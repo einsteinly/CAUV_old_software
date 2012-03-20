@@ -81,13 +81,14 @@ m_viewer(new osgViewer::Viewer())
     // sort out the AUVs cameras
     foreach(boost::shared_ptr<sim::Camera> simulatedCam, m_simulated_auv->getCameras()){
         osg::ref_ptr<osg::Camera> camera = new osg::Camera;
-        m_viewer->addSlave(camera.get(), osg::Matrixd(), osg::Matrixd());
+        m_viewer->addSlave(camera.get(), osg::Matrixd::identity(), osg::Matrixd::identity());
         camera->setGraphicsContext(pbuffer.get());
         camera->setViewport(new osg::Viewport(0,0,300,200));
         camera->attach(osg::Camera::COLOR_BUFFER, simulatedCam.get());
         camera->setViewMatrixAsLookAt(osg::Vec3f(0,-20,2), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
         info() <<"Added simulated camera";
     }
+
 }
 
 
@@ -99,6 +100,8 @@ osg::ref_ptr<WorldModel> Simulator::getWorldModel(){
 void Simulator::onRun()
 {
     CauvNode::onRun();
+    
+    launchViewer();
 
     m_viewer->setUpViewInWindow( 0,0,1024,768, 0 );
 
@@ -198,7 +201,8 @@ int Simulator::useOptionsMap(boost::program_options::variables_map& vm, boost::p
 
     m_root->addChild(m_world_model);
 
-    osgDB::Registry::instance()->getDataFilePathList().push_back("/home/andy/dev/libs/openscenegraph/OpenSceneGraph-Data");
+
+    osgDB::Registry::instance()->getDataFilePathList().push_back("/Users/james/Development/OpenSceneGraph-Data");
     const std::string filename = "cow.osg";
     osg::ref_ptr<osg::Node> cow = osgDB::readNodeFile(filename);
 

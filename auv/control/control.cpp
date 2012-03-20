@@ -13,7 +13,7 @@
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <common/math.h>
-#include <common/spread/spread_rc_mailbox.h>
+#include <common/mailbox.h>
 #include <debug/cauv_debug.h>
 #include <generated/types/TimeStamp.h>
 #include <generated/types/MotorDemand.h>
@@ -31,6 +31,7 @@
 #include <module/module.h>
 
 #include "xsens_imu.h"
+#include "sbg_imu.h"
 
 using namespace std;
 using namespace cauv;
@@ -263,7 +264,7 @@ MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
 class StateObserver : public MessageObserver, public IMUObserver
 {
     public:
-        StateObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+        StateObserver(boost::shared_ptr<Mailbox> mb)
             : m_mb(mb)
         {
         }
@@ -274,11 +275,11 @@ class StateObserver : public MessageObserver, public IMUObserver
         }
         virtual void onStateRequestMessage(StateRequestMessage_ptr)
         {
-            m_mb->sendMessage(boost::make_shared<StateMessage>(m_orientation), SAFE_MESS);
+            m_mb->sendMessage(boost::make_shared<StateMessage>(m_orientation), RELIABLE_MSG);
         }
 
     protected:
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        boost::shared_ptr<Mailbox> m_mb;
         
         floatYPR m_orientation;
 };
@@ -288,7 +289,7 @@ using namespace Controller;
 class ControlLoops : public MessageObserver, public IMUObserver
 {
     public:
-        ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+        ControlLoops(boost::shared_ptr<Mailbox> mb)
             : prop_value(0), hbow_value(0), vbow_value(0),
               hstern_value(0), vstern_value(0), m_max_motor_delta(255),
               m_motor_updates_per_second(5), m_mb(mb), m_simulation_mode(false)
@@ -338,11 +339,11 @@ class ControlLoops : public MessageObserver, public IMUObserver
                
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Bearing].stateMsg();
                 msg->demand(m_demand[Bearing]);
-                m_mb->sendMessage(msg, SAFE_MESS);
+                m_mb->sendMessage(msg, RELIABLE_MSG);
 
                 foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
                     m->name("Bearing-" + m->name());
-                    m_mb->sendMessage(m, SAFE_MESS);
+                    m_mb->sendMessage(m, RELIABLE_MSG);
                 }
             }
             
@@ -354,11 +355,11 @@ class ControlLoops : public MessageObserver, public IMUObserver
                 
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Pitch].stateMsg();
                 msg->demand(m_demand[Pitch]);
-                m_mb->sendMessage(msg, SAFE_MESS);
+                m_mb->sendMessage(msg, RELIABLE_MSG);
                 
                 foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
                     m->name("Pitch-" + m->name());
-                    m_mb->sendMessage(m, SAFE_MESS);
+                    m_mb->sendMessage(m, RELIABLE_MSG);
                 }
             }
         }
@@ -398,11 +399,11 @@ class ControlLoops : public MessageObserver, public IMUObserver
                 
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Depth].stateMsg();
                 msg->demand(m_demand[Depth]);
-                m_mb->sendMessage(msg, SAFE_MESS);
+                m_mb->sendMessage(msg, RELIABLE_MSG);
                 
                 foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
                     m->name("Depth-" + m->name());
-                    m_mb->sendMessage(m, SAFE_MESS);
+                    m_mb->sendMessage(m, RELIABLE_MSG);
                 }
             }
         }
@@ -584,7 +585,7 @@ class ControlLoops : public MessageObserver, public IMUObserver
                     
                     boost::shared_ptr<ControllerStateMessage> msg = m_controllers[i].stateMsg();
                     msg->demand(m_demand[i]);
-                    m_mb->sendMessage(msg, SAFE_MESS);
+                    m_mb->sendMessage(msg, RELIABLE_MSG);
                 }
                 m_controllers[Controller::Pitch].is_angle = true;
                 m_controllers[Controller::Bearing].is_angle = true;
@@ -680,7 +681,7 @@ class ControlLoops : public MessageObserver, public IMUObserver
                     else
                         m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
                 }
-                m_mb->sendMessage(boost::make_shared<MotorStateMessage>(mid, newvalue), SAFE_MESS);
+                m_mb->sendMessage(boost::make_shared<MotorStateMessage>(mid, newvalue), RELIABLE_MSG);
             }
         }
 
@@ -699,7 +700,7 @@ class ControlLoops : public MessageObserver, public IMUObserver
         unsigned m_max_motor_delta;
         unsigned m_motor_updates_per_second;
 
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        boost::shared_ptr<Mailbox> m_mb;
 
         bool m_simulation_mode;
 };
@@ -753,7 +754,7 @@ class DeviceControlObserver : public MessageObserver
 class TelemetryBroadcaster : public MessageObserver, public IMUObserver
 {
     public:
-        TelemetryBroadcaster(boost::shared_ptr<ReconnectingSpreadMailbox> mb,
+        TelemetryBroadcaster(boost::shared_ptr<Mailbox> mb,
                              bool simulation_mode)
             : m_mb(mb), m_simulation_mode(simulation_mode)
         {
@@ -810,7 +811,7 @@ class TelemetryBroadcaster : public MessageObserver, public IMUObserver
             m_depthCalibration = m;
         }
     protected:
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        boost::shared_ptr<Mailbox> m_mb;
         bool m_simulation_mode;
 
         DepthCalibrationMessage_ptr m_depthCalibration;
@@ -825,7 +826,7 @@ class TelemetryBroadcaster : public MessageObserver, public IMUObserver
                 debug() << "Send telemetry thread started";
                 while(true)
                 {
-                    m_mb->sendMessage(boost::make_shared<TelemetryMessage>(m_orientation, m_depth), SAFE_MESS);
+                    m_mb->sendMessage(boost::make_shared<TelemetryMessage>(m_orientation, m_depth), RELIABLE_MSG);
                     msleep(100);
                 }
             } catch (boost::thread_interrupted&) {
@@ -838,7 +839,7 @@ class TelemetryBroadcaster : public MessageObserver, public IMUObserver
 class MCBForwardingObserver : public BufferedMessageObserver
 {
     public:
-        MCBForwardingObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+        MCBForwardingObserver(boost::shared_ptr<Mailbox> mb)
             : m_pressure_min_msecs(50),
               m_battery_min_msecs(5000),
               m_last_pressure_sent(now()),
@@ -853,7 +854,7 @@ class MCBForwardingObserver : public BufferedMessageObserver
         {
             if(now() - m_last_pressure_sent > m_pressure_min_msecs){        
                 debug(5) << "MCBForwardingObserver: Forwarding pressure message:" << *m;
-                m_mb->sendMessage(m, UNRELIABLE_MESS);
+                m_mb->sendMessage(m, UNRELIABLE_MSG);
                 m_last_pressure_sent = now();
             }
         }
@@ -861,21 +862,21 @@ class MCBForwardingObserver : public BufferedMessageObserver
         {
             if(now() - m_last_battery_sent > m_battery_min_msecs){
                 debug(5) << "MCBForwardingObserver: Forwarding battery status message:" << *m;
-                m_mb->sendMessage(m, UNRELIABLE_MESS);
+                m_mb->sendMessage(m, UNRELIABLE_MSG);
                 m_last_battery_sent = now();
             }
         }
         virtual void onDebugMessage(DebugMessage_ptr m)
         {
             debug(5) << "MCBForwardingObserver: Forwarding debug message:" << *m;
-            m_mb->sendMessage(m, SAFE_MESS);
+            m_mb->sendMessage(m, RELIABLE_MSG);
         }
     protected:
         float m_pressure_min_msecs;
         float m_battery_min_msecs;
         TimeStamp m_last_pressure_sent;
         TimeStamp m_last_battery_sent;
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        boost::shared_ptr<Mailbox> m_mb;
 };
 
 class NotRootException : public std::exception
@@ -972,6 +973,26 @@ void ControlNode::setXsens(int id)
     }
 }
 
+void ControlNode::setsbg (const char* port, int baud_rate, int pause_time)
+{
+	// start up the sbg IMU
+
+	try {
+		m_sbg = boost::make_shared<sbgIMU>(port, baud_rate, pause_time);
+		info() << "sbg Connected";
+
+		// configuration ??
+
+		//info() << "sbg configured";
+
+	} catch (sbgException& e) {
+		error() << "Cannot connect to sbg: " << e.what ();
+		
+
+	}
+
+}
+
 void ControlNode::addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos)
 {
     namespace po = boost::program_options;
@@ -1064,22 +1085,10 @@ void ControlNode::onRun()
     m_telemetryBroadcaster->start();
 }
 
-static ControlNode* node;
-
-void cleanup()
-{
-    info() << "Cleaning up..." << endl;
-    CauvNode* oldnode = node;
-    node = 0;
-    delete oldnode;
-    info() << "Clean up done." << endl;
-}
-
 void interrupt(int sig)
 {
     cout << endl;
     info() << BashColour::Red << "Interrupt caught!";
-    cleanup();
     signal(SIGINT, SIG_DFL);
     raise(sig);
 }
@@ -1089,17 +1098,16 @@ int main(int argc, char** argv)
     signal(SIGINT, interrupt);
     
     try {
-        node = new ControlNode();
+        ControlNode node;
     
-        int ret = node->parseOptions(argc, argv);
+        int ret = node.parseOptions(argc, argv);
         if(ret != 0) return ret;
         
-        node->run();
+        node.run();
     }
     catch (NotRootException& e) {
         error() << e.what();
     }
     
-    cleanup();
     return 0;
 }

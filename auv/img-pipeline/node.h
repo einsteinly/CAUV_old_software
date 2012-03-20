@@ -32,15 +32,13 @@
 #include <utility/testable.h>
 #include <common/cauv_utils.h>
 #include <common/image.h>
+#include <common/mailbox.h>
 #include <debug/cauv_debug.h>
 #include <generated/types/PipelineGroup.h>
 #include <generated/types/Pl_GuiGroup.h>
 #include <generated/types/NodeInputStatus.h>
 #include <generated/types/InputSchedType.h>
 #include <generated/types/SensorUIDBase.h>
-
-// TODO: remove this dependency
-#include <ssrc/spread.h>
 
 #include "pipelineTypes.h"
 
@@ -378,8 +376,6 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         typedef boost::recursive_mutex mutex_t;
         typedef boost::unique_lock<mutex_t> lock_t;
 
-        typedef Spread::service service_t;
-
     public:
         struct ConstructArgs{
             Scheduler& sched; ImageProcessor& pl; std::string const& pl_name; NodeType::e type;
@@ -653,7 +649,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
 
         bool unregisterOutputID(output_id const& o, bool warnNonexistent = true);
 
-        void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS) const;
+        void sendMessage(boost::shared_ptr<Message const>, MessageReliability reliability = RELIABLE_MSG) const;
 
         /* Keep a record of which inputs are new (have changed since they were
          * last used by this node)

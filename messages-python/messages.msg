@@ -131,6 +131,7 @@ enum ScriptCommand : int8 {
     Start,
     Stop,
     Restart,
+    Pause,
 }
 enum SensorUIDBase : int32 {
     // !!! TODO: support hex integer literals...
@@ -916,6 +917,7 @@ group guiai
     }
     message ScriptControl : 216
     {
+        taskId : string;
         command : ScriptCommand;
     }
 }

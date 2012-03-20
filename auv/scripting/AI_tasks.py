@@ -125,11 +125,13 @@ class circle_buoy(aiTask):
         
 class avoid_collision(aiTask):
     class options(taskOptions):
-        script_name = 'avoid_collision'
+        script_name = 'sonar_avoid_obstacle'
         priority = 10
         frequency_limit = 0
+        solo= False
+        detectors_enabled_while_running=True
     conditions = [
-        (c['sonar_collision_detectorCondition'], {}),
+        (c['stateCondition'], {'state': True}),
         ]
             
 class track_wall(aiTask):
