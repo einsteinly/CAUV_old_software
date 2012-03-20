@@ -260,7 +260,8 @@ def p_variant(p):
     p[0] = Variant(p[2], p[3])
 
 def p_variant_contents(p):
-    "variant_contents : '{' variant_type_list '}'"
+    """variant_contents : '{' variant_type_list '}'
+                        | '{' variant_type_list ',' '}'"""
     p[0] = p[2]
 
 
