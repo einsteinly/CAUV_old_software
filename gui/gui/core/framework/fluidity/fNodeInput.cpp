@@ -293,7 +293,6 @@ void FNodeParamInput::initView(){
 
     m_view_proxy = new liquid::ProxyWidget();
     m_view_proxy->setWidget(m_view);
-    m_view_proxy->setWidget(m_view);
     
     addWidget(m_view_proxy);
 }
