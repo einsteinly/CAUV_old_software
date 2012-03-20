@@ -95,6 +95,7 @@ enum NodeType : int8 {
     PolarImageToXY,
     SonarImageEdge,
     LearnedKeyPoints,
+    FirstAboveThreshold,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -343,7 +344,8 @@ variant ParamValue
     ImageRegion,
     Range,
     floatXY,
-    DynamicEnum
+    DynamicEnum,
+    list<floatXY>,
 }
 // !!! should generate this for each variant
 enum ParamValueType : int8 {
@@ -356,6 +358,7 @@ enum ParamValueType : int8 {
     RangeType,
     floatXYType,
     DynamicEnumType,
+    listFloatXYType,
 }
 
 group membership
