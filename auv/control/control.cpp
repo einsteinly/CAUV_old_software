@@ -31,6 +31,7 @@
 #include <module/module.h>
 
 #include "xsens_imu.h"
+#include "sbg_imu.h"
 
 using namespace std;
 using namespace cauv;
@@ -970,6 +971,26 @@ void ControlNode::setXsens(int id)
         error() << "Cannot connect to Xsens: " << e.what();
         m_xsens.reset();
     }
+}
+
+void ControlNode::setsbg (const char* port, int baud_rate, int pause_time)
+{
+	// start up the sbg IMU
+
+	try {
+		m_sbg = boost::make_shared<sbgIMU>(port, baud_rate, pause_time);
+		info() << "sbg Connected";
+
+		// configuration ??
+
+		//info() << "sbg configured";
+
+	} catch (sbgException& e) {
+		error() << "Cannot connect to sbg: " << e.what ();
+		
+
+	}
+
 }
 
 void ControlNode::addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos)
