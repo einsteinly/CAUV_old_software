@@ -1,4 +1,5 @@
 find_package(ZeroMq REQUIRED)
+find_package(Ns3c)
 include_directories(${ZEROMQ_INCLUDE_DIRS})
 
 add_executable(
@@ -44,6 +45,20 @@ target_link_libraries(
     ${ZEROMQ_LIBRARY}
 )
 depends_on_messages(zmq_test)
+
+if (NS3_FOUND)
+    add_executable(
+        ns_test
+
+        tests/ns_test.cpp
+    )
+
+    target_link_libraries(
+        ns_test
+
+        ${NS3_LIBRARIES}
+    )
+endif()
 
 install(
     PROGRAMS daemon_wrapper.py
