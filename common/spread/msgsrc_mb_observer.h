@@ -19,6 +19,7 @@
 
 #include <common/cauv_utils.h>
 #include <generated/message_observers.h>
+#include <generated/types/MembershipChangedMessage.h>
 
 #include "spread_messages.h"
 #include "mailbox_monitor.h"

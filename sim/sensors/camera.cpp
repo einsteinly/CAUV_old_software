@@ -23,7 +23,7 @@ using namespace cauv::sim;
 
 #include <common/cauv_utils.h>
 
-#include <generated/messages.h>
+#include <generated/types/ImageMessage.h>
 #include <opencv/cv.h>
 
 #include <sstream>
@@ -51,9 +51,10 @@ void Camera::tick(double simTime){
     if(m_rateLimiter && m_rateLimiter->isSaturated())
         return;
 
-    cv::Mat mat = cv::Mat(m_height, m_width, CV_32FC1, (uchar*)this->data(), 0);
-    cvFlip(&mat, NULL, 1);
-    boost::shared_ptr<ImageMessage> msg = boost::make_shared<ImageMessage>(CameraID::Forward, mat, cauv::now());
+    cv::Mat data = cv::Mat(m_height, m_width, CV_8UC3, (uchar*)this->data(), 0);
+    cv::Mat mat(m_height, m_width, CV_8UC3);
+    cv::flip(data, mat, 1);
+    boost::shared_ptr<ImageMessage> msg = boost::make_shared<ImageMessage>(CameraID::Forward, cauv::Image(mat), cauv::now());
     m_simulator->send(msg);
 
     //std::stringstream str2;

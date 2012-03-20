@@ -83,6 +83,7 @@ add_executable (
     nodes/nodes2.cpp
     nodes/math/mathNodes.cpp
     nodes/sonar/sonarNodes.cpp
+    #nodes/fitEllipseNode.cpp
     ${CONDITIONAL_SOURCE_FILES}
 )
 cauv_install ( img-pipeline )

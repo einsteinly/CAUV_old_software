@@ -32,6 +32,7 @@ target_link_libraries (camera_server
     cauv_debug
     ${OpenCV_LIBS}
     boost_system
+    pthread
     rt
 )
 if (CAUV_USE_DC1394)
@@ -51,6 +52,7 @@ target_link_libraries (camera_client
     cauv_debug
     ${OpeNCV_LIBS}
     boost_system
+    pthread
     rt
 )
 depends_on_messages(camera_client)

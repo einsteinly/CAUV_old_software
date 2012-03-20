@@ -11,6 +11,8 @@ if (${CAUV_BUILD_SIM})
     #Open Scene Graph
     find_package(OSG REQUIRED)
     FIND_OSG_LIBRARY(OSGOCEAN_LIBRARY osgOcean)
+    # this seems to be a missing dependency of osgOcean:
+    find_package (OpenThreads REQUIRED)
 
     # boost:
     find_package (Boost 1.40 REQUIRED)
@@ -20,6 +22,9 @@ if (${CAUV_BUILD_SIM})
 
     # Open CV
     find_package (OpenCV REQUIRED)
+
+    # for generated files
+    include_directories ("${CMAKE_CURRENT_BINARY_DIR}/../")
 
     # for <common/includesstuff> etc
     include_directories (${AUV_SOURCE_DIR})
@@ -40,7 +45,7 @@ if (${CAUV_BUILD_SIM})
         auvs/simulatedauv.cpp
         auvs/redherring.cpp
     )
-
+    
     # libs
     target_link_libraries (
         sim
@@ -50,7 +55,9 @@ if (${CAUV_BUILD_SIM})
         ${OpenCV_LIBS}
         ${OSG_LIBRARY}
         ${OSGVIEWER_LIBRARY}
+        ${OSGDB_LIBRARY}
         ${OSGOCEAN_LIBRARY}
+        ${OPENTHREADS_LIBRARY}
     )
 
     add_custom_command(

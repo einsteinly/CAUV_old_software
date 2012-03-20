@@ -13,6 +13,8 @@
 #include "renderStringNode.h"
 #include "globalMaximumNode.h"
 #include "localMaximaNode.h"
+#include "firstAboveThresholdNode.h"
+#include "kmeansPointsNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -30,6 +32,8 @@ DEFINE_NFR(RotateNode, NodeType::Rotate);
 DEFINE_NFR(RenderStringNode, NodeType::RenderString);
 DEFINE_NFR(GlobalMaximumNode, NodeType::GlobalMaximum);
 DEFINE_NFR(LocalMaximaNode, NodeType::LocalMaxima);
+DEFINE_NFR(FirstAboveThresholdNode, NodeType::FirstAboveThreshold);
+DEFINE_NFR(KMeansPointsNode, NodeType::KMeansPoints);
 
 } // namespace imgproc
 } // namespace cauv

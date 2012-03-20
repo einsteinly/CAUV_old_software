@@ -12,7 +12,7 @@
 
 #include <common/image.h>
 #include <common/cauv_utils.h>
-#include <common/spread/spread_rc_mailbox.h>
+#include <common/mailbox.h>
 #include <generated/message_observers.h>
 
 #include "pipelineTypes.h"
@@ -29,8 +29,7 @@ namespace imgproc{
 class ImageProcessor: public MessageObserver
 {
         typedef boost::shared_ptr<InputNode> input_node_ptr_t;
-        typedef boost::shared_ptr<ReconnectingSpreadMailbox> mb_ptr_t;
-        typedef Spread::service service_t;
+        typedef boost::shared_ptr<Mailbox> mb_ptr_t;
         typedef boost::recursive_mutex mutex_t;
         typedef boost::unique_lock<mutex_t> lock_t;
     public:    
@@ -77,7 +76,7 @@ class ImageProcessor: public MessageObserver
         /**
          * Use m_mailbox (set by constructor) to send the specified message
          */
-        void sendMessage(const boost::shared_ptr<const Message> msg, service_t p = SAFE_MESS) const;
+        void sendMessage(const boost::shared_ptr<const Message> msg, MessageReliability = RELIABLE_MSG) const;
 
         ~ImageProcessor();
     

@@ -5,17 +5,15 @@ import math
 import time
 
 # CAUV:
-import cauv
-from AI_classes import aiProcess, aiDetectorOptions
+from AI_classes import aiScript, aiScriptOptions
 from cauv.debug import debug, info, warning, error
 import cauv.messaging as msg
-import cauv.control   as control
 import cauv.pipeline  as pipeline
 
 from utils.timeutils import RelativeTimeCapability
 
 
-class detectorOptions(aiDetectorOptions):
+class scriptOptions(aiScriptOptions):
     Sonar_Range = 35
     KeyPoints_Name = 'sonar_local_maxima_bearing_range'
     Too_Close_Static = 0.2  # metres
@@ -25,18 +23,14 @@ class detectorOptions(aiDetectorOptions):
     Max_Range = 4    # maximum range to consider targets
     Run_Away_Time = 1 # seconds
 
-class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
-    def __init__(self, opts):
-        aiProcess.__init__(self, 'SonarCollisionAvoider')
+class script(aiScript, RelativeTimeCapability):
+    def __init__(self, *arg, **kwargs):
+        aiScript.__init__(self, *arg, **kwargs)
         RelativeTimeCapability.__init__(self)
-        self.options = opts
         self.Keypoints_Name = self.options.KeyPoints_Name
         self.last_keypoints = None
         self.nearby_detected = 0
         self.last_time = 0
-        self.auv = auv = control.AUV(self.node)
-        self.node.join('processing')
-        #self.request_pl('sonar_collisions.pipe')
         self.time_detected = None
     
     def setDetected(self):
@@ -167,16 +161,21 @@ class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
             self.last_time = now
             
     def run(self):
+        self.node.join('processing')
+        self.request_pl('sonar_collisions')
         while True:
             time.sleep(0.1)
             if self.time_detected is not None and\
                self.relativeTime() - self.time_detected < self.options.Run_Away_Time:
                 info('running away!')
+                if not self.in_control.is_set():
+                    self.request_control_and_wait(1, control_timeout=5)
                 self.auv.prop(-127)
             else:
                 if self.time_detected is not None and \
                    self.relativeTime() - self.time_detected < self.options.Run_Away_Time + 0.5:
                     self.auv.prop(0)
+                    self.drop_control()
                 self.clearDetected()
 
 if __name__ == '__main__':
