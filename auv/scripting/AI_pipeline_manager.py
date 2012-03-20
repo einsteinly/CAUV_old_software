@@ -4,7 +4,7 @@ from cauv.debug import info, warning, error, debug
 from cauv import messaging
 import cauv.pipeline
 
-import threading, os.path, cPickle, time, traceback, pickle, argparse, Queue, subprocess
+import threading, os, os.path, cPickle, time, traceback, pickle, argparse, Queue, subprocess
 from glob import glob
 from datetime import datetime
 
@@ -84,6 +84,10 @@ class NewModel(cauv.pipeline.Model):
             self.manager2pl[node_id] = new_node_id
             self.pl2manager[new_node_id] = node_id
             self.nodes[node_id]=node
+            if node.type in cauv.pipeline.NodeParam_Filters:
+                warning('filtering parameters of type %s node' % messaging.NodeType(node.type))
+                node.params = cauv.pipeline.NodeParam_Filters[node.type](node.params)
+                debug('Filtered parameters:\n%s' % node.params)
             bad_params = []
             for param, value in node.params.items():
                 if isinstance(param, messaging.LocalNodeInput):
@@ -149,7 +153,7 @@ class PipelinesSet():
             return
         #load pipeline
         try:
-            pl_state = cPickle.load(open(os.path.join('pipelines', filename)+'.pipe'))
+            pl_state = cauv.pipeline.Model.loadFile(open(os.path.join('pipelines', filename)+'.pipe'))
         except:
             error('Error loading pipeline %s' %(filename,))
             traceback.print_exc()
@@ -175,32 +179,38 @@ class PipelinesSet():
         self.pipelines[filename] = Pipeline(nodes)
         self.request2filename[name] = filename
     def merge_and_update(self, merged_pls):
-        for pipelines, nodes in merged_pls:
+        for pipelines, node_groups in merged_pls:
             #1) merge pipelines
-            if len(pipelines)>1:
+            if len(pipelines)>=1:
                 #first need generate a name for our merge
                 pl_names = []
                 for pl in pipelines:
-                    if pl.startswith(merged):
+                    if pl.startswith('temp'):
                         pl_names.extend(pl.split('__')[1:-1])
                     else:
                         pl_names.append(pl)
                     #remove old pipelines
                     self.pipelines.pop(pl)
-                pipeline = 'merged__'+'__'.join(pl_names)+'__all'
+                pipeline = '__'.join(pl_names)
                 #update requests to map to this new pl
-                for pl in pipelines:
-                    if pl.startswith(merged):
-                        for name in pl.split('__')[1:-1]:
-                            self.request2filename[name] = pipeline
-                    else:
-                        self.request2filename[pl] = pipeline
-            elif len(pipelines):
-                pipeline = pipelines[0]
+                for name, filename in self.request2filename.items():
+                    if filename in pipelines:
+                        self.request2filename[name] = os.path.join('temp','__')+pipeline+'__all'
             else:
-                pipeline = 'temp'
-            #2) set pipeline to have new nodes
-            self.pipelines[pipeline] = Pipeline(nodes)
+                pipeline = 'temporary'
+            #2) set pipeline to have new nodes, and save
+            all_nodes = {}
+            for index, node_group in enumerate(node_groups):
+                all_nodes.update(node_group)
+                with open(os.path.join('pipelines','temp','__')+pipeline+'__'+str(index)+'.pipe', 'wb') as outf:
+                    st = cauv.pipeline.State()
+                    st.nodes = node_group
+                    pickle.dump(st, outf)
+            self.pipelines[os.path.join('temp','__')+pipeline+'__all'] = Pipeline(all_nodes)
+            with open(os.path.join('pipelines','temp','__')+pipeline+'__all'+'.pipe', 'wb') as outf:
+                st = cauv.pipeline.State()
+                st.nodes = all_nodes
+                pickle.dump(st, outf)
     def get_relabeling(self, new_node_ids):
         self.nnid += len(new_node_ids)
         return dict([(node_id, self.nnid-index-1) for index, node_id in enumerate(new_node_ids)])
@@ -208,6 +218,10 @@ class PipelinesSet():
 class pipelineManager(aiProcess):
     def __init__(self, *args, **kwargs):
         aiProcess.__init__(self, *args, **kwargs)
+        try:
+            os.mkdir(os.path.join('pipelines','temp'))
+        except OSError:
+            pass
         #TODO make options actuall work
         self.disable_gui = kwargs['disable_gui'] if 'disable_gui' in kwargs else False
         self.request_queue = Queue.Queue()
@@ -231,19 +245,20 @@ class pipelineManager(aiProcess):
         """
         try and load pipelines
         syntax for merged pipelines
-        merged__PLNAME1__PLNAME2...__1/2/../all (so if multiple pls get merged, we still get what we want)
-        The strategy is 1) look for all pipelines (except merged__...__1/2.../n since these are only part pipelines)
+        temp__PLNAME1__PLNAME2...__1/2/../all (so if multiple pls get merged, we still get what we want)
+        The strategy is 1) look for all pipelines (except temp__...__1/2.../n since these are only part pipelines)
         2)group all pipelines with the same name 3)choose most recently modified pl
         """
         #scan the pipelines
-        pipeline_names = [x[10:-5] for x in glob(os.path.join('pipelines', '*.pipe'))] #we'll drop the 'pipelines/' prefix and '.pipe'
+        pipeline_names = [x[10:-5] for x in glob(os.path.join('pipelines', '*.pipe'))]
+        pipeline_names.extend([x[10:-5] for x in glob(os.path.join('pipelines','temp','*.pipe'))])#we'll drop the 'pipelines/' prefix and '.pipe'
         pipeline_groups = {} #pipeline main name: filenames
         for name in pipeline_names:
-            if name.startswith('merged'):
-                if not name.endswith('all'):
+            if name.startswith('temp'):
+                if not name.endswith('__all'):
                     #so is only a partial pl, so ignore
                     continue
-                warning('Found merged pipelines in file %s.pipe, it is recommended these are split and the merged file deleted' %(name,))
+                warning('Found temporary pipelines in file %s.pipe, it is recommended these are sorted and deleted' %(name,))
                 names = name.split('__')[1:-1]
                 for pl_name in names:
                     try:
@@ -270,7 +285,7 @@ class pipelineManager(aiProcess):
     def drop_pl(self, requestor_type, requestor_name, requested_pl):
         self.request_queue.put(('unsetup_pl',{'requestor_type':requestor_type, 'requestor_name':requestor_name, 'requested_pl':requested_pl}))
     @external_function
-    def drop_all_pl(self, requestor_type, requestor_name):
+    def drop_all_pls(self, requestor_type, requestor_name):
         self.request_queue.put(('unsetup_all',{'requestor_type':requestor_type, 'requestor_name':requestor_name}))
     @external_function
     def drop_task_pls(self, task_id):
@@ -282,7 +297,7 @@ class pipelineManager(aiProcess):
         if not requestor_type in self.requests:
             error('Invalid requestor type %s, named %s' %(requestor_type, requestor_name))
             return
-        if not requested_pl in self.pl_data.pipelines:
+        if not requested_pl in self.pl_data.request2filename:
             error('Non-existant pipeline %s requested' %(requested_pl,))
             return
             #update request info
@@ -292,7 +307,7 @@ class pipelineManager(aiProcess):
             self.requests[requestor_type][requestor_name] = [requested_pl]
         #confirm setup (atm only scripts)
         if requestor_type == 'script':
-            getattr(self.ai, requestor_name).confirm_pl_response()
+            getattr(self.ai, requestor_name).confirm_pl_request()
         self.reeval = True
     def unsetup_pl(self, requestor_type, requestor_name, requested_pl):
         if not requestor_type in self.requests:
@@ -301,7 +316,7 @@ class pipelineManager(aiProcess):
             error('Requestor does not have any pipelines to drop')
         elif not requested_pl in self.requests[requestor_type][requestor_name]:
             error('Requestor has not requested this pipeline %s' %(requested_pl,))
-        elif not requested_pl in self.pl_data.pipelines:
+        elif not requested_pl in self.pl_data.request2filename:
             warning('Could not drop request %s, may have left things in the pipeline.' %(requested_pl, ))
         else:
             self.requests[requestor_type][requestor_name].remove(requested_pl)
@@ -393,19 +408,19 @@ class pipelineManager(aiProcess):
                 groups.append((nodes,pipelines))
             #5
             #deals with pipelines getting merged (by connecting)
-            merged_pls = [] #[(pipelines,nodes)]
+            merged_pls = [] #[(pipelines,node_groups)]
             pl2merged_pl = {} #pipeline, merged_pl index
             for group, pipelines in groups:
                 for pipeline in pipelines:
                     if pipeline in pl2merged_pl:
-                        merged_pl_id = pl2merged_pl
+                        merged_pl_id = pl2merged_pl[pipeline]
                         break
                 else:
                     merged_pl_id = len(merged_pls)
-                    merged_pls.append([set(),{}])
+                    merged_pls.append([set(),[]])
                 for pipeline_name in pipelines:
                     pl2merged_pl[pipeline_name] = merged_pl_id
-                merged_pls[merged_pl_id][1].update(group)
+                merged_pls[merged_pl_id][1].append(group)
                 merged_pls[merged_pl_id][0].update(pipelines)
             #turn set into list
             for merged_pl in merged_pls:
@@ -419,7 +434,7 @@ class pipelineManager(aiProcess):
                 for req in reqs:
                     new_state.nodes.update(self.pl_data.pipelines[self.pl_data.request2filename[req]].nodes)
         for req in self.detector_requests:
-            if not req in self.pl_data.pipelines:
+            if not req in self.pl_data.request2filename:
                 error('Requested non-existant pipeline %s' %(req, ))
                 continue
             new_state.nodes.update(self.pl_data.pipelines[self.pl_data.request2filename[req]].nodes)

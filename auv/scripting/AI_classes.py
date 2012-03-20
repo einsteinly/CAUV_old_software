@@ -396,12 +396,12 @@ class aiScript(aiProcess):
     #image pipeline stuff
     def request_pl(self, pl_name, timeout=10):
         self.pl_confirmed.clear()
-        self.ai.pl_manager.request_pipeline(pl_name)
+        self.ai.pl_manager.request_pl('script', self.task_name, pl_name)
         return self.pl_confirmed.wait(timeout)
     def drop_pl(self, pl_name):
-        self.ai.pl_manager.drop_pipeline(pl_name)
+        self.ai.pl_manager.drop_pl('script', self.task_name, pl_name)
     def drop_all_pl(self):
-        self.ai.pl_manager.drop_all_pipelines()
+        self.ai.pl_manager.drop_all_pls('script', self.task_name)
     @external_function
     def confirm_pl_request(self):
         self.pl_confirmed.set()
@@ -502,7 +502,7 @@ class aiDetector(messaging.MessageObserver):
         self._pipelines.append(name)
     def drop_pl(self, name):
         self._pipelines.remove(name)
-    def drop_all_pl(self, name):
+    def drop_all_pl(self):
         self._pipelines = []
     def process(self):
         """

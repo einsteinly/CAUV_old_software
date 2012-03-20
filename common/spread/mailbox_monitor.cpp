@@ -14,6 +14,7 @@
 
 #include "mailbox_monitor.h"
 #include "spread_rc_mailbox.h"
+#include "msgsrc_mb_observer.h"
 
 #include <boost/thread/thread.hpp>
 #include <common/cauv_utils.h>
@@ -36,16 +37,17 @@ void TestMBObserver::membershipMessageReceived(boost::shared_ptr<const Membershi
 
 
 
-MailboxEventMonitor::MailboxEventMonitor(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox)
-        : m_thread(), m_mailbox(mailbox), m_interupted(false),
-          m_monitoring(false), m_sync_thread_id(){
+SpreadMailboxEventMonitor::SpreadMailboxEventMonitor(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox)
+        : m_thread(), m_mailbox(mailbox), m_mb_monitor(boost::make_shared<MsgSrcMBMonitor>()),
+          m_interupted(false), m_monitoring(false), m_sync_thread_id() {
+    addObserver(m_mb_monitor);
 }
 
-void MailboxEventMonitor::startMonitoringAsync() {
+void SpreadMailboxEventMonitor::startMonitoringAsync() {
     m_monitoring = true;
 
     if(m_thread.get_id() == boost::thread::id()){
-        m_thread = boost::thread( &MailboxEventMonitor::doMonitoring, this );
+        m_thread = boost::thread( &SpreadMailboxEventMonitor::doMonitoring, this );
         /* TODO: we can't nice down without sudoing, so nice up other things
          * instead
         struct sched_param param;
@@ -57,7 +59,7 @@ void MailboxEventMonitor::startMonitoringAsync() {
     }
 }
 
-void MailboxEventMonitor::stopMonitoring() {
+void SpreadMailboxEventMonitor::stopMonitoring() {
     // async
     if (m_thread.get_id() != boost::thread::id())
     {
@@ -77,12 +79,24 @@ void MailboxEventMonitor::stopMonitoring() {
     }
 }
 
-void MailboxEventMonitor::startMonitoringSync() {
+void SpreadMailboxEventMonitor::startMonitoringSync() {
     m_sync_thread_id = boost::this_thread::get_id();
     doMonitoring();
 }
 
-void MailboxEventMonitor::doMonitoring() {
+void SpreadMailboxEventMonitor::addMessageObserver(boost::shared_ptr<MessageObserver> obs) {
+    m_mb_monitor->addObserver(obs);
+}
+
+void SpreadMailboxEventMonitor::removeMessageObserver(boost::shared_ptr<MessageObserver> obs) {
+    m_mb_monitor->removeObserver(obs);
+}
+
+void SpreadMailboxEventMonitor::clearMessageObservers(void) {
+    m_mb_monitor->clearObservers();
+}
+
+void SpreadMailboxEventMonitor::doMonitoring() {
     try {
         debug() << "Started monitoring";
 
@@ -121,6 +135,6 @@ void MailboxEventMonitor::doMonitoring() {
     m_monitoring = false;
 }
 
-bool MailboxEventMonitor::isMonitoring(){
+bool SpreadMailboxEventMonitor::isMonitoring(){
     return m_monitoring;
 }

@@ -5,7 +5,7 @@ include_directories("/usr/local/include/sbgCom/")
 
 # sources
 add_executable (
-    cube3d
+    cube3d EXCLUDE_FROM_ALL
 
 
     main.c
