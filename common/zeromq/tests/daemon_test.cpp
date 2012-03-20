@@ -39,12 +39,28 @@ void receive_messages(std::string group_name) {
 void multicast_pub(std::string msg_str) {
     zmq::context_t test_context(1);
     zmq::socket_t zm_pub_sock(test_context,ZMQ_PUB);
+    int64_t multicast_loopback = 0;
+    zm_pub_sock.setsockopt(ZMQ_MCAST_LOOP,&multicast_loopback,sizeof(multicast_loopback));
+    info() << "connecting to " << cauv::get_multicast_control();
     zm_pub_sock.connect(cauv::get_multicast_control().c_str());
     zmq::message_t msg(msg_str.size() + 1);
     memcpy(msg.data(),msg_str.c_str(),msg_str.size() + 1);
     info() << "sending message: \"" << msg_str << "\" to multicast";
     zm_pub_sock.send(msg,0);
     info() << "sent message";
+}
+
+void multicast_sub(void) {
+    zmq::context_t test_context(1);
+    zmq::socket_t zm_sub_sock(test_context,ZMQ_SUB);
+    zm_sub_sock.setsockopt(ZMQ_SUBSCRIBE,"",0);
+    int64_t multicast_loopback = 0;
+    zm_sub_sock.setsockopt(ZMQ_MCAST_LOOP,&multicast_loopback,sizeof(multicast_loopback));
+    info() << "connecting to " << cauv::get_multicast_control();
+    zm_sub_sock.connect(cauv::get_multicast_control().c_str());
+    zmq::message_t msg;
+    zm_sub_sock.recv(&msg,0);
+    info() << "got message : \"" << (char*)msg.data() << "\"";
 }
 
 void send_debug_message(std::string message) {
@@ -74,7 +90,8 @@ int main(int argc, char** argv) {
         ("help,h", "print this help message")
         ("send_message,s", po::value<std::string>(), "send message to daemon")
         ("pub_message,p", po::value<std::string>(), "publish control message")
-        ("receive_message,r", "receive messages from group")
+        ("receive_message,r", "receive messages from (local) group")
+        ("receive_multicast,m", "receive messages from multicast control")
         ("group,g", po::value<std::string>()->default_value("default"), "group to send message to")
         ("send_debug_msg,d",po::value<std::string>(),"create a zeromq mailbox")
         ("create_event,e", "create a zeromq event monitor")
@@ -93,6 +110,9 @@ int main(int argc, char** argv) {
     }
     if (vars.count("receive_message")) {
         receive_messages(vars["group"].as<std::string>());
+    }
+    if (vars.count("receive_multicast")) {
+        multicast_sub();
     }
     if (vars.count("pub_message")) {
         multicast_pub(vars["pub_message"].as<std::string>());
