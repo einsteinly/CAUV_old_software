@@ -15,6 +15,8 @@
 #ifndef __PV_PAIR_H__
 #define __PV_PAIR_H__
 
+#include <ios>
+
 #include <boost/lexical_cast.hpp>
 
 #include <utility/string.h>
@@ -44,6 +46,23 @@ class PVPairEditableBase: public Renderable{
         bool m_editable;
 };
 
+// Support editing BoundedFloat types:
+template<typename charT, typename traitsT>
+std::basic_ostream<charT,traitsT>& operator<<(std::basic_ostream<charT,traitsT>& os, BoundedFloat const& bf){
+    os << bf.value;
+    return os;
+}
+
+template<typename charT, typename traitsT>
+std::basic_istream<charT,traitsT>& operator>>(std::basic_istream<charT,traitsT>& is, BoundedFloat& bf){
+    is >> bf.value;
+    if(bf.value < bf.min)
+        bf.value = bf.min;
+    if(bf.value > bf.max)
+        bf.value = bf.max;
+    return is;
+}
+
 template<typename value_T>
 class PVPair: public PVPairEditableBase{
     public:
@@ -54,7 +73,8 @@ class PVPair: public PVPairEditableBase{
               m_min_value_bbox(0, -3, 13, 10),
               m_param(boost::make_shared<Text>(n, param)),
               m_equals(boost::make_shared<Text>(n, "=")),
-              m_value(boost::make_shared<Text>(n, mkStr() << std::boolalpha << value)){
+              m_value(boost::make_shared<Text>(n, mkStr() << std::boolalpha << value)),
+              m_old_value(value){
             updateBbox();
             m_sort_key = param;
         }
@@ -117,14 +137,13 @@ class PVPair: public PVPairEditableBase{
 
     private:
         static void onValueChanged(PVPair const& pvp, std::string const& s){
-            value_T v = value_T();
-            try {
-                v = boost::lexical_cast<value_T>(s);
-                debug() << "PVPair: Edit done:" << s << "=" << std::boolalpha << v;
-            }
-            catch (boost::bad_lexical_cast& e)
-            {
+            value_T v = pvp.m_old_value;
+            std::istringstream is(s);
+            is >> v;
+            debug() << "PVPair: Edit done:" << s << "=" << std::boolalpha << v;
+            if(!is){
                 error() << "PVPair: Bad lexical cast reading " << s;
+                return;
             }
             pvp.m_node->paramValueChanged(*pvp.m_param, v);
         }
@@ -149,6 +168,7 @@ class PVPair: public PVPairEditableBase{
         boost::shared_ptr<Text> m_param;
         boost::shared_ptr<Text> m_equals;
         boost::shared_ptr<Text> m_value;
+        value_T m_old_value;
 };
 
 } // namespace pw
