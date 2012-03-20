@@ -30,7 +30,7 @@ const char* XsensException::what() const throw ()
 
 
 XsensIMU::XsensIMU(int id)
-    : Observable<IMUObserver>()
+
 {
     memset(&m_port, 0, sizeof(CmtPortInfo));
     std::snprintf(m_port.m_portName, sizeof(m_port.m_portName), "/dev/ttyUSB%d", id);

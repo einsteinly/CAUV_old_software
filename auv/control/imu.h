@@ -25,6 +25,15 @@ class IMUObserver
         virtual void onTelemetry(const floatYPR& attitude) = 0;
 };
 
+class IMU : public Observable<IMUObserver>, boost::noncopyable
+{
+	public:
+        virtual ~IMU() { }	
+        virtual void start () = 0;
+        
+
+};
+
 } // namespace cauv
 
 #endif // ndef __CAUV_IMU_OBSERVER_H__

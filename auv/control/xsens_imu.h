@@ -26,7 +26,7 @@
 
 namespace cauv{
 
-class XsensIMU : public Observable<IMUObserver>, boost::noncopyable
+class XsensIMU : public IMU
 {
     public:
         XsensIMU(int id);

@@ -194,15 +194,6 @@ struct makePVPairHelper< const std::vector<T> >
     }
 };
 template<>
-struct makePVPairHelper< const BoundedFloat >
-{
-    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const BoundedFloat& val, bool) {
-        std::stringstream ss;
-        ss << val.min <<":"<< val.value <<":"<< val.max; 
-        return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
-    }
-};
-template<>
 struct makePVPairHelper< const Range >
 {
     static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const Range& val, bool) {
@@ -214,7 +205,7 @@ struct makePVPairHelper< const Range >
 template<>
 struct makePVPairHelper< const ImageRegion >
 {
-    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const ImageRegion& val, bool) {
+    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const ImageRegion&, bool) {
         std::stringstream ss;
 	ss << "unsupported :(";
         return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
@@ -223,7 +214,7 @@ struct makePVPairHelper< const ImageRegion >
 template<>
 struct makePVPairHelper< const DynamicEnum >
 {
-    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const DynamicEnum& val, bool) {
+    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const DynamicEnum&, bool) {
         std::stringstream ss;
 	ss << "unsupported :(";
         return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
@@ -232,7 +223,7 @@ struct makePVPairHelper< const DynamicEnum >
 template<>
 struct makePVPairHelper< const floatXY >
 {
-    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const floatXY& val, bool) {
+    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const floatXY&, bool) {
         std::stringstream ss;
 	ss << "unsupported :(";
         return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
