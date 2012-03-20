@@ -96,6 +96,7 @@ enum NodeType : int8 {
     SonarImageEdge,
     LearnedKeyPoints,
     FirstAboveThreshold,
+    FitEllipse,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -131,7 +132,6 @@ enum ScriptCommand : int8 {
     Start,
     Stop,
     Restart,
-    Pause,
 }
 enum SensorUIDBase : int32 {
     // !!! TODO: support hex integer literals...
@@ -263,6 +263,13 @@ struct Circle
     eq centre : floatXYZ;
     eq radius : float;
 }
+struct Ellipse
+{
+    eq centre : floatXY;
+    eq minorRadius : float;
+    eq majorRadius : float;
+    eq angle : float;
+}
 struct Corner
 {
     eq centre : floatXYZ;
@@ -338,7 +345,7 @@ BoundedFloadBase subclass BoundedFloat : <common/bounded_float.h>
 variant ParamValue
 {
     int32, float, string, bool,
-    list<Corner>, list<Line>, list<Circle>, list<float>,
+    list<Corner>, list<Line>, list<Circle>, list<float>, list<Ellipse>,
     list<KeyPoint>,
     BoundedFloat,
     list<int32>,
@@ -351,7 +358,7 @@ variant ParamValue
 // !!! should generate this for each variant
 enum ParamValueType : int8 {
     int32Type, floatType, stringType, boolType,
-    listCornerType, listLineType, listCircleType, listFloatType,
+    listCornerType, listLineType, listCircleType, listFloatType, listEllipseType,
     listKeyPointType,
     BoundedFloatType,
     listint32Type,
@@ -917,7 +924,6 @@ group guiai
     }
     message ScriptControl : 216
     {
-        taskId : string;
         command : ScriptCommand;
     }
 }
