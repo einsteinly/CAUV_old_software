@@ -29,6 +29,7 @@ namespace cauv{
 
 class MCBModule;
 class XsensIMU;
+class sbgIMU;
 
 class ControlNode : public CauvNode
 {
@@ -42,10 +43,13 @@ class ControlNode : public CauvNode
         void setMCB(const std::string& filename);
 #endif
         void setXsens(int id);
+		void setsbg (const char* port, int baud_rate, int pause_time);
+
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
         boost::shared_ptr<XsensIMU> m_xsens;
+		boost::shared_ptr<sbgIMU> m_sbg;
         boost::shared_ptr<ControlLoops> m_controlLoops;
         boost::shared_ptr<DeviceControlObserver> m_deviceControl;
         boost::shared_ptr<StateObserver> m_stateObserver;

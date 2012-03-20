@@ -16,28 +16,36 @@
 
 #include <boost/thread.hpp>
 
-void workerFunc(const char* port, int baud_rate, int pause_time)
+class sbgIMU
 {
+public:
+    
+    sbgIMU(const char* port, int baud_rate, int pause_time)
+            : m_port(port),
+              m_baud_rate(baud_rate),
+              m_pause_time(pause_time)
+    {
+    }
+
+    void operator()()
+    {
 		SbgProtocolHandle protocolHandle;
 		SbgErrorCode error;
 		SbgOutput output;
-
 		//
 		// Init our communications with the device (Please change here the com port and baud rate)
 		//
-		if (sbgComInit(port, baud_rate, &protocolHandle) == SBG_NO_ERROR)
+		if (sbgComInit(m_port, m_baud_rate, &protocolHandle) == SBG_NO_ERROR)
 		{
 			//
 			// Wait until the device has been initialised
 			//
 			sbgSleep(50);
-		
 			double Euler [3];
 			//
 			// Display the title
 			//
 			printf("Euler Angles:\n");
-
 			//
 			// Main loop
 			//
@@ -57,18 +65,15 @@ void workerFunc(const char* port, int baud_rate, int pause_time)
 													Euler[1],
 													Euler[2]);
 				}
-
 				//
 				// Small pause to unload CPU
 				//
-				sbgSleep(pause_time);
+				sbgSleep(m_pause_time);
 			}
-
 			//
 			// Close our protocol system
 			//
 			sbgProtocolClose(protocolHandle);
-
 			//return 0;
 		}
 		else
@@ -76,18 +81,29 @@ void workerFunc(const char* port, int baud_rate, int pause_time)
 			fprintf(stderr, "Unable to open IG-500 device\n");
 			//return -1;
 		}
+    }
+
+private:
+    const char* m_port;
+    int         m_baud_rate;
+    int         m_pause_time;
+};
 
 
-}
+
 
 int main(int argc, char** argv)
 {
-    // port, baud rate, sleep time
-	boost::thread workerThread(workerFunc, "/dev/ttyUSB0", 115200, 10);
+
 	
+    sbgIMU w("/dev/ttyUSB0", 115200, 10);
+    boost::thread sbgIMUthread(w);
+
+   
+
+    sbgIMUthread.join();
 
 
-    workerThread.join();
 
 	return 0;
 }
