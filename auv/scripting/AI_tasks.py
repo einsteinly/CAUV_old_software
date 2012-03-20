@@ -125,7 +125,7 @@ class circle_buoy(aiTask):
         
 class avoid_collision(aiTask):
     class options(taskOptions):
-        script_name = 'sonar_avoid_collision'
+        script_name = 'sonar_avoid_obstacle'
         priority = 10
         frequency_limit = 0
         solo= False

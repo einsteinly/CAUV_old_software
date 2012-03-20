@@ -95,6 +95,7 @@ enum NodeType : int8 {
     PolarImageToXY,
     SonarImageEdge,
     LearnedKeyPoints,
+    FirstAboveThreshold,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -130,6 +131,7 @@ enum ScriptCommand : int8 {
     Start,
     Stop,
     Restart,
+    Pause,
 }
 enum SensorUIDBase : int32 {
     // !!! TODO: support hex integer literals...
@@ -343,7 +345,8 @@ variant ParamValue
     ImageRegion,
     Range,
     floatXY,
-    DynamicEnum
+    DynamicEnum,
+    list<floatXY>,
 }
 // !!! should generate this for each variant
 enum ParamValueType : int8 {
@@ -356,6 +359,7 @@ enum ParamValueType : int8 {
     RangeType,
     floatXYType,
     DynamicEnumType,
+    listFloatXYType,
 }
 
 group membership
@@ -913,6 +917,7 @@ group guiai
     }
     message ScriptControl : 216
     {
+        taskId : string;
         command : ScriptCommand;
     }
 }
