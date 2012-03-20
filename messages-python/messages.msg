@@ -97,6 +97,7 @@ enum NodeType : int8 {
     LearnedKeyPoints,
     FirstAboveThreshold,
     FitEllipse,
+    KMeansPoints,
 }
 enum NodeStatus : int8 {
     None = 0,

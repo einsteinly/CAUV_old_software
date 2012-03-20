@@ -19,7 +19,7 @@ set (
     cauv_utils.cpp
     image.cpp
     math.cpp
-    random.cpp
+    #random.cpp
 )
 
 set (
