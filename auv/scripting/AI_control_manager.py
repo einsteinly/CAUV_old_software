@@ -169,7 +169,7 @@ class auvControl(aiProcess):
     @external_function
     def limit_prop(self, value):
         self.auv.prop_limit = value
-        if self.auv._control_state['prop'][0][0]>value: #_control_state[function][args/kwargs]
+        if self._control_state['prop'][0][0]>value: #_control_state[function][args/kwargs]
             self.auv.prop(value)
         
     #signaling thread

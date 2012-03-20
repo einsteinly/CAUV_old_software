@@ -96,6 +96,7 @@ enum NodeType : int8 {
     SonarImageEdge,
     LearnedKeyPoints,
     FirstAboveThreshold,
+    BroadcastPoints,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -687,6 +688,12 @@ group processing
     {
         name : string;
         keypoints : list<KeyPoint>;
+    }
+
+    message Points : 136
+    {
+        name : string;
+        points : list<floatXY>;
     }
 
     message Histogram : 133

@@ -66,24 +66,24 @@ class FirstAboveThresholdNode: public Node{
                 throw parameter_error("image must be polar");
             }
             ret_vec operator()(NonUniformPolarMat a) const{
-                ret_vec r;
                 cv::Mat_<uchar> m = a.mat;
+                ret_vec r;
+                r.reserve(m.cols);
                 
-                std::vector<bool> found(m.cols);
-                for(int y = 0; y < m.rows; y++)
+                //for each column, work down thorugh until find high enough threshold
+                for(int x = 0; x < m.cols; x++)
                 {
-                    uchar* val = m[y];
-                    for(int x = 0; x < m.cols; x++, val++)
+                    for(int y = 0; y < m.rows; y++)
                     {
-                        if(found[x])
-                            continue;
-
-                        if(*val > threshold)
+                        if(m.at<uint8_t>(y,x) > threshold)
                         {
-                            r.push_back(floatXY((*a.bearings)[x], (*a.ranges)[y]));
-                            found[x] = true;
+                            r.push_back(floatXY((*a.bearings)[x],(*a.ranges)[y]));
+                            goto next_loop;
                         }
                     }
+                    r.push_back(floatXY((*a.bearings)[x],(*a.ranges)[m.rows-1]));
+                    next_loop:
+                    ;
                 } 
                 
                 return r;
