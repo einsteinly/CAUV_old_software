@@ -20,13 +20,13 @@ class slightlyModifiedAUV(control.AUV):
     def depth(self, value):
         if self.depth_limit and self.depth_limit<value:
             control.AUV.depth(self, self.depth_limit)
-            getattr(self.ai, self.current_task_id).depthOverridden()
+            #getattr(self.ai, self.current_task_id).depthOverridden()
         else:
             control.AUV.depth(self, value)
     def prop(self, value):
         if self.prop_limit and self.prop_limit<value:
             control.AUV.prop(self, self.prop_limit)
-            getattr(self.ai, self.current_task_id).propOverridden()
+            #getattr(self.ai, self.current_task_id).propOverridden()
         else:
             control.AUV.prop(self, value)
     
@@ -169,8 +169,11 @@ class auvControl(aiProcess):
     @external_function
     def limit_prop(self, value):
         self.auv.prop_limit = value
-        if self._control_state['prop'][0][0]>value: #_control_state[function][args/kwargs]
-            self.auv.prop(value)
+        try:
+            if self._control_state['prop'][0][0]>value: #_control_state[function][args/kwargs]
+                self.auv.prop(value)
+        except KeyError:
+            self.auv.prop(0)
         
     #signaling thread
     def signal_loop(self):
