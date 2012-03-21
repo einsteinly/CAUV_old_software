@@ -87,7 +87,8 @@ class KMeansPointsNode: public Node{
                   covar(Eigen::Matrix2f::Zero()),
                   covar_inv(Eigen::Matrix2f::Zero()),
                   sum(Eigen::Vector2f::Zero()),
-                  sumsquared(Eigen::Matrix2f::Zero()){
+                  sumsquared(Eigen::Matrix2f::Zero())
+                  numpoints(0){
             }
 
             float logP(KeyPoint const& kp) const{
@@ -120,6 +121,9 @@ class KMeansPointsNode: public Node{
                         covar = q * l * q.transpose();
                     }
                     covar_inv = covar.inverse();
+                    debug(3) << "mean:" << mean.transpose()
+                             << "covariance:\n"
+                             << covar(0,0) << covar(0,1) << '\n' << covar(1,0) << covar(1,1);
                 }else if(numpoints == 2){
                     mean = sum / numpoints;
                     covar_inv = Eigen::Matrix2f::Identity();
@@ -187,7 +191,7 @@ class KMeansPointsNode: public Node{
 
             // also TODO: angle / something more descriptive
             std::vector<KeyPoint> ret;
-            foreach(NormalDist const& c, clusters)
+            foreach(NormalDist const& c, clusters){
                 ret.push_back(
                     KeyPoint(floatXY(c.mean[0], c.mean[1]),
                     std::sqrt(c.covar.trace()),
@@ -196,6 +200,7 @@ class KMeansPointsNode: public Node{
                     0,
                     0
                 ));
+            }
 
             // !!! TODO: should use InternalParamValue assignment to preserve UID
             r["clusters"] = ret;
