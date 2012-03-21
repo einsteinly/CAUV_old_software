@@ -147,7 +147,7 @@ class KMeansPointsNode: public Node{
             const int k = param<int>("K");
             const std::vector<KeyPoint> keypoints = param<std::vector<KeyPoint> >("keypoints");
 
-            boost::random::uniform_int_distribution<> assign_dist(0,k-1);
+            boost::random::uniform_int_distribution<int> assign_dist(0,k-1);
 
             // start with random assignments:
             std::vector<int> assignments(keypoints.size());
