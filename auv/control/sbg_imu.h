@@ -43,7 +43,11 @@ class sbgIMU : public IMU
         //void calibrateNoRotation(uint16_t duration);
         //void setObjectAlignmentMatrix(CmtMatrix m);
 
+        void initialise();
+
         void start();
+
+
 
 	private:
 		
