@@ -712,7 +712,7 @@ class DeviceControlObserver : public MessageObserver
         {
             m_mcb = mcb;
         }
-        void set_xsens(boost::shared_ptr<XsensIMU> xsens)
+        void set_xsens(boost::shared_ptr<IMU> xsens)
         {
             m_xsens = xsens;
         }
@@ -739,16 +739,18 @@ class DeviceControlObserver : public MessageObserver
 
         virtual void onCalibrateNoRotationMessage(CalibrateNoRotationMessage_ptr m)
         {
-            if (m_xsens) {
+            /*if (m_xsens) {
                 m_xsens->calibrateNoRotation(m->duration());
             }
             else
                 warning() << "Tried to perform no rotation calibration, but there's no XSens";
+*/
+#warning calibration commented out
         }
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
-        boost::shared_ptr<XsensIMU> m_xsens;
+        boost::shared_ptr<IMU> m_xsens;
 };
 
 class TelemetryBroadcaster : public MessageObserver, public IMUObserver
@@ -951,8 +953,12 @@ void ControlNode::setMCB(const std::string& filename)
 void ControlNode::setXsens(int id)
 {
     // start up the Xsens IMU
+	
+    boost::shared_ptr<XsensIMU> xsens;
+	
+
     try {
-        m_xsens = boost::make_shared<XsensIMU>(id);
+        xsens = boost::make_shared<XsensIMU>(id);
         info() << "Xsens Connected";
         
         CmtOutputMode om = CMT_OUTPUTMODE_CALIB | CMT_OUTPUTMODE_ORIENT;
@@ -963,13 +969,15 @@ void ControlNode::setXsens(int id)
         m.m_data[1][0] =  0.0; m.m_data[1][1] =  1.0; m.m_data[1][2] =  0.0; 
         m.m_data[2][0] =  0.0; m.m_data[2][1] =  0.0; m.m_data[2][2] =  1.0; 
 
-        m_xsens->setObjectAlignmentMatrix(m);
-        m_xsens->configure(om, os);
+        xsens->setObjectAlignmentMatrix(m);
+        xsens->configure(om, os);
         
+        m_imu = xsens;
+		        
         info() << "XSens Configured";
-    } catch (XsensException& e) {
+    }catch (XsensException& e) {
         error() << "Cannot connect to Xsens: " << e.what();
-        m_xsens.reset();
+        xsens.reset();
     }
 }
 
@@ -977,11 +985,14 @@ void ControlNode::setsbg (const char* port, int baud_rate, int pause_time)
 {
 	// start up the sbg IMU
 
+    boost::shared_ptr<sbgIMU> sbg;
+
 	try {
-		m_sbg = boost::make_shared<sbgIMU>(port, baud_rate, pause_time);
+		sbg = boost::make_shared<sbgIMU>(port, baud_rate, pause_time);
 		info() << "sbg Connected";
 
-		// configuration ??
+
+        m_imu = sbg;
 
 		//info() << "sbg configured";
 
@@ -1007,6 +1018,7 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
 #endif
         ("depth-offset,o", po::value<float>()->default_value(0), "Depth calibration offset")
         ("depth-scale,s", po::value<float>()->default_value(0), "Depth calibration scale")
+        ("sbg,b", po::value<std::string>()->default_value(0), "TTY device for SBG IG500A")
         ("simulation,N", "Run in simulation mode");
 }
 int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc)
@@ -1034,6 +1046,9 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     }
     else if (vm.count("depth-offset") || vm.count("depth-scale")) {
         warning() << "Need both offset and depth for calibration; ignoring calibration input";   
+    }
+    if(vm.count("sbg")){
+        setsbg(vm["sbg"].as<std::string>().c_str(), 115200, 10);
     }
     if(vm.count("simulation")){
         m_telemetryBroadcaster->setSimulationMode(true);
@@ -1067,15 +1082,15 @@ void ControlNode::onRun()
         warning() << "MCB not connected. No MCB comms available, so no motor control.";
     }
 
-    if (m_xsens) {
-        m_deviceControl->set_xsens(m_xsens);
+    if (m_imu) {
+        m_deviceControl->set_xsens(m_imu);
         
-        m_xsens->addObserver(boost::make_shared<DebugIMUObserver>(5));
-        m_xsens->addObserver(m_telemetryBroadcaster);
-        m_xsens->addObserver(m_controlLoops);
-        m_xsens->addObserver(m_stateObserver);
+        m_imu->addObserver(boost::make_shared<DebugIMUObserver>(5));
+        m_imu->addObserver(m_telemetryBroadcaster);
+        m_imu->addObserver(m_controlLoops);
+        m_imu->addObserver(m_stateObserver);
 
-        m_xsens->start();
+        m_imu->start();
     }
     else {
         warning() << "Xsens not connected. Telemetry not available.";

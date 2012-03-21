@@ -95,9 +95,7 @@ class taskManager(aiProcess):
         self.processing_queue.append(('set_condition_options', [msg.conditionId, BoostMapToDict(msg.conditionOptions)], {}))
     
     def onScriptControlMessage(self, msg):
-        if msg.command == messaging.ScriptCommand.Stop:
-            self.stop_current_script()
-            #need to stop additional scripts, but be careful of the list changing??
+        self.processing_queue.append(('process_script_control', [msg.taskId, msg.command.name], {}))
             
     def onRequestAIStateMessage(self, msg):
         self.processing_queue.append(('gui_send_all', [], {}))
@@ -217,7 +215,17 @@ class taskManager(aiProcess):
         self.gui_update_task(task)
     def set_task_persist_state(self, task_id, key, attr):
         self.tasks[task_id].persist_state[key] = attr
-            
+        
+    def process_script_control(self, task_id, command):
+        if command == 'Start':
+            warning('Start command not implemented')
+        elif command == 'Stop':
+            warning('Stop command not implemented')
+        elif command == 'Restart':
+            warning('Restart command not implemented')
+        elif command == 'Pause':
+            warning('Pause command not implemented')
+        
     #add/remove/modify conditions
     def create_condition(self, condition_type, options={}):
         debug("Creating condition of type %s" %str(condition_type))

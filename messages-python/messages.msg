@@ -96,7 +96,9 @@ enum NodeType : int8 {
     SonarImageEdge,
     LearnedKeyPoints,
     FirstAboveThreshold,
+    BroadcastPoints,
     FitEllipse,
+    KMeansPoints,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -132,6 +134,7 @@ enum ScriptCommand : int8 {
     Start,
     Stop,
     Restart,
+    Pause,
 }
 enum SensorUIDBase : int32 {
     // !!! TODO: support hex integer literals...
@@ -696,6 +699,12 @@ group processing
         keypoints : list<KeyPoint>;
     }
 
+    message Points : 136
+    {
+        name : string;
+        points : list<floatXY>;
+    }
+
     message Histogram : 133
     {
         name : string;
@@ -924,6 +933,7 @@ group guiai
     }
     message ScriptControl : 216
     {
+        taskId : string;
         command : ScriptCommand;
     }
 }
