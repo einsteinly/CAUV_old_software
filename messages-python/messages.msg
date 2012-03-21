@@ -348,7 +348,7 @@ BoundedFloadBase subclass BoundedFloat : <common/bounded_float.h>
 variant ParamValue
 {
     int32, float, string, bool,
-    list<Corner>, list<Line>, list<Circle>, list<float>, list<Ellipse>,
+    list<Corner>, list<Line>, list<Circle>, list<float>,
     list<KeyPoint>,
     BoundedFloat,
     list<int32>,
@@ -357,11 +357,12 @@ variant ParamValue
     floatXY,
     DynamicEnum,
     list<floatXY>,
+    list<Ellipse>,
 }
 // !!! should generate this for each variant
 enum ParamValueType : int8 {
     int32Type, floatType, stringType, boolType,
-    listCornerType, listLineType, listCircleType, listFloatType, listEllipseType,
+    listCornerType, listLineType, listCircleType, listFloatType,
     listKeyPointType,
     BoundedFloatType,
     listint32Type,
@@ -370,6 +371,7 @@ enum ParamValueType : int8 {
     floatXYType,
     DynamicEnumType,
     listFloatXYType,
+    listEllipseType,
 }
 
 group membership
