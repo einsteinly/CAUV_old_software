@@ -23,8 +23,28 @@
 #include <Eigen/StdVector>
 #include <Eigen/Dense>
 
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_smallint.hpp>
+#if BOOST_VERSION >= 104700
+#include <boost/random/uniform_real_distribution.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+#else // old boost random hacks
+#warning !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#warning !! please update your boost version to 1.47 or greater, this is way too hacky !!
+#warning !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#include<boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_real.hpp>
+#include <boost/random/uniform_int.hpp>
+namespace boost{
+namespace random{
+typedef boost::mt19937 mt19937;
+template<typename T> struct uniform_real_distribution: boost::uniform_real<T>{
+    uniform_real_distribution(T const& a, T const& b) : boost::uniform_real<T>(a,b){}
+};
+template<typename T> struct uniform_int_distribution: boost::uniform_int<T>{
+    uniform_int_distribution(T const& a, T const& b) : boost::uniform_int<T>(a,b){}
+};
+} // namespace random
+} // namespace boost
+#endif // old boost random hacks
 
 #include <opencv2/core/core.hpp>
 
@@ -126,7 +146,7 @@ class KMeansPointsNode: public Node{
             const int k = param<int>("K");
             const std::vector<KeyPoint> keypoints = param<std::vector<KeyPoint> >("keypoints");
 
-            boost::random::uniform_smallint<> assign_dist(0,k-1);
+            boost::random::uniform_int<> assign_dist(0,k-1);
 
             // start with random assignments:
             std::vector<int> assignments(keypoints.size());
