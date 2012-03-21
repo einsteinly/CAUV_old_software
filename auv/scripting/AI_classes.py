@@ -144,6 +144,12 @@ class aiProcess():
 class aiOptionsBase(type):
     def __new__(cls, name, bases, attrs):
         new_attrs = {'_option_classes':{}}
+        #add in 'inherited' options from parent class
+        for base in bases:
+            for key, attr in base.__dict__.iteritems():
+                #but don't overwrite values
+                if not key in attrs:
+                    attrs[key] = attr
         for key, value in attrs.iteritems():
             #don't process 'system' values
             if not key[0] == '_':
@@ -348,6 +354,7 @@ class aiScriptOptionsBase(aiOptionsBase):
             
 class aiScriptOptions(aiOptions):
     __metaclass__ = aiScriptOptionsBase
+    reporting_frequency = 2
     def get_dynamic_options(self):
         return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_' and item[0] in self._dynamic])
     def get_static_options(self):
@@ -358,33 +365,47 @@ class aiScriptOptions(aiOptions):
         return dict([(key, self._option_classes[key](attr) if key in self._option_classes else attr) for key, attr in self.__dict__.iteritems() if key[0] != '_' and (not key in self._dynamic)])
         
 class aiScriptState(object):
-    def __init__(self, parent_script):
+    def __init__(self, state):
+        for key, val in state.items():
+            object.__setattr__(self, key, val)
+    def own(self, parent_script):
         self._parent_script = parent_script
     def __setattr__(self, key, attr):
         object.__setattr__(self, key, attr)
         if not key[0] == '_':
-            print self._parent_script.task_name, key, attr
             self._parent_script.ai.task_manager.on_persist_state_change(self._parent_script.task_name, key, attr)
         
 class aiScript(aiProcess):
-    class persistState(aiScriptState):
-        pass
+    debug_values = []
     def __init__(self, task_name, script_opts, persistent_state):
         aiProcess.__init__(self, task_name)
+        self.die_flag = threading.Event() #for any subthreads
         self.exit_confirmed = threading.Event()
+        self.in_control = threading.Event()
+        self.pl_confirmed = threading.Event()
         self.task_name = task_name
         self.options = script_opts
         self.auv = fakeAUV(self)
-        self.persist = self.persistState(self)
-        self.persist.__dict__.update(persistent_state)
+        self.persist = persistent_state
+        #take ownership to ensure that changes get directed back
+        self.persist.own(self)
+        self.reporting_thread=threading.Thread(target=self.report_loop)
+        self.reporting_thread.start()
     def _register(self):
         self.node.addObserver(self._msg_observer)
+    #image pipeline stuff
     def request_pl(self, pl_name, timeout=10):
-        pass
+        self.pl_confirmed.clear()
+        self.ai.pl_manager.request_pl('script', self.task_name, pl_name)
+        return self.pl_confirmed.wait(timeout)
     def drop_pl(self, pl_name):
-        pass
+        self.ai.pl_manager.drop_pl('script', self.task_name, pl_name)
     def drop_all_pl(self):
-        pass
+        self.ai.pl_manager.drop_all_pls('script', self.task_name)
+    @external_function
+    def confirm_pl_request(self):
+        self.pl_confirmed.set()
+    #option stuff
     @external_function
     def set_option(self, option_name, option_value):
         if option_name in self.options._dynamic:
@@ -398,15 +419,56 @@ class aiScript(aiProcess):
             self.set_option(key,val)
     def optionChanged(self, option_name):
         pass
+    #control stuff
+    def request_control(self, timeout=None):
+        self.ai.auv_control.request_control(timeout)
+    def request_control_and_wait(self, wait_timeout=5, control_timeout=None):
+        self.ai.auv_control.request_control(control_timeout)
+        return self.in_control.wait(wait_timeout)
+    def drop_control(self):
+        self.ai.auv_control.drop_control()
     @external_function
     def depthOverridden(self):
         warning('%s tried to set a depth but was overridden and has no method to deal with this.' %(self.task_name,))
+    #note that _ functions are called by auv control, to make sure things like waiting for control are dealt with properly
+    def set_paused(self):
+        warning('AUV control by %s was paused, but this script has no method to deal with this event' %(self.task_name,))
+    def set_unpaused(self):
+        warning('AUV control by %s was unpaused, but this script has no method to deal with this event' %(self.task_name,))
     @external_function
-    def begin_override_pause(self):
-        warning('AUV control by %s was paused, but this script has no methd to deal with this event' %(self.task_name,))
+    def _set_paused(self):
+        self.in_control.clear()
+        self.set_paused()
     @external_function
-    def end_override_pause(self):
-        pass
+    def _set_unpaused(self):
+        self.in_control.set()
+        self.set_unpaused()
+    @external_function
+    def control_timed_out(self):
+        warning('AUV control by %s timed out, but this script has no method to deal with this event' %(self.task_name,))
+    #debug value reporting etc
+    def report_status(self):
+        debug = {}
+        for key_str in self.debug_values:
+            keys = key_str.split('.')
+            value = self
+            try:
+                for key in keys:
+                    value = getattr(value, key)
+                #make sure that we can transmit it
+                value = messaging.ParamValue.create(value)
+            except Exception:
+                warning("Could not get/encode attribute %s, skipping from debug value report" %key_str)
+                continue
+            debug[key_str] = value
+        try:
+            self.node.send(messaging.ScriptStateMessage(self.task_name,debug,[]))
+        except Exception as e:
+            traceback.print_exc()
+    def report_loop(self):
+        while not self.die_flag.wait(self.options.reporting_frequency):
+            self.report_status()
+        debug("Exiting reporting thread")
     def _notify_exit(self, exit_status):
         #make sure to drop pipelines
         self.drop_all_pl()
@@ -419,6 +481,7 @@ class aiScript(aiProcess):
     def confirm_exit(self):
         self.exit_confirmed.set()
     def die(self):
+        self.die_flag.set()
         self.ai.auv_control.stop()
         self.ai.auv_control.lights_off()
         aiProcess.die(self)
@@ -430,12 +493,17 @@ class aiDetectorOptions(aiOptions):
 class aiDetector(messaging.MessageObserver):
     def __init__(self, node, opts):
         messaging.MessageObserver.__init__(self)
+        self._pipelines = []
         self.options = opts
         self.node = node
         self.node.addObserver(self)
         self.detected = False
-        self._pl_enabled = False
-        self._pl_requests = {}
+    def request_pl(self, name):
+        self._pipelines.append(name)
+    def drop_pl(self, name):
+        self._pipelines.remove(name)
+    def drop_all_pl(self):
+        self._pipelines = []
     def process(self):
         """
         This should define a method to do any intensive (ie not on message) processing
@@ -444,18 +512,6 @@ class aiDetector(messaging.MessageObserver):
     def set_option(self, option_name, option_value):
         setattr(self.options, option_name, option_value)
         self.optionChanged(option_name)
-    def request_pl(self, pl_name):
-        if pl_name in self._pl_requests:
-            self._pl_requests[pl_name] += 1
-        else: self._pl_requests[pl_name] = 1
-    def drop_pl(self, pl_name):
-        if pl_name in self._pl_requests:
-            if self._pl_requests[pl_name] > 0:
-                self._pl_requests[pl_name] -= 1
-                return
-        error("Can't drop pipeline that hasn't been requested")
-    def drop_all_pl(self):
-        self._pl_requests = {}
     def log(self, message):
         try:
             self.node.send(messaging.AIlogMessage(message), "ai")

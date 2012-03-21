@@ -95,6 +95,10 @@ enum NodeType : int8 {
     PolarImageToXY,
     SonarImageEdge,
     LearnedKeyPoints,
+    FirstAboveThreshold,
+    BroadcastPoints,
+    FitEllipse,
+    KMeansPoints,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -130,6 +134,16 @@ enum ScriptCommand : int8 {
     Start,
     Stop,
     Restart,
+    Pause,
+}
+enum SensorUIDBase : int32 {
+    // !!! TODO: support hex integer literals...
+    None = 0,
+    Camera = 16,  // cameras are 0x10 +- ID: range [0x1--0x1F]
+    Sonar = 48,   // sonars are 0x20 + ID: range [0x20--0x3F]
+    Network = 80, // network is just 0x50, but has a reserved range
+    Multiple = 128, // multiple sources is just 0x70 (no reserved range)
+    File = 256,   // files are 0x100 += ?: range[0x100--0xFFF]
 }
 
 struct floatYPR
@@ -161,6 +175,7 @@ struct LocalNodeInput
     eq cmp subType : int32;
     // NB: schedType is excluded from comparison and equality testing
     schedType : InputSchedType;
+    compatibleSubTypes : list<int32>;
 }
 struct NodeOutput
 {
@@ -251,6 +266,13 @@ struct Circle
     eq centre : floatXYZ;
     eq radius : float;
 }
+struct Ellipse
+{
+    eq centre : floatXY;
+    eq minorRadius : float;
+    eq majorRadius : float;
+    eq angle : float;
+}
 struct Corner
 {
     eq centre : floatXYZ;
@@ -288,6 +310,13 @@ struct ScriptExecRequest
     id : string;
     seq : uint32;
 }
+struct UID
+{
+    eq cmp host : int32;   // unique (constant) per-host, eg IP address / end of MAC
+    eq cmp sensor : int32; // unique (constant) per-sensor
+    eq cmp seq1 : int32;   // 
+    eq cmp seq2 : int32;   // sequence per-sensor
+}
 enum BoundedFloatType : int8 {
     Clamps, Wraps
 }
@@ -298,6 +327,21 @@ struct BoundedFloatBase
     eq max : float;
     eq type : BoundedFloatType;
 }
+struct ImageRegion
+{
+    eq top_left : floatXY;
+    eq size     : floatXY;
+}
+struct Range
+{
+    eq min : float;
+    eq max : float;
+}
+struct DynamicEnum
+{
+    eq value : string;
+    eq possible : list<string>;
+}
 class Image : <common/image.h>
 BoundedFloadBase subclass BoundedFloat : <common/bounded_float.h>
 
@@ -307,7 +351,27 @@ variant ParamValue
     list<Corner>, list<Line>, list<Circle>, list<float>,
     list<KeyPoint>,
     BoundedFloat,
-    list<int32>
+    list<int32>,
+    ImageRegion,
+    Range,
+    floatXY,
+    DynamicEnum,
+    list<floatXY>,
+    list<Ellipse>,
+}
+// !!! should generate this for each variant
+enum ParamValueType : int8 {
+    int32Type, floatType, stringType, boolType,
+    listCornerType, listLineType, listCircleType, listFloatType,
+    listKeyPointType,
+    BoundedFloatType,
+    listint32Type,
+    ImageRegionType,
+    RangeType,
+    floatXYType,
+    DynamicEnumType,
+    listFloatXYType,
+    listEllipseType,
 }
 
 group membership
@@ -637,6 +701,12 @@ group processing
         keypoints : list<KeyPoint>;
     }
 
+    message Points : 136
+    {
+        name : string;
+        points : list<floatXY>;
+    }
+
     message Histogram : 133
     {
         name : string;
@@ -806,7 +876,7 @@ group guiai
     message SetTaskState : 204
     {
         taskId : string;
-        conditionIds : list<int32>;
+        conditionIds : list<string>;
         taskOptions : map<string, ParamValue>;
         scriptOptions : map<string, ParamValue>;
     }
@@ -865,6 +935,7 @@ group guiai
     }
     message ScriptControl : 216
     {
+        taskId : string;
         command : ScriptCommand;
     }
 }

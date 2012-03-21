@@ -24,6 +24,7 @@
 #include <utility/serialisation-types.h>
 
 #include <generated/types/TimeStamp.h>
+#include <generated/types/UID.h>
 
 namespace cauv{
 
@@ -71,14 +72,24 @@ class Image{
         friend int32_t deserialise(const_svec_ptr, uint32_t i, Image&);
     public:
         Image();
-        //Image(cv::Mat const& cv_image);
         Image(augmented_mat_t const& augmented_image);
+        Image(augmented_mat_t const& augmented_image, TimeStamp const& ts);
+        Image(augmented_mat_t const& augmented_image, TimeStamp const& ts, UID const& id);
         Image(Image const& other);
         Image& operator=(Image const& other);
         ~Image();
 
         TimeStamp ts() const;
         void ts(TimeStamp const&);
+        
+        // UID is unique to the instance in which a sensor records data, and
+        // can be used to associate derived data with other data deriving from
+        // the same sensor reading.
+        // If data derives from multiple sensors or multiple sensor readings or
+        // multiple sensors, then it should probably get a new UID at that
+        // point.
+        cauv::UID id() const;
+        void id(cauv::UID const& uid);
         
         // Nodes that wish to support pyramid images (not implemented yet), or
         // polar images should use only the augmentedMat functions
@@ -94,10 +105,13 @@ class Image{
         void serializeQuality(int32_t);
 
     private:
+        void setDefaultCompressParams();
+
         augmented_mat_t m_img;
         TimeStamp m_ts;
         std::string m_compress_fmt;
         std::vector<int32_t> m_compress_params;
+        cauv::UID m_uid;
 };
 
 /* image serialisation */

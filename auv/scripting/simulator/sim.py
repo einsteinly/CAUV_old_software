@@ -30,8 +30,8 @@ import base_model
 
 
 def fmtQuat(q):
-    ypr = q.equatorial
-    return '(y=%.2f p=%.2f r=%.2f)' % (ypr[0], ypr[1], ypr[2])
+    yrp = q.equatorial
+    return '(y=%.2f(%.2f global) r=%.2f p=%.2f)' % (yrp[0], base_model.globalYaw(q), yrp[1], yrp[2])
 
 def fmtArr(a):
     r = ''

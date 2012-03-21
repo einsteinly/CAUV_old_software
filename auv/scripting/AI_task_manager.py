@@ -62,6 +62,7 @@ class taskManager(aiProcess):
         self.running_script = None
         self.current_task = None
         self.current_priority = -1
+        self.additional_tasks = {} #task_id: (task, script)
         #state data file
         self.state_shelf = shelve.open('state_task_manager.shelf')
         #Setup intial values
@@ -94,8 +95,7 @@ class taskManager(aiProcess):
         self.processing_queue.append(('set_condition_options', [msg.conditionId, BoostMapToDict(msg.conditionOptions)], {}))
     
     def onScriptControlMessage(self, msg):
-        if msg.command == messaging.ScriptCommand.Stop:
-            self.stop_script()
+        self.processing_queue.append(('process_script_control', [msg.taskId, msg.command.name], {}))
             
     def onRequestAIStateMessage(self, msg):
         self.processing_queue.append(('gui_send_all', [], {}))
@@ -133,15 +133,6 @@ class taskManager(aiProcess):
     @external_function
     def on_detector_state_change(self, detector_id, state):
         self.detector_conditions[detector_id].on_state_set(state)
-    #from control process
-    @external_function
-    def notify_begin_pause(self, message):
-        if self.current_task:
-            getattr(self.ai, self.current_task.id).begin_override_pause()
-    @external_function
-    def notify_end_pause(self, message):
-        if self.current_task:
-            getattr(self.ai, self.current_task.id).end_override_pause()
     #from script
     @external_function
     def on_script_exit(self, task_id, status):
@@ -200,7 +191,9 @@ class taskManager(aiProcess):
         self.tasks[task_id].deregister(self)
         self.tasks.pop(task_id)
         if self.current_task and task_id == self.current_task.id:
-            self.stop_script()
+            self.stop_current_script()
+        elif task_id in self.additional_tasks:
+            self.stop_script(task_id)
         self.gui_remove_task(task_id)
     def set_task_options(self, task_id, task_options={}, script_options={}, condition_ids=[]):
         debug("Setting options %s on task %s" %(str((task_options, script_options, condition_ids)), task_id))
@@ -208,7 +201,7 @@ class taskManager(aiProcess):
         task.set_options(task_options)
         #not only need to change in task, need to try and change in running script
         task.set_script_options(script_options)
-        if self.current_task and task_id == self.current_task.id:
+        if (self.current_task and task_id == self.current_task.id) or task_id in self.additional_tasks:
             getattr(self.ai, str(task_id)).set_options(script_options)
         #need to tell task which conditions to use
         #remove current conditions
@@ -222,7 +215,17 @@ class taskManager(aiProcess):
         self.gui_update_task(task)
     def set_task_persist_state(self, task_id, key, attr):
         self.tasks[task_id].persist_state[key] = attr
-            
+        
+    def process_script_control(self, task_id, command):
+        if command == 'Start':
+            warning('Start command not implemented')
+        elif command == 'Stop':
+            warning('Stop command not implemented')
+        elif command == 'Restart':
+            warning('Restart command not implemented')
+        elif command == 'Pause':
+            warning('Pause command not implemented')
+        
     #add/remove/modify conditions
     def create_condition(self, condition_type, options={}):
         debug("Creating condition of type %s" %str(condition_type))
@@ -249,11 +252,20 @@ class taskManager(aiProcess):
         self.gui_update_condition(condition)
         
     #script control
-    def stop_script(self):
-        self.ai.auv_control.set_task_id(None)
-        #make sure the sub actually stops
-        self.ai.auv_control.stop()
-        self.ai.auv_control.lights_off()
+    def stop_script(self, task_id):
+        #make sure additional task isnt blocking other tasks from doing stuff, and doesn't have any leftover pipelines
+        self.ai.auv_control.remove_additional_task_id(task_id)
+        self.ai.pl_manager.drop_task_pls(task_id)
+        script = self.additional_tasks.pop(task_id)[1]
+        if script:
+            try:
+                script.kill()
+            except OSError:
+                debug('Could not kill running script (probably already dead)')
+        info('Stopping additional script for task %s' %task_id)
+    def stop_current_script(self):
+        self.ai.auv_control.set_current_task_id(None, 0)
+        self.ai.pl_manager.remove_task_pls(self.current_task.id)
         if self.running_script:
             try:
                 self.running_script.kill()
@@ -282,26 +294,39 @@ class taskManager(aiProcess):
         getattr(self.ai,str(task_id)).confirm_exit()
                 
     #--function run by periodic loop--
-    def start_script(self, task_id, script_name, script_opts={}, persist_state={}):
-        self.ai.auv_control.signal(task_id)
-        self.stop_script()
-        self.ai.auv_control.set_task_id(str(task_id))
-        info('Starting script: %s  (Task %s)' %(script_name, task_id))
-        # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
-        self.running_script = subprocess.Popen(['python2.7','./AI_scriptparent.py', str(task_id), script_name, cPickle.dumps(script_opts), cPickle.dumps(persist_state)])
     def start_task(self, task):
-        #disable/enable detectors according to task
-        self.detectors_enabled = task.options.detectors_enabled_while_running
-        if self.detectors_enabled: self.ai.detector_control.enable()
-        else: self.ai.detector_control.disable()
         #start the new script
-        self.start_script(task.id, task.options.script_name, task.get_script_options(), task.persist_state)
-        #set priority
-        self.current_priority = task.options.running_priority
-        #mark last task not active, current task active
-        if self.current_task:
-            self.current_task.active = False
-        self.current_task = task
+        self.ai.auv_control.signal(task.id)
+        info('Starting script: %s  (Task %s)' %(task.options.script_name, task.id))
+        # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
+        script = subprocess.Popen(['python2.7','./AI_scriptparent.py', str(task.id),
+                                   task.options.script_name, 
+                                   cPickle.dumps(task.get_script_options()), 
+                                   cPickle.dumps(task.persist_state)])
+        if task.options.solo:
+            if self.current_task:
+                #mark last task not active, current task active
+                self.current_task.active = False
+                self.stop_current_script()
+            self.running_script = script
+            self.ai.auv_control.set_current_task_id(task.id, task.options.priority)
+            #disable/enable detectors according to task
+            self.detectors_enabled = task.options.detectors_enabled_while_running
+            if self.detectors_enabled: self.ai.detector_control.enable()
+            else: self.ai.detector_control.disable()
+            #set priority
+            self.current_priority = task.options.running_priority
+            self.current_task = task
+            self.current_task.active = True
+        else:
+            #make sure an instance is not already running
+            if task.id in self.additional_tasks:
+                self.stop_script(task.id)
+                warning("Detected script already started, killing old script first")
+            #then just add it to the list
+            #THIS MIGHT BREAK (RAPID REMOVAL/ADDITION OF THE SAME ID)
+            self.ai.auv_control.add_additional_task_id(task.id, task.options.running_priority)
+            self.additional_tasks[task.id]=(task,script)
         task.active = True
         #update task status to gui
         self.node.send(messaging.TaskStateMessage(task.id,
@@ -318,7 +343,12 @@ class taskManager(aiProcess):
                 self.running_script = None
                 self.current_task = None
                 self.current_priority = -1
-                #make sure detector are running
+        dead_scripts = []
+        for task_id, (task, script) in self.additional_tasks.iteritems():
+            if script.poll():
+                dead_scripts.append(task_id)
+        for task_id in dead_scripts:
+            self.additional_tasks.pop(task_id)
         if not self.running_script: #must recheck as set in above if
             if not self.detectors_enabled:
                 self.detectors_enabled = True
@@ -338,11 +368,15 @@ class taskManager(aiProcess):
         highest_priority = self.current_priority
         to_start = None
         for task in self.tasks.itervalues():
-            if task != self.current_task and task.is_available() and \
-               task.options.priority > highest_priority and \
-               time.time()-task.options.last_called > task.options.frequency_limit:
-                to_start = task
-                highest_priority = task.options.priority
+            if task.is_available():
+                if (not task.options.solo):
+                    if not task.id in self.additional_tasks:
+                        self.start_task(task)
+                elif task != self.current_task and \
+                    task.options.priority > highest_priority and \
+                    time.time()-task.options.last_called > task.options.frequency_limit:
+                    to_start = task
+                    highest_priority = task.options.priority
         if to_start:
             self.start_task(to_start)
     def add_periodic_to_queue(self):

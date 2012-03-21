@@ -21,6 +21,7 @@ node = cauv.node.Node('py-start')
 try:
     auv = control.AUV(node)
     sonar = cauv.sonar.Sonar(node)
+    gemini = cauv.sonar.Gemini(node)
     pl = pipeline.Model(node)
 
 

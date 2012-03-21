@@ -30,7 +30,7 @@ class SonarSLAMNode: public OutputNode{
         void init();
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs);
+        void doWork(in_image_map_t& inputs, out_map_t& r);
 
     private:
         boost::shared_ptr<SonarSLAMImpl> m_impl;

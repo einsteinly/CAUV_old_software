@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -68,7 +68,7 @@ class GlobalMaximumNode: public Node{
                     k.pt.x = a.bearings->at(int(k.pt.x));
                     k.pt.y = a.ranges->at(int(k.pt.y));
                 }
-                debug() << "bearing/range globalMaximum:" << r;                
+                debug() << "bearing/range globalMaximum:" << r;
                 return r;
             }
             std::vector<KeyPoint> operator()(PyramidMat) const{
@@ -76,8 +76,7 @@ class GlobalMaximumNode: public Node{
                 return std::vector<KeyPoint>();
             }
         };
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             image_ptr_t img = inputs["image_in"];
             
@@ -93,7 +92,6 @@ class GlobalMaximumNode: public Node{
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
             
-            return r;
         }
     
     // Register this node type

@@ -13,7 +13,7 @@
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <common/math.h>
-#include <common/spread/spread_rc_mailbox.h>
+#include <common/mailbox.h>
 #include <debug/cauv_debug.h>
 #include <generated/types/TimeStamp.h>
 #include <generated/types/MotorDemand.h>
@@ -31,6 +31,7 @@
 #include <module/module.h>
 
 #include "xsens_imu.h"
+#include "sbg_imu.h"
 
 using namespace std;
 using namespace cauv;
@@ -47,10 +48,10 @@ void sendAlive(boost::shared_ptr<MCBModule> mcb)
 }
 
 
-class DebugXsensObserver : public XsensObserver
+class DebugIMUObserver : public IMUObserver
 {
     public:
-        DebugXsensObserver(unsigned int level = 1) : m_level(level)
+        DebugIMUObserver(unsigned int level = 1) : m_level(level)
         {
         }
         virtual void onTelemetry(const floatYPR& attitude)
@@ -260,10 +261,10 @@ MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
     return l;
 }
 
-class StateObserver : public MessageObserver, public XsensObserver
+class StateObserver : public MessageObserver, public IMUObserver
 {
     public:
-        StateObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+        StateObserver(boost::shared_ptr<Mailbox> mb)
             : m_mb(mb)
         {
         }
@@ -274,21 +275,21 @@ class StateObserver : public MessageObserver, public XsensObserver
         }
         virtual void onStateRequestMessage(StateRequestMessage_ptr)
         {
-            m_mb->sendMessage(boost::make_shared<StateMessage>(m_orientation), SAFE_MESS);
+            m_mb->sendMessage(boost::make_shared<StateMessage>(m_orientation), RELIABLE_MSG);
         }
 
     protected:
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        boost::shared_ptr<Mailbox> m_mb;
         
         floatYPR m_orientation;
 };
 
 using namespace Controller;
 
-class ControlLoops : public MessageObserver, public XsensObserver
+class ControlLoops : public MessageObserver, public IMUObserver
 {
     public:
-        ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+        ControlLoops(boost::shared_ptr<Mailbox> mb)
             : prop_value(0), hbow_value(0), vbow_value(0),
               hstern_value(0), vstern_value(0), m_max_motor_delta(255),
               m_motor_updates_per_second(5), m_mb(mb), m_simulation_mode(false)
@@ -338,11 +339,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Bearing].stateMsg();
                 msg->demand(m_demand[Bearing]);
-                m_mb->sendMessage(msg, SAFE_MESS);
+                m_mb->sendMessage(msg, RELIABLE_MSG);
 
                 foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
                     m->name("Bearing-" + m->name());
-                    m_mb->sendMessage(m, SAFE_MESS);
+                    m_mb->sendMessage(m, RELIABLE_MSG);
                 }
             }
             
@@ -354,11 +355,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Pitch].stateMsg();
                 msg->demand(m_demand[Pitch]);
-                m_mb->sendMessage(msg, SAFE_MESS);
+                m_mb->sendMessage(msg, RELIABLE_MSG);
                 
                 foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
                     m->name("Pitch-" + m->name());
-                    m_mb->sendMessage(m, SAFE_MESS);
+                    m_mb->sendMessage(m, RELIABLE_MSG);
                 }
             }
         }
@@ -398,11 +399,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Depth].stateMsg();
                 msg->demand(m_demand[Depth]);
-                m_mb->sendMessage(msg, SAFE_MESS);
+                m_mb->sendMessage(msg, RELIABLE_MSG);
                 
                 foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
                     m->name("Depth-" + m->name());
-                    m_mb->sendMessage(m, SAFE_MESS);
+                    m_mb->sendMessage(m, RELIABLE_MSG);
                 }
             }
         }
@@ -584,7 +585,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
                     
                     boost::shared_ptr<ControllerStateMessage> msg = m_controllers[i].stateMsg();
                     msg->demand(m_demand[i]);
-                    m_mb->sendMessage(msg, SAFE_MESS);
+                    m_mb->sendMessage(msg, RELIABLE_MSG);
                 }
                 m_controllers[Controller::Pitch].is_angle = true;
                 m_controllers[Controller::Bearing].is_angle = true;
@@ -680,7 +681,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
                     else
                         m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
                 }
-                m_mb->sendMessage(boost::make_shared<MotorStateMessage>(mid, newvalue), SAFE_MESS);
+                m_mb->sendMessage(boost::make_shared<MotorStateMessage>(mid, newvalue), RELIABLE_MSG);
             }
         }
 
@@ -699,7 +700,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         unsigned m_max_motor_delta;
         unsigned m_motor_updates_per_second;
 
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        boost::shared_ptr<Mailbox> m_mb;
 
         bool m_simulation_mode;
 };
@@ -711,7 +712,7 @@ class DeviceControlObserver : public MessageObserver
         {
             m_mcb = mcb;
         }
-        void set_xsens(boost::shared_ptr<XsensIMU> xsens)
+        void set_xsens(boost::shared_ptr<IMU> xsens)
         {
             m_xsens = xsens;
         }
@@ -738,22 +739,24 @@ class DeviceControlObserver : public MessageObserver
 
         virtual void onCalibrateNoRotationMessage(CalibrateNoRotationMessage_ptr m)
         {
-            if (m_xsens) {
+            /*if (m_xsens) {
                 m_xsens->calibrateNoRotation(m->duration());
             }
             else
                 warning() << "Tried to perform no rotation calibration, but there's no XSens";
+*/
+#warning calibration commented out
         }
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
-        boost::shared_ptr<XsensIMU> m_xsens;
+        boost::shared_ptr<IMU> m_xsens;
 };
 
-class TelemetryBroadcaster : public MessageObserver, public XsensObserver
+class TelemetryBroadcaster : public MessageObserver, public IMUObserver
 {
     public:
-        TelemetryBroadcaster(boost::shared_ptr<ReconnectingSpreadMailbox> mb,
+        TelemetryBroadcaster(boost::shared_ptr<Mailbox> mb,
                              bool simulation_mode)
             : m_mb(mb), m_simulation_mode(simulation_mode)
         {
@@ -810,7 +813,7 @@ class TelemetryBroadcaster : public MessageObserver, public XsensObserver
             m_depthCalibration = m;
         }
     protected:
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        boost::shared_ptr<Mailbox> m_mb;
         bool m_simulation_mode;
 
         DepthCalibrationMessage_ptr m_depthCalibration;
@@ -825,7 +828,7 @@ class TelemetryBroadcaster : public MessageObserver, public XsensObserver
                 debug() << "Send telemetry thread started";
                 while(true)
                 {
-                    m_mb->sendMessage(boost::make_shared<TelemetryMessage>(m_orientation, m_depth), SAFE_MESS);
+                    m_mb->sendMessage(boost::make_shared<TelemetryMessage>(m_orientation, m_depth), RELIABLE_MSG);
                     msleep(100);
                 }
             } catch (boost::thread_interrupted&) {
@@ -838,7 +841,7 @@ class TelemetryBroadcaster : public MessageObserver, public XsensObserver
 class MCBForwardingObserver : public BufferedMessageObserver
 {
     public:
-        MCBForwardingObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+        MCBForwardingObserver(boost::shared_ptr<Mailbox> mb)
             : m_pressure_min_msecs(50),
               m_battery_min_msecs(5000),
               m_last_pressure_sent(now()),
@@ -853,7 +856,7 @@ class MCBForwardingObserver : public BufferedMessageObserver
         {
             if(now() - m_last_pressure_sent > m_pressure_min_msecs){        
                 debug(5) << "MCBForwardingObserver: Forwarding pressure message:" << *m;
-                m_mb->sendMessage(m, UNRELIABLE_MESS);
+                m_mb->sendMessage(m, UNRELIABLE_MSG);
                 m_last_pressure_sent = now();
             }
         }
@@ -861,21 +864,21 @@ class MCBForwardingObserver : public BufferedMessageObserver
         {
             if(now() - m_last_battery_sent > m_battery_min_msecs){
                 debug(5) << "MCBForwardingObserver: Forwarding battery status message:" << *m;
-                m_mb->sendMessage(m, UNRELIABLE_MESS);
+                m_mb->sendMessage(m, UNRELIABLE_MSG);
                 m_last_battery_sent = now();
             }
         }
         virtual void onDebugMessage(DebugMessage_ptr m)
         {
             debug(5) << "MCBForwardingObserver: Forwarding debug message:" << *m;
-            m_mb->sendMessage(m, SAFE_MESS);
+            m_mb->sendMessage(m, RELIABLE_MSG);
         }
     protected:
         float m_pressure_min_msecs;
         float m_battery_min_msecs;
         TimeStamp m_last_pressure_sent;
         TimeStamp m_last_battery_sent;
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        boost::shared_ptr<Mailbox> m_mb;
 };
 
 class NotRootException : public std::exception
@@ -950,8 +953,12 @@ void ControlNode::setMCB(const std::string& filename)
 void ControlNode::setXsens(int id)
 {
     // start up the Xsens IMU
+	
+    boost::shared_ptr<XsensIMU> xsens;
+	
+
     try {
-        m_xsens = boost::make_shared<XsensIMU>(id);
+        xsens = boost::make_shared<XsensIMU>(id);
         info() << "Xsens Connected";
         
         CmtOutputMode om = CMT_OUTPUTMODE_CALIB | CMT_OUTPUTMODE_ORIENT;
@@ -962,14 +969,39 @@ void ControlNode::setXsens(int id)
         m.m_data[1][0] =  0.0; m.m_data[1][1] =  1.0; m.m_data[1][2] =  0.0; 
         m.m_data[2][0] =  0.0; m.m_data[2][1] =  0.0; m.m_data[2][2] =  1.0; 
 
-        m_xsens->setObjectAlignmentMatrix(m);
-        m_xsens->configure(om, os);
+        xsens->setObjectAlignmentMatrix(m);
+        xsens->configure(om, os);
         
+        m_imu = xsens;
+		        
         info() << "XSens Configured";
-    } catch (XsensException& e) {
+    }catch (XsensException& e) {
         error() << "Cannot connect to Xsens: " << e.what();
-        m_xsens.reset();
+        xsens.reset();
     }
+}
+
+void ControlNode::setsbg (const char* port, int baud_rate, int pause_time)
+{
+	// start up the sbg IMU
+
+    boost::shared_ptr<sbgIMU> sbg;
+
+	try {
+		sbg = boost::make_shared<sbgIMU>(port, baud_rate, pause_time);
+		info() << "sbg Connected";
+
+
+        m_imu = sbg;
+
+		//info() << "sbg configured";
+
+	} catch (sbgException& e) {
+		error() << "Cannot connect to sbg: " << e.what ();
+		
+
+	}
+
 }
 
 void ControlNode::addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos)
@@ -986,6 +1018,7 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
 #endif
         ("depth-offset,o", po::value<float>()->default_value(0), "Depth calibration offset")
         ("depth-scale,s", po::value<float>()->default_value(0), "Depth calibration scale")
+        ("sbg,b", po::value<std::string>()->default_value(0), "TTY device for SBG IG500A")
         ("simulation,N", "Run in simulation mode");
 }
 int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc)
@@ -1013,6 +1046,9 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     }
     else if (vm.count("depth-offset") || vm.count("depth-scale")) {
         warning() << "Need both offset and depth for calibration; ignoring calibration input";   
+    }
+    if(vm.count("sbg")){
+        setsbg(vm["sbg"].as<std::string>().c_str(), 115200, 10);
     }
     if(vm.count("simulation")){
         m_telemetryBroadcaster->setSimulationMode(true);
@@ -1046,15 +1082,15 @@ void ControlNode::onRun()
         warning() << "MCB not connected. No MCB comms available, so no motor control.";
     }
 
-    if (m_xsens) {
-        m_deviceControl->set_xsens(m_xsens);
+    if (m_imu) {
+        m_deviceControl->set_xsens(m_imu);
         
-        m_xsens->addObserver(boost::make_shared<DebugXsensObserver>(5));
-        m_xsens->addObserver(m_telemetryBroadcaster);
-        m_xsens->addObserver(m_controlLoops);
-        m_xsens->addObserver(m_stateObserver);
+        m_imu->addObserver(boost::make_shared<DebugIMUObserver>(5));
+        m_imu->addObserver(m_telemetryBroadcaster);
+        m_imu->addObserver(m_controlLoops);
+        m_imu->addObserver(m_stateObserver);
 
-        m_xsens->start();
+        m_imu->start();
     }
     else {
         warning() << "Xsens not connected. Telemetry not available.";
@@ -1064,22 +1100,10 @@ void ControlNode::onRun()
     m_telemetryBroadcaster->start();
 }
 
-static ControlNode* node;
-
-void cleanup()
-{
-    info() << "Cleaning up..." << endl;
-    CauvNode* oldnode = node;
-    node = 0;
-    delete oldnode;
-    info() << "Clean up done." << endl;
-}
-
 void interrupt(int sig)
 {
     cout << endl;
     info() << BashColour::Red << "Interrupt caught!";
-    cleanup();
     signal(SIGINT, SIG_DFL);
     raise(sig);
 }
@@ -1089,17 +1113,16 @@ int main(int argc, char** argv)
     signal(SIGINT, interrupt);
     
     try {
-        node = new ControlNode();
+        ControlNode node;
     
-        int ret = node->parseOptions(argc, argv);
+        int ret = node.parseOptions(argc, argv);
         if(ret != 0) return ret;
         
-        node->run();
+        node.run();
     }
     catch (NotRootException& e) {
         error() << e.what();
     }
     
-    cleanup();
     return 0;
 }

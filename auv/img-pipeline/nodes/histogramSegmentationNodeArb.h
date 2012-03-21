@@ -41,8 +41,7 @@ class HistogramSegmentationNodeArb: public OutputNode{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             //int bins = param<int>("Number of bins");
             //int bin = param<int>("Bin");
@@ -71,7 +70,6 @@ class HistogramSegmentationNodeArb: public OutputNode{
             }
 
             r["Pixels"] = boost::make_shared<Image>(out);
-            return r;
         }
 
     //Register this node type

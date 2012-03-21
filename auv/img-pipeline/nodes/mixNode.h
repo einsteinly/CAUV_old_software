@@ -88,8 +88,7 @@ class MixNode: public Node{
             const bool m_do_abs;
         };
 
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             augmented_mat_t img = inputs["image"]->augmentedMat();
             augmented_mat_t mix = inputs["mix"]->augmentedMat();
@@ -108,7 +107,6 @@ class MixNode: public Node{
             }
             
             
-            return r;
         }
     
     // Register this node type

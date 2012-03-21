@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -34,22 +34,21 @@ class GuiOutputNode: public OutputNode{
             
             // one parameter: image compression quality for network
             // transmission
-            registerParamID<int>("jpeg quality", 85); // 0-100
+            registerParamID<BoundedFloat>(
+                "jpeg quality", BoundedFloat(85, 0, 100, BoundedFloatType::Clamps)
+            ); // 0-100
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
+        void doWork(in_image_map_t& inputs, out_map_t&){
             using boost::algorithm::replace_all_copy;
-            out_map_t r;
 
             image_ptr_t img = inputs["image_in"];
-            int qual = param<int>("jpeg quality");
+            float qual = param<BoundedFloat>("jpeg quality");
             
             debug(4) << "GuiOutputNode::doWork()" << *this;
-            img->serializeQuality(qual);
-            sendMessage(boost::make_shared<GuiImageMessage>(plName(), id(), *img), UNRELIABLE_MESS);
-
-            return r;
+            img->serializeQuality(int(qual));
+            sendMessage(boost::make_shared<GuiImageMessage>(plName(), id(), *img), UNRELIABLE_MSG);
         }
 
         int m_counter;

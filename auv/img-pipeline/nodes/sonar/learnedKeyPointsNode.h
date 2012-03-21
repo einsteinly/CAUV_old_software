@@ -365,13 +365,12 @@ class Forest{
         }
         
         void addTree(TreeNode_ptr p){
-            if(m_trees.size() > std::size_t(m_max_num_trees)){
+            if(m_trees.size() >= std::size_t(m_max_num_trees)){
                 boost::random::uniform_int_distribution<int> remove_idx_dist(0,m_trees.size()-2);
                 std::swap(m_trees.back(), m_trees[remove_idx_dist(m_rng)]);
                 m_trees.pop_back();
-            }else{
-                m_trees.push_back(p);
             }
+            m_trees.push_back(p);
             info() << "addTree:" << size() << "trees";
         }
         
@@ -481,8 +480,7 @@ class LearnedKeyPointsNode: public Node{
                 kp_vec const& m_kps;
         };
 
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             image_ptr_t img = inputs["image"];
 
@@ -491,8 +489,12 @@ class LearnedKeyPointsNode: public Node{
             image_ptr_t training_img = inputs["training: keypoints image"];
 
             m_forest.setMaxSize(param<int>("trees"));
-            const int num_questions = param<int>("questions");
+            int num_questions = param<int>("questions");
             if(num_questions != m_number_of_questions){
+                if(num_questions < 1){
+                    error() << "cannot set questions < 1";
+                    num_questions = 1;
+                }
                 if(m_forest.size())
                     warning() << "Changing number of questions after training has started";
                 m_number_of_questions = num_questions;
@@ -524,7 +526,6 @@ class LearnedKeyPointsNode: public Node{
 
             r["image"] = img;
 
-            return r;
         }
 
         class TreeGrowingVisitor: public boost::static_visitor<TreeNode_ptr>{

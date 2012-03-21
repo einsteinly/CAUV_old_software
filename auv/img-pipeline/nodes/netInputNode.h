@@ -75,9 +75,7 @@ class NetInputNode: public InputNode{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t&){
-            out_map_t r;
-            
+        void doWork(in_image_map_t&, out_map_t& r){
             debug(4) << "NetInputNode::doWork";
         
             r["image_out"] = boost::make_shared<Image>(latestImageMsg()->image());
@@ -85,7 +83,6 @@ class NetInputNode: public InputNode{
             // setAllowQueue() is called by InputNode when a new latestImageMsg
             // is available
             clearAllowQueue();
-            return r;
         }
         
         boost::shared_ptr<const ImageMessage> latestImageMsg(){

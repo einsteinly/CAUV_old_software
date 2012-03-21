@@ -36,8 +36,7 @@ class QuickSegmentNode: public OutputNode{
         }
         
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             cv::Mat img = inputs["image"]->mat();
             
@@ -69,7 +68,6 @@ class QuickSegmentNode: public OutputNode{
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
             
-            return r;
         }
 
     // Register this node type

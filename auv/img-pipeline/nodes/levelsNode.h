@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -47,13 +47,13 @@ class LevelsNode: public Node{
             registerOutputID("image (not copied)");
             
             // parameters:
-            registerParamID<int>("white level", 255);
-            registerParamID<int>("black level", 0);
+            registerParamID<BoundedFloat>("white level", BoundedFloat(255, 0, 255, BoundedFloatType::Clamps));
+            registerParamID<BoundedFloat>("black level", BoundedFloat(0, 0, 255, BoundedFloatType::Clamps));
         }
 
     protected:
         struct applyLevels: boost::static_visitor<void>{
-            applyLevels(int white, int black) : m_white(white), m_black(black){}
+            applyLevels(float white, float black) : m_white(white), m_black(black){}
             void operator()(cv::Mat a) const{
                 float scale = 1;
                 if(m_black != m_white)
@@ -76,19 +76,17 @@ class LevelsNode: public Node{
             int m_white;
             int m_black;
         };
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             augmented_mat_t img = inputs["image"]->augmentedMat();
             
-            int white_level = param<int>("white level");
-            int black_level = param<int>("black level");
+            float white_level = param<BoundedFloat>("white level");
+            float black_level = param<BoundedFloat>("black level");
             
             boost::apply_visitor(applyLevels(white_level, black_level), img);
             
             r["image (not copied)"] = boost::make_shared<Image>(img);
             
-            return r;
         }
 
     

@@ -64,9 +64,14 @@ Follow the steps on this website to install ffm-peg first
 http://ubuntuforums.org/showthread.php?t=786095
 
 OpenCV >= 2.3.1 (http://opencv.willowgarage.com/wiki/InstallGuide)
+PCL             (http://pointclouds.org)
+
+either:
 libspread       (http://data.cambridgeauv.co.uk/files/deps/spread-src-4.1.0.tbz)
 libssrcspread   (http://data.cambridgeauv.co.uk/files/deps/libssrcspread-1.0.9.tbz)
-PCL             (http://pointclouds.org)
+or:
+libzmq (with pgm support), pass -DZEROMQ_MESSAGING=ON to cmake. availible via
+apt-get isntall libzmq-dev on ubuntu
 
 If you've installed all these, and something still seems to be missing, please
 add it to this list!  

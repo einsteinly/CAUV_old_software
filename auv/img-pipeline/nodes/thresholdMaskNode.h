@@ -37,8 +37,7 @@ class ThresholdMaskNode: public Node{
 
     protected:
 
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             int threshold = param<int>("threshold (>= is masked)");         
 
@@ -55,7 +54,6 @@ class ThresholdMaskNode: public Node{
 
             r["output mask"] = boost::make_shared<Image>(img);
             
-            return r;
         }
     
     // Register this node type

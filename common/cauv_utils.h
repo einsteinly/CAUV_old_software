@@ -15,7 +15,6 @@
 #ifndef __CAUV_UTILS_H__
 #define __CAUV_UTILS_H__
 
-#include <sstream>
 #include <vector>
 #include <list>
 #include <set>
@@ -24,14 +23,10 @@
 #include <boost/typeof/typeof.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#ifndef foreach
-#   include <boost/foreach.hpp>
-#   define foreach BOOST_FOREACH
-#endif
 
 #include <utility/string.h>
 #include <utility/rounding.h>
-
+#include <utility/foreach.h>
 
 namespace cauv{
 
@@ -39,6 +34,9 @@ template <typename T, typename U> T convert_to(const U& in)
 {
     return reinterpret_cast<const T&>(in);
 }
+
+struct UID;
+UID mkUID(uint32_t sensor=0, uint64_t sequence=0);
 
 struct TimeStamp;
 TimeStamp now();

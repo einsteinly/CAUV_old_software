@@ -81,14 +81,12 @@ class HistogramNode: public Node{
             }
             const int m_bins;
         };
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             const int bins = param<int>("Number of bins");
             augmented_mat_t img = inputs["image_in"]->augmentedMat();
             r["histogram"] = ParamValue(boost::apply_visitor(calcHistogram(bins), img));
 
-            return r;
         }
 
     //Register this node type

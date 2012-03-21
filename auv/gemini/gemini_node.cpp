@@ -402,6 +402,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             }else if(m_range_lines <= 4096){
                 GEM_SetGeminiEvoQuality(7);
             }
+            // !!! FIXME this seems to cause lock-ups under high load, safer to
+            // request another ping when we've received the last one in full
             GEM_SetPingMode(m_ping_continuous);
             GEM_SetInterPingPeriod(m_inter_ping_musec);
             debug() << "SendPingConfig: range" << m_range << "gain" << m_gain_percent;

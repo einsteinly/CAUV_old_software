@@ -20,13 +20,13 @@ class slightlyModifiedAUV(control.AUV):
     def depth(self, value):
         if self.depth_limit and self.depth_limit<value:
             control.AUV.depth(self, self.depth_limit)
-            getattr(self.ai, self.current_task_id).depthOverridden()
+            #getattr(self.ai, self.current_task_id).depthOverridden()
         else:
             control.AUV.depth(self, value)
     def prop(self, value):
         if self.prop_limit and self.prop_limit<value:
             control.AUV.prop(self, self.prop_limit)
-            getattr(self.ai, self.current_task_id).propOverridden()
+            #getattr(self.ai, self.current_task_id).propOverridden()
         else:
             control.AUV.prop(self, value)
     
@@ -36,44 +36,70 @@ class auvControl(aiProcess):
         aiProcess.__init__(self, 'auv_control')
         self.auv = slightlyModifiedAUV(self.node)
         self.sonar = sonar.Sonar(self.node)
-        self.current_calling_process = None
+        self.active_tasks = {}
+        self.default_task = None
+        self.waiting_for_control = {}
+        self.current_task = None
         self.enabled = threading.Event()
-        self.paused = threading.Event()
         if 'disable_control' in kwargs:
             if not kwargs['disable_control']:
                 self.enabled.set()
         else: self.enabled.set()
         self.depth_limit = None
         self.signal_msgs = Queue.Queue(5)
-        self._control_state = {}
-        self._sonar_state = {}
+        self.processing_queue = Queue.Queue()
+        self._control_state = {'prop':([0],{})}
+        self._control_state_default = {}
+        self._sonar_state_default = {}
         
     #SCRIPT COMMANDS
     @external_function
     @force_calling_process
     def auv_command(self, command, *args, **kwargs):
-        calling_process = kwargs.pop('calling_process')
-        #__getattr__ was more trouble than its worth. since this is abstracted by fakeAUV, doesn't matter to much
-        #TODO make it possible to filter by script id. script id should match task_managers record as well
-        #Might need to move parts of control here/take a smaller version of control that doesn't have waiting commands (eg depth and wait)
-        #note, we don't care about errors here, cos they'l be caught by the message handler.
-        #Also the message handler will tell us which message from who caused the error
-        debug('auvControl::auv_command(self, calling_process=%s, cmd=%s, args=%s, kwargs=%s)' % (calling_process, command, args, kwargs), 5)
-        if self.enabled.is_set() and (not self.paused.is_set()):
-            if self.current_calling_process == calling_process:
+        task_id = kwargs.pop('calling_process')
+        debug('auvControl::auv_command(self, calling_process=%s, cmd=%s, args=%s, kwargs=%s)' % (task_id, command, args, kwargs), 5)
+        if self.enabled.is_set():
+            if self.current_task == task_id:
                 debug('Will call %s(*args, **kwargs)' % (getattr(self.auv, command)), 5)
                 getattr(self.auv, command)(*args, **kwargs)
                 self._control_state[command] = (args, kwargs)
             else:
-                warning('Script %s tried to move auv when scipt %s was in control' %(calling_process, self.current_calling_process))
+                warning('Script %s tried to move auv when script %s was in control \
+                (scripts waiting for control were %s, scripts known to be running were %s)'
+                %(task_id, self.current_task, self.waiting_for_control, self.active_tasks))
         else:
-            debug('Function not calledas paused or disabled.', 5)
+            debug('Function not called as paused or disabled.', 5)
     @external_function
     @force_calling_process
     def sonar_command(self, command, *args, **kwargs):
-        calling_process = kwargs.pop('calling_process')
-        if self.enabled.is_set() and (not self.paused.is_set()) and self.current_calling_process == calling_process:
+        task_id = kwargs.pop('calling_process')
+        if self.enabled.is_set() and self.current_task == task_id:
             getattr(self.sonar, command)(*args, **kwargs)
+            
+    @external_function
+    @force_calling_process
+    def request_control(self, timeout=None, *args, **kwargs):
+        self.processing_queue.put(('request_control_local',[kwargs['calling_process'], timeout],{}))
+    def request_control_local(self, calling_process, timeout=None):
+        try:
+            self.waiting_for_control[calling_process] = (self.active_tasks[calling_process], timeout+time.time() if timeout else None)
+        except KeyError:
+            warning('Script %s wanted to take control of auv when not in list of allowed scripts \
+            (scripts waiting for control were %s, scripts known to be running were %s)'
+            %(calling_process, self.waiting_for_control, self.active_tasks))
+            return
+        if timeout:
+            debug('Script %s has started waiting for control, with a %d timeout' %(calling_process, timeout))
+        else:
+            debug('Script %s has started waiting for control, with no timeout' %(calling_process))
+    @external_function
+    @force_calling_process
+    def drop_control(self, *args, **kwargs):
+        self.processing_queue.put(('drop_control_local',[kwargs['calling_process']],{}))
+    def drop_control_local(self, task_id):
+        self.waiting_for_control.pop(task_id, None)
+        #need to tel script its been paused, else if it wants control in the future it will think it already has it.
+        getattr(self.ai, task_id)._set_paused()
             
     #GENERAL FUNCTIONS (that could be called from anywhere)
     @external_function
@@ -102,9 +128,32 @@ class auvControl(aiProcess):
     
     #TASK MANAGER COMMANDS
     @external_function
-    def set_task_id(self, task_id):
-        #different name to avoid auto replace
-        self.current_calling_process = task_id
+    def set_current_task_id(self, task_id, priority):
+        self.processing_queue.put(('set_current_task_id_local',[task_id, priority],{}))
+    @external_function
+    def add_additional_task_id(self, task_id, priority):
+        self.processing_queue.put(('add_additional_task_id_local',[task_id, priority],{}))
+    @external_function
+    def remove_additional_task_id(self, task_id):
+        self.processing_queue.put(('remove_additional_task_id_local',[task_id],{}))
+        
+    def set_current_task_id_local(self, task_id, priority):
+        try:
+            self.waiting_for_control.pop(self.default_task)
+        except KeyError:
+            #presumably no task in the list
+            pass
+        self.default_task = task_id
+        #dont add to list if default set to none
+        if task_id:
+            self.waiting_for_control[task_id] = (priority, None)
+    def add_additional_task_id_local(self, task_id, priority):
+        self.active_tasks[task_id] = priority
+    def remove_additional_task_id_local(self, task_id):
+        self.active_tasks.pop(task_id)
+        #try to remove from waiting for control list
+        self.waiting_for_control.pop(task_id, None)
+        getattr(self.ai, task_id)._set_paused()
         
     #OBSTACLE AVOIDANCE COMMANDS
     @external_function
@@ -115,54 +164,25 @@ class auvControl(aiProcess):
         self.enabled.clear()
         self.auv.stop()
     @external_function
-    def pause(self, calling_process, timeout=None):
-        self.log('Pausing for thought...')
-        if self.paused.is_set():
-            warning('Multiple pause requests, probably will mean processes are conflicting, pause request rejected')
-        else:
-            #notify scripts
-            self.ai.task_manager.notify_begin_pause('paused')
-            #get sonar state (since is convieniently saved)
-            self._sonar_state = self.sonar.__dict__.copy()
-        if timeout:
-            t = threading.Timer(timeout, self.timeout_resume, [calling_process])
-            t.start()
-        else:
-            #pause indefinately
-            warning('Indefinate pause started, a timeout would be a good idea!!!')
-        self.paused.set()
-        self.stop()
-    def timeout_resume(self, calling_process):
-        result = self.resume(calling_process)
-        if result:
-            getattr(self.ai, calling_process).on_pause_timeout()
-    @external_function
-    def resume(self, calling_process):
-        #restore control values, hopefully won't timeout at same time as manual resume
-        if self.paused.is_set():
-            for command, (args, kwargs) in self._control_state.items():
-                getattr(self.auv, command)(*args, **kwargs)
-            #restore sonar state
-            self.sonar.__dict__ = self._sonar_state
-            self.sonar.update()
-            self.paused.clear()
-            return True
-        return False
-    @external_function
     def limit_depth(self, value):
         self.auv.depth_limit = value
     @external_function
     def limit_prop(self, value):
         self.auv.prop_limit = value
+        try:
+            if self._control_state['prop'][0][0]>value: #_control_state[function][args/kwargs]
+                self.auv.prop(value)
+        except KeyError:
+            self.auv.prop(0)
         
-    #MAIN LOOP
-    def run(self):
+    #signaling thread
+    def signal_loop(self):
         self.auv.forwardlights(0)
         while True:
             try:
-                msg = self.signal_msgs.get(block = True, timeout = 5)
+                msg = self.signal_msgs.get(block = False)
             except Queue.Empty:
-                continue
+                break
             self.auv.forwardlights(0)
             time.sleep(2)
             for c in str(msg):
@@ -177,6 +197,64 @@ class auvControl(aiProcess):
                     self.auv.forwardlights(0)
                     time.sleep(0.5)
                 time.sleep(1)
+                
+    #MAIN LOOP
+    def reevaluate(self):
+        #filter out requests that have timed out
+        new_dict = {}
+        for task_id, (priority, timeout) in self.waiting_for_control.iteritems():
+            if timeout and timeout < time.time():
+                getattr(self.ai, task_id)._set_unpaused()
+                getattr(self.ai, task_id).control_timed_out()
+                continue
+            new_dict[task_id] = (priority, timeout)
+        self.waiting_for_control = new_dict
+        #find highest priority
+        try:
+            highest_priority_task = max(self.waiting_for_control.iteritems(), key=lambda x: x[1][0])[0]
+        except ValueError:
+            #list is empty
+            highest_priority_task = None
+        if self.current_task == highest_priority_task:
+            #no change, so don't do anything
+            return
+        #need to: store current values, set highest priority as current task, make sure scripts know whether they are in control
+        #atm, just store values for default script TODO decide on a better way of doing this (or even if storing values is desirable)
+        if self.current_task == self.default_task:
+            self._sonar_state_default = self.sonar.__dict__.copy()
+            self._control_state_default = self._control_state.copy()
+        #stop current script and restore values
+        self.current_task = None
+        self.stop()
+        if highest_priority_task == self.default_task:
+            for command, (args, kwargs) in self._control_state_default.items():
+                getattr(self.auv, command)(*args, **kwargs)
+            self._control_state = self._control_state_default
+            #restore sonar state
+            self.sonar.__dict__.update(self._sonar_state_default)
+            self.sonar.update()
+        self.current_task = highest_priority_task
+        for task_id in self.waiting_for_control:
+            if task_id != self.current_task:
+                getattr(self.ai, task_id)._set_paused()
+        if self.current_task:
+            getattr(self.ai, self.current_task)._set_unpaused()
+                    
+    def run(self):
+        signalling_thread = threading.Thread(target=self.signal_loop)
+        signalling_thread.start()
+        while True:
+            if not self.signal_msgs.empty():
+                if not signalling_thread.is_alive():
+                    signalling_thread = threading.Thread(target=self.signal_loop)
+                    signalling_thread.start()
+            while True:
+                try:
+                    function, args, kwargs = self.processing_queue.get(block=True, timeout=1)
+                except Queue.Empty:
+                    break
+                getattr(self, function)(*args,**kwargs)
+                self.reevaluate()
     def die(self):
         self.disable()
         aiProcess.die(self)

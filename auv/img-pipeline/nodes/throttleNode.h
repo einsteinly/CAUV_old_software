@@ -164,8 +164,7 @@ class ThrottleNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             r[Image_Out_Name] = inputs[Image_In_Name];
 
@@ -180,7 +179,6 @@ class ThrottleNode: public Node{
 
             _setupCallback();
 
-            return r;
         }
 
     private:

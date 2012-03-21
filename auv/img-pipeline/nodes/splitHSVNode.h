@@ -48,8 +48,7 @@ class SplitHSVNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
             cv::Mat img = inputs["image"]->mat();
             cv::Mat HSV;
             int conversion_code = 0;
@@ -88,7 +87,6 @@ class SplitHSVNode: public Node{
             r["S"] = boost::make_shared<Image>(out[1]);
             r["V"] = boost::make_shared<Image>(out[2]);
             
-            return r;
         }
     
     // Register this node type

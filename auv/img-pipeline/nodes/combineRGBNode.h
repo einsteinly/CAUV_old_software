@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -49,8 +49,7 @@ class CombineRGBNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
             cv::Mat R = inputs["R"]->mat();
             cv::Mat G = inputs["G"]->mat();
             cv::Mat B = inputs["B"]->mat();
@@ -78,7 +77,6 @@ class CombineRGBNode: public Node{
 
             r["image"] = boost::make_shared<Image>(out);
             
-            return r;
         }
     
     // Register this node type

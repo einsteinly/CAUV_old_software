@@ -11,6 +11,7 @@ class taskOptions(aiOptions):
     crash_limit = 5
     frequency_limit = 30# once every x seconds
     last_called = 0
+    solo = True
     def __init__(self, options={}):
         if not hasattr(self.__class__, 'running_priority'):
             self.running_priority = self.priority
@@ -87,7 +88,20 @@ class start(aiTask):
     class options(taskOptions):
         script_name = 'start'
         priority = 1
-        detectors_enabled=True
+        detectors_enabled_while_running=True
+        frequency_limit=1
+    #need 1 condition or else won't start
+    conditions = [
+        (c['stateCondition'], {'state': True}),
+        ]
+
+class test(aiTask):
+    class options(taskOptions):
+        script_name = 'test'
+        priority = 1
+        detectors_enabled_while_running=True
+        frequency_limit=1
+        solo=False
     #need 1 condition or else won't start
     conditions = [
         (c['stateCondition'], {'state': True}),
@@ -111,11 +125,13 @@ class circle_buoy(aiTask):
         
 class avoid_collision(aiTask):
     class options(taskOptions):
-        script_name = 'avoid_collision'
+        script_name = 'sonar_avoid_obstacle'
         priority = 10
         frequency_limit = 0
+        solo= False
+        detectors_enabled_while_running=True
     conditions = [
-        (c['sonar_collision_detectorCondition'], {}),
+        (c['stateCondition'], {'state': True}),
         ]
             
 class track_wall(aiTask):
