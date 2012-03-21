@@ -989,17 +989,19 @@ void ControlNode::setsbg (const char* port, int baud_rate, int pause_time)
 
 	try {
 		sbg = boost::make_shared<sbgIMU>(port, baud_rate, pause_time);
-		info() << "sbg Connected";
 
+        sbg->initialise();
+
+        info() << "sbg Connected";
 
         m_imu = sbg;
 
 		//info() << "sbg configured";
 
 	} catch (sbgException& e) {
+       
 		error() << "Cannot connect to sbg: " << e.what ();
-		
-
+        sbg.reset();
 	}
 
 }
@@ -1018,7 +1020,7 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
 #endif
         ("depth-offset,o", po::value<float>()->default_value(0), "Depth calibration offset")
         ("depth-scale,s", po::value<float>()->default_value(0), "Depth calibration scale")
-        ("sbg,b", po::value<std::string>()->default_value(0), "TTY device for SBG IG500A")
+        ("sbg,b", po::value<std::string>()->default_value("/dev/ttyUSB1"), "TTY device for SBG IG500A")
         ("simulation,N", "Run in simulation mode");
 }
 int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc)

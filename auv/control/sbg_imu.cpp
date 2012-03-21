@@ -47,6 +47,8 @@ sbgIMU::sbgIMU(const char* port, int baud_rate, int pause_time)
 	// Init our communications with the device (Please change here the com port and baud rate)
 	// *specify in the constructor port, baud rate and sleep time
     //
+
+        
 	if (sbgComInit(m_port, m_baud_rate, &protocolHandle) == SBG_NO_ERROR)
 		{
 		//
@@ -58,6 +60,7 @@ sbgIMU::sbgIMU(const char* port, int baud_rate, int pause_time)
 	else
 		{
 		debug () << "Unable to open IG-500 device";
+        //throw sbgException("Failed while setting device");
 		//return -1;
 		}
 
@@ -143,6 +146,15 @@ void XsensIMU::calibrateNoRotation(uint16_t duration)
         error() << "Failed trying to start no rotation procedure";
 }
 */
+
+void sbgIMU::initialise()
+{
+		error = sbgGetSpecificOutput(protocolHandle, SBG_OUTPUT_EULER, &output);
+		if (error != SBG_NO_ERROR) {
+            throw sbgException("Failed while initialising");
+        }
+
+}
 
 
 //void XsensIMU::start()
