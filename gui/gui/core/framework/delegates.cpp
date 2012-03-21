@@ -143,7 +143,7 @@ void NumericDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
     else if (node) {
         QStyleOptionProgressBarV2 progressBarOption;
         progressBarOption.rect = option.rect;
-        progressBarOption.text = QString::number(index.data().value<double>()).append(
+        progressBarOption.text = QString::number(node->asNumber().toDouble()).append(
                     QString::fromStdString(node->getUnits()));
         progressBarOption.textVisible = true;
         progressBarOption.invertedAppearance = true;
@@ -156,7 +156,7 @@ void NumericDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
         progressBarOption.progress = (int)(fabs(pivot(node->getMin().toDouble(),
                                                       node->getNeutral().toDouble(),
                                                       node->getMax().toDouble(),
-                                                      node->get().toDouble()))*progressBarOption.maximum);
+                                                      node->asNumber().toDouble()))*progressBarOption.maximum);
 
         QApplication::style()->drawControl(QStyle::CE_ProgressBar,
                                            &progressBarOption, painter);
@@ -185,6 +185,7 @@ void NumericDelegate::setEditorData(QWidget *editor, const QModelIndex &index) c
             neutral->setMaximum(node->getMax().toInt());
             neutral->setWrapping(node->getWraps());
             neutral->setNeutral(node->getNeutral().toInt());
+            neutral->setValue(node->asNumber().toInt());
         }
 
         if(NeutralDoubleSpinBox * neutral = qobject_cast<NeutralDoubleSpinBox*>(editor)){
@@ -193,6 +194,7 @@ void NumericDelegate::setEditorData(QWidget *editor, const QModelIndex &index) c
             neutral->setWrapping(node->getWraps());
             neutral->setNeutral(node->getNeutral().toDouble());
             neutral->setDecimals(node->getPrecision());
+            neutral->setValue(node->asNumber().toDouble());
         }
     }
 }

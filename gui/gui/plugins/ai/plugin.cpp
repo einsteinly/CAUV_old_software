@@ -73,9 +73,10 @@ void AiPlugin::initialise(){
 
         AiNode *node1 = new AiNode();
         QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
-        QTreeView * view = new NodeTreeView();
+        NodeTreeView * view = new NodeTreeView();
         view->setModel(m_actions->root.get());
         view->setDragEnabled(true);
+        view->addNumericDelegateToColumn(1);
         proxy->setWidget(view);
         node1->addItem(proxy);
         node1->setResizable(true);
@@ -84,10 +85,11 @@ void AiPlugin::initialise(){
 
         AiNode *node3 = new AiNode();
         QGraphicsProxyWidget * proxy3 = new QGraphicsProxyWidget();
-        QTreeView * view3 = new NodeTreeView();
+        NodeTreeView * view3 = new NodeTreeView();
         view3->setModel(m_actions->root.get());
         view3->setDragEnabled(true);
         view3->setRootIndex(m_actions->root->indexFromNode(VehicleRegistry::instance()->find<Node>("redherring")));
+        view3->addNumericDelegateToColumn(1);
         proxy3->setWidget(view3);
         node3->addItem(proxy3);
         node3->setResizable(true);
