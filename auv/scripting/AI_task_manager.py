@@ -265,7 +265,7 @@ class taskManager(aiProcess):
         info('Stopping additional script for task %s' %task_id)
     def stop_current_script(self):
         self.ai.auv_control.set_current_task_id(None, 0)
-        self.ai.pl_manager.remove_task_pls(self.current_task.id)
+        self.ai.pl_manager.drop_task_pls(self.current_task.id)
         if self.running_script:
             try:
                 self.running_script.kill()
