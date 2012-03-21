@@ -96,6 +96,7 @@ enum NodeType : int8 {
     SonarImageEdge,
     LearnedKeyPoints,
     FirstAboveThreshold,
+    BroadcastPoints,
     FitEllipse,
     KMeansPoints,
 }
@@ -133,6 +134,7 @@ enum ScriptCommand : int8 {
     Start,
     Stop,
     Restart,
+    Pause,
 }
 enum SensorUIDBase : int32 {
     // !!! TODO: support hex integer literals...
@@ -346,7 +348,7 @@ BoundedFloadBase subclass BoundedFloat : <common/bounded_float.h>
 variant ParamValue
 {
     int32, float, string, bool,
-    list<Corner>, list<Line>, list<Circle>, list<float>, list<Ellipse>,
+    list<Corner>, list<Line>, list<Circle>, list<float>,
     list<KeyPoint>,
     BoundedFloat,
     list<int32>,
@@ -355,11 +357,12 @@ variant ParamValue
     floatXY,
     DynamicEnum,
     list<floatXY>,
+    list<Ellipse>,
 }
 // !!! should generate this for each variant
 enum ParamValueType : int8 {
     int32Type, floatType, stringType, boolType,
-    listCornerType, listLineType, listCircleType, listFloatType, listEllipseType,
+    listCornerType, listLineType, listCircleType, listFloatType,
     listKeyPointType,
     BoundedFloatType,
     listint32Type,
@@ -368,6 +371,7 @@ enum ParamValueType : int8 {
     floatXYType,
     DynamicEnumType,
     listFloatXYType,
+    listEllipseType,
 }
 
 group membership
@@ -697,6 +701,12 @@ group processing
         keypoints : list<KeyPoint>;
     }
 
+    message Points : 136
+    {
+        name : string;
+        points : list<floatXY>;
+    }
+
     message Histogram : 133
     {
         name : string;
@@ -925,6 +935,7 @@ group guiai
     }
     message ScriptControl : 216
     {
+        taskId : string;
         command : ScriptCommand;
     }
 }

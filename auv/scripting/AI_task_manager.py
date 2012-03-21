@@ -95,9 +95,7 @@ class taskManager(aiProcess):
         self.processing_queue.append(('set_condition_options', [msg.conditionId, BoostMapToDict(msg.conditionOptions)], {}))
     
     def onScriptControlMessage(self, msg):
-        if msg.command == messaging.ScriptCommand.Stop:
-            self.stop_current_script()
-            #need to stop additional scripts, but be careful of the list changing??
+        self.processing_queue.append(('process_script_control', [msg.taskId, msg.command.name], {}))
             
     def onRequestAIStateMessage(self, msg):
         self.processing_queue.append(('gui_send_all', [], {}))
@@ -217,7 +215,17 @@ class taskManager(aiProcess):
         self.gui_update_task(task)
     def set_task_persist_state(self, task_id, key, attr):
         self.tasks[task_id].persist_state[key] = attr
-            
+        
+    def process_script_control(self, task_id, command):
+        if command == 'Start':
+            warning('Start command not implemented')
+        elif command == 'Stop':
+            warning('Stop command not implemented')
+        elif command == 'Restart':
+            warning('Restart command not implemented')
+        elif command == 'Pause':
+            warning('Pause command not implemented')
+        
     #add/remove/modify conditions
     def create_condition(self, condition_type, options={}):
         debug("Creating condition of type %s" %str(condition_type))
@@ -296,7 +304,10 @@ class taskManager(aiProcess):
                                    cPickle.dumps(task.get_script_options()), 
                                    cPickle.dumps(task.persist_state)])
         if task.options.solo:
-            self.stop_current_script()
+            if self.current_task:
+                #mark last task not active, current task active
+                self.current_task.active = False
+                self.stop_current_script()
             self.running_script = script
             self.ai.auv_control.set_current_task_id(task.id, task.options.priority)
             #disable/enable detectors according to task
@@ -305,10 +316,8 @@ class taskManager(aiProcess):
             else: self.ai.detector_control.disable()
             #set priority
             self.current_priority = task.options.running_priority
-            #mark last task not active, current task active
-            if self.current_task:
-                self.current_task.active = False
             self.current_task = task
+            self.current_task.active = True
         else:
             #make sure an instance is not already running
             if task.id in self.additional_tasks:
