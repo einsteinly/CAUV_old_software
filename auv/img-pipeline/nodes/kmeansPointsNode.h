@@ -26,11 +26,12 @@
 #if BOOST_VERSION >= 104700
 #include <boost/random/uniform_real_distribution.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
 #else // old boost random hacks
 #warning !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #warning !! please update your boost version to 1.47 or greater, this is way too hacky !!
 #warning !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#include<boost/random/mersenne_twister.hpp>
+#include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real.hpp>
 #include <boost/random/uniform_int.hpp>
 namespace boost{
@@ -146,7 +147,7 @@ class KMeansPointsNode: public Node{
             const int k = param<int>("K");
             const std::vector<KeyPoint> keypoints = param<std::vector<KeyPoint> >("keypoints");
 
-            boost::random::uniform_int<> assign_dist(0,k-1);
+            boost::random::uniform_int_distribution<> assign_dist(0,k-1);
 
             // start with random assignments:
             std::vector<int> assignments(keypoints.size());
@@ -201,7 +202,7 @@ class KMeansPointsNode: public Node{
         }
 
     private:
-        boost::mt19937 gen;
+        boost::random::mt19937 gen;
 
     // Register this node type
     DECLARE_NFR;
