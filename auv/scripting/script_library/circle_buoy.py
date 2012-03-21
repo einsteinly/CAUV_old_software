@@ -197,7 +197,7 @@ class script(aiScript):
         pidTelem(self.depth_pid,'BuoyDepth')
 
     def run(self):
-        #self.request_pl(self.options.Pipeline_File)
+        self.request_pl(self.options.Pipeline_File)
         start_bearing = self.auv.getBearing()
         entered_quarters = [False, False, False, False]
         exit_status = 'SUCCESS'
