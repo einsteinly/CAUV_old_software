@@ -10,12 +10,13 @@ class scriptOptions(aiScriptOptions):
     monitor_fraction = 0.25
     max_distance = 5.0
     min_distance = 0.5 #any values below this constitute and emergency
-    speed_fraction = 10.0
+    speed_factor = -0.5
+    distance_factor = 25.0
     emergency_reverse_time = 2 #seconds
     average_count_size = 5
     class Meta:
-        dynamic = ['monitor_fraction', 'max_distance', 'min_distance', 'speed_fraction',
-                    'emergency_reverse_time']
+        dynamic = ['monitor_fraction', 'max_distance', 'min_distance', 'speed_factor',
+                    'distance_factor', 'emergency_reverse_time']
 
 class script(aiScript):
     debug_values = ['mean_speed','last_min','last_mean','last_time','speed_limit', 'emergency_reversing']
@@ -67,7 +68,6 @@ class script(aiScript):
             #calculate average distance
             self.last_mean = sum(cols)/float(len(cols))
             self.last_time = time.time()
-            debug("minimum distance %f, mean %f" %(cols[0],self.last_mean))
             self.times.append(self.last_time)
             #if mean is to far away, no limit
             if self.last_mean > self.options.max_distance:
@@ -75,7 +75,7 @@ class script(aiScript):
             else:
                 self.means.append(self.last_mean)
             self.mean_speed = sum([(self.means[i+1]-self.means[i])/float(self.times[i+1]-self.times[i]) for i in range(len(self.means)-1)])/(len(self.means)-1)
-            speed_limit = max(0,self.options.speed_fraction*self.last_mean-self.mean_speed)#factor*distance from object-speed travelling at
+            speed_limit = max(0,self.options.distance_factor*self.last_mean-self.options.speed_factor*self.mean_speed)#factor*distance from object-speed travelling at
             self.speed_limit = int(round(speed_limit))
             self.ai.auv_control.limit_prop(self.speed_limit)
-            debug("Setting speed limit to %d" %(self.speed_limit,))
+            debug("minimum distance %f, mean %f, average speed %f, setting speed limit to %d" %(cols[0],self.last_mean,self.mean_speed,self.speed_limit,))
