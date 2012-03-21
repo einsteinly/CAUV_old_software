@@ -99,8 +99,8 @@ const std::string get_multicast_control() {
  * anyway, just inefficient)
  */
 const std::string get_multicast_group(const std::string groupName) {
-    unsigned char low;
-    unsigned char high;
+    unsigned char low = 0;
+    unsigned char high = 0;
 
     for (unsigned int i = 0; i < groupName.size(); i++) {
         if (i%2) {
