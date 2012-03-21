@@ -67,7 +67,7 @@ class script(aiScript):
             for i in range(len(m.lines)):
                 for j in range(i):
                     #Filter out the lines that are vaguly pointing up
-                    if abs(degrees(m.lines[i].angle)+90)<40 and abs(degrees(m.lines[j].angle)+90)<40:
+                    if abs(degrees(m.lines[i].angle)+90)<30 and abs(degrees(m.lines[j].angle)+90)<30:
                         #debug('got straigh lines')
 
                         #Filter out the lines that are paralle to each other by pairwise comparision
