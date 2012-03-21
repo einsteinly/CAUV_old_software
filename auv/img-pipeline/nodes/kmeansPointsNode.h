@@ -87,7 +87,7 @@ class KMeansPointsNode: public Node{
                   covar(Eigen::Matrix2f::Zero()),
                   covar_inv(Eigen::Matrix2f::Zero()),
                   sum(Eigen::Vector2f::Zero()),
-                  sumsquared(Eigen::Matrix2f::Zero())
+                  sumsquared(Eigen::Matrix2f::Zero()),
                   numpoints(0){
             }
 
