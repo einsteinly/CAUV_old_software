@@ -40,6 +40,7 @@ Q_DECLARE_METATYPE(cauv::Range)
 Q_DECLARE_METATYPE(cauv::floatXY)
 Q_DECLARE_METATYPE(cauv::DynamicEnum)
 Q_DECLARE_METATYPE(std::vector<cauv::floatXY>)
+Q_DECLARE_METATYPE(std::vector<cauv::Ellipse>)
 
 namespace cauv {
     namespace gui {
