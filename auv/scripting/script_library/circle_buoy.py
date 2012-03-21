@@ -31,7 +31,7 @@ class scriptOptions(aiScriptOptions):
     Depth_DError_Window = expWindow(5, 0.6)
     Depth_Error_Clamp = 200
     
-    Pipeline_File = 'circle_buoy.pipe'
+    Pipeline_File = 'circle_buoy'
 
     class Meta:
         dynamic = [
@@ -43,8 +43,8 @@ class scriptOptions(aiScriptOptions):
 
 
 class script(aiScript):
-    def __init__(self, script_name, opts):
-        aiScript.__init__(self, script_name, opts)
+    def __init__(self, *args, **kwargs):
+        aiScript.__init__(self, *args, **kwargs)
         # self.node is set by aiProcess (base class of aiScript)
         self.node.join('processing')
         self.__strafe_speed = self.options.Strafe_Speed
