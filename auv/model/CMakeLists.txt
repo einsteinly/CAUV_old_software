@@ -10,6 +10,7 @@ add_library (
 target_link_libraries (
     model
     common
+    pthread
 )
 depends_on_messages(model)
 
