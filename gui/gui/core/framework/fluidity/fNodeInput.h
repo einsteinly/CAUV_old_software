@@ -107,10 +107,6 @@ class FNodeParamInput: public FNodeInput{
         boost::shared_ptr<Node> m_model_node;
         NodeTreeView* m_view;
         QGraphicsProxyWidget* m_view_proxy;
-        
-        // !!! workaround, should only exist in the model, see implementation
-        // of modelValueChanged
-        ParamValue m_value;
 };
 
 } // namespace f

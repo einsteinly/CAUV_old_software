@@ -94,11 +94,12 @@ void NodeDelegateMapper::paint(QPainter *painter, const QStyleOptionViewItem &op
         return;
     }
     const boost::shared_ptr<Node> node = static_cast<Node*>(ptr)->shared_from_this();
-    if (node && index.column() == 1) {
+    if (node) {
         try {
             boost::shared_ptr<QAbstractItemDelegate> delegate = getDelegate(node);
             delegate->paint(painter, option, index);
         } catch (std::out_of_range){
+            //debug() << "NodeDelegateMapper::paint() - not column one"
             QStyledItemDelegate::paint(painter, option, index);
         }
     } else QStyledItemDelegate::paint(painter, option, index);
@@ -119,6 +120,9 @@ NumericDelegate::NumericDelegate(NodeTreeView * tree, QObject * parent) : QStyle
     factory->registerEditor(QVariant::UInt, new QItemEditorCreator<NeutralSpinBox>("value"));
     factory->registerEditor(QVariant::Double, new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
     factory->registerEditor((QVariant::Type)qMetaTypeId<float>(), new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
+    factory->registerEditor((QVariant::Type)qMetaTypeId<BoundedFloat>(), new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
+
+    debug() << "NumericDelegate()";
 }
 
 
@@ -136,7 +140,7 @@ void NumericDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
         QApplication::style()->drawControl(QStyle::CE_CheckBox,
                                            &onOffOption, painter);
     }
-    else if (node && index.column() == 1) {
+    else if (node) {
         QStyleOptionProgressBarV2 progressBarOption;
         progressBarOption.rect = option.rect;
         progressBarOption.text = QString::number(index.data().value<double>()).append(

@@ -152,7 +152,7 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
 
         virtual void update(QVariant const& value){
             if(m_value.userType() != value.userType()) {
-                error() << "Type mismatch in Node variant:" << nodePath();
+                error() << "Node::update() Type mismatch in Node variant:" << nodePath();
             }
             m_value = value;
             Q_EMIT onUpdate(value);
@@ -161,6 +161,9 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
         }
 
         virtual bool set(QVariant const& value){
+            if(m_value.userType() != value.userType()) {
+                error() << "Node::set() Type mismatch in Node variant:" << nodePath();
+            }
             debug(2) << nodePath() << "set to" << value.toString().toStdString() << "type:" << value.typeName();
             update(value);
             Q_EMIT onSet(value);

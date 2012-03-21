@@ -123,6 +123,7 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     ui->view->setAcceptDrops(false);
     ui->filter->installEventFilter(new EscapeFilter());
     ui->view->setModel(root.get());
+    ui->view->addNumericDelegateToColumn(1);
 
     QHBoxLayout * layout = new QHBoxLayout(ui->filter);
     QPushButton * button = new QPushButton("X");
@@ -184,10 +185,7 @@ NodeTreeView::NodeTreeView(QWidget *) {
     setAllColumnsShowFocus(true);
     setAnimated(true);
     setSelectionMode(QAbstractItemView::ExtendedSelection);
-    NodeDelegateMapper *delegate = new NodeDelegateMapper(this);
     setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    setItemDelegate(delegate);
-    delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(this));
 
     //this->setMouseTracking(true);
     //connect(this, SIGNAL(entered(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));
@@ -195,6 +193,13 @@ NodeTreeView::NodeTreeView(QWidget *) {
     connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(toggleExpanded(QModelIndex)));
 }
 
+
+void NodeTreeView::addNumericDelegateToColumn(int col){
+    debug() << "NodeTreeView::addNumericDelegateToColumn()";
+    NodeDelegateMapper *delegate = new NodeDelegateMapper(this);
+    setItemDelegateForColumn(col, delegate);
+    delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(this));
+}
 
 void NodeTreeView::forceEdit(QModelIndex const& index){
     if(index.column() == 1) {

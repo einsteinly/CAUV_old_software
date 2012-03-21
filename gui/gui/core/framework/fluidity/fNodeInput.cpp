@@ -174,8 +174,7 @@ FNodeParamInput::FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode*
       m_model(),
       m_model_node(),
       m_view(NULL),
-      m_view_proxy(NULL),
-      m_value(){
+      m_view_proxy(NULL){
 }
 FNodeParamInput::~FNodeParamInput(){
     // if it isn't in the layout, then need to delete the view proxy
@@ -193,7 +192,6 @@ SubType FNodeParamInput::subType() const{ return m_subtype;
 }
 
 void FNodeParamInput::setValue(ParamValue const& v){
-    m_value = v;
     if(!m_model){
         m_model_node = makeModelNodeForInput(id(), v);
         m_model = new SingleNodeItemModel(m_model_node);
@@ -235,14 +233,7 @@ void FNodeParamInput::modelValueChanged(QVariant value){
     debug() << "modelValueChanged:" << id() << value.typeName();
     ParamValue pv;
     try{
-        // !!! TODO: this is a workaround for the fact that the true type isn't
-        // available in the onUpdate signal
-        pv = m_value;
-        if(pv.which() == ParamValueType::BoundedFloatType){
-            boost::get<BoundedFloat>(pv).value = value.toFloat();
-        }else{
-            pv = qVariantToVariant<ParamValue>(value);
-        }
+        pv = qVariantToVariant<ParamValue>(value);
     }catch(std::bad_cast& e){
         error() << "modelValueChanged:" << e.what()
                 << "value type:" << value.typeName()
@@ -278,6 +269,7 @@ void FNodeParamInput::initView(){
     m_view->setMaximumSize(QSize(1000,21));
     m_view->setModel(m_model);
     m_view->setColumnWidth(0,80);
+    m_view->addNumericDelegateToColumn(0);
     //m_view->resizeRowsToContents();
 
     // umm, doesn't play well with editing widgets!

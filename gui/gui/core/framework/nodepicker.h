@@ -78,6 +78,9 @@ public:
     NodeTreeView(QWidget * parent = 0);
     virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
 
+public Q_SLOTS:
+    void addNumericDelegateToColumn(int col);
+
 private Q_SLOTS:
     void forceEdit(QModelIndex const& index);
     void applyFilters();
