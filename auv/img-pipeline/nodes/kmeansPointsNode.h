@@ -168,7 +168,7 @@ class KMeansPointsNode: public Node{
                 bool assignments_changed = false;
                 for(size_t i = 0; i < keypoints.size(); i++){
                     int best_assignment = -1;
-                    float best_log_p = std::numeric_limits<float>::min();
+                    float best_log_p = -std::numeric_limits<float>::max();
                     for(int j = 0; j < k; j++){
                         const float p = clusters[j].logP(keypoints[i]);
                         if(p > best_log_p){
