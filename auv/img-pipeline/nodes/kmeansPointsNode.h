@@ -140,13 +140,14 @@ class KMeansPointsNode: public Node{
 
             Ellipse ellipse() const{
                 Eigen::SelfAdjointEigenSolver<Eigen::Matrix2f> solver(covar);
-                const float major = solver.eigenvalues()[0];
-                const float minor = solver.eigenvalues()[1];
+                const float major = std::sqrt(solver.eigenvalues()[0]);
+                const float minor = std::sqrt(solver.eigenvalues()[1]);
                 const float angle = 0.5 * std::atan((minor / major) * ((covar(0,1) + covar(1,0)) / (covar(0,0) - covar(1,1))));
+                debug() << "Ellipse: major=" << major << "minor=" << minor << "angle=" << angle;
                 return Ellipse(
                     floatXY(mean[0], mean[1]),
-                    minor * 2.5,
-                    major * 2.5,
+                    minor*2.5, // 95%
+                    major*2.5, // 95%
                     angle
                 );
             }
