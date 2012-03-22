@@ -16,6 +16,7 @@
 #include "firstAboveThresholdNode.h"
 #include "broadcastPointsNode.h"
 #include "kmeansPointsNode.h"
+#include "drawEllipsesNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -36,6 +37,7 @@ DEFINE_NFR(LocalMaximaNode, NodeType::LocalMaxima);
 DEFINE_NFR(FirstAboveThresholdNode, NodeType::FirstAboveThreshold);
 DEFINE_NFR(BroadcastPointsNode, NodeType::BroadcastPoints);
 DEFINE_NFR(KMeansPointsNode, NodeType::KMeansPoints);
+DEFINE_NFR(DrawEllipsesNode, NodeType::DrawEllipses);
 
 } // namespace imgproc
 } // namespace cauv
