@@ -116,8 +116,8 @@ class auvControl(aiProcess):
             self.auv.bearing(self.auv.current_bearing)
         self.auv.pitch(0)
         #check that depth autopilot has been set,
-        if self._control_state['depth'] != None and self.auv.depth != None:
-            self.auv.depth(self.auv.current_depth)
+        if 'depth' in self._control_state and self._control_state['depth'] != None:
+            self.auv.depth(self._control_state)
     @external_function
     def lights_off(self):
         self.auv.downlights(0)
@@ -192,7 +192,6 @@ class auvControl(aiProcess):
     def signal_loop(self):
         self.auv.forwardlights(0)
         while True:
-            print 'signal looping'
             try:
                 msg = self.signal_msgs.get(block = False)
             except Queue.Empty:
