@@ -17,6 +17,7 @@
 #include <generated/types/floatYPR.h>
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
+#include <generated/types/DebugMessage.h>
 
 #include "sbg_imu.h"
 
@@ -59,8 +60,9 @@ sbgIMU::sbgIMU(const char* port, int baud_rate, int pause_time)
 		}
 	else
 		{
-		debug () << "Unable to open IG-500 device";
-        //throw sbgException("Failed while setting device");
+		//debug () << "Unable to open IG-500 device";
+        //error() << "Unable to open IG-500 device";
+        throw sbgException("Failed to open sbg port");
 		//return -1;
 		}
 
@@ -151,7 +153,8 @@ void sbgIMU::initialise()
 {
 		error = sbgGetSpecificOutput(protocolHandle, SBG_OUTPUT_EULER, &output);
 		if (error != SBG_NO_ERROR) {
-            throw sbgException("Failed while initialising");
+            //throw sbgException("Failed while initialising");
+            warning () << "Sbg not connected. ";
         }
 
 }
@@ -227,6 +230,10 @@ void sbgIMU::readThread()
                         }
 				
 			}
+            else
+            {
+                warning() << "Lost connection to sbg, error code: " << error;
+            }
 			//
 			// Small pause to unload CPU
 			//

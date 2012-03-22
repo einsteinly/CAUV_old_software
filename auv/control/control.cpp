@@ -1014,7 +1014,7 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
     desc.add_options()
         ("xsens,x", po::value<int>()->default_value(0), "USB device id of the Xsens")
         ("sbg,b", po::value<std::string>()->default_value("/dev/ttyUSB1"), "TTY device for SBG IG500A")
-        ("imu,i", po::value<std::string>()->default_value("xsens"), "TTY device for SBG IG500A")
+        ("imu,i", po::value<std::string>()->default_value("xsens"), "default Xsens USB device or TTY device for SBG IG500A, or both")
 
 #ifdef CAUV_MCB_IS_FTDI
         ("mcb,m", po::value<int>()->default_value(0), "FTDI device id of the MCB")
@@ -1035,9 +1035,16 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     bool use_xsens = false, use_sbg = false;    
     if (vm["imu"].as<std::string>() == ("xsens")) use_xsens = true;
     if (vm["imu"].as<std::string>() == ("sbg")) use_sbg = true;
+    if (vm["imu"].as<std::string>() == ("both") ) {
+        use_xsens = true;
+        use_sbg = true;
+    }
 
     if (vm.count("xsens") && use_xsens) {
         setXsens(vm["xsens"].as<int>());
+    }
+    if(vm.count("sbg") && use_sbg){
+        setsbg(vm["sbg"].as<std::string>().c_str(), 115200, 10);
     }
 #ifdef CAUV_MCB_IS_FTDI
     if (vm.count("mcb")) {
@@ -1056,9 +1063,7 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     else if (vm.count("depth-offset") || vm.count("depth-scale")) {
         warning() << "Need both offset and depth for calibration; ignoring calibration input";   
     }
-    if(vm.count("sbg") && use_sbg){
-        setsbg(vm["sbg"].as<std::string>().c_str(), 115200, 10);
-    }
+
     if(vm.count("simulation")){
         m_telemetryBroadcaster->setSimulationMode(true);
         m_controlLoops->setSimulationMode(true);
@@ -1102,7 +1107,7 @@ void ControlNode::onRun()
         m_imu->start();
     }
     else {
-        warning() << "Xsens not connected. Telemetry not available.";
+        warning() << "IMU not connected. Telemetry not available.";
     }
 
     m_controlLoops->start();
