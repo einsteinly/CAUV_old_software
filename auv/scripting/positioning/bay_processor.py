@@ -4,7 +4,7 @@ from cauv.debug import debug, warning, error, info
 
 import cauv.sonar
 
-from AI_location import aiLocationProvider, vec, dotProd
+from AI_location import aiLocationProvider
 import cauv
 import cauv.messaging as msg
 from math import cos,sin,atan2,pi,sqrt
@@ -15,8 +15,7 @@ import threading
 
 import cauv.pipeline as pipeline
 
-def crossProd(p1,p2):
-    return p1.x*p2.y - p1.y*p2.x
+from utils.vectormath import vec, dotProd, crossProd
 
 def nearestLinePoint(p,l):
     p = vec(p.x,p.y)

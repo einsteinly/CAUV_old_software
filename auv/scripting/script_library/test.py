@@ -17,6 +17,7 @@ class script(aiScript):
         
         while True:
             i = raw_input('Continue? y/n/m: ')
+            print self.auv.position
             if i.lower() == 'n':
                 break
             elif i.lower() == 'm':
