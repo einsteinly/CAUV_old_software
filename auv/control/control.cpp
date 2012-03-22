@@ -739,7 +739,7 @@ class DeviceControlObserver : public MessageObserver
 
         virtual void onCalibrateNoRotationMessage(CalibrateNoRotationMessage_ptr m)
         {
-            /*if (m_xsens) {
+      /*      if (m_xsens) {
                 m_xsens->calibrateNoRotation(m->duration());
             }
             else
@@ -1013,6 +1013,9 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
     
     desc.add_options()
         ("xsens,x", po::value<int>()->default_value(0), "USB device id of the Xsens")
+        ("sbg,b", po::value<std::string>()->default_value("/dev/ttyUSB1"), "TTY device for SBG IG500A")
+        ("imu,i", po::value<std::string>()->default_value("xsens"), "TTY device for SBG IG500A")
+
 #ifdef CAUV_MCB_IS_FTDI
         ("mcb,m", po::value<int>()->default_value(0), "FTDI device id of the MCB")
 #else 
@@ -1020,7 +1023,7 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
 #endif
         ("depth-offset,o", po::value<float>()->default_value(0), "Depth calibration offset")
         ("depth-scale,s", po::value<float>()->default_value(0), "Depth calibration scale")
-        ("sbg,b", po::value<std::string>()->default_value("/dev/ttyUSB1"), "TTY device for SBG IG500A")
+
         ("simulation,N", "Run in simulation mode");
 }
 int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc)
@@ -1029,7 +1032,11 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     int ret = CauvNode::useOptionsMap(vm, desc);
     if (ret != 0) return ret;
 
-    if (vm.count("xsens")) {
+    bool use_xsens = false, use_sbg = false;    
+    if (vm["imu"].as<std::string>() == ("xsens")) use_xsens = true;
+    if (vm["imu"].as<std::string>() == ("sbg")) use_sbg = true;
+
+    if (vm.count("xsens") && use_xsens) {
         setXsens(vm["xsens"].as<int>());
     }
 #ifdef CAUV_MCB_IS_FTDI
@@ -1049,7 +1056,7 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     else if (vm.count("depth-offset") || vm.count("depth-scale")) {
         warning() << "Need both offset and depth for calibration; ignoring calibration input";   
     }
-    if(vm.count("sbg")){
+    if(vm.count("sbg") && use_sbg){
         setsbg(vm["sbg"].as<std::string>().c_str(), 115200, 10);
     }
     if(vm.count("simulation")){

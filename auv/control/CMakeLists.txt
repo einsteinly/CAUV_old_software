@@ -2,6 +2,7 @@ find_package(ftdi REQUIRED)
 include_directories (${ftdi_INCLUDE_DIRS})
 
 include_directories("/usr/local/include/sbgCom/")
+include_directories("/usr/include/sbgCom/")
 
 link_directories (${ftdi_LIBRARY_DIRS})
 if (CAUV_USE_FTDIPP)

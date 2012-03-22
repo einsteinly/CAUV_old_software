@@ -72,11 +72,13 @@ class KMeansPointsNode: public Node{
             registerParamID< std::vector<KeyPoint> >("keypoints", std::vector<KeyPoint>(), "", Must_Be_New);
 
             // two outputs:
-            registerOutputID("clusters", std::vector<KeyPoint>());
+            registerOutputID("clusters", std::vector<Ellipse>());
 
             // parameters:
             //   K: the number of clusters
             registerParamID<int>("K", 5);
+            registerParamID<int>("max iters", 50);
+            registerParamID<int>("search iters", 5);
         }
 
     protected:
@@ -87,7 +89,8 @@ class KMeansPointsNode: public Node{
                   covar(Eigen::Matrix2f::Zero()),
                   covar_inv(Eigen::Matrix2f::Zero()),
                   sum(Eigen::Vector2f::Zero()),
-                  sumsquared(Eigen::Matrix2f::Zero()){
+                  sumsquared(Eigen::Matrix2f::Zero()),
+                  numpoints(0){
             }
 
             float logP(KeyPoint const& kp) const{
@@ -120,6 +123,9 @@ class KMeansPointsNode: public Node{
                         covar = q * l * q.transpose();
                     }
                     covar_inv = covar.inverse();
+                    debug(3) << "mean:" << mean.transpose()
+                             << "covariance:\n"
+                             << covar(0,0) << covar(0,1) << '\n' << covar(1,0) << covar(1,1);
                 }else if(numpoints == 2){
                     mean = sum / numpoints;
                     covar_inv = Eigen::Matrix2f::Identity();
@@ -130,6 +136,19 @@ class KMeansPointsNode: public Node{
                     mean = Eigen::Vector2f::Zero();
                     covar_inv = Eigen::Matrix2f::Zero();
                 }
+            }
+
+            Ellipse ellipse() const{
+                Eigen::SelfAdjointEigenSolver<Eigen::Matrix2f> solver(covar);
+                const float major = solver.eigenvalues()[0];
+                const float minor = solver.eigenvalues()[1];
+                const float angle = 0.5 * std::atan((minor / major) * ((covar(0,1) + covar(1,0)) / (covar(0,0) - covar(1,1))));
+                return Ellipse(
+                    floatXY(mean[0], mean[1]),
+                    minor * 2.5,
+                    major * 2.5,
+                    angle
+                );
             }
 
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -145,60 +164,89 @@ class KMeansPointsNode: public Node{
 
         void doWork(in_image_map_t&, out_map_t& r){
             const int k = param<int>("K");
-            const std::vector<KeyPoint> keypoints = param<std::vector<KeyPoint> >("keypoints");
+            const int max_iters = param<int>("max iters");
+            const int search_iters = param<int>("search iters");
+            
+            // In a rather special case, we want to propagate the uid from the
+            // input keypoints to the output ellipses, NOT have the out_map_t
+            // autmagially assign a uid based on the input (since we don't have
+            // any 'input' images)
+            std::vector<KeyPoint> keypoints;
+            UID kps_uid;
+            boost::tie(keypoints, kps_uid) = paramAndUID< std::vector<KeyPoint> >("keypoints");
 
-            boost::random::uniform_int_distribution<int> assign_dist(0,k-1);
+            if(!keypoints.size())
+                return;
 
-            // start with random assignments:
-            std::vector<int> assignments(keypoints.size());
-            foreach(int& a, assignments)
-                a = assign_dist(gen);
+            boost::random::uniform_int_distribution<int> random_point_dist(0,keypoints.size()-1);
+            
+            std::vector<NormalDist, Eigen::aligned_allocator<NormalDist> > best_search_clusters(k);
+            float best_search_log_p = -std::numeric_limits<float>::max();
 
-            std::vector<NormalDist, Eigen::aligned_allocator<NormalDist> > clusters(k);
-            for(int iter = 0; iter < 100; iter++){
-                // estimate cluster distributions
-                foreach(NormalDist& c, clusters)
-                    c = NormalDist();
-                for(size_t i = 0; i < keypoints.size(); i++)
-                    clusters[assignments[i]].add(keypoints[i]);
-                foreach(NormalDist& c, clusters)
-                    c.bake();
+            for(int search = 0; search < search_iters; search++){
+                std::vector<int> assignments(keypoints.size(), -2);
+                float search_log_p = 0;
+                std::vector<NormalDist, Eigen::aligned_allocator<NormalDist> > clusters(k);
+                for(int iter = 0; iter < max_iters; iter++){
+                    // estimate cluster distributions
+                    foreach(NormalDist& c, clusters)
+                        c = NormalDist();
+                    if(iter == 0){
+                        // start with means assigned to random points, large variances:
+                        foreach(NormalDist& c, clusters){
+                            KeyPoint kp = keypoints[random_point_dist(gen)];
+                            c.mean[0] = kp.pt.x;
+                            c.mean[1] = kp.pt.y;
+                            c.covar = Eigen::Matrix2f::Identity() * 100;
+                            c.covar_inv = c.covar.inverse();
+                        }
+                    }else{
+                        for(size_t i = 0; i < keypoints.size(); i++)
+                            clusters[assignments[i]].add(keypoints[i]);
+                        foreach(NormalDist& c, clusters)
+                            c.bake();
+                    }
 
-                // update assignments
-                bool assignments_changed = false;
-                for(size_t i = 0; i < keypoints.size(); i++){
-                    int best_assignment = -1;
-                    float best_log_p = std::numeric_limits<float>::min();
-                    for(int j = 0; j < k; j++){
-                        const float p = clusters[j].logP(keypoints[i]);
-                        if(p > best_log_p){
-                            best_log_p = p;
-                            best_assignment = j;
+                    // update assignments
+                    bool assignments_changed = false;
+                    for(size_t i = 0; i < keypoints.size(); i++){
+                        int best_assignment = -1;
+                        float best_log_p = -std::numeric_limits<float>::max();
+                        for(int j = 0; j < k; j++){
+                            const float p = clusters[j].logP(keypoints[i]);
+                            if(p >= best_log_p){
+                                best_log_p = p;
+                                best_assignment = j;
+                            }
+                        }
+                        search_log_p += best_log_p;
+                        if(assignments[i] != best_assignment){
+                            assignments_changed = true;
+                            assignments[i] = best_assignment;
                         }
                     }
-                    if(assignments[i] != best_assignment){
-                        assignments_changed = true;
-                        assignments[i] = best_assignment;
+                    if(!assignments_changed){
+                        debug() << "break iter" << iter;
+                        break;
                     }
                 }
-                if(!assignments_changed)
-                    break;
+
+                if(search_log_p > best_search_log_p){
+                    best_search_log_p = search_log_p;
+                    best_search_clusters = clusters;
+                }
             }
 
-            // also TODO: angle / something more descriptive
-            std::vector<KeyPoint> ret;
-            foreach(NormalDist const& c, clusters)
-                ret.push_back(
-                    KeyPoint(floatXY(c.mean[0], c.mean[1]),
-                    std::sqrt(c.covar.trace()),
-                    0,
-                    0,
-                    0,
-                    0
-                ));
+            std::vector<Ellipse> ret;
+            foreach(NormalDist const& c, best_search_clusters)
+                ret.push_back(c.ellipse());
 
             // !!! TODO: should use InternalParamValue assignment to preserve UID
             r["clusters"] = ret;
+            
+            r.internalValue("clusters") = InternalParamValue(
+                ret, kps_uid
+            );
         }
 
     private:
