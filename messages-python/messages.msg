@@ -99,6 +99,7 @@ enum NodeType : int8 {
     BroadcastPoints,
     FitEllipse,
     KMeansPoints,
+    DrawEllipses,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -271,7 +272,7 @@ struct Ellipse
     eq centre : floatXY;
     eq minorRadius : float;
     eq majorRadius : float;
-    eq angle : float;
+    eq angle : float; // radians, angle of major axis from x axis
 }
 struct Corner
 {

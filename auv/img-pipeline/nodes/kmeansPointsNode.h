@@ -72,7 +72,7 @@ class KMeansPointsNode: public Node{
             registerParamID< std::vector<KeyPoint> >("keypoints", std::vector<KeyPoint>(), "", Must_Be_New);
 
             // two outputs:
-            registerOutputID("clusters", std::vector<KeyPoint>());
+            registerOutputID("clusters", std::vector<Ellipse>());
 
             // parameters:
             //   K: the number of clusters
@@ -138,6 +138,19 @@ class KMeansPointsNode: public Node{
                 }
             }
 
+            Ellipse ellipse() const{
+                Eigen::SelfAdjointEigenSolver<Eigen::Matrix2f> solver(covar);
+                const float major = solver.eigenvalues()[0];
+                const float minor = solver.eigenvalues()[1];
+                const float angle = 0.5 * std::atan((minor / major) * ((covar(0,1) + covar(1,0)) / (covar(0,0) - covar(1,1))));
+                return Ellipse(
+                    floatXY(mean[0], mean[1]),
+                    minor * 2.5,
+                    major * 2.5,
+                    angle
+                );
+            }
+
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
             Eigen::Vector2f mean;
@@ -153,7 +166,14 @@ class KMeansPointsNode: public Node{
             const int k = param<int>("K");
             const int max_iters = param<int>("max iters");
             const int search_iters = param<int>("search iters");
-            const std::vector<KeyPoint> keypoints = param<std::vector<KeyPoint> >("keypoints");
+            
+            // In a rather special case, we want to propagate the uid from the
+            // input keypoints to the output ellipses, NOT have the out_map_t
+            // autmagially assign a uid based on the input (since we don't have
+            // any 'input' images)
+            std::vector<KeyPoint> keypoints;
+            UID kps_uid;
+            boost::tie(keypoints, kps_uid) = paramAndUID< std::vector<KeyPoint> >("keypoints");
 
             if(!keypoints.size())
                 return;
@@ -217,21 +237,16 @@ class KMeansPointsNode: public Node{
                 }
             }
 
-            // also TODO: angle / something more descriptive
-            std::vector<KeyPoint> ret;
-            foreach(NormalDist const& c, best_search_clusters){
-                ret.push_back(
-                    KeyPoint(floatXY(c.mean[0], c.mean[1]),
-                    std::sqrt(c.covar.trace()),
-                    0,
-                    0,
-                    0,
-                    0
-                ));
-            }
+            std::vector<Ellipse> ret;
+            foreach(NormalDist const& c, best_search_clusters)
+                ret.push_back(c.ellipse());
 
             // !!! TODO: should use InternalParamValue assignment to preserve UID
             r["clusters"] = ret;
+            
+            r.internalValue("clusters") = InternalParamValue(
+                ret, kps_uid
+            );
         }
 
     private:
