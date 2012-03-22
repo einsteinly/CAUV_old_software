@@ -22,7 +22,7 @@ def savepl(node, fname, timeout=3.0, name='default'):
         model.dumpFile(saved, outf)
 
 
-def loadpl(node, fname, timeout=3.0, name='default'):
+def loadpl(node, fname, timeout=3.0, name='default', clear=True):
     with open(fname, 'rb') as inf:
         info('Initializing pipeline model (%s)...' % name)
         model = pipeline.Model(node, name)
@@ -31,7 +31,7 @@ def loadpl(node, fname, timeout=3.0, name='default'):
         saved = model.loadFile(inf)
         
         info('Setting pipeline state...')
-        model.set(saved, timeout)
+        model.set(saved, timeout, clear)
 
 def clearpl(node, name='default'):
     info('Initializing pipeline model (%s)...' % name)
@@ -63,6 +63,8 @@ if __name__ == '__main__':
             savepl(node, fname, timeout, name)
         elif opts.verb == 'load':
             loadpl(node, fname, timeout, name)
+        elif opts.verb == 'add':
+            loadpl(node, fname, timeout, name, False)
         info('Done.')
     finally:
         node.stop()
