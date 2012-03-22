@@ -77,6 +77,8 @@ class KMeansPointsNode: public Node{
             // parameters:
             //   K: the number of clusters
             registerParamID<int>("K", 5);
+            registerParamID<int>("max iters", 50);
+            registerParamID<int>("search iters", 5);
         }
 
     protected:
@@ -149,49 +151,75 @@ class KMeansPointsNode: public Node{
 
         void doWork(in_image_map_t&, out_map_t& r){
             const int k = param<int>("K");
+            const int max_iters = param<int>("max iters");
+            const int search_iters = param<int>("search iters");
             const std::vector<KeyPoint> keypoints = param<std::vector<KeyPoint> >("keypoints");
 
-            boost::random::uniform_int_distribution<int> assign_dist(0,k-1);
+            if(!keypoints.size())
+                return;
 
-            // start with random assignments:
-            std::vector<int> assignments(keypoints.size());
-            foreach(int& a, assignments)
-                a = assign_dist(gen);
+            boost::random::uniform_int_distribution<int> random_point_dist(0,keypoints.size()-1);
+            
+            std::vector<NormalDist, Eigen::aligned_allocator<NormalDist> > best_search_clusters(k);
+            float best_search_log_p = -std::numeric_limits<float>::max();
 
-            std::vector<NormalDist, Eigen::aligned_allocator<NormalDist> > clusters(k);
-            for(int iter = 0; iter < 100; iter++){
-                // estimate cluster distributions
-                foreach(NormalDist& c, clusters)
-                    c = NormalDist();
-                for(size_t i = 0; i < keypoints.size(); i++)
-                    clusters[assignments[i]].add(keypoints[i]);
-                foreach(NormalDist& c, clusters)
-                    c.bake();
+            for(int search = 0; search < search_iters; search++){
+                std::vector<int> assignments(keypoints.size(), -2);
+                float search_log_p = 0;
+                std::vector<NormalDist, Eigen::aligned_allocator<NormalDist> > clusters(k);
+                for(int iter = 0; iter < max_iters; iter++){
+                    // estimate cluster distributions
+                    foreach(NormalDist& c, clusters)
+                        c = NormalDist();
+                    if(iter == 0){
+                        // start with means assigned to random points, large variances:
+                        foreach(NormalDist& c, clusters){
+                            KeyPoint kp = keypoints[random_point_dist(gen)];
+                            c.mean[0] = kp.pt.x;
+                            c.mean[1] = kp.pt.y;
+                            c.covar = Eigen::Matrix2f::Identity() * 100;
+                            c.covar_inv = c.covar.inverse();
+                        }
+                    }else{
+                        for(size_t i = 0; i < keypoints.size(); i++)
+                            clusters[assignments[i]].add(keypoints[i]);
+                        foreach(NormalDist& c, clusters)
+                            c.bake();
+                    }
 
-                // update assignments
-                bool assignments_changed = false;
-                for(size_t i = 0; i < keypoints.size(); i++){
-                    int best_assignment = -1;
-                    float best_log_p = -std::numeric_limits<float>::max();
-                    for(int j = 0; j < k; j++){
-                        const float p = clusters[j].logP(keypoints[i]);
-                        if(p > best_log_p){
-                            best_log_p = p;
-                            best_assignment = j;
+                    // update assignments
+                    bool assignments_changed = false;
+                    for(size_t i = 0; i < keypoints.size(); i++){
+                        int best_assignment = -1;
+                        float best_log_p = -std::numeric_limits<float>::max();
+                        for(int j = 0; j < k; j++){
+                            const float p = clusters[j].logP(keypoints[i]);
+                            if(p >= best_log_p){
+                                best_log_p = p;
+                                best_assignment = j;
+                            }
+                        }
+                        search_log_p += best_log_p;
+                        if(assignments[i] != best_assignment){
+                            assignments_changed = true;
+                            assignments[i] = best_assignment;
                         }
                     }
-                    if(assignments[i] != best_assignment){
-                        assignments_changed = true;
-                        assignments[i] = best_assignment;
+                    if(!assignments_changed){
+                        debug() << "break iter" << iter;
+                        break;
                     }
                 }
-                if(!assignments_changed)
-                    break;
+
+                if(search_log_p > best_search_log_p){
+                    best_search_log_p = search_log_p;
+                    best_search_clusters = clusters;
+                }
             }
 
             // also TODO: angle / something more descriptive
             std::vector<KeyPoint> ret;
-            foreach(NormalDist const& c, clusters){
+            foreach(NormalDist const& c, best_search_clusters){
                 ret.push_back(
                     KeyPoint(floatXY(c.mean[0], c.mean[1]),
                     std::sqrt(c.covar.trace()),
