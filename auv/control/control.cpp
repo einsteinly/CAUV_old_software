@@ -673,13 +673,15 @@ class ControlLoops : public MessageObserver, public IMUObserver
         {
             if(newvalue != oldvalue) {
                 oldvalue = newvalue;
-                // VBow is the wrong way round, but we want all the motors to
-                // be inverted
                 if(m_mcb){
-                    if(mid != MotorID::VBow)
-                        m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
-                    else
+                    if(mid == MotorID::Prop)
                         m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                    // VBow is the wrong way around, this set-up is for the
+                    // ducts to be on the bottom, as set on Red Herring on 22/3/2012
+                    if(mid != MotorID::VBow)
+                        m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                    else
+                        m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
                 }
                 m_mb->sendMessage(boost::make_shared<MotorStateMessage>(mid, newvalue), RELIABLE_MSG);
             }
