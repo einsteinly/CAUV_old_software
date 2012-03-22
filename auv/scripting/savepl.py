@@ -47,7 +47,7 @@ if __name__ == '__main__':
     parser.add_argument("-n", "--pipeline-name", dest="name", default="default")
     parser.add_argument("-t", "--timeout", dest="timeout", type=float, default=3.0)
     parser.add_argument('clear', action='store_true', default=False)
-    parser.add_argument('verb', choices=('load', 'save', 'clear'))
+    parser.add_argument('verb', choices=('load', 'save', 'clear', 'add'))
 
     opts, unknown_args = parser.parse_known_args()
     fname = opts.fname
