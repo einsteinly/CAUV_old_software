@@ -675,7 +675,7 @@ class ControlLoops : public MessageObserver, public IMUObserver
                 oldvalue = newvalue;
                 if(m_mcb){
                     if(mid == MotorID::Prop)
-                        m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                        m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
                     // VBow is the wrong way around, this set-up is for the
                     // ducts to be on the bottom, as set on Red Herring on 22/3/2012
                     if(mid != MotorID::VBow)
