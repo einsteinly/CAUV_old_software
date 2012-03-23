@@ -22,8 +22,8 @@ Default_Messages_To_Watch = (
     'PitchAutopilotParams',
     'SetMotorMap',
     'MotorRampRate',
-    'SonarControl',
-    'GeminiControl'
+    'SonarControl'
+    #'GeminiControl'
 )
 
 Ignore_Message_Attrs = (
@@ -35,6 +35,8 @@ Ignore_Message_Attrs = (
 def sendSavedMessages(node, shelf):
     info('restoring saved settings...')
     for msg_name in shelf:
+        if not msg_name in Default_Messages_To_Watch:
+            continue
         try:
             attrs = shelf[msg_name]
             info('restoring saved %s: %s' % (msg_name, attrs))
