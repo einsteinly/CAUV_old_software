@@ -53,8 +53,16 @@ class DrawEllipsesNode: public Node{
         struct DrawEllipses: boost::static_visitor< cv::Mat >{
             DrawEllipses(std::vector<cauv::Ellipse> const& es) : m_ellipses(es){}
             cv::Mat operator()(cv::Mat a) const{
-                cv::Mat out(a);
+                cv::Mat out;
+                if(a.channels() >= 3){
+                    out = a.clone();
+                }else if(a.channels() == 1){
+                    cv::cvtColor(a, out, CV_GRAY2RGB);
+                }else{
+                    throw parameter_error("image must be 1, 3 or 4 channel");
+                }
                 foreach(Ellipse const& p, m_ellipses){
+                    debug() << "draw ellipse:" << p;
                     cv::ellipse(
                         out,
                         cv::Point(p.centre.x, p.centre.y),
