@@ -95,9 +95,7 @@ class taskManager(aiProcess):
         self.processing_queue.append(('set_condition_options', [msg.conditionId, BoostMapToDict(msg.conditionOptions)], {}))
     
     def onScriptControlMessage(self, msg):
-        if msg.command == messaging.ScriptCommand.Stop:
-            self.stop_current_script()
-            #need to stop additional scripts, but be careful of the list changing??
+        self.processing_queue.append(('process_script_control', [msg.taskId, msg.command.name], {}))
             
     def onRequestAIStateMessage(self, msg):
         self.processing_queue.append(('gui_send_all', [], {}))
@@ -145,7 +143,10 @@ class taskManager(aiProcess):
     @external_function
     def on_persist_state_change(self, task_id, key, attr):
         self.processing_queue.append(('set_task_persist_state', [task_id, key, attr], {}))
-        
+    #from location process
+    @external_function
+    def broadcast_position(self, position):
+        self.processing_queue.append(('broadcast_position_local', [position], {}))
     #helpful diagnostics
     @external_function
     def export_task_data(self, file_name):
@@ -217,7 +218,17 @@ class taskManager(aiProcess):
         self.gui_update_task(task)
     def set_task_persist_state(self, task_id, key, attr):
         self.tasks[task_id].persist_state[key] = attr
-            
+        
+    def process_script_control(self, task_id, command):
+        if command == 'Start':
+            warning('Start command not implemented')
+        elif command == 'Stop':
+            warning('Stop command not implemented')
+        elif command == 'Restart':
+            warning('Restart command not implemented')
+        elif command == 'Pause':
+            warning('Pause command not implemented')
+        
     #add/remove/modify conditions
     def create_condition(self, condition_type, options={}):
         debug("Creating condition of type %s" %str(condition_type))
@@ -257,7 +268,7 @@ class taskManager(aiProcess):
         info('Stopping additional script for task %s' %task_id)
     def stop_current_script(self):
         self.ai.auv_control.set_current_task_id(None, 0)
-        self.ai.pl_manager.remove_task_pls(self.current_task.id)
+        self.ai.pl_manager.drop_task_pls(self.current_task.id)
         if self.running_script:
             try:
                 self.running_script.kill()
@@ -285,6 +296,12 @@ class taskManager(aiProcess):
             self.tasks[task_id].options.last_called = time.time()
         getattr(self.ai,str(task_id)).confirm_exit()
                 
+    def broadcast_position_local(self,  position):
+        for task_id in self.additional_tasks:
+            getattr(self.ai, task_id)._set_position(position)
+        if self.current_task:
+            getattr(self.ai, self.current_task.id)._set_position(position)
+                
     #--function run by periodic loop--
     def start_task(self, task):
         #start the new script
@@ -296,7 +313,10 @@ class taskManager(aiProcess):
                                    cPickle.dumps(task.get_script_options()), 
                                    cPickle.dumps(task.persist_state)])
         if task.options.solo:
-            self.stop_current_script()
+            if self.current_task:
+                #mark last task not active, current task active
+                self.current_task.active = False
+                self.stop_current_script()
             self.running_script = script
             self.ai.auv_control.set_current_task_id(task.id, task.options.priority)
             #disable/enable detectors according to task
@@ -305,10 +325,8 @@ class taskManager(aiProcess):
             else: self.ai.detector_control.disable()
             #set priority
             self.current_priority = task.options.running_priority
-            #mark last task not active, current task active
-            if self.current_task:
-                self.current_task.active = False
             self.current_task = task
+            self.current_task.active = True
         else:
             #make sure an instance is not already running
             if task.id in self.additional_tasks:

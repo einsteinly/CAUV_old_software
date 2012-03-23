@@ -36,6 +36,7 @@ depends_on_messages (sonar)
 # libs
 target_link_libraries (
     sonar
+    pthread
     sonar_accumulator
     common
 )

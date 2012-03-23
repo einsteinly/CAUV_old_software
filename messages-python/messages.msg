@@ -95,6 +95,11 @@ enum NodeType : int8 {
     PolarImageToXY,
     SonarImageEdge,
     LearnedKeyPoints,
+    FirstAboveThreshold,
+    BroadcastPoints,
+    FitEllipse,
+    KMeansPoints,
+    DrawEllipses,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -130,6 +135,7 @@ enum ScriptCommand : int8 {
     Start,
     Stop,
     Restart,
+    Pause,
 }
 enum SensorUIDBase : int32 {
     // !!! TODO: support hex integer literals...
@@ -261,6 +267,13 @@ struct Circle
     eq centre : floatXYZ;
     eq radius : float;
 }
+struct Ellipse
+{
+    eq centre : floatXY;
+    eq minorRadius : float;
+    eq majorRadius : float;
+    eq angle : float; // radians, angle of major axis from x axis
+}
 struct Corner
 {
     eq centre : floatXYZ;
@@ -343,7 +356,9 @@ variant ParamValue
     ImageRegion,
     Range,
     floatXY,
-    DynamicEnum
+    DynamicEnum,
+    list<floatXY>,
+    list<Ellipse>,
 }
 // !!! should generate this for each variant
 enum ParamValueType : int8 {
@@ -356,6 +371,8 @@ enum ParamValueType : int8 {
     RangeType,
     floatXYType,
     DynamicEnumType,
+    listFloatXYType,
+    listEllipseType,
 }
 
 group membership
@@ -685,6 +702,12 @@ group processing
         keypoints : list<KeyPoint>;
     }
 
+    message Points : 136
+    {
+        name : string;
+        points : list<floatXY>;
+    }
+
     message Histogram : 133
     {
         name : string;
@@ -913,6 +936,7 @@ group guiai
     }
     message ScriptControl : 216
     {
+        taskId : string;
         command : ScriptCommand;
     }
 }

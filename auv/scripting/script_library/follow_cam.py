@@ -16,7 +16,7 @@ import time
 
 class scriptOptions(aiScriptOptions):
     #Pipeline details
-    follow_cam_file  = 'river-edges.pipe'
+    follow_cam_file  = 'river-edges2'
     lines_name = 'cam'
     #Timeouts
     ready_timeout = 30
@@ -67,7 +67,7 @@ class script(aiScript):
             for i in range(len(m.lines)):
                 for j in range(i):
                     #Filter out the lines that are vaguly pointing up
-                    if abs(degrees(m.lines[i].angle)+90)<40 and abs(degrees(m.lines[j].angle)+90)<40:
+                    if abs(degrees(m.lines[i].angle)+90)<30 and abs(degrees(m.lines[j].angle)+90)<30:
                         #debug('got straigh lines')
 
                         #Filter out the lines that are paralle to each other by pairwise comparision
@@ -162,7 +162,7 @@ class script(aiScript):
     def run(self):
         self.log('Cam follow: Initiating following river cam.')
         follow_cam_file = self.options.follow_cam_file
-        #self.request_pl(follow_cam_file)
+        self.request_pl(follow_cam_file)
     
         while True:
 

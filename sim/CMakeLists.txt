@@ -60,6 +60,23 @@ if (${CAUV_BUILD_SIM})
         ${OPENTHREADS_LIBRARY}
     )
 
+    add_executable(
+        sim2
+        sim2.cpp
+        FixedNodeTrackerManipulator.cpp
+    )
+
+    target_link_libraries (
+        sim2
+        common
+        cauv_debug
+        ${OSG_LIBRARY}
+        ${OSGVIEWER_LIBRARY}
+        ${OSGGA_LIBRARY}
+        ${OSGDB_LIBRARY}
+    )
+        
+
     add_custom_command(
         TARGET sim
 

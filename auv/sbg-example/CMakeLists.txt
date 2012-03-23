@@ -8,13 +8,13 @@ add_executable (
     cube3d EXCLUDE_FROM_ALL
 
 
-    main.c
+    main.cpp
 
 )
 
 target_link_libraries (
     cube3d
-
+    boost_thread
     SbgComSerial
 
 )

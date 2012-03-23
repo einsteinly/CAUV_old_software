@@ -1,5 +1,9 @@
 find_package(ftdi REQUIRED)
 include_directories (${ftdi_INCLUDE_DIRS})
+
+include_directories("/usr/local/include/sbgCom/")
+include_directories("/usr/include/sbgCom/")
+
 link_directories (${ftdi_LIBRARY_DIRS})
 if (CAUV_USE_FTDIPP)
     add_definitions(-DCAUV_USE_FTDIPP=1)
@@ -14,6 +18,7 @@ add_executable (
 
     control.cpp
     xsens_imu.cpp
+	sbg_imu.cpp
 )
 cauv_install ( control )
 
@@ -26,6 +31,10 @@ target_link_libraries (
     common
     module
     cmt
+    pthread
     ${ftdi_LIBRARIES}
+
+	SbgComSerial
+	boost_thread
 )
 depends_on_messages(control)

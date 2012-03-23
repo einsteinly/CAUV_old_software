@@ -249,6 +249,7 @@ class fakeAUV(messaging.MessageObserver):
         self.current_bearing = None
         self.current_depth = None
         self.current_pitch = None
+        self.position = None
         self.latitude = None
         self.longitude = None
         self.altitude = None
@@ -420,6 +421,9 @@ class aiScript(aiProcess):
     def optionChanged(self, option_name):
         pass
     #control stuff
+    @external_function
+    def _set_position(self, pos):
+        self.auv.position = pos
     def request_control(self, timeout=None):
         self.ai.auv_control.request_control(timeout)
     def request_control_and_wait(self, wait_timeout=5, control_timeout=None):

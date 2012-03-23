@@ -21,6 +21,8 @@ ZeroMQMailboxEventMonitor::ZeroMQMailboxEventMonitor(boost::shared_ptr<ZeroMQMai
 }
 
 void ZeroMQMailboxEventMonitor::startMonitoringAsync(void) {
+    //potential race condition otherwise
+    m_monitoring = true;
     m_thread = boost::thread(&ZeroMQMailboxEventMonitor::doMonitoring,this);
 }
 
