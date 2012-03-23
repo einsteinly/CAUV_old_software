@@ -90,7 +90,7 @@ class locationFilter(object):
             total_prob += probability
         #normalise
         total_diff /= total_prob
-        return self.last_known_location+total_diff, len(velocity_estimators)-total_prob
+        return self.last_known_location+total_diff, total_prob/len(velocity_estimators)
 
 class aiLocation(aiProcess):
     def __init__(self, opts, args):

@@ -26,7 +26,7 @@ class script(aiScript):
                 break
             else:
                 debug("Didn't enter valid answer")
-        print self.waypoints
+        debug("Waypoints were set at "+str(self.waypoints))
         if self.auv.position == None:
             #no position data, wait for broadcast
             time.sleep(1.0)
@@ -49,9 +49,13 @@ class script(aiScript):
             #             |
             while abs(vector_to)>self.options.error:
                 #rotate to vector
-                bearing = degrees(atan(vector_to.x/vector_to.y))
-                if vector_to.y<0:
-                    bearing+180
+                try:
+                    bearing = degrees(atan(vector_to.x/vector_to.y))
+                    #atan gives a result in -pi to pi
+                    if vector_to.y<0:
+                        bearing+180
+                except ZeroDivisionError:
+                    bearing = 90 if x>0 else 270
                 bearing = bearing%360
                 debug('Heading on a %f degree bearing, direction vector '+str(vector_to))
                 self.auv.bearing(bearing)
