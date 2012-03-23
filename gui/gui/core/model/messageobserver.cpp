@@ -201,7 +201,7 @@ void DefaultGuiMessageObserver::onProcessStatusMessage(ProcessStatusMessage_ptr 
 void DefaultGuiMessageObserver::onControllerStateMessage(ControllerStateMessage_ptr message){
 
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<GroupingNode> ap = autopilots->findOrCreate<GroupingNode>(message->contoller());
+    boost::shared_ptr<NumericNode<bool> > ap = autopilots->findOrCreate< NumericNode<bool> >(message->contoller());
     boost::shared_ptr<GroupingNode> state = ap->findOrCreate<GroupingNode>("state");
 
 

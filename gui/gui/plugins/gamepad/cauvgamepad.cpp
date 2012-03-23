@@ -180,9 +180,9 @@ void CauvGamepad::stop(bool){
 
 void CauvGamepad::update(){
 
-    boost::shared_ptr<NumericNode<float> > bearing = m_autopilots->findOrCreate<GroupingNode>(Controller::Bearing)->findOrCreate<NumericNode<float> >("target");
-    boost::shared_ptr<NumericNode<float> > pitch = m_autopilots->findOrCreate<GroupingNode>(Controller::Pitch)->findOrCreate<NumericNode<float> >("target");
-    boost::shared_ptr<NumericNode<float> > depth = m_autopilots->findOrCreate<GroupingNode>(Controller::Depth)->findOrCreate<NumericNode<float> >("target");
+    boost::shared_ptr<NumericNode<float> > bearing = m_autopilots->findOrCreate<NumericNode<bool> >(Controller::Bearing)->findOrCreate<NumericNode<float> >("target");
+    boost::shared_ptr<NumericNode<float> > pitch = m_autopilots->findOrCreate<NumericNode<bool> >(Controller::Pitch)->findOrCreate<NumericNode<float> >("target");
+    boost::shared_ptr<NumericNode<float> > depth = m_autopilots->findOrCreate<NumericNode<bool> >(Controller::Depth)->findOrCreate<NumericNode<float> >("target");
 
     boost::shared_ptr<NumericNode<int> > hSternMotor = m_motors->findOrCreate<NumericNode<int> >(MotorID::HStern);
     boost::shared_ptr<NumericNode<int> > hBowMotor = m_motors->findOrCreate<NumericNode<int> >(MotorID::HBow);
