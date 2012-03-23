@@ -1,10 +1,15 @@
 # required libraries:
 find_package (OpenCV REQUIRED)
 
-option(ZEROMQ_MESSAGING "use zeromq for messaging instead of spread" OFF)
-if(ZEROMQ_MESSAGING)
+option(CAUV_ZEROMQ_MESSAGING "use zeromq for messaging instead of spread" OFF)
+option(CAUV_ZMQ3 "use zmq3 for zeromq" OFF)
+if(CAUV_ZEROMQ_MESSAGING)
+    if(CAUV_ZMQ3)
+        add_subdirectory(zeromq3)
+    else()
+        add_subdirectory(zeromq)
+    endif()
     add_definitions(-DZEROMQ_MESSAGING)
-    add_subdirectory(zeromq)
 else()
     add_subdirectory(spread)
 endif()
