@@ -48,7 +48,9 @@ class auvControl(aiProcess):
         self.depth_limit = None
         self.signal_msgs = Queue.Queue(5)
         self.processing_queue = Queue.Queue()
-        self._control_state = {'prop':([0],{})}
+        #values set by the current script
+        self._control_state = {}
+        #values set by the default script
         self._control_state_default = {}
         self._sonar_state_default = {}
         
@@ -113,8 +115,9 @@ class auvControl(aiProcess):
         if self.auv.bearing != None:
             self.auv.bearing(self.auv.current_bearing)
         self.auv.pitch(0)
-        if self.auv.depth != None:
-            self.auv.depth(self.auv.current_depth)
+        #check that depth autopilot has been set,
+        if 'depth' in self._control_state and self._control_state['depth'] != None:
+            self.auv.depth(self._control_state)
     @external_function
     def lights_off(self):
         self.auv.downlights(0)
@@ -143,6 +146,16 @@ class auvControl(aiProcess):
         except KeyError:
             #presumably no task in the list
             pass
+        #if currently in control, need to stop
+        if self.current_task == self.default_task:
+            self.stop()
+        else:
+            #else need to clear default script state so new script gets fresh state
+            #except for depth
+            if 'depth' in self._control_state_default:
+                self._control_state_default = {'depth': self._control_state_default['depth']}
+            else:
+                self._control_state_default = {}
         self.default_task = task_id
         #dont add to list if default set to none
         if task_id:
@@ -204,7 +217,7 @@ class auvControl(aiProcess):
         new_dict = {}
         for task_id, (priority, timeout) in self.waiting_for_control.iteritems():
             if timeout and timeout < time.time():
-                getattr(self.ai, task_id)._set_unpaused()
+                getattr(self.ai, task_id)._set_paused()
                 getattr(self.ai, task_id).control_timed_out()
                 continue
             new_dict[task_id] = (priority, timeout)

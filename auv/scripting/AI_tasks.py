@@ -168,4 +168,13 @@ class default(aiTask):
         (c['stateCondition'], {'state': True}),
         ]
         
+class waypoint_demo(aiTask):
+    class options(taskOptions):
+        script_name = 'waypoint_demo'
+        priority = 2
+        detectors_enabled_while_running = True
+    conditions = [
+        (c['stateCondition'], {'state': True}),
+        ]
+        
 tasks = subclassDict(aiTask)

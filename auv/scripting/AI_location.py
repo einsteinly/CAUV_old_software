@@ -9,153 +9,120 @@ import argparse
 import traceback
 import threading
 
-
 from AI_classes import aiProcess, external_function
+from utils.vectormath import vec
+from simulator import redherring_model
 
+from Quaternion import Quat
 
-class vec:
-    def __init__(self,x,y):
-        self.x = x
-        self.y = y
-    def __add__(self, other):
-        return vec(self.x+other.x, self.y+other.y)
-    def __sub__(self, other):
-        return vec(self.x-other.x, self.y-other.y)
-    def __abs__(self):
-        return math.sqrt(dotProd(self,self))
-    def __repr__(self):
-        return "(%f,%f)"%(self.x,self.y)
-    
-def dotProd(p1,p2):
-    return p1.x*p2.x + p1.y*p2.y
+SANITY_CUTOFF = 10.0
 
-class aiLocationProvider(msg.MessageObserver):
+class aiEstimator(msg.MessageObserver):
     def __init__(self, node):
-        msg.MessageObserver.__init__(self)
-        self.node = node
-        self.node.addObserver(self)
-        # events
-        self.finished = threading.Event()
-        self.performFix = threading.Event()
-        self.stopped = threading.Event()
-        
-    def fixPosition(self):
-        # do your work in here
-        # if self.stop.is_set() is ever true you sould
-        # stop processing and return
+        self.node = node #dont clear up this node, as its the same node as in aiLocation
+
+class aiVelocityEstimator(aiEstimator):
+    def __init__(self, node):
+        aiEstimator.__init__(self, node)
+    def get_relative_position(self):
         pass
+
+class aiLocationEstimator(aiEstimator):
+    def __init__(self, node, id, location_filter):
+        aiEstimator.__init__(self, node)
+        self.id = id
+        self.location_filter = location_filter
+    def update(self, location, probability):
+        #first sanity check
+        estimated_location, estimate_probability = self.location_filter.get_estimate()
+        if estimate_probability*(estimate_location-location)/probability > SANITY_CUTOFF:
+            #might want to ignore in future
+            return
+        #then update
+        self.location_filter.update(self.id, estimate, probability)
+        
+class motorEstimator(redherring_model.Model, aiVelocityEstimator):
+    def __init__(self, node):
+        redherring_model.Model.__init__(self, node)
+        aiVelocityEstimator.__init__(self, node)
+        self.start()
+    def get_relative_position(self):
+        return vec(self.displacement[0], self.displacement[1]), 0.9
+    def reset(self):
+        self.displacement[0]=0
+        self.displacement[1]=0
+    #Overridden commands
+    def sendStateMessages(self):
+        pass
+    def onTelemetryMessage(self, m):
+        self.oreintation = Quat((m.orientation.yaw,m.orientation.roll,m.orientation.pitch))
+        self.displacement[3]=m.depth
+        
     
-    def getPosition(self):
-        # return your results from here as (x, y)
-        pass
-        
-    def stop(self):
-        self.stopped.set()
-        pass
+velocity_estimators = [motorEstimator]
+location_estimators = []
 
-    def startFix(self):
-        self.performFix.set()
-
-    def run(self):
-        while True:
-            # wait until we're told to run
-            self.performFix.clear()
-            self.performFix.wait()
-            
-            # run the fix
-            self.stopped.clear()
-            self.finished.clear()
-            self.fixPosition()
-            self.finished.set()
-
-    def isFinished(self):
-        # if stop is set then processing might not have actually finished
-        if(self.stopped.is_set()):
-            return False
-        return self.finished.is_set()
-        
+class locationFilter(object):
+    def __init__(self):
+        self.last_known_location = vec(0,0)
+        self.last_known_time = time.time()
+        self.coord_displacements = {}
+        self.velocity_estimators = []
+    def update(self, id, estimate, probability):
+        if not id in self.coord_displacements:
+            #use first estimate as 'initial' value
+            self.coord_displacements[id] = estimate-self.get_estimate() #ie 0 position
+            return
+        #this needs to be much better
+        self.last_known_location = (1-probability)*self.get_estimate()+probability*estimate
+        self.last_known_time = time.time()
+        for vel_est in self.velocity_estimators:
+            vel_est.reset()
+    def add_velocity_estimator(self, vel_est):
+        self.velocity_estimators.append(vel_est)
+        vel_est.reset()
+    def get_estimate(self):
+        total_diff = vec(0,0)
+        total_prob = 0
+        for vel_est in self.velocity_estimators:
+            posn, probability = vel_est.get_relative_position()
+            total_diff += posn*probability
+            total_prob += probability
+        #normalise
+        total_diff /= total_prob
+        return self.last_known_location+total_diff, total_prob/len(velocity_estimators)
 
 class aiLocation(aiProcess):
     def __init__(self, opts, args):
         aiProcess.__init__(self, 'location')
-        self.options = opts
+        self.options = opts.__dict__
         self.args = args
-        self.timeout = threading.Event()
-        self.auv = control.AUV(self.node)
-        
+        self.location_filter = locationFilter()
+        self.location_estimators = []
+        #initialise estimators
+        for estimator_class in velocity_estimators:
+            self.location_filter.add_velocity_estimator(estimator_class(self.node))
+        for id, estimator_class in enumerate(location_estimators):
+            self.location_estimators.append(estimator_class(self.node, id, self.location_filter))
     def run(self):
-        self.ai.auv_control.pause(self.process_name, self.options.timeout)
-    
-        scriptName = self.options.script
-    
-        # import the file passed on the command line 
-        try:
-            self.positioning = __import__('positioning.'+ scriptName, fromlist=['positioning'])
-        except Exception:
-            error("Could not import positioning script " + scriptName)
-            traceback.print_exc()
-            raise Exception
-        
-        # create an instance
-        try:
-            self.locator = self.positioning.locationProvider(self.node, self.args)
-        except Exception:
-            traceback.print_exc()
-            error("%s doesn't contain a class called locationProvider" % scriptName)
-            return
-        
-        self.locationProviderThread = threading.Thread(target=self.locator.run)
-        self.locationProviderThread.setDaemon(True)
-        self.locationProviderThread.start()
-            
-    
         while True:
-            self.timeout.clear()
-        
-            # stop the auv from being moved by other threads
-            self.ai.auv_control.pause(self.process_name, self.options.timeout)
-                        
-            info("AI_location: Running fix")
-            self.locator.startFix()
-            
-            
-            while not self.locator.isFinished():
-                if self.timeout.is_set():
-                    error("AI_location: Position provider is taking too long to give a result. Killing it")
-                    self.locator.stop()
-                    break;
-                else:
-                    time.sleep(1) # check if its finished once per second
-           
-            if self.locator.isFinished():
-                # we now should have a fix ready for us
-                position = self.locator.getPosition()
-                if position is None:
-                    info("AI_location: Positioner returned None")
-                else: info("AI_location: Positioner returned: %f, %f" % (position.x, position.y))
-                self.auv.send(msg.SonarLocationMessage(msg.floatXY(position.x, position.y))) #pylint: disable=E1101
-            
-            info("AI_location: Waiting for %i seconds before next fix attemp" % self.options.wait)
-            time.sleep(self.options.wait)                
-
-    @external_function
-    def onPauseTimeout(self):
-        error("AI_location: Pause time has run out")
-        self.timeout.set()
-        
+            time.sleep(self.options['update_period'])
+            estimate, probability = self.location_filter.get_estimate()
+            self.ai.task_manager.broadcast_position(estimate)
+    def die(self):
+        for vel_est in self.location_filter.velocity_estimators:
+            vel_est.stop()
+        aiProcess.die(self)
     
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
+    p.add_argument('-t', '--update_period', dest='update_period', type=int, default=0.5, help='location updating frequency')
     
-    p.add_argument('-w', '--wait', dest='wait', type=int, default=30, help="time to wait inbetween captures")
-    p.add_argument('-t', '--timeout', dest='timeout', type=int, default=15, help='maximum time to wait for a position fix')
-    p.add_argument('-s', '--script', dest='script', default="bay_processor", help='script to process sonar data')
-    
-    (opts, args) = p.parse_known_args()
+    opts, args = p.parse_known_args()
     
     sc = aiLocation(opts, args)
     try:
         sc.run()
     finally:
-        sc.locator.node.stop()
+        sc.node.stop()
         sc.die()

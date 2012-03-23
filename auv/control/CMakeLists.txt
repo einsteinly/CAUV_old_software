@@ -31,6 +31,7 @@ target_link_libraries (
     common
     module
     cmt
+    pthread
     ${ftdi_LIBRARIES}
 
 	SbgComSerial
