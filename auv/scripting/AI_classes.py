@@ -10,6 +10,9 @@ import traceback
 #------AI PROCESSES STUFF------
 #ai messages are of form message is (to, from, function_name, args, kwargs)
 
+debug_converters = {threading._Event: lambda x:x.is_set(),
+                    }
+
 class CommunicationError(Exception):
     pass
 
@@ -460,7 +463,10 @@ class aiScript(aiProcess):
                 for key in keys:
                     value = getattr(value, key)
                 #make sure that we can transmit it
-                value = messaging.ParamValue.create(value)
+                try:
+                    value = messaging.ParamValue.create(value)
+                except TypeError:
+                    value = messaging.ParamValue.create(debug_converters[type(value)](value))
             except Exception:
                 warning("Could not get/encode attribute %s, skipping from debug value report" %key_str)
                 continue
