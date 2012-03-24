@@ -104,6 +104,8 @@ class Image{
 
         void serializeQuality(int32_t);
 
+        float bits() const;
+
     private:
         void setDefaultCompressParams();
 

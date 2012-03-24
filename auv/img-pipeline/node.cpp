@@ -302,7 +302,9 @@ Node::Node(ConstructArgs const& args)
       m_sched(args.sched),
       m_pl(args.pl),
       m_pl_name(args.pl_name),
-      m_stopped(false){
+      m_stopped(false),
+      m_throughput_counter(0.1),
+      m_message_throttle(0){
 }
 
 
@@ -649,6 +651,9 @@ void Node::exec(){
     in_image_map_t inputs;
 
     lock_t il(m_inputs_lock);
+    
+    // calculate data rate (inputs only!)
+    float bits = 0;
 
     try{
         foreach(private_in_map_t::value_type const& v, m_inputs){
@@ -665,6 +670,7 @@ void Node::exec(){
                         throw bad_input_error(v.first);
                     }
                 }
+                bits += inputs[v.first]->bits();
             }
         }
     }catch(bad_input_error& e){
@@ -682,7 +688,7 @@ void Node::exec(){
 
     NodeStatus::e status = NodeStatus::None;
     if(allowQueue()) status |= NodeStatus::AllowQueue;
-    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status | NodeStatus::Executing));
+    _statusMessage(status | NodeStatus::Executing);
     out_map_t outputs(inputs);    
     try{
         if(m_speed == asynchronous){
@@ -698,12 +704,18 @@ void Node::exec(){
             this->doWork(inputs, outputs);
             demandNewParentInput();
         }
+        // only set data rate if something bad didn't happen:
+        m_throughput_counter.tick(bits);
+        status = NodeStatus::e(status & ~NodeStatus::Bad);
     }catch(std::exception& e){
         error() << "Error executing node: " << *this << "\n\t" << e.what();
+        m_throughput_counter.tick(0);
+        status |= NodeStatus::Bad;
     }catch(...){
         error() << "Evil error executing node: " << *this << "\n\t";
+        m_throughput_counter.tick(0);
+        status |= NodeStatus::Bad;
     }
-    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
 
     
     std::vector<output_link_t> children_to_notify;
@@ -760,8 +772,12 @@ void Node::exec(){
     }
 
     // warn if no outputs were filled
-    if(outputs.size() == 0 && m_outputs.size())
+    if(outputs.size() == 0 && m_outputs.size()){
+        status |= NodeStatus::Bad;
         warning() << *this << "exec() produced no output when some was expected";
+    }
+
+    _statusMessage(status);
 }
 
 /* Get the actual image data associated with an output
@@ -959,7 +975,11 @@ void Node::checkAddSched(SchedMode m){
                 return;
             }
             if(!ensureValidInput()){
-                debug(4) << __func__ << "Cannot enqueue" << *this << ", invalid input";
+                debug(4) << __func__ << "Cannot enqueue" << *this << ", invalid input"; 
+                NodeStatus::e status = NodeStatus::Bad;
+                if(execQueued()) status |= NodeStatus::ExecQueued;
+                if(allowQueue()) status |= NodeStatus::AllowQueue;
+                _statusMessage(status);
                 return;
             }
             break;
@@ -993,6 +1013,10 @@ void Node::checkAddSched(SchedMode m){
 
     if(wait_for_synchronisation){
         debug() << __func__ << "Cannot enqueue" << *this << ", synchronisation required";
+        NodeStatus::e status = NodeStatus::WaitingForSync;
+        if(execQueued()) status |= NodeStatus::ExecQueued;
+        if(allowQueue()) status |= NodeStatus::AllowQueue;
+        _statusMessage(status);
         return;
     }
 
@@ -1162,7 +1186,7 @@ void Node::setAllowQueue(){
     m_allow_queue = true;
     NodeStatus::e status = NodeStatus::AllowQueue;
     if(execQueued()) status |= NodeStatus::ExecQueued;
-    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
+    _statusMessage(status);
     l.unlock();
     checkAddSched();
 }
@@ -1172,7 +1196,7 @@ void Node::clearAllowQueue(){
     m_allow_queue = false;
     NodeStatus::e status = NodeStatus::e(0);
     if(execQueued()) status |= NodeStatus::ExecQueued;
-    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
+    _statusMessage(status);
 }
 
 bool Node::allowQueue() const{
@@ -1185,7 +1209,7 @@ void Node::setExecQueued(){
     m_exec_queued = true;
     NodeStatus::e status = NodeStatus::ExecQueued;
     if(allowQueue()) status |= NodeStatus::AllowQueue;
-    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
+    _statusMessage(status);
 }
 
 void Node::clearExecQueued(){
@@ -1193,7 +1217,7 @@ void Node::clearExecQueued(){
     m_exec_queued = false;
     NodeStatus::e status = NodeStatus::e(0);
     if(allowQueue()) status |= NodeStatus::AllowQueue;
-    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
+    _statusMessage(status);
     l.unlock();
     checkAddSched();
 }
@@ -1274,6 +1298,14 @@ void Node::_popQueueOutputForSync(output_id const& o_id){
         i->second->popShouldQueue();
     else
         error() << "no such output:" << o_id;
+}
+
+void Node::_statusMessage(NodeStatus::e const& status){
+    if(status & NodeStatus::Bad || ((m_message_throttle++ % 0x20) == 0))
+        m_pl.sendMessage(boost::make_shared<StatusMessage const>(
+            m_pl_name, m_id, status, m_throughput_counter.mBitPerSecond(),
+            m_throughput_counter.frequency()
+        ));
 }
 
 #ifndef NO_NODE_IO_STATUS
