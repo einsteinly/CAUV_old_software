@@ -40,6 +40,7 @@ class scriptOptions(aiScriptOptions):
 
 
 class script(aiScript):
+    debug_values = ['detected', 'centred', 'aligned', 'ready']
     def __init__(self, script_name, opts, state):
         aiScript.__init__(self, script_name, opts, state) 
         self.node.join("processing")
