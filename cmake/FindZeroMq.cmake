@@ -8,7 +8,7 @@
 find_package(PkgConfig)
 pkg_check_modules(PC_ZEROMQ QUIET libzmq)
 
-find_path(ZEROMQ_INCLUDE_DIR NAMES zmq.hpp
+find_path(ZEROMQ_INCLUDE_DIR NAMES zmq.h
           HINTS ${PC_ZEROMQ_INCLUDE_DIRS})
 
 find_library(ZEROMQ_LIBRARY NAMES zmq

@@ -67,7 +67,7 @@ class Model(messaging.MessageObserver):
         
         # Note that Quat uses degrees, NOT radians, (which is what we want)
         # the yaw component is the LOCAL YAW (about the LOCAL z axis)
-        self.orientation = Quat((0.0,0.0,45.0)) # init from yaw,roll,pitch=0
+        self.orientation = Quat((0.0,0.0,0.0)) # init from yaw,roll,pitch=0
         self.angular_velocity = np.array((0.0,0.0,0.0)) # dYaw/dt, dRoll/dt, dPitch/dt
 
         self.motor_states = MotorStates()

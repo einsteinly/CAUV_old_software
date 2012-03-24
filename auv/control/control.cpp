@@ -673,13 +673,15 @@ class ControlLoops : public MessageObserver, public IMUObserver
         {
             if(newvalue != oldvalue) {
                 oldvalue = newvalue;
-                // VBow is the wrong way round, but we want all the motors to
-                // be inverted
                 if(m_mcb){
-                    if(mid != MotorID::VBow)
+                    if(mid == MotorID::Prop)
                         m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
-                    else
+                    // VBow is the wrong way around, this set-up is for the
+                    // ducts to be on the bottom, as set on Red Herring on 22/3/2012
+                    else if(mid != MotorID::VBow)
                         m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                    else
+                        m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
                 }
                 m_mb->sendMessage(boost::make_shared<MotorStateMessage>(mid, newvalue), RELIABLE_MSG);
             }
@@ -712,9 +714,9 @@ class DeviceControlObserver : public MessageObserver
         {
             m_mcb = mcb;
         }
-        void set_xsens(boost::shared_ptr<IMU> xsens)
+        void set_imu(boost::shared_ptr<IMU> imu)
         {
-            m_xsens = xsens;
+            m_imu = imu;
         }
         
         virtual void onLightMessage(LightMessage_ptr m)
@@ -739,18 +741,17 @@ class DeviceControlObserver : public MessageObserver
 
         virtual void onCalibrateNoRotationMessage(CalibrateNoRotationMessage_ptr m)
         {
-      /*      if (m_xsens) {
-                m_xsens->calibrateNoRotation(m->duration());
+            boost::shared_ptr<XsensIMU> xsens = boost::dynamic_pointer_cast<XsensIMU>(m_imu);
+            if (xsens) {
+                xsens->calibrateNoRotation(m->duration());
             }
             else
                 warning() << "Tried to perform no rotation calibration, but there's no XSens";
-*/
-#warning calibration commented out
         }
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
-        boost::shared_ptr<IMU> m_xsens;
+        boost::shared_ptr<IMU> m_imu;
 };
 
 class TelemetryBroadcaster : public MessageObserver, public IMUObserver
@@ -1014,7 +1015,7 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
     desc.add_options()
         ("xsens,x", po::value<int>()->default_value(0), "USB device id of the Xsens")
         ("sbg,b", po::value<std::string>()->default_value("/dev/ttyUSB1"), "TTY device for SBG IG500A")
-        ("imu,i", po::value<std::string>()->default_value("xsens"), "TTY device for SBG IG500A")
+        ("imu,i", po::value<std::string>()->default_value("xsens"), "default Xsens USB device or TTY device for SBG IG500A, or both")
 
 #ifdef CAUV_MCB_IS_FTDI
         ("mcb,m", po::value<int>()->default_value(0), "FTDI device id of the MCB")
@@ -1035,9 +1036,16 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     bool use_xsens = false, use_sbg = false;    
     if (vm["imu"].as<std::string>() == ("xsens")) use_xsens = true;
     if (vm["imu"].as<std::string>() == ("sbg")) use_sbg = true;
+    if (vm["imu"].as<std::string>() == ("both") ) {
+        use_xsens = true;
+        use_sbg = true;
+    }
 
     if (vm.count("xsens") && use_xsens) {
         setXsens(vm["xsens"].as<int>());
+    }
+    if(vm.count("sbg") && use_sbg){
+        setsbg(vm["sbg"].as<std::string>().c_str(), 115200, 10);
     }
 #ifdef CAUV_MCB_IS_FTDI
     if (vm.count("mcb")) {
@@ -1056,9 +1064,7 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     else if (vm.count("depth-offset") || vm.count("depth-scale")) {
         warning() << "Need both offset and depth for calibration; ignoring calibration input";   
     }
-    if(vm.count("sbg") && use_sbg){
-        setsbg(vm["sbg"].as<std::string>().c_str(), 115200, 10);
-    }
+
     if(vm.count("simulation")){
         m_telemetryBroadcaster->setSimulationMode(true);
         m_controlLoops->setSimulationMode(true);
@@ -1092,7 +1098,7 @@ void ControlNode::onRun()
     }
 
     if (m_imu) {
-        m_deviceControl->set_xsens(m_imu);
+        m_deviceControl->set_imu(m_imu);
         
         m_imu->addObserver(boost::make_shared<DebugIMUObserver>(5));
         m_imu->addObserver(m_telemetryBroadcaster);
@@ -1102,7 +1108,7 @@ void ControlNode::onRun()
         m_imu->start();
     }
     else {
-        warning() << "Xsens not connected. Telemetry not available.";
+        warning() << "IMU not connected. Telemetry not available.";
     }
 
     m_controlLoops->start();

@@ -692,6 +692,12 @@ group processing
         circles : list<Circle>;
     }
 
+    message Ellipses : 137
+    {
+        name : string;
+        ellipses : list<Ellipse>;
+    }
+
     message Corners : 132
     {
         name : string;

@@ -143,7 +143,10 @@ class taskManager(aiProcess):
     @external_function
     def on_persist_state_change(self, task_id, key, attr):
         self.processing_queue.append(('set_task_persist_state', [task_id, key, attr], {}))
-        
+    #from location process
+    @external_function
+    def broadcast_position(self, position):
+        self.processing_queue.append(('broadcast_position_local', [position], {}))
     #helpful diagnostics
     @external_function
     def export_task_data(self, file_name):
@@ -292,6 +295,12 @@ class taskManager(aiProcess):
             self.log('Task %s failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].options.frequency_limit))
             self.tasks[task_id].options.last_called = time.time()
         getattr(self.ai,str(task_id)).confirm_exit()
+                
+    def broadcast_position_local(self,  position):
+        for task_id in self.additional_tasks:
+            getattr(self.ai, task_id)._set_position(position)
+        if self.current_task:
+            getattr(self.ai, self.current_task.id)._set_position(position)
                 
     #--function run by periodic loop--
     def start_task(self, task):
