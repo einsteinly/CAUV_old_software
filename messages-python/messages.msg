@@ -105,7 +105,9 @@ enum NodeStatus : int8 {
     None = 0,
     AllowQueue = 1,
     ExecQueued = 2,
-    Executing = 4
+    Executing = 4,
+    WaitingForSync = 8,
+    Bad = 16,
 }
 enum NodeInputStatus : int8 {
     Old = 0, New = 1, Invalid = 2
@@ -810,6 +812,8 @@ group pl_gui
         pipelineName : string;
         nodeId : int32;
         status : NodeStatus;
+        throughput : float; // bits/second
+        frequency : float; // Hz
     }
 
     message InputStatus : 122

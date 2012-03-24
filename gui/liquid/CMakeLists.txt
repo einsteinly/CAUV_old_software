@@ -26,6 +26,7 @@ else()
         ephemeralArcEnd.cpp
         layout.cpp
         arcSinkLabel.cpp
+        shadow.cpp
     )
 
     set (
@@ -46,6 +47,7 @@ else()
         layout.h
         arcSinkLabel.h
         proxyWidget.h
+        shadow.h
     )
 
     set (

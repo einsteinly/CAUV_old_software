@@ -28,6 +28,7 @@ class Button;
 class ResizeHandle;
 class NodeHeader;
 class RequiresCutout;
+class Shadow;
 
 class LiquidNode: public QGraphicsObject{
     Q_OBJECT
@@ -63,6 +64,10 @@ public:
 
     virtual NodeStyle style() const;
 
+    enum Status{ NotOK, OK };
+    Status status() const;
+    virtual void status(Status const& s, std::string const& status_information="");
+
 protected:
     void layoutChanged();
 
@@ -82,11 +87,14 @@ protected:
     QGraphicsWidget       *m_contentWidget;
     QGraphicsLinearLayout *m_contentLayout;
     QGraphicsPathItem     *m_back;
+    Shadow                *m_status_highlight;
     // ...
     //QVector<QGraphicsLineItem*> m_separators;
     QList<RequiresCutout*> m_items_requiring_cutout;
 
     NodeStyle const& m_style;
+
+    Status m_status;
 
     static QSizeF Minimum_Size;
 };

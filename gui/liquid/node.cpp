@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -31,6 +31,7 @@
 #include "button.h"
 #include "nodeHeader.h"
 #include "resize.h"
+#include "shadow.h"
 
 using namespace liquid;
 
@@ -43,7 +44,10 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
       m_contentWidget(new QGraphicsWidget(this)),
       m_contentLayout(new QGraphicsLinearLayout(Qt::Vertical)),
       m_back(new QGraphicsPathItem(this)),
-      m_style(style){
+      m_status_highlight(new Shadow(this)),
+      m_items_requiring_cutout(),      
+      m_style(style),
+      m_status(OK){
 
     setCacheMode(DeviceCoordinateCache);
 
@@ -68,6 +72,8 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     m_resizeHandle->setZValue(100);
     m_resizeHandle->setPen(m_style.resize_handle_pen);
 
+    m_status_highlight->setFlag(ItemStacksBehindParent);
+    m_status_highlight->setZValue(-100);
 
     Button *close_button = new Button(
        QRectF(0,0,24,24), QString(":/resources/icons/x_button"), NULL, this
@@ -76,6 +82,8 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
 
     connect(close_button, SIGNAL(pressed()), this, SLOT(close()));
     connect(m_contentWidget, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
+
+    status(OK);
 }
 
 LiquidNode::~LiquidNode(){
@@ -252,6 +260,7 @@ void LiquidNode::layoutChanged(){
     // an integer in mouseMoveEvent)
     p.translate(0.5,0.5);
     m_back->setPath(p);
+    m_status_highlight->setShape(m_back->shape());
 }
 
 void LiquidNode::updateLayout(){
@@ -282,3 +291,19 @@ void LiquidNode::setSizeFromContents(){
 NodeStyle LiquidNode::style() const{
     return m_style;
 }
+
+
+LiquidNode::Status LiquidNode::status() const{
+    return m_status;
+}
+
+void LiquidNode::status(Status const& s, std::string const& status_information){
+    m_status = s;
+    m_header->setInfo(QString::fromStdString(status_information));
+    if(s == OK){
+        m_status_highlight->setBrush(QBrush(Qt::NoBrush));
+    }else{
+        m_status_highlight->setBrush(QBrush(QColor(128,0,0,190)));
+    }
+}
+

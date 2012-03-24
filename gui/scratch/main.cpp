@@ -42,7 +42,9 @@ int main(int argc, char *argv[]){
     QApplication::setStyle(new cauv::gui::CauvStyle());
 
     boost::shared_ptr<ScratchNode> node = boost::make_shared<ScratchNode>("scratch");
-    node->parseOptions(argc, argv);
+    if(node->parseOptions(argc, argv))
+        return 0;
+
     node->start();
 
     cauv::gui::f::FView view(node);

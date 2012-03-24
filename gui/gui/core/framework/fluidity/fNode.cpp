@@ -15,6 +15,8 @@
 #include "fNode.h"
 
 #include <set>
+#include <ios>
+#include <iomanip>
 
 #include <QPropertyAnimation>
 #include <QGraphicsScene>
@@ -131,8 +133,8 @@ FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
     setSize(QSizeF(104,130));
     
     // !!!
-
-    m_header->setInfo(mkQStr() << id << ": 0.0MB/s 0Hz");
+    
+    status(OK);
 }
 
 
@@ -144,7 +146,6 @@ FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
       m_collapsed(false){
     initButtons();
     setType(p->nodeType());
-    m_header->setInfo(mkQStr() << p->nodeId() << ": 0.0MB/s 0Hz");
 
     setParams(p->params());
     setParamLinks(p->inputs()); // param links are inputs
@@ -154,6 +155,8 @@ FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
     
     setOutputs(p->outputs());
     setOutputLinks(p->outputs());
+
+    status(OK);
 }
 
 void FNode::setType(NodeType::e const& type){
@@ -312,6 +315,23 @@ void FNode::addImageDisplayOnInput(std::string const& input, boost::shared_ptr<I
             w, SLOT(displayImage(boost::shared_ptr<const GuiImageMessage>)));
     i->second->addWidget(w);
     setResizable(true);
+}
+
+void FNode::status(Status const& s, std::string const& status_information){
+    if(!status_information.size())
+        LiquidNode::status(s, mkStr() << m_node_id << ": unknown status");
+    else
+        LiquidNode::status(s, mkStr() << m_node_id << ": " << status_information);
+}
+
+void FNode::status(Status const& s, float const& throughput, float const& frequency){
+    LiquidNode::status(
+        s,
+        mkStr()
+            << m_node_id << ": "
+            << std::setprecision(1) << std::setiosflags(std::ios::fixed) << throughput << "Mb/s "
+            << std::setprecision(1) << std::setiosflags(std::ios::fixed) << frequency << "Hz"
+    );
 }
 
 void FNode::close(){

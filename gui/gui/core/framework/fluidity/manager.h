@@ -80,6 +80,7 @@ class Manager: public QObject,
         virtual void onArcAddedMessage(ArcAddedMessage_ptr);
         virtual void onArcRemovedMessage(ArcRemovedMessage_ptr);
         virtual void onGuiImageMessage(GuiImageMessage_ptr);
+        virtual void onStatusMessage(StatusMessage_ptr);
 
     Q_SIGNALS:
         void receivedGraphDescription(GraphDescriptionMessage_ptr);
@@ -89,6 +90,7 @@ class Manager: public QObject,
         void receivedArcAdded(ArcAddedMessage_ptr);
         void receivedArcRemoved(ArcRemovedMessage_ptr);
         void receivedGuiImage(GuiImageMessage_ptr);
+        void receivedStatus(StatusMessage_ptr);
 
     public Q_SLOTS:
         void onGraphDescription(GraphDescriptionMessage_ptr);
@@ -98,6 +100,7 @@ class Manager: public QObject,
         void onArcAdded(ArcAddedMessage_ptr);
         void onArcRemoved(ArcRemovedMessage_ptr);
         void onGuiImage(GuiImageMessage_ptr);
+        void onStatus(StatusMessage_ptr);
 
         /* When an arc is added: 
          * 1) GUI element emits arcRequested in response to drag & drop, or

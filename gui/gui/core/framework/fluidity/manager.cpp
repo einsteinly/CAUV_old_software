@@ -79,6 +79,7 @@ Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipel
     qRegisterMetaType<ArcAddedMessage_ptr>("ArcAddedMessage_ptr");
     qRegisterMetaType<ArcRemovedMessage_ptr>("ArcRemovedMessage_ptr");
     qRegisterMetaType<GuiImageMessage_ptr>("GuiImageMessage_ptr");
+    qRegisterMetaType<StatusMessage_ptr>("StatusMessage_ptr");
     connect(this, SIGNAL(receivedGraphDescription(GraphDescriptionMessage_ptr)),
             this, SLOT(onGraphDescription(GraphDescriptionMessage_ptr)));
     connect(this, SIGNAL(receivedNodeParameters(NodeParametersMessage_ptr)),
@@ -93,6 +94,8 @@ Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipel
             this, SLOT(onArcRemoved(ArcRemovedMessage_ptr)));
     connect(this, SIGNAL(receivedGuiImage(GuiImageMessage_ptr)),
             this, SLOT(onGuiImage(GuiImageMessage_ptr)));
+    connect(this, SIGNAL(receivedStatus(StatusMessage_ptr)),
+            this, SLOT(onStatus(StatusMessage_ptr)));
     
     m_layout_soon_timer->setSingleShot(true);
     connect(m_layout_soon_timer, SIGNAL(timeout()), this, SLOT(updateLayoutNow()));
@@ -172,6 +175,10 @@ void Manager::onArcRemovedMessage(ArcRemovedMessage_ptr m){
 void Manager::onGuiImageMessage(GuiImageMessage_ptr m){
     if(!_nameMatches(m)) return;
     Q_EMIT receivedGuiImage(m);
+}
+void Manager::onStatusMessage(StatusMessage_ptr m){
+    if(!_nameMatches(m)) return;
+    Q_EMIT receivedStatus(m);
 }
 
 // - Message Handling Slots:
@@ -301,6 +308,23 @@ void Manager::onGuiImage(GuiImageMessage_ptr m){
         i->second->emitImage(m);
     }else{
         warning() << "node" << m->nodeId() << "does not display images";
+    }
+}
+
+void Manager::onStatus(StatusMessage_ptr m){
+    node_id_map_t::right_iterator i = m_nodes.right().find(m->nodeId());
+    if(i != m_nodes.right().end()){
+        if(((m->status() & cauv::NodeStatus::Bad) &&
+            (i->left->liquid::LiquidNode::status() != liquid::LiquidNode::NotOK)) ||
+           !(m->status() & cauv::NodeStatus::Bad)
+        ){
+            if(m->status() & cauv::NodeStatus::Bad)
+                i->left->status(liquid::LiquidNode::NotOK, "Could Not Execute");
+            else
+                i->left->status(liquid::LiquidNode::OK, m->throughput(), m->frequency());
+        }
+    }else{
+        error() << "no such node:" << m->nodeId();
     }
 }
 

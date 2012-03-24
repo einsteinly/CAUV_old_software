@@ -78,6 +78,9 @@ class FNode: public liquid::LiquidNode,
         void connectOutputTo(std::string const& output, fnode_ptr, std::string const& input);
         void disconnectOutputFrom(std::string const& output, fnode_ptr, std::string const& input);
         void addImageDisplayOnInput(std::string const& input, boost::shared_ptr<ImageSource>);
+
+        virtual void status(Status const& s, std::string const& status_information="");
+        virtual void status(Status const& s, float const& throughput, float const& frequency);
     
     Q_SIGNALS:
         void closed(node_id_t const);
