@@ -274,13 +274,17 @@ void FNodeParamInput::initView(){
     m_view->setAutoFillBackground(false);
 
     
-    QPalette transparent_bg = palette();
+    QPalette transparent_bg_and_base = palette();
     for(int i=0; i < QPalette::NColorGroups; i++){
-         QColor color = transparent_bg.brush(QPalette::ColorGroup(i), QPalette::Window).color();
+         QColor color = transparent_bg_and_base.brush(QPalette::ColorGroup(i), QPalette::Window).color();
          color.setAlpha(0);
-         transparent_bg.setBrush(QPalette::ColorGroup(i), QPalette::Window, QBrush(color));
+         transparent_bg_and_base.setBrush(QPalette::ColorGroup(i), QPalette::Window, QBrush(color));
+
+         color = transparent_bg_and_base.brush(QPalette::ColorGroup(i), QPalette::Base).color(); 
+         color.setAlpha(0);
+         transparent_bg_and_base.setBrush(QPalette::ColorGroup(i), QPalette::Base, QBrush(color));
     }
-    m_view->setPalette(transparent_bg);
+    m_view->setPalette(transparent_bg_and_base);
 
     // umm, doesn't play well with editing widgets!
     //m_view->setStyleSheet("QTreeView {background-color: transparent;}");
@@ -296,7 +300,7 @@ void FNodeParamInput::initView(){
     m_view_proxy = new liquid::ProxyWidget();
     m_view_proxy->setWidget(m_view);
     m_view_proxy->setAutoFillBackground(false);    
-    m_view_proxy->setPalette(transparent_bg);
+    m_view_proxy->setPalette(transparent_bg_and_base);
     
     addWidget(m_view_proxy);
 }
