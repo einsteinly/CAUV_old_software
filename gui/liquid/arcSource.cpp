@@ -41,6 +41,7 @@ AbstractArcSourceInternal::AbstractArcSourceInternal(ArcStyle const& of_style,
       m_sourceDelegate(sourceDelegate),
       m_ephemeral_sink(NULL){
     debug(7) << "AbstractArcSourceInternal(delegate="<<sourceDelegate<<"): " << this;
+    // !!! TODO: instead of signals we can use ItemScenePositionHasChanged notifications
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
 }

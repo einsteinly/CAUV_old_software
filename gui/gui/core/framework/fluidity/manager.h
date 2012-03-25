@@ -125,6 +125,8 @@ class Manager: public QObject,
         void popAnimationPermittedState();
 
         void considerUpdatingLayout();
+        
+        void delayLayout();
 
     protected:
         void removeNode(node_id_t const& id);

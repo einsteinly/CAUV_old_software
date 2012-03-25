@@ -36,6 +36,7 @@ class Node
         {
             return agnameof(const_cast<Agnode_t*>(m_node));
         }
+        // NB: returned values are in pt (=1/72 inch)
         pointf coord() const
         {
             return ND_coord(const_cast<Agnode_t*>(m_node));

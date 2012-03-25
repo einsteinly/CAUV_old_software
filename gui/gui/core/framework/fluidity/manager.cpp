@@ -143,6 +143,11 @@ void Manager::considerUpdatingLayout(){
     _layoutSoonIfNothingHappens();
 }
 
+void Manager::delayLayout(){
+    if(m_layout_soon_timer->isActive())
+        _layoutSoonIfNothingHappens();
+}
+
 void Manager::setFocusPosition(QPointF p){
     m_focus_scenepos = QPointF(qRound(p.x()), qRound(p.y()));
 }

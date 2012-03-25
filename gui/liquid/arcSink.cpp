@@ -27,6 +27,7 @@ AbstractArcSink::AbstractArcSink(QGraphicsItem * parent)
       ConnectionSink(),
       LayoutItems(this){
     debug(7) << "AbstractArcSink()";
+    // !!! TODO: instead of signals we can use ItemScenePositionHasChanged notifications    
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
     connectParentSignals(parent);
@@ -54,6 +55,7 @@ QGraphicsItem* AbstractArcSink::ultimateParent(){
 void AbstractArcSink::disconnectParentSignals(QGraphicsItem* p){
     QGraphicsObject* parent = dynamic_cast<QGraphicsObject*>(p);
     if(parent){
+        // !!! TODO: instead of signals we can use ItemScenePositionHasChanged notifications
         disconnect(parent, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
         disconnect(parent, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
         disconnect(parent, SIGNAL(parentChanged()), this, SIGNAL(geometryChanged()));
@@ -64,6 +66,7 @@ void AbstractArcSink::connectParentSignals(QGraphicsItem* p){
     QGraphicsObject* parent = dynamic_cast<QGraphicsObject*>(p);
     debug(7) << "connectParentSignals:" << parent;
     if(parent){
+        // !!! TODO: instead of signals we can use ItemScenePositionHasChanged notifications
         connect(parent, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
         connect(parent, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
         connect(parent, SIGNAL(parentChanged()), this, SIGNAL(geometryChanged()));

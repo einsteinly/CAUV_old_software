@@ -72,16 +72,18 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
     
     gv::Context c;
 
-    float dpi = 96;
+    float dpi = 72;
 
     gv::Graph g("nodes", AGDIGRAPH);
     g.addGraphAttr("dpi", dpi);
     g.addGraphAttr("rankdir", "LR");
-    g.addGraphAttr("nodesep", 1);
-    g.addGraphAttr("ranksep", 1);
+    g.addGraphAttr("nodesep", 0.5);
+    g.addGraphAttr("ranksep", 0.5);
     g.addNodeAttr("shape","box");
     g.addNodeAttr("height", 1);
     g.addNodeAttr("width", 1);
+    g.addNodeAttr("fixedsize", true);
+    g.addNodeAttr("shape", "box");
 
     foreach(QGraphicsItem* n, nodes)
     {
@@ -119,6 +121,8 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
     foreach(const gv::Node& gn, g.nodes)
     {
         QGraphicsItem* n = node_names[gn.name()];
+        // Coord values are returned in pt (1/72 of an inch): we cunningly set
+        // the dpi to 72 so no conversion is needed here
         QPointF centre_pos = QPointF(gn.coord().x, gn.coord().y) - n->boundingRect().center();
         QPointF end_pos = (centre_pos - layout_rect.center()).toPoint();
 

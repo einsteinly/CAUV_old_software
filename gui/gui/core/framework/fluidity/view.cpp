@@ -238,7 +238,7 @@ void FView::scrollContentsBy(int dx, int dy){
 
 void FView::paintEvent(QPaintEvent * event){
     // hooking on resize/scroll events updates the positions too late and it
-    // looks aweful :(
+    // looks awful :(
     _updateOverlays();
     LiquidView::paintEvent(event);
 }
@@ -259,6 +259,11 @@ void FView::keyPressEvent(QKeyEvent *event){
     }
 }
 
+void FView::mouseMoveEvent(QMouseEvent *event){
+    m_manager->delayLayout();
+    LiquidView::mouseMoveEvent(event);
+}
+
 void FView::_updateOverlays(){
     std::vector< std::pair<QPoint, QGraphicsWidget*> >::const_iterator i;
     for(i = m_overlay_items.begin(); i != m_overlay_items.end(); i++){
@@ -272,7 +277,12 @@ void FView::_updateOverlays(){
         else
             y = i->first.y();
         debug(8) << "_updateOverlays:" << i->first.x() << i->first.y() << "->" << x << y;
-        i->second->setPos(mapToScene(x, y));
+        const QPointF new_pos = mapToScene(x, y);
+        if((i->second->pos() - new_pos).manhattanLength() > 0.1)
+            i->second->setPos(new_pos);
+        const float new_scale = std::sqrt(1.0/transform().determinant());
+        if(std::fabs(i->second->scale() - new_scale) > 1e-3)
+            i->second->setScale(new_scale);
     }
 }
 

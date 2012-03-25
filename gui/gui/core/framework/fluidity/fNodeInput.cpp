@@ -280,7 +280,8 @@ void FNodeParamInput::initView(){
          color.setAlpha(0);
          transparent_bg_and_base.setBrush(QPalette::ColorGroup(i), QPalette::Window, QBrush(color));
 
-         color = transparent_bg_and_base.brush(QPalette::ColorGroup(i), QPalette::Base).color(); 
+         //color = transparent_bg_and_base.brush(QPalette::ColorGroup(i), QPalette::Base).color(); 
+         color = QColor(0xf3,0xf3,0xf3);
          color.setAlpha(0);
          transparent_bg_and_base.setBrush(QPalette::ColorGroup(i), QPalette::Base, QBrush(color));
     }

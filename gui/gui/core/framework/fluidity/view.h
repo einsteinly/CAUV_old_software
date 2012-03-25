@@ -46,6 +46,8 @@ class FView: public liquid::LiquidView {
         // temporary keyboard shortcut hook:
         virtual void keyPressEvent(QKeyEvent *event);
 
+        virtual void mouseMoveEvent(QMouseEvent *event);
+
     private:
         // types
         typedef boost::shared_ptr<QAction> QAction_ptr;
