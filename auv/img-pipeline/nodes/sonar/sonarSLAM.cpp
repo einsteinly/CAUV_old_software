@@ -424,6 +424,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     const Eigen::Vector2i vis_res(param<int>("-vis resolution"),
                                   param<int>("-vis resolution"));
     const float vis_size = param<float>("-vis size");
+    image_ptr_t keypoints_image = inputs["keypoints image"];
 
     //const float xy_m_per_pix = param<float>("xy metres/px");
     //const int render_size = param<int>("-vis size");
@@ -435,10 +436,14 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
 
     image_ptr_t xy_image = inputs["xy image"];
 
-
-    // !!! TODO: propagate timestamps with sonar images, or something
+    TimeStamp ts;
+    if(keypoints_image)
+        ts = keypoints_image->ts();
+    else
+        ts = now();
+    
     cloud_ptr scan = boost::make_shared<cloud_t>(
-        keypoints, now(), SlamCloudPart<pt_t>::FilterResponse(weight_test)
+        keypoints, ts, SlamCloudPart<pt_t>::FilterResponse(weight_test)
     );
     
     boost::shared_ptr< PairwiseMatcher<pt_t> > scan_matcher;

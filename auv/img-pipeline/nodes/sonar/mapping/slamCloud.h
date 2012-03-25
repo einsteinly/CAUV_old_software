@@ -288,7 +288,7 @@ class SlamCloudGraph{
                 p->setRelativeTransform(p->globalTransform());
                 p->setRelativeToNone();
                 m_key_scans.push_back(p);
-                m_key_scan_locations->points.push_back(PointT(xyr_space_loc));
+                m_key_scan_locations->push_back(PointT(xyr_space_loc));
                 m_all_scans.push_back(p);
                 debug() << "key frame at"
                         << transformation.block<3,1>(0, 3).transpose()

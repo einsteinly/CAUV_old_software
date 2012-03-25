@@ -168,11 +168,22 @@ class KDTreeCachingCloud: public pcl::PointCloud<PointT>,
         using boost::enable_shared_from_this< KDTreeCachingCloud<PointT> >::shared_from_this;
     
         KDTreeCachingCloud()
-            : pcl::PointCloud<PointT>(), m_kdtree(), m_kdtree_invalid(true){
+            : pcl::PointCloud<PointT>(), 
+              boost::enable_shared_from_this< KDTreeCachingCloud<PointT> >(),
+              m_kdtree(),
+              m_kdtree_invalid(true){
         }
 
+        virtual ~KDTreeCachingCloud(){
+        }
+        
         inline void push_back(PointT const& p){
             base_cloud_t::push_back(p);
+            m_kdtree_invalid = true;
+        }
+
+        inline void clear(){
+            base_cloud_t::clear();
             m_kdtree_invalid = true;
         }
 
@@ -180,11 +191,15 @@ class KDTreeCachingCloud: public pcl::PointCloud<PointT>,
                             int k,
                             std::vector<int> &k_indices,
                             std::vector<float> &k_sqr_distances){
+            if(!base_cloud_t::size())
+                return 0;
             ensureKdTree();
             return m_kdtree.nearestKSearch(point, k, k_indices, k_sqr_distances);
         }
 
         float nearestSquaredDist(PointT const& point){
+            if(!base_cloud_t::size())
+                return std::numeric_limits<float>::max();
             std::vector<int> k_indices(1);
             std::vector<float> k_sqr_distances(1);
             ensureKdTree();
@@ -200,6 +215,7 @@ class KDTreeCachingCloud: public pcl::PointCloud<PointT>,
         void ensureKdTree(){
             if(m_kdtree_invalid){
                 m_kdtree_invalid = false;
+                m_kdtree = pcl::KdTreeFLANN<PointT>();
                 m_kdtree.setInputCloud(shared_from_this());
                 // clear the circular reference just created through call to
                 // base version of setInputCloud, which doesn't clobber the
@@ -214,8 +230,7 @@ class KDTreeCachingCloud: public pcl::PointCloud<PointT>,
 
 template<typename PointT>
 class SlamCloudPart: public SlamCloudLocation,
-                     public KDTreeCachingCloud<PointT>,
-                     public boost::enable_shared_from_this< SlamCloudPart<PointT> >{
+                     public KDTreeCachingCloud<PointT>{
     public:
         // - public types
         typedef boost::shared_ptr<SlamCloudPart<PointT> > Ptr;
@@ -228,7 +243,7 @@ class SlamCloudPart: public SlamCloudLocation,
         using pcl::PointCloud<PointT>::size;
         using pcl::PointCloud<PointT>::push_back;
 
-        using boost::enable_shared_from_this< SlamCloudPart<PointT> >::shared_from_this;
+        using KDTreeCachingCloud<PointT>::shared_from_this;
 
         struct FilterResponse{
             FilterResponse(float thr)
@@ -242,7 +257,7 @@ class SlamCloudPart: public SlamCloudLocation,
         template<typename Callable>
         SlamCloudPart(std::vector<KeyPoint> const& kps, TimeStamp const& t, Callable const& filter)
             : SlamCloudLocation(t),
-              boost::enable_shared_from_this< SlamCloudPart<PointT> >(),
+              KDTreeCachingCloud<PointT>(),
               m_point_descriptors(),
               m_keypoint_indices(),
               m_keypoint_goodness(kps.size(), 0),

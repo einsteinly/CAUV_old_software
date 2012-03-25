@@ -670,7 +670,8 @@ void Node::exec(){
                         throw bad_input_error(v.first);
                     }
                 }
-                bits += inputs[v.first]->bits();
+                if(inputs[v.first])
+                    bits += inputs[v.first]->bits();
             }
         }
     }catch(bad_input_error& e){
