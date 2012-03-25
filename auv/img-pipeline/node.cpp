@@ -707,6 +707,14 @@ void Node::exec(){
         // only set data rate if something bad didn't happen:
         m_throughput_counter.tick(bits);
         status = NodeStatus::e(status & ~NodeStatus::Bad);
+    }catch(user_attention_error& e){
+        // these messages are only expected from nodes (such as file/video
+        // input nodes) that are used in interactively for development. Nodes
+        // designed for autonomy should not produce these errors.
+        // !!! this message should be forwarded to GUI
+        info() << "Node stopped:" << *this << ":" << e.what();
+        m_throughput_counter.tick(0);
+        status |= NodeStatus::Bad;
     }catch(std::exception& e){
         error() << "Error executing node: " << *this << "\n\t" << e.what();
         m_throughput_counter.tick(0);
@@ -1301,7 +1309,7 @@ void Node::_popQueueOutputForSync(output_id const& o_id){
 }
 
 void Node::_statusMessage(NodeStatus::e const& status){
-    if(status & NodeStatus::Bad || ((m_message_throttle++ % 0x20) == 0))
+    if(status & NodeStatus::Bad || ((m_message_throttle++ % 0x40) == 0))
         m_pl.sendMessage(boost::make_shared<StatusMessage const>(
             m_pl_name, m_id, status, m_throughput_counter.mBitPerSecond(),
             m_throughput_counter.frequency()

@@ -218,6 +218,7 @@ void cauv::serialise(svec_ptr p, Image const& v){
     serialise(p, load_flags);
 
     std::vector<uint8_t> buf;
+    buf.reserve(converted.cols * converted.rows * converted.elemSize() * 0.2);
     try{
         cv::imencode(v.m_compress_fmt, converted, buf, v.m_compress_params);
     }catch(cv::Exception& e){
@@ -227,6 +228,7 @@ void cauv::serialise(svec_ptr p, Image const& v){
                 << "size:" << source.rows << "x" << source.cols;
     }
     // rely on efficient overload of serialise for vector<uint8_t>
+    p->reserve(p->size() + buf.size() + sizeof(v.m_ts));
     serialise(p, buf);
     serialise(p, v.m_ts);
     
