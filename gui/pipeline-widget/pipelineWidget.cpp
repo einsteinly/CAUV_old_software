@@ -911,7 +911,7 @@ void PipelineWidget::calcLayout(){
     
     gv::Context c;
 
-    float dpi = 96;
+    float dpi = 72;
 
     gv::Graph g("nodes", AGDIGRAPH);
     g.addGraphAttr("dpi", dpi);
