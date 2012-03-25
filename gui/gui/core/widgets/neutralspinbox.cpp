@@ -65,7 +65,7 @@ void NeutralSpinBox::paintEvent(QPaintEvent * )
 NeutralDoubleSpinBox::NeutralDoubleSpinBox(QWidget * parent) : QDoubleSpinBox(parent), m_neutral(0){
     this->setAlignment(Qt::AlignHCenter);
     this->setMaximum(std::numeric_limits<float>::max());
-    this->setMinimum(std::numeric_limits<float>::min());
+    this->setMinimum(-std::numeric_limits<float>::max());
 
     QPalette pal = this->palette();
     pal.setColor(QPalette::Base, Qt::transparent);

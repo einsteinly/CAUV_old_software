@@ -133,7 +133,10 @@ struct MakeModelNode: boost::static_visitor<boost::shared_ptr<cauv::gui::Node> >
 
     boost::shared_ptr<cauv::gui::Node> operator()(float const&) const{
         debug(7) << "MakeModelNode: float";
-        return boost::make_shared< cauv::gui::NumericNode<float> >(cauv::gui::nid_t(id));
+        typedef cauv::gui::NumericNode<float> float_node_t;
+        boost::shared_ptr<float_node_t> r = boost::make_shared<float_node_t>(cauv::gui::nid_t(id));
+        r->setPrecision(8);
+        return r;
     }
     
     boost::shared_ptr<cauv::gui::Node> operator()(bool const&) const{
@@ -147,8 +150,11 @@ struct MakeModelNode: boost::static_visitor<boost::shared_ptr<cauv::gui::Node> >
     }
 
     boost::shared_ptr<cauv::gui::Node> operator()(cauv::BoundedFloat const&) const{
-        debug(7) << "MakeModelNode: BoundedFloat";    
-        return boost::make_shared< cauv::gui::NumericNode<cauv::BoundedFloat> >(cauv::gui::nid_t(id));
+        debug(7) << "MakeModelNode: BoundedFloat";
+        typedef cauv::gui::NumericNode<cauv::BoundedFloat> boundedfloat_node_t;
+        boost::shared_ptr<boundedfloat_node_t> r = boost::make_shared<boundedfloat_node_t>(cauv::gui::nid_t(id));
+        r->setPrecision(5);
+        return r;
     }
 
     boost::shared_ptr<cauv::gui::Node> operator()(std::string const&) const{

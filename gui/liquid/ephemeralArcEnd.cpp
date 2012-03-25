@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -87,6 +87,12 @@ void EphemeralArcEnd::paint(QPainter *painter,
     Q_UNUSED(painter);
     Q_UNUSED(opt);
     Q_UNUSED(widget);
+}
+
+bool EphemeralArcEnd::contains(QPointF const& point) const{
+    // reimplemented to provide a bigger target for user interaction
+    const float d = 2;
+    return boundingRect().adjusted(-d,-d,d,d).contains(point);
 }
 
 void EphemeralArcEnd::removeFromScene(){

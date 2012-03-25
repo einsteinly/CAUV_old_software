@@ -37,6 +37,7 @@ class EphemeralArcEnd: public AbstractArcSink{
         void paint(QPainter *painter,
                    const QStyleOptionGraphicsItem *opt,
                    QWidget *widget);
+        virtual bool contains(QPointF const& point) const;
         
         virtual bool willAcceptConnection(ArcSourceDelegate*){return false;}
         virtual void doPresentHighlight(qreal){}

@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -116,9 +116,20 @@ void AbstractArcSourceInternal::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
         QRectF near_field(e->scenePos() - ds, e->scenePos() + ds);
         QList<QGraphicsItem *> items_at_drop = scene()->items(near_field, Qt::IntersectsItemShape);
         AbstractArcSink* sink;
-        foreach(QGraphicsItem* item, items_at_drop)
-            if((sink = dynamic_cast<AbstractArcSink*>(item)))
-                checkDoAcceptConnection(sink);
+        // only drop onto the closest possible sink (by manhattan length)
+        float closest_manhattan_length = std::numeric_limits<float>::max();
+        AbstractArcSink *closest = NULL;
+        foreach(QGraphicsItem* item, items_at_drop){
+            if((sink = dynamic_cast<AbstractArcSink*>(item)) && sink->willAcceptConnection(m_sourceDelegate)){
+                const float ml = (sink->scenePos() - e->scenePos()).manhattanLength();
+                if(ml < closest_manhattan_length){
+                    closest = sink;
+                    closest_manhattan_length = ml;
+                }
+            }
+        }
+        if(closest)
+            checkDoAcceptConnection(closest);
         if(m_ephemeral_sink){
             // sink arranges its own deletion
             scene()->sendEvent(m_ephemeral_sink, e);
