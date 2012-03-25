@@ -33,6 +33,7 @@ VideoWidget::VideoWidget(QGraphicsWidget* parent)
     qRegisterMetaType< boost::shared_ptr<const GuiImageMessage> >("boost::shared_ptr<const GuiImageMessage>");
     setMinimumSize(QSizeF(40,40));
     setPreferredSize(QSizeF(4000,400));
+    setMaximumSize(QSizeF(10000,10000));
 }
 
 void VideoWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){

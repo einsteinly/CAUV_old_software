@@ -303,7 +303,7 @@ void LiquidNode::status(Status const& s, std::string const& status_information){
     if(s == OK){
         m_status_highlight->setBrush(QBrush(Qt::NoBrush));
     }else{
-        m_status_highlight->setBrush(QBrush(QColor(128,0,0,190)));
+        m_status_highlight->setBrush(QBrush(QColor(180,0,0,200)));
     }
 }
 

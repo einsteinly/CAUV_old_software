@@ -271,6 +271,16 @@ void FNodeParamInput::initView(){
     m_view->setColumnWidth(0,80);
     m_view->addNumericDelegateToColumn(0);
     //m_view->resizeRowsToContents();
+    m_view->setAutoFillBackground(false);
+
+    
+    QPalette transparent_bg = palette();
+    for(int i=0; i < QPalette::NColorGroups; i++){
+         QColor color = transparent_bg.brush(QPalette::ColorGroup(i), QPalette::Window).color();
+         color.setAlpha(0);
+         transparent_bg.setBrush(QPalette::ColorGroup(i), QPalette::Window, QBrush(color));
+    }
+    m_view->setPalette(transparent_bg);
 
     // umm, doesn't play well with editing widgets!
     //m_view->setStyleSheet("QTreeView {background-color: transparent;}");
@@ -285,6 +295,8 @@ void FNodeParamInput::initView(){
 
     m_view_proxy = new liquid::ProxyWidget();
     m_view_proxy->setWidget(m_view);
+    m_view_proxy->setAutoFillBackground(false);    
+    m_view_proxy->setPalette(transparent_bg);
     
     addWidget(m_view_proxy);
 }
