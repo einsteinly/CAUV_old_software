@@ -304,7 +304,7 @@ Node::Node(ConstructArgs const& args)
       m_pl_name(args.pl_name),
       m_stopped(false),
       m_throughput_counter(0.1),
-      m_message_throttle(0){
+      m_message_throttle(1, 2000){ // ie, one mesage every two seconds
 }
 
 
@@ -1309,7 +1309,7 @@ void Node::_popQueueOutputForSync(output_id const& o_id){
 }
 
 void Node::_statusMessage(NodeStatus::e const& status){
-    if(status & NodeStatus::Bad || ((m_message_throttle++ % 0x40) == 0))
+    if(status & NodeStatus::Bad || m_message_throttle.click())
         m_pl.sendMessage(boost::make_shared<StatusMessage const>(
             m_pl_name, m_id, status, m_throughput_counter.mBitPerSecond(),
             m_throughput_counter.frequency()

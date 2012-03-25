@@ -768,8 +768,8 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         /* keep track of the amount of data being processed */
         cauv::ThroughputCounter m_throughput_counter;
         
-        /* only send messages a subset of the time... */
-        int m_message_throttle;
+        /* don't send status messages too frequently! */
+        RateLimiter m_message_throttle;
 };
 
 template<typename char_T, typename traits>
