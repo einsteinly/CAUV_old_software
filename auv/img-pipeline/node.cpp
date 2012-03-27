@@ -78,8 +78,7 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
         i++;
     }
     for(; i != inputs.end(); i++){
-        // != == !==
-        if(i->second && !(i->second->id() == m_uid)){
+        if(i->second && (i->second->id().host != m_uid.host || i->second->id().sensor != m_uid.sensor)){
             // if inputs have a mixture of UIDs, set output to a completely new
             // UID (but this single UID will be shared between however many
             // outputs are produced)
@@ -91,6 +90,13 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
             m_uid = mkUID(SensorUIDBase::Multiple, 0);//seq);
             uid_inherited = false;
             break;
+        }else if(i->second && (i->second->id().seq2 > m_uid.seq2 ||
+                               (i->second->id().seq2 == m_uid.seq2 && i->second->id().seq1 > m_uid.seq1))
+        ){
+            // if UIDs differ only in sequence, inherit the highest number
+            // !!! this is not ideal, but essential until images are also
+            // supported as synchronised inputs
+            m_uid = i->second->id();
         }
     }
     if(!uid_set)

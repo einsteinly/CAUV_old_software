@@ -186,6 +186,8 @@ class SlamCloudGraph{
                     transformation = Eigen::Matrix4f::Identity();
                     p->setRelativeToNone();
                     p->setRelativeTransform(transformation);
+                    const Eigen::Vector3f xyr = xytFromScanTransformation(p->globalTransform());
+                    m_key_scan_locations->push_back(PointT(xyr[0], xyr[1], xyr[2]));
                     return 1.0f;
                 }else{
                     debug() << "cloud not good enough for initialisation";
@@ -423,7 +425,7 @@ class SlamCloudGraph{
             }
         }
         
-        // return area of conveh hull in m^2
+        // return area of convex hull in m^2
         static float area(cloud_ptr a){
            assert(a->size() != 0);
 
@@ -449,8 +451,13 @@ class SlamCloudGraph{
          * features, and how well it matches with itself, or something.
          */
         bool cloudIsGoodEnoughForInitialisation(cloud_ptr p) const{
-            return (p->size() > m_min_initial_points) &&
-                   (area(p) > m_min_initial_area);
+            const bool enough_points = (p->size() > m_min_initial_points);
+            const bool large_enough_area = enough_points && (area(p) > m_min_initial_area);
+            if(!enough_points)
+                debug() << "too few points for initialisation:" << p->size() << "<" << m_min_initial_points;
+            else if(!large_enough_area)
+                debug() << "too small area for initialisation:" << area(p) << "<" << m_min_initial_area;
+            return enough_points && large_enough_area;
         }
 
         /* Convert 4d affine transformation of a scan origin into 3D (x, y,

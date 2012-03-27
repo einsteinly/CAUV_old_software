@@ -398,8 +398,12 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     // Because we set the parameters as synchronised, there's guaranteed to be
     // training keypoints with the same UID
     const kp_vec training_keypoints = param<kp_vec>("training: polar keypoints", keypoints_uid);
-
-    assert(keypoints.size() == training_keypoints.size());
+    
+    // or, should be guaranteed... (cases where it's been broken: swapping
+    // between two different keypoints extractors based on the same source --
+    // so UIDs match, but keypoints do not correspond)
+    if(keypoints.size() != training_keypoints.size())
+        throw std::runtime_error("training keypoints do not correspond to keypoints");
     
     // The rest of the parameters
     const int   max_iters   = param<int>("max iters");

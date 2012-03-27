@@ -28,6 +28,8 @@
 
 #include <Eigen/StdVector>
 
+#include <debug/cauv_debug.h>
+
 #include <generated/types/TimeStamp.h>
 #include <generated/types/KeyPoint.h>
 
@@ -48,6 +50,7 @@ class SlamCloudLocation{
             : m_relative_to(),
               m_relative_transformation(Eigen::Matrix4f::Identity()),
               m_time(t){
+            _checkAlignment();
         }
 
         template<typename PointT>
@@ -55,6 +58,7 @@ class SlamCloudLocation{
             : m_relative_to(p->m_relative_to),
               m_relative_transformation(p->m_relative_transformation),
               m_time(p->m_time){
+            _checkAlignment();
         }
 
         explicit SlamCloudLocation(float x, float y, float theta_radians)
@@ -63,6 +67,7 @@ class SlamCloudLocation{
               m_time(){
             m_relative_transformation.block<2,1>(0,3) = Eigen::Vector2f(x, y);
             m_relative_transformation.block<2,2>(0,0) *= Eigen::Matrix2f(Eigen::Rotation2D<float>(theta_radians));
+            _checkAlignment();
         }
 
         virtual ~SlamCloudLocation(){
@@ -144,6 +149,15 @@ class SlamCloudLocation{
         virtual void transformationChanged(){}
 
     private:
+        void _checkAlignment() const{
+            #ifndef CAUV_NO_DEBUG
+            if(int64_t(&m_relative_transformation) & 0x7)
+                error() << "Bad Alignment of SlamCloudLocation: this:" << this
+                        << "m_rel_tr:" << &m_relative_transformation
+                        << "Bad things will happen!";
+            #endif
+        }
+
         typedef std::vector< RelativePose, Eigen::aligned_allocator<RelativePose> > rel_pose_vec;
     
         location_ptr    m_relative_to;
@@ -172,6 +186,10 @@ class KDTreeCachingCloud: public pcl::PointCloud<PointT>,
               boost::enable_shared_from_this< KDTreeCachingCloud<PointT> >(),
               m_kdtree(),
               m_kdtree_invalid(true){
+            if(int64_t((void*)dynamic_cast<pcl::PointCloud<PointT>*>(this)) & 0x7)
+                error() << "Bad alignment of KDTreeCachingCloud this:" << this
+                        << "PointCloud<PointT> base:" << dynamic_cast<pcl::PointCloud<PointT>*>(this)
+                        << "Bad things will happen!";
         }
 
         virtual ~KDTreeCachingCloud(){
@@ -210,6 +228,9 @@ class KDTreeCachingCloud: public pcl::PointCloud<PointT>,
         void invalidateKDTree(){
             m_kdtree_invalid = true;
         }
+        
+        // derives from stuff with Eigen::stuff as members
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         
     private:
         void ensureKdTree(){
