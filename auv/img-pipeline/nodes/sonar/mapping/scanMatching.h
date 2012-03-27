@@ -60,6 +60,8 @@ class PairwiseMatcher{
          *
          * relative_guess = map.relativeTransform().inverse() * guess * new_cloud.relativeTo().relativeTransform() * new_cloud.relativeTransform()
          *
+         * Where relative_guess is in the map's coordinate system.
+         *
          * so:
          * guess * new_cloud_local = map_local
          *

@@ -305,7 +305,7 @@ void SmartStreamBase::addOptions(boost::program_options::options_description& de
 {
     namespace po = boost::program_options;
     desc.add_options ()
-        ("verbose,v", po::value<unsigned int>()->implicit_value(1)->notifier(SmartStreamBase::setLevel), "Set the verbosity of debug messages")
+        ("verbose,v", po::value<int>()->implicit_value(1)->notifier(SmartStreamBase::setLevel), "Set the verbosity of debug messages")
         ("logdir,L", po::value<std::string>()->default_value("")->notifier(SmartStreamBase::setLogDirName), "The directory to log debug messages to")
     ;
 };

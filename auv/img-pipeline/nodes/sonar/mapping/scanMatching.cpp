@@ -116,7 +116,8 @@ class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
             icp.setEuclideanFitnessEpsilon(m_euclidean_fitness);
             icp.setRANSACOutlierRejectionThreshold(m_reject_threshold);
 
-            const Eigen::Matrix4f relative_guess = map->relativeTransform().inverse() * guess * new_cloud->globalTransform();
+            //const Eigen::Matrix4f relative_guess = map->relativeTransform().inverse() * guess * new_cloud->globalTransform();
+            const Eigen::Matrix4f relative_guess = new_cloud->globalTransform().inverse() *  guess.inverse() * map->relativeTransform();
 
             debug(3) << BashColour::Green << "guess:\n"
                      << guess;
@@ -146,8 +147,8 @@ class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
                 Eigen::Vector3f xytheta = xythetaFrom4dAffine(final_transform);
                 info() << BashColour::Green << "pairwise match:"
                        << xytheta[0] << "," << xytheta[1] << "rot=" << xytheta[2] << "deg";
-
-                transformation = final_transform;
+                // transform is map->new cloud, without inverse it's new->map
+                transformation = final_transform.inverse();
             }else if(score >= m_score_thr){
                 info() << BashColour::Brown
                        << "ICP pairwise match failed (error too high: "
@@ -250,7 +251,8 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
             ndt.setTransformationEpsilon(m_transform_eps);
             ndt.setEuclideanFitnessEpsilon(m_euclidean_fitness);
 
-            const Eigen::Matrix4f relative_guess = map->relativeTransform().inverse() * guess * new_cloud->globalTransform();
+            //const Eigen::Matrix4f relative_guess = map->relativeTransform().inverse() * guess * new_cloud->globalTransform();
+            const Eigen::Matrix4f relative_guess = new_cloud->globalTransform().inverse() *  guess.inverse() * map->relativeTransform();
 
             debug(3) << BashColour::Green << "guess:\n"
                      << guess;
@@ -278,8 +280,8 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
                 Eigen::Vector3f xytheta = xythetaFrom4dAffine(final_transform);
                 info() << BashColour::Green << "pairwise match:"
                        << xytheta[0] << "," << xytheta[1] << "rot=" << xytheta[2] << "deg";
-
-                transformation = final_transform;
+                // transform is map->new cloud, without inverse it's new->map
+                transformation = final_transform.inverse();
             }else if(score >= m_score_thr){
                 info() << BashColour::Brown
                        << "NDT pairwise match failed (error too high: "
