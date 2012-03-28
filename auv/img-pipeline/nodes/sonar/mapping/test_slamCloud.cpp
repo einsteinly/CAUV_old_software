@@ -31,6 +31,7 @@ namespace ci = cauv::imgproc;
 typedef pcl::PointXYZ pt_t;
 typedef ci::SlamCloudPart<pt_t> cloud_t;
 typedef cloud_t::Ptr cloud_ptr;
+typedef boost::shared_ptr<ci::SlamCloudLocation> location_ptr;
 
 typedef std::vector<cauv::KeyPoint> kp_vec;
 
@@ -100,6 +101,8 @@ int main(int argc, char** argv){
     cauv::TimeStamp t_a(0, 0);
     cauv::TimeStamp t_b(1, 0);
     cauv::TimeStamp t_c(3, 0);
+    cauv::TimeStamp t_d(4, 0);
+    cauv::TimeStamp t_e(5, 0);
     kp_vec kps_a;
     kps_a.push_back(cauv::KeyPoint(cauv::floatXY(0,0), 1, 0, 1, 0, 0));
     kps_a.push_back(cauv::KeyPoint(cauv::floatXY(0,5), 1, 0, 1, 0, 0));
@@ -115,18 +118,25 @@ int main(int argc, char** argv){
     kps_c.push_back(cauv::KeyPoint(cauv::floatXY(3,6), 1, 0, 1, 0, 0));
     kps_c.push_back(cauv::KeyPoint(cauv::floatXY(8,6), 1, 0, 1, 0, 0));
     kps_c.push_back(cauv::KeyPoint(cauv::floatXY(8,1), 1, 0, 1, 0, 0));
+    // rotated about 11 degrees about origin, shifted (-2, -1)
+    kp_vec kps_d;
+    kps_d.push_back(cauv::KeyPoint(cauv::floatXY(-2,-1), 1, 0, 1, 0, 0));
+    kps_d.push_back(cauv::KeyPoint(cauv::floatXY(-3,4), 1, 0, 1, 0, 0));
+    kps_d.push_back(cauv::KeyPoint(cauv::floatXY(2,5), 1, 0, 1, 0, 0));
+    kps_d.push_back(cauv::KeyPoint(cauv::floatXY(3,0), 1, 0, 1, 0, 0));
+    // rotated about -11 degrees, shifted -2, 0
+    kp_vec kps_e;
+    kps_e.push_back(cauv::KeyPoint(cauv::floatXY(-2,0), 1, 0, 1, 0, 0));
+    kps_e.push_back(cauv::KeyPoint(cauv::floatXY(-1,5), 1, 0, 1, 0, 0));
+    kps_e.push_back(cauv::KeyPoint(cauv::floatXY(4,4), 1, 0, 1, 0, 0));
+    kps_e.push_back(cauv::KeyPoint(cauv::floatXY(3,-1), 1, 0, 1, 0, 0));
 
     std::vector<cloud_ptr> test_clouds;
-    
-    test_clouds.push_back(boost::make_shared<cloud_t>(
-        kps_a, t_a, cloud_t::FilterResponse(0)
-    ));
-    test_clouds.push_back(boost::make_shared<cloud_t>(
-        kps_b, t_b, cloud_t::FilterResponse(0)
-    ));
-    test_clouds.push_back(boost::make_shared<cloud_t>(
-        kps_c, t_c, cloud_t::FilterResponse(0)
-    ));
+    test_clouds.push_back(boost::make_shared<cloud_t>(kps_a, t_a, cloud_t::FilterResponse(0)));
+    test_clouds.push_back(boost::make_shared<cloud_t>(kps_b, t_b, cloud_t::FilterResponse(0)));
+    test_clouds.push_back(boost::make_shared<cloud_t>(kps_c, t_c, cloud_t::FilterResponse(0)));
+    test_clouds.push_back(boost::make_shared<cloud_t>(kps_d, t_d, cloud_t::FilterResponse(0)));
+    test_clouds.push_back(boost::make_shared<cloud_t>(kps_e, t_e, cloud_t::FilterResponse(0)));
 
     ci::GraphOptimiserV1 graph_optimiser(Graph_Iters);
     boost::shared_ptr< ci::PairwiseMatcher<pt_t> > scan_matcher;
@@ -162,9 +172,9 @@ int main(int argc, char** argv){
                 d << "(" << (*scan)[j].getVector3fMap().transpose() << ")";
         }
 
-        const float delta_theta = 0;
         Eigen::Matrix4f global_transformation = Eigen::Matrix4f::Zero();
-        
+        /*
+        const float delta_theta = 0;
         Eigen::Matrix4f relative_transformation_guess = Eigen::Matrix4f::Identity();
         relative_transformation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
             Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ())
@@ -173,12 +183,22 @@ int main(int argc, char** argv){
         Eigen::Matrix4f guess = g.guessTransformationAtTime(scan->time());
         // use rotation from external guess, and translation from internal guess:
         guess.block<3,3>(0,0) = relative_transformation_guess.block<3,3>(0,0);
-
+        */
         const float confidence = g.registerScan(
-            scan, guess, *scan_matcher, graph_optimiser, global_transformation
+            scan, Eigen::Matrix4f::Identity(), *scan_matcher, graph_optimiser, global_transformation
         );
 
         debug() << "matched (confidence=" << confidence << ") at:\n" << global_transformation;
+    }
+    
+    info() << "results:";
+    foreach(location_ptr const& loc, g.allScans()){
+        const Eigen::Matrix4f a = loc->globalTransform();
+        const Eigen::Matrix2f r = a.block<2,2>(0, 0);
+        const Eigen::Vector2f t = a.block<2,1>(0, 3);
+        const Eigen::Vector2f tmp = r * Eigen::Vector2f(1,0);
+        const float rz = std::atan2(tmp[1], tmp[0]);
+        info() << "x,y=" << t[0] << "," << t[1] << "r=" << rz * 180/M_PI << "deg.";//\n" << a;
     }
 }
 

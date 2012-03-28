@@ -275,6 +275,8 @@ class SlamCloudPart: public SlamCloudLocation,
             }
             const float m_thr;
         };
+        // NB: this function converts from OpenCV image-space keypoints (y-axis
+        // downwards) to a y-axis upwards convention
         template<typename Callable>
         SlamCloudPart(std::vector<KeyPoint> const& kps, TimeStamp const& t, Callable const& filter)
             : SlamCloudLocation(t),
@@ -293,7 +295,8 @@ class SlamCloudPart: public SlamCloudLocation,
             for(size_t i = 0; i < kps.size(); i++){
                 if(!filter(kps[i]))
                     continue;
-                push_back(PointT(kps[i].pt.x, kps[i].pt.y, 0.0f), kps[i].response, i);
+                // flip the y-axis: opencv y axis is downwards
+                push_back(PointT(kps[i].pt.x, -kps[i].pt.y, 0.0f), kps[i].response, i);
                 // start out assuming all keypoints that have passed the weight
                 // test are good:
                 m_keypoint_goodness[i] = 1;

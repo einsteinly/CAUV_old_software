@@ -275,7 +275,7 @@ class SlamCloudGraph{
             for(ti = transformations.begin(); ti != transformations.end(); ti++){
                 debug(5) << "score=" << ti->first << ", relative transformation=\n" << ti->second.mat;
                 const Eigen::Vector3f xyr = xytFromScanTransformation(ti->second.mat);
-                debug(5) << "pos=" << xyr[0] << "," << xyr[1] << ": rotation=" << xyr[2] * 180/M_PI << "deg";
+                debug(5) << "pos=" << xyr[0] << "," << xyr[1] << ": rotation=" << (xyr[2]/m_rotation_scale) * 180/M_PI << "deg";
             }
             
             // Choose the best *score* (not overlap) out of these matches, and use as the

@@ -56,7 +56,8 @@ if (CAUV_POINTCLOUDS)
 
     set (CONDITIONAL_SOURCE_FILES ${CONDITIONAL_SOURCE_FILES}
         nodes/sonar/sonarSLAM.cpp
-        nodes/sonar/mapping/scanMatching.cpp        
+        nodes/sonar/mapping/scanMatchingICP.cpp
+        nodes/sonar/mapping/scanMatchingNDT.cpp
         nodes/sonar/mapping/graphOptimiser.cpp
     )
     set (CONDITIONAL_LIBS ${CONDITIONAL_LIBS} ${PCL_LIBS} ${CLIPPER_LIBRARY})
@@ -75,7 +76,8 @@ if (CAUV_POINTCLOUDS)
         add_executable (
             test_slamCloud
             nodes/sonar/mapping/test_slamCloud.cpp
-            nodes/sonar/mapping/scanMatching.cpp
+            nodes/sonar/mapping/scanMatchingICP.cpp
+            nodes/sonar/mapping/scanMatchingNDT.cpp
             nodes/sonar/mapping/graphOptimiser.cpp
         )
         target_link_libraries (

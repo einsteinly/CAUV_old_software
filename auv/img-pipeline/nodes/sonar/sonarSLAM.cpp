@@ -122,6 +122,7 @@ class SonarSLAMImpl{
               m_vis_res(0,0),
               m_vis_parameters_changed(false),
               m_vis_buffer(cv::Size(0,0), CV_8UC3, cv::Scalar(0)),
+              m_vis_last_cloud(cv::Size(0,0), CV_8UC3, cv::Scalar(0)),
               m_vis_keyframes_included(0),
               m_vis_allframes_included(0),
               m_vis_graphopt_number(0){
@@ -176,14 +177,17 @@ class SonarSLAMImpl{
 
         void initVis(){
             m_vis_parameters_changed = false;
-            m_vis_buffer = cv::Mat(cv::Size(m_vis_res[0], m_vis_res[1]), CV_8UC3, cv::Scalar(0)),
+            m_vis_buffer = cv::Mat(cv::Size(m_vis_res[0], m_vis_res[1]), CV_8UC3, cv::Scalar(0));
+            m_vis_last_cloud = cv::Mat(cv::Size(m_vis_res[0], m_vis_res[1]), CV_8UC3, cv::Scalar(0));
             m_vis_keyframes_included = 0;
             m_vis_allframes_included = 0;
             m_vis_graphopt_number = m_graph.graphOptimisationsCount();
         }
-
+        
+        // reverse the y-axis (back to OpenCV conventional image coordinates,
+        // subtract the visualisation origin, and scale
         Eigen::Vector2f toVisCoords(Eigen::Vector3f const& p) const{
-            return (p.block<2,1>(0,0) - m_vis_origin) / m_vis_metres_per_px;
+            return (Eigen::Vector2f(p[0],-p[1]) - m_vis_origin) / m_vis_metres_per_px;
         }
 
         void updateVis(){
@@ -293,6 +297,9 @@ class SonarSLAMImpl{
             m_vis_allframes_included = all_scans.size();
         }
 
+        void updateLastScanVis(){
+        }
+
         cv::Mat const& vis() const{
             return m_vis_buffer;
         }
@@ -306,6 +313,7 @@ class SonarSLAMImpl{
         bool m_vis_parameters_changed;
 
         cv::Mat m_vis_buffer;
+        cv::Mat m_vis_last_cloud;
         int m_vis_keyframes_included;
         int m_vis_allframes_included;
         int m_vis_graphopt_number;
@@ -447,7 +455,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
         ts = now();
     
     cloud_ptr scan = boost::make_shared<cloud_t>(
-        keypoints, ts, SlamCloudPart<pt_t>::FilterResponse(weight_test)
+        keypoints, ts, cloud_t::FilterResponse(weight_test)
     );
     
     boost::shared_ptr< PairwiseMatcher<pt_t> > scan_matcher;
