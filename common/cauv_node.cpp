@@ -20,7 +20,7 @@
 #include <boost/filesystem.hpp>
 
 #include <utility/string.h>
-#include <common/cauv_global.h> 
+#include <common/cauv_logo.h> 
 
 #ifdef ZEROMQ_MESSAGING
 #include <common/zeromq/zeromq_mailbox.h>
@@ -53,7 +53,7 @@ CauvNode::~CauvNode()
 
 void CauvNode::run(bool synchronous)
 {
-    cauv_global::print_module_header(m_name);
+    print_module_header(m_name);
     info() << "Module: " << m_name;
     info() << "Version:\n" << Version_Information;
 

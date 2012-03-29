@@ -14,7 +14,7 @@ add_subdirectory(supermess)
 set (
     common_files
 
-    cauv_global.cpp
+    cauv_logo.cpp
     cauv_node.cpp
     cauv_utils.cpp
     image.cpp

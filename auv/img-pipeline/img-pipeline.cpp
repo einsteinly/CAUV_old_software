@@ -19,7 +19,6 @@
 
 #include <boost/program_options.hpp>
 
-#include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 
 #include <common/mailbox.h>
