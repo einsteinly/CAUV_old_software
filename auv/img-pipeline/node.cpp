@@ -78,8 +78,7 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
         i++;
     }
     for(; i != inputs.end(); i++){
-        // != == !==
-        if(i->second && !(i->second->id() == m_uid)){
+        if(i->second && (i->second->id().host != m_uid.host || i->second->id().sensor != m_uid.sensor)){
             // if inputs have a mixture of UIDs, set output to a completely new
             // UID (but this single UID will be shared between however many
             // outputs are produced)
@@ -91,6 +90,13 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
             m_uid = mkUID(SensorUIDBase::Multiple, 0);//seq);
             uid_inherited = false;
             break;
+        }else if(i->second && (i->second->id().seq2 > m_uid.seq2 ||
+                               (i->second->id().seq2 == m_uid.seq2 && i->second->id().seq1 > m_uid.seq1))
+        ){
+            // if UIDs differ only in sequence, inherit the highest number
+            // !!! this is not ideal, but essential until images are also
+            // supported as synchronised inputs
+            m_uid = i->second->id();
         }
     }
     if(!uid_set)
@@ -187,10 +193,10 @@ Node::InternalParamValue Node::Input::getParam(bool& did_change) const{
             // make sure we have the latest
             param_value = parent_value;
         }else{
-            debug() << "Type mismatch on parameter link:" << *this
-                    << " (param=" << param_value.param.which()
-                    << "vs link=" << parent_value.param.which()
-                    << ") the last valid parameter value will be returned";
+            warning() << "Type mismatch on parameter link:" << *this
+                      << " (param=" << param_value.param.which()
+                      << "vs link=" << parent_value.param.which()
+                      << ") the last valid parameter value will be returned";
         }
     }
     return param_value;
@@ -216,10 +222,10 @@ Node::InternalParamValue Node::Input::getParam(bool& did_change, UID const& uid)
             // make sure we have the latest
             param_value = parent_value;
         }else{
-            debug() << "Type mismatch on parameter link:" << *this
-                    << " (param=" << param_value.param.which()
-                    << "vs link=" << parent_value.param.which()
-                    << ") the last valid parameter value will be returned";
+            warning() << "Type mismatch on parameter link:" << *this
+                      << " (param=" << param_value.param.which()
+                      << "vs link=" << parent_value.param.which()
+                      << ") the last valid parameter value will be returned";
         }
     }
     return param_value;
@@ -250,7 +256,7 @@ UID Node::Input::latestUIDSharedWithSync() const{
         target.node->getOutputParamUIDs(target.id) &
         syncwith_tgt.node->getOutputParamUIDs(syncwith_tgt.id);
 
-    debug() << "common UIDs:" << common_uids;
+    debug(5) << "common UIDs:" << common_uids;
     // go though in most recent order to find which is latest:
     
     return syncwith_tgt.node->mostRecentUIDOnOutputInSet(syncwith_tgt.id, common_uids);
@@ -302,7 +308,9 @@ Node::Node(ConstructArgs const& args)
       m_sched(args.sched),
       m_pl(args.pl),
       m_pl_name(args.pl_name),
-      m_stopped(false){
+      m_stopped(false),
+      m_throughput_counter(0.1),
+      m_message_throttle(1, 2000){ // ie, one mesage every two seconds
 }
 
 
@@ -313,7 +321,7 @@ Node::~Node(){
 }
 
 void Node::stop(){
-    debug(-3) << BashColour::Purple << "stop()" << *this << "check...";
+    debug() << BashColour::Purple << "stop()" << *this << "check...";
     // check that the node is not executing: if it is then there should still
     // be a shared pointer hanging around, and this node should not be being
     // destroyed, so complain loudly!
@@ -339,7 +347,7 @@ void Node::stop(){
     m_exec_queued_lock.unlock();
     m_allow_queue_lock.unlock();
 
-    debug(-3) << BashColour::Purple << "stop()" << *this << ", done";
+    debug() << BashColour::Purple << "stop()" << *this << ", done";
     m_stopped = true;
 }
 
@@ -649,6 +657,9 @@ void Node::exec(){
     in_image_map_t inputs;
 
     lock_t il(m_inputs_lock);
+    
+    // calculate data rate (inputs only!)
+    float bits = 0;
 
     try{
         foreach(private_in_map_t::value_type const& v, m_inputs){
@@ -665,6 +676,8 @@ void Node::exec(){
                         throw bad_input_error(v.first);
                     }
                 }
+                if(inputs[v.first])
+                    bits += inputs[v.first]->bits();
             }
         }
     }catch(bad_input_error& e){
@@ -682,7 +695,7 @@ void Node::exec(){
 
     NodeStatus::e status = NodeStatus::None;
     if(allowQueue()) status |= NodeStatus::AllowQueue;
-    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status | NodeStatus::Executing));
+    _statusMessage(status | NodeStatus::Executing);
     out_map_t outputs(inputs);    
     try{
         if(m_speed == asynchronous){
@@ -698,12 +711,26 @@ void Node::exec(){
             this->doWork(inputs, outputs);
             demandNewParentInput();
         }
+        // only set data rate if something bad didn't happen:
+        m_throughput_counter.tick(bits);
+        status = NodeStatus::e(status & ~NodeStatus::Bad);
+    }catch(user_attention_error& e){
+        // these messages are only expected from nodes (such as file/video
+        // input nodes) that are used in interactively for development. Nodes
+        // designed for autonomy should not produce these errors.
+        // !!! this message should be forwarded to GUI
+        info() << "Node stopped:" << *this << ":" << e.what();
+        m_throughput_counter.tick(0);
+        status |= NodeStatus::Bad;
     }catch(std::exception& e){
         error() << "Error executing node: " << *this << "\n\t" << e.what();
+        m_throughput_counter.tick(0);
+        status |= NodeStatus::Bad;
     }catch(...){
         error() << "Evil error executing node: " << *this << "\n\t";
+        m_throughput_counter.tick(0);
+        status |= NodeStatus::Bad;
     }
-    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
 
     
     std::vector<output_link_t> children_to_notify;
@@ -760,8 +787,12 @@ void Node::exec(){
     }
 
     // warn if no outputs were filled
-    if(outputs.size() == 0 && m_outputs.size())
+    if(outputs.size() == 0 && m_outputs.size()){
+        status |= NodeStatus::Bad;
         warning() << *this << "exec() produced no output when some was expected";
+    }
+
+    _statusMessage(status);
 }
 
 /* Get the actual image data associated with an output
@@ -823,7 +854,7 @@ UID Node::mostRecentUIDOnOutputInSet(output_id const& o_id,  std::set<UID> const
         reverse_foreach(output_t const& o, i->second->value_queue){
             UID t = boost::apply_visitor(output_t_GetUID(), o);
             if(uid_set.count(t)){
-                debug() << __func__ << "seq2=" << t.seq2;
+                debug(5) << __func__ << "seq2=" << t.seq2;
                 return t;
             }
         }
@@ -959,7 +990,11 @@ void Node::checkAddSched(SchedMode m){
                 return;
             }
             if(!ensureValidInput()){
-                debug(4) << __func__ << "Cannot enqueue" << *this << ", invalid input";
+                debug(4) << __func__ << "Cannot enqueue" << *this << ", invalid input"; 
+                NodeStatus::e status = NodeStatus::Bad;
+                if(execQueued()) status |= NodeStatus::ExecQueued;
+                if(allowQueue()) status |= NodeStatus::AllowQueue;
+                _statusMessage(status);
                 return;
             }
             break;
@@ -982,7 +1017,7 @@ void Node::checkAddSched(SchedMode m){
         // demand output more often than necessary
         const input_ptr ip = i->second;
         if(ip->synchronised_with && ip->target.node && !ip->synchronisedInputAvailable()){
-            debug() << "(need sync input on: " << i->first << ")";
+            debug(2) << "(need sync input on: " << i->first << ")";
             if(!demanded_additional_output_from.count(ip->target.node)){
                 ip->target.node->setNewOutputDemanded(ip->target.id);
                 demanded_additional_output_from.insert(ip->target.node);
@@ -992,7 +1027,11 @@ void Node::checkAddSched(SchedMode m){
     }
 
     if(wait_for_synchronisation){
-        debug() << __func__ << "Cannot enqueue" << *this << ", synchronisation required";
+        debug(2) << __func__ << "Cannot enqueue" << *this << ", synchronisation required";
+        NodeStatus::e status = NodeStatus::WaitingForSync;
+        if(execQueued()) status |= NodeStatus::ExecQueued;
+        if(allowQueue()) status |= NodeStatus::AllowQueue;
+        _statusMessage(status);
         return;
     }
 
@@ -1162,7 +1201,7 @@ void Node::setAllowQueue(){
     m_allow_queue = true;
     NodeStatus::e status = NodeStatus::AllowQueue;
     if(execQueued()) status |= NodeStatus::ExecQueued;
-    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
+    _statusMessage(status);
     l.unlock();
     checkAddSched();
 }
@@ -1172,7 +1211,7 @@ void Node::clearAllowQueue(){
     m_allow_queue = false;
     NodeStatus::e status = NodeStatus::e(0);
     if(execQueued()) status |= NodeStatus::ExecQueued;
-    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
+    _statusMessage(status);
 }
 
 bool Node::allowQueue() const{
@@ -1185,7 +1224,7 @@ void Node::setExecQueued(){
     m_exec_queued = true;
     NodeStatus::e status = NodeStatus::ExecQueued;
     if(allowQueue()) status |= NodeStatus::AllowQueue;
-    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
+    _statusMessage(status);
 }
 
 void Node::clearExecQueued(){
@@ -1193,7 +1232,7 @@ void Node::clearExecQueued(){
     m_exec_queued = false;
     NodeStatus::e status = NodeStatus::e(0);
     if(allowQueue()) status |= NodeStatus::AllowQueue;
-    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
+    _statusMessage(status);
     l.unlock();
     checkAddSched();
 }
@@ -1274,6 +1313,14 @@ void Node::_popQueueOutputForSync(output_id const& o_id){
         i->second->popShouldQueue();
     else
         error() << "no such output:" << o_id;
+}
+
+void Node::_statusMessage(NodeStatus::e const& status){
+    if(status & NodeStatus::Bad || m_message_throttle.click())
+        m_pl.sendMessage(boost::make_shared<StatusMessage const>(
+            m_pl_name, m_id, status, m_throughput_counter.mBitPerSecond(),
+            m_throughput_counter.frequency()
+        ));
 }
 
 #ifndef NO_NODE_IO_STATUS

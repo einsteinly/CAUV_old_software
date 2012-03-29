@@ -14,6 +14,7 @@ class AUV(messaging.MessageObserver):
         self.current_bearing = None
         self.current_depth = None
         self.current_pitch = None
+        self.depth_disabled = True
         self.bearingCV = threading.Condition()
         self.depthCV = threading.Condition()
         self.pitchCV = threading.Condition()
@@ -78,7 +79,7 @@ class AUV(messaging.MessageObserver):
         self.calibrateDepth(-928.0/86.5, 1.0/86.5)
 
     def depth(self, depth):
-        if depth is not None:
+        if depth is not None and not self.depth_disabled:
             self.send(messaging.DepthAutopilotEnabledMessage(True, depth))
         else:
             self.send(messaging.DepthAutopilotEnabledMessage(False, 0))

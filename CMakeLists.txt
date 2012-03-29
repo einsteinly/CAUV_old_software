@@ -28,6 +28,8 @@ if (CAUV_DEBUG_MESSAGES)
     add_definitions(-DCAUV_DEBUG_MESSAGES)
 endif()
 
+option(CAUV_BUILD_TESTS "Build test programs" ON)
+
 # Definitions (overridable) for Debug / Release
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG CAUV_DEBUG_LEVEL=1)
 

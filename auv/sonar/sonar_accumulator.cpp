@@ -217,7 +217,7 @@ bool SonarAccumulator::setWholeImage(PolarImage const& image){
     const float cy = radius;
     const float bscale = radius * image.rangeConversion / image.rangeEnd;
 
-    debug() << "radius =" << radius << "rows=" << m.rows << "cols=" << m.cols << "rangeEnd=" << image.rangeEnd;
+    debug(2) << "radius =" << radius << "rows=" << m.rows << "cols=" << m.cols << "rangeEnd=" << image.rangeEnd;
 
     gem_cached.ensureTablesFor(bearing_bins);
 

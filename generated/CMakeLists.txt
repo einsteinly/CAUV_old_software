@@ -47,16 +47,16 @@ add_custom_target (
 depends_on_messages(messages)
 
 add_custom_command (
-    OUTPUT ${GEND}/cauv_logo_large.h
-    COMMAND xxd -i - ${GEND}/cauv_logo_large.h < ${SRCD}/cauv_logo_large.txt
-    DEPENDS ${SRCD}/cauv_logo_large.txt
-    COMMENT "Generating cauv_logo_large.h with xxd"
+    OUTPUT ${GEND}/cauv_logo_shape.h ${GEND}/cauv_logo_colours.h
+    COMMAND xxd -i - ${GEND}/cauv_logo_shape.h < ${SRCD}/cauv_logo_shape.txt && xxd -i - ${GEND}/cauv_logo_colours.h < ${SRCD}/cauv_logo_colours.txt  
+    DEPENDS ${SRCD}/cauv_logo_shape.txt ${SRCD}/cauv_logo_colours.txt
+    COMMENT "Generating CAUV Banner with xxd"
 )
 
 add_custom_target (
     logo-headers
-    DEPENDS ${GEND}/cauv_logo_large.h
-    COMMENT "Depending on generated logo header"
+    DEPENDS ${GEND}/cauv_logo_shape.h ${GEND}/cauv_logo_colours.h
+    COMMENT "Depending on CAUV Banner"
 )
 
 add_custom_command (

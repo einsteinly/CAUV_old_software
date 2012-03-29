@@ -133,13 +133,16 @@ class SlamCloudGraph{
          * the previous transformations.
          * Returned transformation is in the global coordinate system
          */
-        Eigen::Matrix4f guessTransformationAtTime(TimeStamp const& t) const{
+        Eigen::Matrix4f guessTransformationAtTime(TimeStamp const&/* t*/) const{
             switch(m_all_scans.size()){
                 case 0:
                     return Eigen::Matrix4f::Identity();
                 case 1:
                     assert(!m_all_scans.back()->relativeTo());
                     return m_all_scans.back()->globalTransform();
+                // TODO: reinstate this now that transformation inverting has
+                // been sorted out...
+
                 // this seems to harm performance!
                 /*default:{
                     // !!! TODO: use more than one previous point for smooth
@@ -186,6 +189,8 @@ class SlamCloudGraph{
                     transformation = Eigen::Matrix4f::Identity();
                     p->setRelativeToNone();
                     p->setRelativeTransform(transformation);
+                    const Eigen::Vector3f xyr = xytFromScanTransformation(p->globalTransform());
+                    m_key_scan_locations->push_back(PointT(xyr[0], xyr[1], xyr[2]));
                     return 1.0f;
                 }else{
                     debug() << "cloud not good enough for initialisation";
@@ -220,6 +225,7 @@ class SlamCloudGraph{
                 try{
                     cloud_ptr map_cloud = i->second;
                     base_cloud_ptr transformed = boost::make_shared<base_cloud_t>();
+                    relative_transformation = Eigen::Matrix4f::Identity();
                     float score = m.transformcloudToMatch(
                         map_cloud, p, guess, relative_transformation, transformed
                     );
@@ -263,7 +269,15 @@ class SlamCloudGraph{
                     << "scores"
                     << transformations.rbegin()->first << "--"
                     << transformations.begin()->first;
-
+            
+            debug(5) << "transformations to map scans:";
+            typename cloud_constraint_map::const_iterator ti;
+            for(ti = transformations.begin(); ti != transformations.end(); ti++){
+                debug(5) << "score=" << ti->first << ", relative transformation=\n" << ti->second.mat;
+                const Eigen::Vector3f xyr = xytFromScanTransformation(ti->second.mat);
+                debug(5) << "pos=" << xyr[0] << "," << xyr[1] << ": rotation=" << (xyr[2]/m_rotation_scale) * 180/M_PI << "deg";
+            }
+            
             // Choose the best *score* (not overlap) out of these matches, and use as the
             // parent for this scan:
             const cloud_ptr       parent_map_cloud   = transformations.rbegin()->second.cloud;
@@ -288,12 +302,12 @@ class SlamCloudGraph{
                 p->setRelativeTransform(p->globalTransform());
                 p->setRelativeToNone();
                 m_key_scans.push_back(p);
-                m_key_scan_locations->points.push_back(PointT(xyr_space_loc));
+                m_key_scan_locations->push_back(PointT(xyr_space_loc));
                 m_all_scans.push_back(p);
-                debug() << "key frame at"
+                debug() << "key frame at:"
                         << transformation.block<3,1>(0, 3).transpose()
                         << ":" << std::sqrt(squared_keyframe_spacing)
-                        << "from previous scans";
+                        << "m from previous scans";
 
                 // If this is a new key scan, we need to re-run the graph
                 // optimiser:
@@ -308,6 +322,9 @@ class SlamCloudGraph{
                 // they can be prioritised
                 graph_optimiser.optimiseGraph(m_key_constraints, new_constraints);
                 m_graph_optimisation_count++;
+                transformation = p->globalTransform();
+                debug() << "post-optimisation, key frame at:"
+                        << transformation.block<3,1>(0, 3).transpose();
             }else{
                 // discard all the point data for non-key scans
                 m_all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
@@ -410,20 +427,20 @@ class SlamCloudGraph{
                 // return area of overlap as fraction of union of areas of input
                 // polys
                 // areas can be negative due to vertex order, hence the fabs-ing
-                const double union_area = std::fabs(ClipperLib::Area(solution[0]));
+                const double intersect_area = std::fabs(ClipperLib::Area(solution[0]));
                 const double a_area = std::fabs(ClipperLib::Area(clipper_poly_a));
                 const double b_area = std::fabs(ClipperLib::Area(clipper_poly_b));
 
-                debug(3) << "overlap pct =" << 1e-6*union_area
-                         << "/ (" << -1e-6*a_area << "+" << -1e-6*b_area << ") ="
-                         << union_area / (a_area + b_area) << "(m^2)";
-                return union_area / (a_area + b_area);
+                debug(3) << "overlap pct =" << 1e-6*intersect_area
+                         << "/ min(" << -1e-6*a_area << "," << -1e-6*b_area << ") ="
+                         << intersect_area / std::min(a_area,b_area);
+                return intersect_area / std::min(a_area,b_area);
             }else{
                 return 0;
             }
         }
         
-        // return area of conveh hull in m^2
+        // return area of convex hull in m^2
         static float area(cloud_ptr a){
            assert(a->size() != 0);
 
@@ -449,8 +466,13 @@ class SlamCloudGraph{
          * features, and how well it matches with itself, or something.
          */
         bool cloudIsGoodEnoughForInitialisation(cloud_ptr p) const{
-            return (p->size() > m_min_initial_points) &&
-                   (area(p) > m_min_initial_area);
+            const bool enough_points = (p->size() > m_min_initial_points);
+            const bool large_enough_area = enough_points && (area(p) > m_min_initial_area);
+            if(!enough_points)
+                debug() << "too few points for initialisation:" << p->size() << "<" << m_min_initial_points;
+            else if(!large_enough_area)
+                debug() << "too small area for initialisation:" << area(p) << "<" << m_min_initial_area;
+            return enough_points && large_enough_area;
         }
 
         /* Convert 4d affine transformation of a scan origin into 3D (x, y,
@@ -477,7 +499,7 @@ class SlamCloudGraph{
             
             while(it != end_it){
                 r.push_back(SlamCloudLocation::addConstraintBetween(
-                    p, it->second.cloud, it->second.mat
+                    it->second.cloud, p, it->second.mat
                 ));
                 it++;
             }

@@ -95,13 +95,13 @@ bool cauv::RateLimiter::click(bool blocking){
 
         // otherwise sleep until it's time to remove the element at the end of the list
         boost::posix_time::time_duration diff;
-        diff = boost::posix_time::microsec_clock::local_time() - m_timestamps.back();
+        diff = boost::posix_time::microsec_clock::universal_time() - m_timestamps.back();
         cauv::msleep(diff.total_milliseconds());
     }
 
     // once we're below the rate limit, allow the click to happen and
     // register a new timestamp for this click
-    boost::posix_time::ptime current = boost::posix_time::microsec_clock::local_time();
+    boost::posix_time::ptime current = boost::posix_time::microsec_clock::universal_time();
     m_timestamps.push_front(current);
     return true;
 }
@@ -112,7 +112,7 @@ bool cauv::RateLimiter::isSaturated() {
 
 unsigned int cauv::RateLimiter::count(){
     // remove any timestamps older than now() - m_period
-    boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+    boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
     boost::posix_time::ptime cutoff = now - boost::posix_time::milliseconds(m_period);
     while(m_timestamps.size() && (m_timestamps.back() < cutoff)){
         m_timestamps.pop_back();

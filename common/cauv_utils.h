@@ -51,7 +51,7 @@ std::string implode( const std::string &glue, const std::set<std::string> &piece
 
 class RateLimiter {
 public:
-    RateLimiter(const unsigned int max, const unsigned int period);
+    RateLimiter(const unsigned int max, const unsigned int period_milliseconds);
     bool click(bool blocking = false);
     unsigned int count();
     bool isSaturated();

@@ -67,6 +67,20 @@ struct getPrincipalMat: boost::static_visitor<cv::Mat>{
             return cv::Mat();
     }
 };
+struct getImageSizeInBits: boost::static_visitor<float>{
+    float operator()(cv::Mat a) const{
+        return a.rows * a.cols * a.elemSize() * 8;
+    }
+    float operator()(NonUniformPolarMat a) const{
+        return a.mat.rows * a.mat.cols * a.mat.elemSize() * 8; 
+    }
+    float operator()(PyramidMat a) const{
+        float r = 0;
+        foreach(cv::Mat const& m, a.levels)
+            r += operator()(m);
+        return r;
+    }
+};
 } // namespace cauv
 
 cauv::Image::Image()
@@ -164,6 +178,12 @@ void cauv::Image::serializeQuality(int q){
     }
 }
 
+
+float cauv::Image::bits() const{
+   return boost::apply_visitor(getImageSizeInBits(), m_img);
+}
+
+
 void cauv::Image::setDefaultCompressParams(){
     m_compress_params.clear();
     m_compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
@@ -198,6 +218,7 @@ void cauv::serialise(svec_ptr p, Image const& v){
     serialise(p, load_flags);
 
     std::vector<uint8_t> buf;
+    buf.reserve(converted.cols * converted.rows * converted.elemSize() * 0.2);
     try{
         cv::imencode(v.m_compress_fmt, converted, buf, v.m_compress_params);
     }catch(cv::Exception& e){
@@ -207,6 +228,7 @@ void cauv::serialise(svec_ptr p, Image const& v){
                 << "size:" << source.rows << "x" << source.cols;
     }
     // rely on efficient overload of serialise for vector<uint8_t>
+    p->reserve(p->size() + buf.size() + sizeof(v.m_ts));
     serialise(p, buf);
     serialise(p, v.m_ts);
     
