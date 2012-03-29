@@ -1,5 +1,5 @@
 find_package(ZeroMq REQUIRED)
-find_package(Ns3)
+find_package(Ns3 QUIET)
 
 include_directories(${ZEROMQ_INCLUDE_DIRS})
 
