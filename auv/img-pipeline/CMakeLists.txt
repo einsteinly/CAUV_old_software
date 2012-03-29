@@ -1,5 +1,7 @@
 # subdirs
-add_subdirectory (tests)
+if(CAUV_BUILD_TESTS)
+    add_subdirectory (tests)
+endif()
 
 set (CONDITIONAL_SOURCE_FILES )
 set (CONDITIONAL_LIBS )
@@ -54,21 +56,36 @@ if (CAUV_POINTCLOUDS)
 
     set (CONDITIONAL_SOURCE_FILES ${CONDITIONAL_SOURCE_FILES}
         nodes/sonar/sonarSLAM.cpp
-        nodes/sonar/mapping/scanMatching.cpp        
+        nodes/sonar/mapping/scanMatchingICP.cpp
+        nodes/sonar/mapping/scanMatchingNDT.cpp
         nodes/sonar/mapping/graphOptimiser.cpp
     )
     set (CONDITIONAL_LIBS ${CONDITIONAL_LIBS} ${PCL_LIBS} ${CLIPPER_LIBRARY})
-
-    add_executable (
-        test_graphOptimiser
-        nodes/sonar/mapping/test_graphOptimiser.cpp
-        nodes/sonar/mapping/graphOptimiser.cpp
-    )
-    target_link_libraries (
-        test_graphOptimiser
-        common
-        ${CONDITIONAL_LIBS}
-    )
+    
+    if(CAUV_BUILD_TESTS)
+        add_executable (
+            test_graphOptimiser
+            nodes/sonar/mapping/test_graphOptimiser.cpp
+            nodes/sonar/mapping/graphOptimiser.cpp
+        )
+        target_link_libraries (
+            test_graphOptimiser
+            common
+            ${CONDITIONAL_LIBS}
+        )
+        add_executable (
+            test_slamCloud
+            nodes/sonar/mapping/test_slamCloud.cpp
+            nodes/sonar/mapping/scanMatchingICP.cpp
+            nodes/sonar/mapping/scanMatchingNDT.cpp
+            nodes/sonar/mapping/graphOptimiser.cpp
+        )
+        target_link_libraries (
+            test_slamCloud
+            common
+            ${CONDITIONAL_LIBS}
+        )
+    endif()
 endif()
 
 # sources:

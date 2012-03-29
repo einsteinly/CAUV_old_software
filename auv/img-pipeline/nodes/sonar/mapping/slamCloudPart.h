@@ -28,6 +28,8 @@
 
 #include <Eigen/StdVector>
 
+#include <debug/cauv_debug.h>
+
 #include <generated/types/TimeStamp.h>
 #include <generated/types/KeyPoint.h>
 
@@ -48,6 +50,7 @@ class SlamCloudLocation{
             : m_relative_to(),
               m_relative_transformation(Eigen::Matrix4f::Identity()),
               m_time(t){
+            _checkAlignment();
         }
 
         template<typename PointT>
@@ -55,6 +58,7 @@ class SlamCloudLocation{
             : m_relative_to(p->m_relative_to),
               m_relative_transformation(p->m_relative_transformation),
               m_time(p->m_time){
+            _checkAlignment();
         }
 
         explicit SlamCloudLocation(float x, float y, float theta_radians)
@@ -63,6 +67,7 @@ class SlamCloudLocation{
               m_time(){
             m_relative_transformation.block<2,1>(0,3) = Eigen::Vector2f(x, y);
             m_relative_transformation.block<2,2>(0,0) *= Eigen::Matrix2f(Eigen::Rotation2D<float>(theta_radians));
+            _checkAlignment();
         }
 
         virtual ~SlamCloudLocation(){
@@ -144,6 +149,15 @@ class SlamCloudLocation{
         virtual void transformationChanged(){}
 
     private:
+        void _checkAlignment() const{
+            #ifndef CAUV_NO_DEBUG
+            if(int64_t(&m_relative_transformation) & 0x7)
+                error() << "Bad Alignment of SlamCloudLocation: this:" << this
+                        << "m_rel_tr:" << &m_relative_transformation
+                        << "Bad things will happen!";
+            #endif
+        }
+
         typedef std::vector< RelativePose, Eigen::aligned_allocator<RelativePose> > rel_pose_vec;
     
         location_ptr    m_relative_to;
@@ -168,11 +182,26 @@ class KDTreeCachingCloud: public pcl::PointCloud<PointT>,
         using boost::enable_shared_from_this< KDTreeCachingCloud<PointT> >::shared_from_this;
     
         KDTreeCachingCloud()
-            : pcl::PointCloud<PointT>(), m_kdtree(), m_kdtree_invalid(true){
+            : pcl::PointCloud<PointT>(), 
+              boost::enable_shared_from_this< KDTreeCachingCloud<PointT> >(),
+              m_kdtree(),
+              m_kdtree_invalid(true){
+            if(int64_t((void*)dynamic_cast<pcl::PointCloud<PointT>*>(this)) & 0x7)
+                error() << "Bad alignment of KDTreeCachingCloud this:" << this
+                        << "PointCloud<PointT> base:" << dynamic_cast<pcl::PointCloud<PointT>*>(this)
+                        << "Bad things will happen!";
         }
 
+        virtual ~KDTreeCachingCloud(){
+        }
+        
         inline void push_back(PointT const& p){
             base_cloud_t::push_back(p);
+            m_kdtree_invalid = true;
+        }
+
+        inline void clear(){
+            base_cloud_t::clear();
             m_kdtree_invalid = true;
         }
 
@@ -180,11 +209,15 @@ class KDTreeCachingCloud: public pcl::PointCloud<PointT>,
                             int k,
                             std::vector<int> &k_indices,
                             std::vector<float> &k_sqr_distances){
+            if(!base_cloud_t::size())
+                return 0;
             ensureKdTree();
             return m_kdtree.nearestKSearch(point, k, k_indices, k_sqr_distances);
         }
 
         float nearestSquaredDist(PointT const& point){
+            if(!base_cloud_t::size())
+                return std::numeric_limits<float>::max();
             std::vector<int> k_indices(1);
             std::vector<float> k_sqr_distances(1);
             ensureKdTree();
@@ -196,10 +229,14 @@ class KDTreeCachingCloud: public pcl::PointCloud<PointT>,
             m_kdtree_invalid = true;
         }
         
+        // derives from stuff with Eigen::stuff as members
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        
     private:
         void ensureKdTree(){
             if(m_kdtree_invalid){
                 m_kdtree_invalid = false;
+                m_kdtree = pcl::KdTreeFLANN<PointT>();
                 m_kdtree.setInputCloud(shared_from_this());
                 // clear the circular reference just created through call to
                 // base version of setInputCloud, which doesn't clobber the
@@ -214,8 +251,7 @@ class KDTreeCachingCloud: public pcl::PointCloud<PointT>,
 
 template<typename PointT>
 class SlamCloudPart: public SlamCloudLocation,
-                     public KDTreeCachingCloud<PointT>,
-                     public boost::enable_shared_from_this< SlamCloudPart<PointT> >{
+                     public KDTreeCachingCloud<PointT>{
     public:
         // - public types
         typedef boost::shared_ptr<SlamCloudPart<PointT> > Ptr;
@@ -228,7 +264,7 @@ class SlamCloudPart: public SlamCloudLocation,
         using pcl::PointCloud<PointT>::size;
         using pcl::PointCloud<PointT>::push_back;
 
-        using boost::enable_shared_from_this< SlamCloudPart<PointT> >::shared_from_this;
+        using KDTreeCachingCloud<PointT>::shared_from_this;
 
         struct FilterResponse{
             FilterResponse(float thr)
@@ -239,10 +275,12 @@ class SlamCloudPart: public SlamCloudLocation,
             }
             const float m_thr;
         };
+        // NB: this function converts from OpenCV image-space keypoints (y-axis
+        // downwards) to a y-axis upwards convention
         template<typename Callable>
         SlamCloudPart(std::vector<KeyPoint> const& kps, TimeStamp const& t, Callable const& filter)
             : SlamCloudLocation(t),
-              boost::enable_shared_from_this< SlamCloudPart<PointT> >(),
+              KDTreeCachingCloud<PointT>(),
               m_point_descriptors(),
               m_keypoint_indices(),
               m_keypoint_goodness(kps.size(), 0),
@@ -257,7 +295,8 @@ class SlamCloudPart: public SlamCloudLocation,
             for(size_t i = 0; i < kps.size(); i++){
                 if(!filter(kps[i]))
                     continue;
-                push_back(PointT(kps[i].pt.x, kps[i].pt.y, 0.0f), kps[i].response, i);
+                // flip the y-axis: opencv y axis is downwards
+                push_back(PointT(kps[i].pt.x, -kps[i].pt.y, 0.0f), kps[i].response, i);
                 // start out assuming all keypoints that have passed the weight
                 // test are good:
                 m_keypoint_goodness[i] = 1;
