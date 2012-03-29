@@ -30,6 +30,8 @@ add_custom_command (
             ${PYMSGD}/cppmess-xvariant.template.h
             ${PYMSGD}/cppmess-message_observers.template.h
             ${PYMSGD}/cppmess-message_observers.template.cpp
+            ${PYMSGD}/cppmess-groupmap.template.cpp
+            ${PYMSGD}/cppmess-groupmap.template.h
             ${PYMSGD}/msggenyacc.py
             ${PYMSGD}/msggenlex.py
             ${PYMSGD}/messages.msg

@@ -295,7 +295,7 @@ def main():
         t = Template(file = os.path.join(msgdir, "cppmess-messagetype.template.h"), searchList=tree)
         t.toCPPType = toCPPType
         filesWritten += writeIfChanged(os.path.join(output_types, "message_type.h"), str(t), options)
-        
+
         for g in tree["groups"]:
             t = Template(file = os.path.join(msgdir, "cppmess-xgroup.template.h"), searchList={"g":g})
             filesWritten += writeIfChanged(os.path.join(output_types, g.name.title() + "Group.h"), str(t), options)
@@ -340,6 +340,14 @@ def main():
         t = Template(file = os.path.join(msgdir, "cppmess-message_observers.template.cpp"), searchList=tree)
         t.toCPPType = toCPPType
         filesWritten += writeIfChanged(os.path.join(output, "message_observers.cpp"), str(t), options)
+
+        t = Template(file = os.path.join(msgdir, "cppmess-groupmap.template.cpp"), searchList=tree)
+        t.toCPPType = toCPPType
+        filesWritten += writeIfChanged(os.path.join(output, "groupmap.cpp"), str(t), options)
+    
+        t = Template(file = os.path.join(msgdir, "cppmess-groupmap.template.h"), searchList=tree)
+        t.toCPPType = toCPPType
+        filesWritten += writeIfChanged(os.path.join(output, "groupmap.h"), str(t), options)
     
     elif options.lang == "c":
         # -----------------
