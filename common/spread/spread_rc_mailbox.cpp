@@ -129,6 +129,14 @@ void ReconnectingSpreadMailbox::leaveGroup(const std::string &groupName) {
     }
 }
 
+void ReconnectingSpreadMailbox::subMessage(const Message &message) {
+    joinGroup(message.group());
+}
+
+void ReconnectingSpreadMailbox::unSubMessage(const Message &message) {
+    //do nothing
+}
+
 /**
  * @return The number of bytes sent
  */

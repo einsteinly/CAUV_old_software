@@ -24,7 +24,6 @@
 
 #ifdef ZEROMQ_MESSAGING
 #include <common/zeromq/zeromq_mailbox.h>
-#include <common/zeromq/zeromq_mailbox_monitor.h>
 #else
 #include <common/spread/spread_rc_mailbox.h>
 #include <common/spread/mailbox_monitor.h>
@@ -92,10 +91,27 @@ void CauvNode::onRun()
 
 void CauvNode::joinGroup(std::string const& group)
 {
+    info() << "Group-based subscriptions are deprecated. Switch to subMessage() if possible";
     if(m_mailbox)
         m_mailbox->joinGroup(group);
     else
         error() << "CauvNode::joinGroup: no mailbox";
+}
+
+void CauvNode::subMessage(const Message &message)
+{
+    if (m_mailbox)
+        m_mailbox->subMessage(message);
+    else
+        error() << "CauvNode::subMessage: no mailbox";
+}
+
+void CauvNode::unSubMessage(const Message &message)
+{
+    if (m_mailbox)
+        m_mailbox->subMessage(message);
+    else
+        error() << "CauvNode::unSubMessage: no mailbox";
 }
 
 void CauvNode::addMessageObserver(boost::shared_ptr<MessageObserver> o)
@@ -202,7 +218,7 @@ CauvNode::CauvNode(const std::string& name)
 #ifdef ZEROMQ_MESSAGING
       m_zeromq_mailbox(boost::make_shared<ZeroMQMailbox>()),
       m_mailbox(m_zeromq_mailbox),
-      m_event_monitor(boost::make_shared<ZeroMQMailboxEventMonitor>(m_zeromq_mailbox)),
+      m_event_monitor(m_zeromq_mailbox),
 #else
       m_spread_mailbox(boost::make_shared<ReconnectingSpreadMailbox>()),
       m_mailbox(m_spread_mailbox),
