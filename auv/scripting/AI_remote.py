@@ -4,7 +4,11 @@ from cauv.debug import info, error, debug, warning
 from AI_classes import aiProcess
 
 import cPickle
-from IPython.Shell import IPShellEmbed
+import IPython
+if [int(v) for v in IPython.__version__.split('.')] < [0,11]:
+    from IPython.Shell import IPShellEmbed as InteractiveShellEmbed #pylint: disable=E0611
+else:
+    from IPython.frontend.terminal.embed import InteractiveShellEmbed #pylint: disable=E0611
 
 class aiMessageListener(messaging.MessageObserver):
     def __init__(self, node):
@@ -99,7 +103,7 @@ def shell(ainode):
     To access AI use ainode, e.g.
     -to change a condition, run ainode.ai.task_manager.notify_condition(condition_name, *args, **kwargs)
     """
-    ipshell = IPShellEmbed()
+    ipshell = InteractiveShellEmbed()
     ipshell()
 
 class option():
