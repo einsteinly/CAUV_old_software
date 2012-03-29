@@ -100,6 +100,7 @@ enum NodeType : int8 {
     FitEllipse,
     KMeansPoints,
     DrawEllipses,
+    Sobel,
 }
 enum NodeStatus : int8 {
     None = 0,
