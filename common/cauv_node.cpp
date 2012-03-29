@@ -48,7 +48,6 @@ const static char Version_Information[] = {
 CauvNode::~CauvNode()
 {
     info() << "Shutting down node";
-    debug::setCauvNode(NULL);
     m_event_monitor->stopMonitoring();
 }
 
@@ -65,8 +64,6 @@ void CauvNode::run(bool synchronous)
 #endif
     if(!synchronous)
         m_event_monitor->startMonitoringAsync();
-
-    debug::setCauvNode(this);
 
     m_running = true;
 
@@ -172,7 +169,7 @@ int CauvNode::parseOptions(int argc, char** argv)
     po::positional_options_description pos;
     
     addOptions(desc, pos);
-    info::addOptions(desc, pos);
+    debug::addOptions(desc, pos);
     
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
@@ -186,8 +183,10 @@ void CauvNode::addOptions(boost::program_options::options_description& desc,
     namespace po = boost::program_options;
     desc.add_options()
         ("help,h", "Print this help message")
+#ifndef ZEROMQ_MESSAGING
         ("server,s", po::value<std::string>(&m_server)->default_value("localhost"), "Spread server address for messages")
         ("port,p", po::value<unsigned int>(&m_port)->default_value(16707), "Spread server port for messages")
+#endif
         ("version,V", "show version information")
     ;
 }
@@ -229,6 +228,6 @@ CauvNode::CauvNode(const std::string& name)
     debug::setProgramName(name);
     
     addMessageObserver(boost::make_shared<DBGLevelObserver>());
-    joinGroup("debug");
+    subMessage(DebugLevelMessage());
 }
 
