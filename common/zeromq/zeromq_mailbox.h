@@ -11,7 +11,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
-#include "zmq.hpp"
+#include <xs.hpp>
 
 #include <string>
 #include <map>
@@ -52,15 +52,15 @@ class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public Message
     //most internal variables are *not* threadsafe and should only be accessed
     //by the thread calling doMonitoring
     const std::string name;         //node name
-    std::string sub_bind;           //zmq connection string for this node's sub socket
-    zmq::context_t zm_context;      //main zm_context
-    zmq::socket_t pub;              //the main message publication socket
-    zmq::socket_t sub;              //the main message subscription socket
-    zmq::socket_t send_queue_push;  //inproc queue for messages (passed by pointer)
-    zmq::socket_t send_queue_pull;
-    zmq::socket_t sub_queue_push;   //inproc queue for subscriptions
-    zmq::socket_t sub_queue_pull;
-    zmq::socket_t daemon_control;   //used to communicate with vehicle_daemon
+    std::string sub_bind;           //xs connection string for this node's sub socket
+    xs::context_t zm_context;      //main zm_context
+    xs::socket_t pub;               //the main message publication socket
+    xs::socket_t sub;               //the main message subscription socket
+    xs::socket_t send_queue_push;   //inproc queue for messages (passed by pointer)
+    xs::socket_t send_queue_pull;
+    xs::socket_t sub_queue_push;    //inproc queue for subscriptions
+    xs::socket_t sub_queue_pull;
+    xs::socket_t daemon_control;    //used to communicate with vehicle_daemon
 
     boost::mutex m_send_mutex;      //guards send_queue_push socket
     boost::mutex m_sub_mutex;       //guards send_sub_push socket
@@ -81,7 +81,7 @@ class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public Message
     pids_t scan_ipc_dir(std::string dir);
     //pids which we need to send connection strings to
     pids_t send_connect_pids;
-    //zmq connections strings that this node has connected to already
+    //xs connections strings that this node has connected to already
     connections_t connections;
 
     //pushed over sub_queue_push for subscriptions

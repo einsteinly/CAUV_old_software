@@ -13,7 +13,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <zmq.h>
+#include <xs.h>
 #include <assert.h>
 #include <stdint.h>
 
@@ -29,7 +29,7 @@ class DaemonContext {
     bool running;
     const std::string working_directory;
     const std::string vehicle_name;
-    void *zmq_context;
+    void *xs_context;
     void *control_rep;
     void *network_xsub;
     void *network_xpub;
@@ -52,7 +52,7 @@ class DaemonContext {
     stats_t stats_local_to_net;
 
     void pump_message(void *from, void *to, stats_t *stats, subscriptions_t *subs);
-    zmq_msg_t message_buf;
+    xs_msg_t message_buf;
 
     void handle_control_message(void);
     static std::string handle_connect_message(void *socket, std::string connect, conn_list_t &conn_list);
@@ -69,70 +69,67 @@ DaemonContext::DaemonContext(const std::string vehicle_name, const std::string w
     running(true),
     working_directory(working_directory),
     vehicle_name(vehicle_name) {
-    zmq_context = zmq_ctx_new();
-    assert(zmq_context);
+    xs_context = xs_init();
+    assert(xs_context);
 
     int linger = 300;
-    control_rep = zmq_socket(zmq_context,ZMQ_REP);
-    network_xsub = zmq_socket(zmq_context,ZMQ_XSUB);
-    network_xpub = zmq_socket(zmq_context,ZMQ_XPUB);
-    local_xsub = zmq_socket(zmq_context,ZMQ_XSUB);
-    local_xpub = zmq_socket(zmq_context,ZMQ_XPUB);
+    control_rep = xs_socket(xs_context,XS_REP);
+    network_xsub = xs_socket(xs_context,XS_XSUB);
+    network_xpub = xs_socket(xs_context,XS_XPUB);
+    local_xsub = xs_socket(xs_context,XS_XSUB);
+    local_xpub = xs_socket(xs_context,XS_XPUB);
     assert(control_rep);
     assert(network_xsub);
     assert(network_xpub);
     assert(local_xsub);
     assert(local_xpub);
-    assert(zmq_setsockopt(control_rep, ZMQ_LINGER, &linger, sizeof(linger)) == 0);
-    assert(zmq_setsockopt(network_xsub, ZMQ_LINGER, &linger, sizeof(linger)) == 0);
-    assert(zmq_setsockopt(network_xpub, ZMQ_LINGER, &linger, sizeof(linger)) == 0);
-    assert(zmq_setsockopt(local_xsub, ZMQ_LINGER, &linger, sizeof(linger)) == 0);
-    assert(zmq_setsockopt(local_xpub, ZMQ_LINGER, &linger, sizeof(linger)) == 0);
+    assert(xs_setsockopt(control_rep, XS_LINGER, &linger, sizeof(linger)) == 0);
+    assert(xs_setsockopt(network_xsub, XS_LINGER, &linger, sizeof(linger)) == 0);
+    assert(xs_setsockopt(network_xpub, XS_LINGER, &linger, sizeof(linger)) == 0);
+    assert(xs_setsockopt(local_xsub, XS_LINGER, &linger, sizeof(linger)) == 0);
+    assert(xs_setsockopt(local_xpub, XS_LINGER, &linger, sizeof(linger)) == 0);
     std::string control_path = "ipc://" + working_directory + "/control";
-    assert(zmq_bind(control_rep,control_path.c_str()) == 0);
+    assert(xs_bind(control_rep,control_path.c_str()) == 0);
     std::string local_sub_path = "ipc://" + working_directory + "/sub";
-    assert(zmq_bind(local_xsub, local_sub_path.c_str()) == 0);
+    assert(xs_bind(local_xsub, local_sub_path.c_str()) == 0);
 
-    assert(zmq_msg_init(&message_buf) == 0);
+    assert(xs_msg_init(&message_buf) == 0);
     std::string sub_buf;
     uint32_t msgid = DAEMON_MARKER_MSGID;
     sub_buf += "\1";
     sub_buf += std::string(reinterpret_cast<char*>(&msgid),sizeof(msgid));
-    assert(zmq_send(local_xsub, sub_buf.c_str(), sub_buf.size(), 0) >= 0);
+    assert(xs_send(local_xsub, sub_buf.c_str(), sub_buf.size(), 0) >= 0);
 }
 
 DaemonContext::~DaemonContext(void) {
-    zmq_close(control_rep);
-    zmq_close(network_xsub);
-    zmq_close(network_xpub);
-    zmq_close(local_xsub);
-    zmq_close(local_xpub);
-    zmq_ctx_destroy(zmq_context);
+    xs_close(control_rep);
+    xs_close(network_xsub);
+    xs_close(network_xpub);
+    xs_close(local_xsub);
+    xs_close(local_xpub);
+    xs_term(xs_context);
 }
 
 void DaemonContext::pump_message(void *from, void *to, stats_t *stats, subscriptions_t *subs) {
     int flags = 0;
-    if (zmq_recvmsg(from, &message_buf, ZMQ_DONTWAIT) < 0) {
+    if (xs_recvmsg(from, &message_buf, XS_DONTWAIT) < 0) {
         assert(errno & (EAGAIN | EINTR));
     } else {
-        if (zmq_msg_more(&message_buf)) {
-            flags = ZMQ_SNDMORE;
-        }
         if (stats) {
-            if (zmq_msg_size(&message_buf) >= sizeof(uint32_t)) {
-                const uint32_t msg_id = *reinterpret_cast<const uint32_t*>(zmq_msg_data(&message_buf));
+            if (xs_msg_size(&message_buf) >= sizeof(uint32_t)) {
+                const uint32_t msg_id = *reinterpret_cast<const uint32_t*>(xs_msg_data(&message_buf));
                 if (msg_id == NODE_MARKER_MSGID) {
                     return;
                 }
                 (*stats)[msg_id].first++;
-                (*stats)[msg_id].second += zmq_msg_size(&message_buf);
+                (*stats)[msg_id].second += xs_msg_size(&message_buf);
             }
         }
         if (subs) {
-            if (zmq_msg_size(&message_buf) >= sizeof(uint32_t) + 1) {
-                const char sub = *reinterpret_cast<const char*>(zmq_msg_data(&message_buf));
+            if (xs_msg_size(&message_buf) >= sizeof(uint32_t) + 1) {
+                const char sub = *reinterpret_cast<const char*>(xs_msg_data(&message_buf));
                 const uint32_t msg_id = *reinterpret_cast<const uint32_t*>(
-                                            reinterpret_cast<const char*>(zmq_msg_data(&message_buf)) + 1);
+                                            reinterpret_cast<const char*>(xs_msg_data(&message_buf)) + 1);
                 if (sub) {
                     subs->insert(msg_id);
                 } else {
@@ -141,32 +138,32 @@ void DaemonContext::pump_message(void *from, void *to, stats_t *stats, subscript
             }
         }
 
-        if (zmq_sendmsg(to, &message_buf, flags) < 0) {
+        if (xs_sendmsg(to, &message_buf, flags) < 0) {
             assert(errno & (EAGAIN | EINTR));
         }
     } 
 }
 
 void DaemonContext::run(void) {
-    zmq_pollitem_t sockets[] = {
+    xs_pollitem_t sockets[] = {
         { local_xsub,
-          0, ZMQ_POLLIN, 0
+          0, XS_POLLIN, 0
         },
         { local_xpub,
-          0, ZMQ_POLLIN, 0
+          0, XS_POLLIN, 0
         },
         { network_xsub,
-          0, ZMQ_POLLIN, 0
+          0, XS_POLLIN, 0
         },
         { network_xpub,
-          0, ZMQ_POLLIN, 0
+          0, XS_POLLIN, 0
         },
         { control_rep,
-          0, ZMQ_POLLIN, 0
+          0, XS_POLLIN, 0
         }
     };
     while(running) {
-        int rc = zmq_poll(sockets, sizeof(sockets)/sizeof(sockets[0]), 10000);
+        int rc = xs_poll(sockets, sizeof(sockets)/sizeof(sockets[0]), 10000);
         if (rc < 0) {
             switch(errno) {
                 case ETERM:
@@ -181,19 +178,19 @@ void DaemonContext::run(void) {
                     break;
             }
         } else {
-            if (sockets[0].revents & ZMQ_POLLIN) {
+            if (sockets[0].revents & XS_POLLIN) {
                 pump_message(local_xsub, network_xpub, &stats_local_to_net, NULL);
             }
-            if (sockets[1].revents & ZMQ_POLLIN) {
+            if (sockets[1].revents & XS_POLLIN) {
                 pump_message(local_xpub, network_xsub, NULL, &subs_net_to_local);
             }
-            if (sockets[2].revents & ZMQ_POLLIN) {
+            if (sockets[2].revents & XS_POLLIN) {
                 pump_message(network_xsub, local_xpub, &stats_net_to_local, NULL);
             }
-            if (sockets[3].revents & ZMQ_POLLIN) {
+            if (sockets[3].revents & XS_POLLIN) {
                 pump_message(network_xpub, local_xsub, NULL, &subs_local_to_net);
             }
-            if (sockets[4].revents & ZMQ_POLLIN) {
+            if (sockets[4].revents & XS_POLLIN) {
                 handle_control_message();
             }
         }
@@ -202,9 +199,9 @@ void DaemonContext::run(void) {
 
 std::string DaemonContext::handle_connect_message(void *socket, std::string connection, conn_list_t &conn_list) {
     std::string reply;
-    if (zmq_connect(socket, connection.c_str()) < 0) {
+    if (xs_connect(socket, connection.c_str()) < 0) {
         reply = "FAILED ";
-        reply += zmq_strerror(errno);
+        reply += xs_strerror(errno);
     } else {
         reply = "SUCCESS";
         conn_list.push_back(connection);
@@ -214,9 +211,9 @@ std::string DaemonContext::handle_connect_message(void *socket, std::string conn
 
 std::string DaemonContext::handle_bind_message(void *socket, std::string bind, conn_list_t &conn_list) {
     std::string reply;
-    if (zmq_bind(socket, bind.c_str()) < 0) {
+    if (xs_bind(socket, bind.c_str()) < 0) {
         reply = "FAILED ";
-        reply += zmq_strerror(errno);
+        reply += xs_strerror(errno);
     } else {
         reply = "SUCCESS";
         conn_list.push_back(bind);
@@ -251,19 +248,19 @@ std::string DaemonContext::get_stats_string(const stats_t stats) {
 }
 
 void DaemonContext::handle_control_message(void) {
-    zmq_msg_t message;
-    assert(zmq_msg_init(&message) == 0);
-    if (zmq_recvmsg(control_rep, &message, ZMQ_DONTWAIT) < 0) {
+    xs_msg_t message;
+    assert(xs_msg_init(&message) == 0);
+    if (xs_recvmsg(control_rep, &message, XS_DONTWAIT) < 0) {
         if (errno & EFSM) {
             //try to clear state
-            zmq_send(control_rep, "", 0, ZMQ_DONTWAIT);
+            xs_send(control_rep, "", 0, XS_DONTWAIT);
         } else {
             assert(errno & (EAGAIN | EINTR));
         }
         return;
     }
-    std::string control_message(reinterpret_cast<char*> (zmq_msg_data(&message)),
-                                zmq_msg_size(&message));
+    std::string control_message(reinterpret_cast<char*> (xs_msg_data(&message)),
+                                xs_msg_size(&message));
     std::istringstream ctrl_iss(control_message);
     std::string command;
     std::string reply;
@@ -308,7 +305,7 @@ void DaemonContext::handle_control_message(void) {
        reply = "UNKNOWN";
     } 
     //XXX: possible to get stuck in wrong state here?
-    if (zmq_send(control_rep, reply.c_str(), reply.size(), ZMQ_DONTWAIT) < 0) {
+    if (xs_send(control_rep, reply.c_str(), reply.size(), XS_DONTWAIT) < 0) {
         assert(errno & (EAGAIN | EINTR));
     }
 }

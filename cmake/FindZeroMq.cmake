@@ -3,7 +3,7 @@
 #
 #  ZEROMQ_FOUND - system has ZeroMq
 #  ZEROMQ_INCLUDE_DIR - the ZeroMq include directory
-#  ZEROMQ_LIBRARIES 
+#  ZEROMQ_LIBRARY
 
 find_package(PkgConfig)
 pkg_check_modules(PC_ZEROMQ QUIET libzmq)

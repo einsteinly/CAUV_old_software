@@ -1,7 +1,8 @@
 find_package(ZeroMq REQUIRED)
+find_package(Crossroads REQUIRED)
 find_package(Ns3 QUIET)
 
-include_directories(${ZEROMQ_INCLUDE_DIRS})
+include_directories(${CROSSROADS_INCLUDE_DIRS})
 
 add_executable(vehicle_daemon
     vehicle_daemon.cpp
@@ -10,7 +11,8 @@ add_executable(vehicle_daemon
 )
 
 target_link_libraries(vehicle_daemon
-    ${ZEROMQ_LIBRARY}
+    ${CROSSROADS_LIBRARY}
+    xs
 )
 
 add_library(
@@ -23,9 +25,10 @@ add_library(
 target_link_libraries(
     zeromq_msg
 
-    ${ZEROMQ_LIBRARY}
+    ${CROSSROADS_LIBRARY}
     messages
     rt
+    xs
 )
 
 depends_on_messages(zeromq_msg)

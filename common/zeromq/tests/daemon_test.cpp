@@ -1,7 +1,5 @@
 #include <debug/cauv_debug.h>
 
-#include <common/zeromq/zmq.hpp>
-
 #include <string.h>
 #include <string>
 

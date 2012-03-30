@@ -22,14 +22,14 @@ namespace cauv {
 
 ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     name(name),
-    zm_context(1),
-    pub(zm_context, ZMQ_XPUB),
-    sub(zm_context, ZMQ_SUB),
-    send_queue_push(zm_context, ZMQ_PUSH),
-    send_queue_pull(zm_context, ZMQ_PULL),
-    sub_queue_push(zm_context, ZMQ_PUSH),
-    sub_queue_pull(zm_context, ZMQ_PULL),
-    daemon_control(zm_context, ZMQ_REQ),
+    zm_context(),
+    pub(zm_context, XS_XPUB),
+    sub(zm_context, XS_SUB),
+    send_queue_push(zm_context, XS_PUSH),
+    send_queue_pull(zm_context, XS_PULL),
+    sub_queue_push(zm_context, XS_PUSH),
+    sub_queue_pull(zm_context, XS_PULL),
+    daemon_control(zm_context, XS_REQ),
     m_monitoring(false),
     m_interrupted(false),
     daemon_connected(false) {
@@ -54,7 +54,7 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     uint32_t marker_sub[2];
     marker_sub[0] = NODE_MARKER_MSGID;
     marker_sub[1] = getpid();
-    sub.setsockopt(ZMQ_SUBSCRIBE, marker_sub, sizeof(marker_sub));
+    sub.setsockopt(XS_SUBSCRIBE, marker_sub, sizeof(marker_sub));
 
     std::string daemon_control_str;
     daemon_control_str = "ipc://" + ipc_directory + "/daemon/control";
@@ -89,7 +89,7 @@ int ZeroMQMailbox::sendMessage(boost::shared_ptr<const Message> message,
     }
     boost::lock_guard<boost::mutex> lock(m_send_mutex);
     void *msg_shared_ptr = new boost::shared_ptr<const Message>(message);
-    zmq::message_t message_wrap(msg_shared_ptr, sizeof(boost::shared_ptr<const Message>),
+    xs::message_t message_wrap(msg_shared_ptr, sizeof(boost::shared_ptr<const Message>),
                                 delete_message_shared_ptr, msg_shared_ptr);
     send_queue_push.send(message_wrap);
     //doesn't actually report bytes written, since we don't know at this stage
@@ -222,8 +222,8 @@ void ZeroMQMailbox::send_connect_message (uint32_t pid) {
 }
 
 void ZeroMQMailbox::handle_pub_message (void) {
-    zmq::message_t pub_message;
-    if (!pub.recv(&pub_message, ZMQ_DONTWAIT)) {
+    xs::message_t pub_message;
+    if (!pub.recv(&pub_message, XS_DONTWAIT)) {
         return;
     }
     char *data = reinterpret_cast<char*>(pub_message.data());
@@ -265,8 +265,8 @@ void ZeroMQMailbox::handle_pub_message (void) {
 }
 
 void ZeroMQMailbox::handle_sub_message(void) {
-    zmq::message_t inc_message;
-    if (!sub.recv(&inc_message, ZMQ_DONTWAIT)) {
+    xs::message_t inc_message;
+    if (!sub.recv(&inc_message, XS_DONTWAIT)) {
         return;
     }
     char *data = reinterpret_cast<char*>(inc_message.data());
@@ -305,7 +305,7 @@ static void delete_message_bytes(void *data, void *hint) {
 }
 
 void ZeroMQMailbox::handle_send_message(void) {
-    zmq::message_t ptr_message;
+    xs::message_t ptr_message;
     send_queue_pull.recv(&ptr_message);
     boost::shared_ptr<const Message> *msg_ptr = reinterpret_cast<boost::shared_ptr<const Message>*>(ptr_message.data());
     if (!publications.count((*msg_ptr)->id())) {
@@ -315,7 +315,7 @@ void ZeroMQMailbox::handle_send_message(void) {
     void *bytes_shared = reinterpret_cast<void*> (new const_svec_ptr(bytes));
 
     //!!! ugly cast to remove constness
-    zmq::message_t msg(const_cast<void*>(reinterpret_cast<const void*>(bytes->data())),
+    xs::message_t msg(const_cast<void*>(reinterpret_cast<const void*>(bytes->data())),
                        bytes->size(), delete_message_bytes, bytes_shared);
 #ifdef CAUV_DEBUG_MESSAGES
     debug(9) << "sending message";
@@ -329,7 +329,7 @@ void ZeroMQMailbox::handle_subscription_message(void) {
     if (sub_msg.subscribe) {
         debug(2) << "subscribing to message id" << sub_msg.msg_id;
         if (subscriptions[sub_msg.msg_id] == 0) {
-            sub.setsockopt(ZMQ_SUBSCRIBE,&sub_msg.msg_id, sizeof(sub_msg.msg_id));
+            sub.setsockopt(XS_SUBSCRIBE,&sub_msg.msg_id, sizeof(sub_msg.msg_id));
         }
         subscriptions[sub_msg.msg_id]++;
     } else {
@@ -340,13 +340,13 @@ void ZeroMQMailbox::handle_subscription_message(void) {
             subscriptions[sub_msg.msg_id]--;
         }
         if (subscriptions[sub_msg.msg_id] == 0) {
-            sub.setsockopt(ZMQ_UNSUBSCRIBE,&sub_msg.msg_id, sizeof(sub_msg.msg_id));
+            sub.setsockopt(XS_UNSUBSCRIBE,&sub_msg.msg_id, sizeof(sub_msg.msg_id));
         }
     }
 }
 
 void ZeroMQMailbox::handle_daemon_message(void) {
-    zmq::message_t reply_msg;
+    xs::message_t reply_msg;
     daemon_control.recv(&reply_msg);
     std::string reply(reinterpret_cast<char*>(reply_msg.data()), reply_msg.size());
     if (reply != "SUCCESS") {
@@ -355,21 +355,21 @@ void ZeroMQMailbox::handle_daemon_message(void) {
 }
 
 void ZeroMQMailbox::doMonitoring(void) {
-    zmq::pollitem_t sockets[] = {
+    xs::pollitem_t sockets[] = {
         { pub,
-          0, ZMQ_POLLIN, 0
+          0, XS_POLLIN, 0
         },
         { sub,
-          0, ZMQ_POLLIN, 0
+          0, XS_POLLIN, 0
         },
         { send_queue_pull,
           0, 0, 0
         },
         { sub_queue_pull,
-          0, ZMQ_POLLIN, 0
+          0, XS_POLLIN, 0
         },
         { daemon_control,
-          0, ZMQ_POLLIN, 0
+          0, XS_POLLIN, 0
         }
     };
     bool starting_up = true;
@@ -378,7 +378,7 @@ void ZeroMQMailbox::doMonitoring(void) {
     clock_gettime(CLOCK_MONOTONIC, &start_time);
     while (!m_interrupted || starting_up) {
         //use C API for this part because it's simpler
-        int rc = zmq_poll(sockets, sizeof(sockets)/sizeof(zmq::pollitem_t), timeout);
+        int rc = xs_poll(sockets, sizeof(sockets)/sizeof(xs::pollitem_t), timeout);
         if (starting_up) {
             struct timespec current_time;
             clock_gettime(CLOCK_MONOTONIC, &current_time);
@@ -393,7 +393,7 @@ void ZeroMQMailbox::doMonitoring(void) {
                 }
                 starting_up = false;
                 timeout = 300;
-                sockets[2].events |= ZMQ_POLLIN;
+                sockets[2].events |= XS_POLLIN;
                 debug() << "mailbox started up, sending messages now";
             }
         }
@@ -408,7 +408,7 @@ void ZeroMQMailbox::doMonitoring(void) {
                 break;
             case EFAULT:
             default:
-                error() << "error calling zmq_poll, Stopping monitoring";
+                error() << "error calling xs_poll, Stopping monitoring";
                 m_monitoring = false;
             }
             continue;
@@ -421,26 +421,26 @@ void ZeroMQMailbox::doMonitoring(void) {
         //
         //This gives the greatest chance that all is in order before sending
         //messages
-        if (sockets[0].revents & ZMQ_POLLIN) {
+        if (sockets[0].revents & XS_POLLIN) {
             handle_pub_message();
-        } else if (sockets[3].revents & ZMQ_POLLIN) {
+        } else if (sockets[3].revents & XS_POLLIN) {
             handle_subscription_message();
-        } else if (sockets[1].revents & ZMQ_POLLIN) {
+        } else if (sockets[1].revents & XS_POLLIN) {
             handle_sub_message();
-        } else if (sockets[2].revents & ZMQ_POLLIN) {
+        } else if (sockets[2].revents & XS_POLLIN) {
             handle_send_message();
         }
 
-        if (sockets[4].revents & ZMQ_POLLIN) {
+        if (sockets[4].revents & XS_POLLIN) {
             handle_daemon_message();
         }
     }
     debug() << "Finishing sending messages";
-    zmq::pollitem_t send_poll = {
+    xs::pollitem_t send_poll = {
         send_queue_pull,
-        0, ZMQ_POLLIN, 0 };
+        0, XS_POLLIN, 0 };
     while (true) {
-        int rc = zmq_poll(&send_poll,1,100);
+        int rc = xs_poll(&send_poll,1,100);
         if (rc <= 0) {
             break;
         } else {
