@@ -85,6 +85,8 @@ find_library( graphviz_PATHPLAN_LIBRARY
     /usr/lib
     )
 
+mark_as_advanced (graphviz_GVC_LIBRARY g graphviz_CDT_LIBRARY graphviz_GRAPH_LIBRARY g graphviz_PATHPLAN_LIBRARY )
+
 if ( graphviz_INCLUDE_DIRECTORIES AND
       graphviz_GVC_LIBRARY AND graphviz_CDT_LIBRARY AND
       graphviz_GRAPH_LIBRARY AND graphviz_PATHPLAN_LIBRARY )

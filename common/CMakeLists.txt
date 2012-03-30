@@ -35,7 +35,7 @@ set (
     boost_program_options
 )
 
-if (ZEROMQ_MESSAGING)
+if (CAUV_ZEROMQ_MESSAGING)
     list(APPEND common_links zeromq_msg)
 else()
     list(APPEND common_links spread_msg)
