@@ -169,7 +169,7 @@ int CauvNode::parseOptions(int argc, char** argv)
     po::positional_options_description pos;
     
     addOptions(desc, pos);
-    debug::addOptions(desc, pos);
+    info::addOptions(desc, pos);
     
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
