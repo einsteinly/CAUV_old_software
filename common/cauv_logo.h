@@ -12,8 +12,8 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef __CAUV_GLOBAL_H__
-#define __CAUV_GLOBAL_H__
+#ifndef __CAUV_LOGO_H__
+#define __CAUV_LOGO_H__
 
 #include <string>
 
@@ -23,4 +23,4 @@ void print_module_header(const std::string &module_name);
 
 } // namespace cauv
 
-#endif//__CAUV_GLOBAL_H__
+#endif//__CAUV_LOGO_H__
