@@ -60,15 +60,19 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     daemon_control_str = "ipc://" + ipc_directory + "/daemon/control";
     daemon_control.connect(daemon_control_str.c_str());
 
-    std::string daemon_connect_cmd;
-    daemon_connect_cmd = "LOCAL_CONNECT " + sub_bind; 
-    daemon_control.send(daemon_connect_cmd.c_str(),daemon_connect_cmd.size());
+    //std::string daemon_connect_cmd;
+    //daemon_connect_cmd = "LOCAL_CONNECT " + sub_bind; 
+    //daemon_control.send(daemon_connect_cmd.c_str(),daemon_connect_cmd.size());
 
     send_connect_pids = scan_ipc_dir(ipc_directory);
 
     std::string daemon_sub_str;
     daemon_sub_str = "ipc://" + ipc_directory + "/daemon/sub";
     pub.connect(daemon_sub_str.c_str());
+
+    std::string daemon_pub_str;
+    daemon_pub_str = "ipc://" + ipc_directory + "/daemon/pub";
+    sub.connect(daemon_pub_str.c_str());
 
     umask(old_umask);
 }

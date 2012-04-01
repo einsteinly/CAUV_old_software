@@ -92,6 +92,8 @@ DaemonContext::DaemonContext(const std::string vehicle_name, const std::string w
     assert(xs_bind(control_rep,control_path.c_str()) == 0);
     std::string local_sub_path = "ipc://" + working_directory + "/sub";
     assert(xs_bind(local_xsub, local_sub_path.c_str()) == 0);
+    std::string local_pub_path = "ipc://" + working_directory + "/pub";
+    assert(xs_bind(local_xpub, local_pub_path.c_str()) == 0);
 
     assert(xs_msg_init(&message_buf) == 0);
     std::string sub_buf;
