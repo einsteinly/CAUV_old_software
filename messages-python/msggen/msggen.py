@@ -234,7 +234,7 @@ def main():
                  type="string",
                  metavar="FILE",
                  help="output filename(s) prefix (file extension will be added depending on language) [default: INPUT]")
-    p.add_option("-t", "--template-dir", default=os.path.dirname(sys.argv[0]),
+    p.add_option("-t", "--template-dir", default=os.path.join(os.path.dirname(sys.argv[0]), 'templates'),
                  dest='template_dir', metavar="TEMPLATE_DIR",
                  help="look for template files here [default: %default]")
     p.add_option("-p", "--package",
@@ -268,6 +268,7 @@ def main():
         # -----------------
         #  C++
         # -----------------
+        msgdir = os.path.join(msgdir, 'cpp')
         
         output_types = os.path.join(output,"types")
         
@@ -345,6 +346,7 @@ def main():
         # -----------------
         #  C
         # -----------------
+        msgdir = os.path.join(msgdir, 'c')
         
         t = Template(file = os.path.join(msgdir, "cmessage.template.h"), searchList=tree)
         t.toCType = toCType
@@ -363,6 +365,7 @@ def main():
         # -----------------
         #  Python
         # -----------------
+        msgdir = os.path.join(msgdir, 'python')
         if not os.path.exists(output):
             os.makedirs(output)
         

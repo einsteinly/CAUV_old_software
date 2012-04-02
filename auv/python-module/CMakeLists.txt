@@ -61,18 +61,18 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_custom_command(
     OUTPUT ${CAUV_MESSAGE_PYTHON_FILES}
     WORKING_DIRECTORY ${PYMSGD}
-    COMMAND ./msggen.py -l python -o "${BINDIR}/" ${PYMSGD}/messages.msg
+    COMMAND ./msggen.py -l python -o "${BINDIR}/" ${MSGS}
     DEPENDS ${PYMSGD}/msggen.py
-           ${PYMSGD}/boostpy-emit_containers.cpp.template
-           ${PYMSGD}/boostpy-emit_enums.cpp.template
-           ${PYMSGD}/boostpy-emit_messages.cpp.template
-           ${PYMSGD}/boostpy-emit_message.cpp.template
-           ${PYMSGD}/boostpy-emit_observers.cpp.template
-           ${PYMSGD}/boostpy-emit_structs.cpp.template
-           ${PYMSGD}/boostpy-emit_variants.cpp.template
+           ${PYMSGD}/templates/python/boostpy-emit_containers.cpp.template
+           ${PYMSGD}/templates/python/boostpy-emit_enums.cpp.template
+           ${PYMSGD}/templates/python/boostpy-emit_messages.cpp.template
+           ${PYMSGD}/templates/python/boostpy-emit_message.cpp.template
+           ${PYMSGD}/templates/python/boostpy-emit_observers.cpp.template
+           ${PYMSGD}/templates/python/boostpy-emit_structs.cpp.template
+           ${PYMSGD}/templates/python/boostpy-emit_variants.cpp.template
            ${PYMSGD}/msggenyacc.py
            ${PYMSGD}/msggenlex.py
-           ${PYMSGD}/messages.msg
+           ${MSGS}
     COMMENT "Generating emit_*.cpp with messages-python" 
 )
 add_custom_target (python-messages-gen

@@ -14,25 +14,25 @@ target_link_libraries (
 
 add_custom_command (
     OUTPUT ${CAUV_MESSAGE_FILES}
-    COMMAND ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${PYMSGD}/messages.msg
+    COMMAND ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${MSGS}
     DEPENDS ${PYMSGD}/msggen.py
-            ${PYMSGD}/cppmess-serialise.template.h
-            ${PYMSGD}/cppmess-serialise.template.cpp
-            ${PYMSGD}/cppmess-message.template.h
-            ${PYMSGD}/cppmess-message.template.cpp
-            ${PYMSGD}/cppmess-messagetype.template.h
-            ${PYMSGD}/cppmess-xgroup.template.h
-            ${PYMSGD}/cppmess-xmessage.template.h
-            ${PYMSGD}/cppmess-xmessage.template.cpp
-            ${PYMSGD}/cppmess-xstruct.template.h
-            ${PYMSGD}/cppmess-structs.template.cpp
-            ${PYMSGD}/cppmess-xenum.template.h
-            ${PYMSGD}/cppmess-xvariant.template.h
-            ${PYMSGD}/cppmess-message_observers.template.h
-            ${PYMSGD}/cppmess-message_observers.template.cpp
+            ${PYMSGD}/templates/cpp/cppmess-serialise.template.h
+            ${PYMSGD}/templates/cpp/cppmess-serialise.template.cpp
+            ${PYMSGD}/templates/cpp/cppmess-message.template.h
+            ${PYMSGD}/templates/cpp/cppmess-message.template.cpp
+            ${PYMSGD}/templates/cpp/cppmess-messagetype.template.h
+            ${PYMSGD}/templates/cpp/cppmess-xgroup.template.h
+            ${PYMSGD}/templates/cpp/cppmess-xmessage.template.h
+            ${PYMSGD}/templates/cpp/cppmess-xmessage.template.cpp
+            ${PYMSGD}/templates/cpp/cppmess-xstruct.template.h
+            ${PYMSGD}/templates/cpp/cppmess-structs.template.cpp
+            ${PYMSGD}/templates/cpp/cppmess-xenum.template.h
+            ${PYMSGD}/templates/cpp/cppmess-xvariant.template.h
+            ${PYMSGD}/templates/cpp/cppmess-message_observers.template.h
+            ${PYMSGD}/templates/cpp/cppmess-message_observers.template.cpp
             ${PYMSGD}/msggenyacc.py
             ${PYMSGD}/msggenlex.py
-            ${PYMSGD}/messages.msg
+            ${MSGS}
     COMMENT "Generating messages"
 )
 
