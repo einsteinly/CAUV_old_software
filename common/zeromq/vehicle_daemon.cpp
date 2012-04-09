@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <utility>
+#include <algorithm>
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -16,9 +17,162 @@
 #include <xs.h>
 #include <assert.h>
 #include <stdint.h>
+#include <sys/time.h>
 
 #include "daemon_util.h"
 #include "zeromq_addresses.h"
+
+typedef std::set<uint32_t> subscriptions_t;
+typedef std::map<uint32_t,std::pair <unsigned int, unsigned long int> > stats_t;
+typedef std::vector<std::string> conn_list_t;
+
+std::ostream &operator<<(std::ostream &os, const conn_list_t &conn_list) {
+    for(conn_list_t::const_iterator it = conn_list.begin();
+        it != conn_list.end(); it++) {
+
+        os << *it;
+        if (it != conn_list.end() - 1) {
+            os << "; ";
+        }
+    }
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const subscriptions_t &subs) {
+    for(subscriptions_t::const_iterator it = subs.begin();
+        it != subs.end(); it++) {
+
+        os << *it;
+    }
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const stats_t &stats) {
+    for(stats_t::const_iterator it = stats.begin();
+        it != stats.end(); it++) {
+
+        os << it->first << ": (" << it->second.first << ", " << it->second.second << ")";
+        os << "; ";
+    }
+    return os;
+}
+
+class SocketInfo {
+    public:
+    SocketInfo(void *skt) :
+        skt(skt) {};
+    void *skt;
+    conn_list_t binds;
+    conn_list_t connections;
+    int connect(std::string connect_str);
+    int bind(std::string bind_str);
+};
+
+std::ostream &operator<<(std::ostream &os, const SocketInfo &info) {
+    os << "CONNECTIONS(" << info.connections << ")\n";
+    os << "BINDS(" << info.binds << ")\n";
+    return os;
+}
+
+int SocketInfo::connect(std::string connect_str) {
+    if (std::count(connections.begin(), connections.end(), connect_str)) {
+        return 0;
+    }
+    if (xs_connect(skt, connect_str.c_str()) < 0) {
+        return errno;
+    } else {
+        connections.push_back(connect_str);
+        return 0;
+    }
+}
+
+int SocketInfo::bind(std::string bind_str) {
+    if (std::count(binds.begin(), binds.end(), bind_str)) {
+        return 0;
+    }
+    if (xs_bind(skt, bind_str.c_str()) < 0) {
+        return errno;
+    } else {
+        binds.push_back(bind_str);
+        return 0;
+    }
+}
+
+class XPubSubPair {
+    public:
+    XPubSubPair(void *ctx);
+    ~XPubSubPair(void);
+    SocketInfo xsub;
+    SocketInfo xpub;
+    subscriptions_t subs;
+    stats_t stats;
+
+    void pump_message(void);
+    void pump_subscription(void);
+    private:
+    xs_msg_t message_buf;
+    XPubSubPair (XPubSubPair &other);
+    XPubSubPair &operator=(XPubSubPair &other);
+    XPubSubPair *opposite;
+};
+
+XPubSubPair::XPubSubPair(void *ctx) :
+    xsub(xs_socket(ctx, XS_XSUB)),
+    xpub(xs_socket(ctx, XS_XPUB)),
+    opposite(NULL) {
+    int linger = 300;
+    assert(xsub.skt);
+    assert(xpub.skt);
+    assert(xs_setsockopt(xsub.skt, XS_LINGER, &linger, sizeof(linger)) == 0);
+    assert(xs_setsockopt(xpub.skt, XS_LINGER, &linger, sizeof(linger)) == 0);
+    assert(xs_msg_init(&message_buf) == 0);
+}
+
+XPubSubPair::~XPubSubPair(void) {
+    if (opposite) {
+        opposite->opposite = NULL;
+    }
+    xs_close(xsub.skt);
+    xs_close(xpub.skt);
+}
+
+void XPubSubPair::pump_message(void) {
+    if (xs_recvmsg(xsub.skt, &message_buf, XS_DONTWAIT) < 0) {
+        assert(errno & (EAGAIN | EINTR));
+        return;
+    }
+    if (xs_msg_size(&message_buf) >= sizeof(uint32_t)) {
+        const uint32_t msg_id = *reinterpret_cast<const uint32_t*>(xs_msg_data(&message_buf));
+        if (msg_id == NODE_MARKER_MSGID) {
+            return;
+        }
+        stats[msg_id].first++;
+        stats[msg_id].second += xs_msg_size(&message_buf);
+    }
+    if (xs_sendmsg(xpub.skt, &message_buf, 0) < 0) {
+        assert(errno & (EAGAIN | EINTR));
+    }
+}
+
+void XPubSubPair::pump_subscription(void) {
+    if (xs_recvmsg(xpub.skt, &message_buf, XS_DONTWAIT) < 0) {
+        assert(errno & (EAGAIN | EINTR));
+        return;
+    }
+    if (xs_msg_size(&message_buf) >= sizeof(uint32_t) + 1) {
+        const char *data = reinterpret_cast<const char*>(xs_msg_data(&message_buf));
+        const char sub = *data; 
+        const uint32_t msg_id = *reinterpret_cast<const uint32_t*>(data + 1);
+        if (sub) {
+            subs.insert(msg_id);
+        } else {
+            subs.erase(msg_id);
+        }
+    }
+    if (xs_sendmsg(xsub.skt, &message_buf, 0) < 0) {
+        assert(errno & (EAGAIN | EINTR));
+    }
+}
 
 class DaemonContext {
     public:
@@ -29,37 +183,17 @@ class DaemonContext {
     bool running;
     const std::string working_directory;
     const std::string vehicle_name;
+
+    //unique daemon id
+    uint32_t daemon_id;
     void *xs_context;
     void *control_rep;
-    void *network_xsub;
-    void *network_xpub;
-    void *local_xsub;
-    void *local_xpub;
-
-    typedef std::vector<std::string> conn_list_t;
-    conn_list_t local_connections;
-    conn_list_t local_binds;
-    conn_list_t net_connections;
-    conn_list_t net_binds;
-
-    typedef std::set<uint32_t> subscriptions_t;
-    typedef std::map<uint32_t,std::pair <unsigned int, unsigned long int> > stats_t;
-
-    subscriptions_t subs_net_to_local;
-    subscriptions_t subs_local_to_net;
-
-    stats_t stats_net_to_local;
-    stats_t stats_local_to_net;
-
-    void pump_message(void *from, void *to, stats_t *stats, subscriptions_t *subs);
-    xs_msg_t message_buf;
+    //the names refer to the flow of messages. flow of subscriptions is in
+    //opposite direction
+    XPubSubPair net_to_local;
+    XPubSubPair local_to_net;
 
     void handle_control_message(void);
-    static std::string handle_connect_message(void *socket, std::string connect, conn_list_t &conn_list);
-    static std::string handle_bind_message(void *socket, std::string connect, conn_list_t &conn_list);
-    static std::string get_conn_list_string(const conn_list_t conn_list);
-    static std::string get_stats_string(const stats_t stats);
-    static std::string get_subs_string(subscriptions_t subs);
 
     DaemonContext &operator=(const DaemonContext &other);
     DaemonContext (const DaemonContext &other);
@@ -68,96 +202,54 @@ class DaemonContext {
 DaemonContext::DaemonContext(const std::string vehicle_name, const std::string working_directory) :
     running(true),
     working_directory(working_directory),
-    vehicle_name(vehicle_name) {
-    xs_context = xs_init();
+    vehicle_name(vehicle_name),
+    xs_context(xs_init()),
+    net_to_local(xs_context),
+    local_to_net(xs_context) {
     assert(xs_context);
+
+    //seed random number generator
+    struct timeval tv;
+    assert(gettimeofday(&tv,NULL) == 0);
+    srand(getpid() + tv.tv_sec * 1000000 + tv.tv_usec);
+    daemon_id = rand();
 
     int linger = 300;
     control_rep = xs_socket(xs_context,XS_REP);
-    network_xsub = xs_socket(xs_context,XS_XSUB);
-    network_xpub = xs_socket(xs_context,XS_XPUB);
-    local_xsub = xs_socket(xs_context,XS_XSUB);
-    local_xpub = xs_socket(xs_context,XS_XPUB);
     assert(control_rep);
-    assert(network_xsub);
-    assert(network_xpub);
-    assert(local_xsub);
-    assert(local_xpub);
     assert(xs_setsockopt(control_rep, XS_LINGER, &linger, sizeof(linger)) == 0);
-    assert(xs_setsockopt(network_xsub, XS_LINGER, &linger, sizeof(linger)) == 0);
-    assert(xs_setsockopt(network_xpub, XS_LINGER, &linger, sizeof(linger)) == 0);
-    assert(xs_setsockopt(local_xsub, XS_LINGER, &linger, sizeof(linger)) == 0);
-    assert(xs_setsockopt(local_xpub, XS_LINGER, &linger, sizeof(linger)) == 0);
     std::string control_path = "ipc://" + working_directory + "/control";
     assert(xs_bind(control_rep,control_path.c_str()) == 0);
-    std::string local_sub_path = "ipc://" + working_directory + "/sub";
-    assert(xs_bind(local_xsub, local_sub_path.c_str()) == 0);
-    std::string local_pub_path = "ipc://" + working_directory + "/pub";
-    assert(xs_bind(local_xpub, local_pub_path.c_str()) == 0);
 
-    assert(xs_msg_init(&message_buf) == 0);
+    std::string local_sub_path = "ipc://" + working_directory + "/sub";
+    assert(local_to_net.xsub.bind(local_sub_path) == 0);
+    std::string local_pub_path = "ipc://" + working_directory + "/pub";
+    assert(net_to_local.xpub.bind(local_pub_path) == 0);
+
     std::string sub_buf;
     uint32_t msgid = DAEMON_MARKER_MSGID;
     sub_buf += "\1";
     sub_buf += std::string(reinterpret_cast<char*>(&msgid),sizeof(msgid));
-    assert(xs_send(local_xsub, sub_buf.c_str(), sub_buf.size(), 0) >= 0);
+    assert(xs_send(local_to_net.xsub.skt, sub_buf.c_str(), sub_buf.size(), 0) >= 0);
 }
 
 DaemonContext::~DaemonContext(void) {
     xs_close(control_rep);
-    xs_close(network_xsub);
-    xs_close(network_xpub);
-    xs_close(local_xsub);
-    xs_close(local_xpub);
-    xs_term(xs_context);
-}
-
-void DaemonContext::pump_message(void *from, void *to, stats_t *stats, subscriptions_t *subs) {
-    int flags = 0;
-    if (xs_recvmsg(from, &message_buf, XS_DONTWAIT) < 0) {
-        assert(errno & (EAGAIN | EINTR));
-    } else {
-        if (stats) {
-            if (xs_msg_size(&message_buf) >= sizeof(uint32_t)) {
-                const uint32_t msg_id = *reinterpret_cast<const uint32_t*>(xs_msg_data(&message_buf));
-                if (msg_id == NODE_MARKER_MSGID) {
-                    return;
-                }
-                (*stats)[msg_id].first++;
-                (*stats)[msg_id].second += xs_msg_size(&message_buf);
-            }
-        }
-        if (subs) {
-            if (xs_msg_size(&message_buf) >= sizeof(uint32_t) + 1) {
-                const char sub = *reinterpret_cast<const char*>(xs_msg_data(&message_buf));
-                const uint32_t msg_id = *reinterpret_cast<const uint32_t*>(
-                                            reinterpret_cast<const char*>(xs_msg_data(&message_buf)) + 1);
-                if (sub) {
-                    subs->insert(msg_id);
-                } else {
-                    subs->erase(msg_id);
-                }
-            }
-        }
-
-        if (xs_sendmsg(to, &message_buf, flags) < 0) {
-            assert(errno & (EAGAIN | EINTR));
-        }
-    } 
+    //xs_term(xs_context);
 }
 
 void DaemonContext::run(void) {
     xs_pollitem_t sockets[] = {
-        { local_xsub,
+        { local_to_net.xsub.skt,
           0, XS_POLLIN, 0
         },
-        { local_xpub,
+        { local_to_net.xpub.skt,
           0, XS_POLLIN, 0
         },
-        { network_xsub,
+        { net_to_local.xsub.skt,
           0, XS_POLLIN, 0
         },
-        { network_xpub,
+        { net_to_local.xpub.skt,
           0, XS_POLLIN, 0
         },
         { control_rep,
@@ -181,72 +273,22 @@ void DaemonContext::run(void) {
             }
         } else {
             if (sockets[0].revents & XS_POLLIN) {
-                pump_message(local_xsub, network_xpub, &stats_local_to_net, NULL);
+                local_to_net.pump_message();
             }
             if (sockets[1].revents & XS_POLLIN) {
-                pump_message(local_xpub, network_xsub, NULL, &subs_net_to_local);
+                local_to_net.pump_subscription();
             }
             if (sockets[2].revents & XS_POLLIN) {
-                pump_message(network_xsub, local_xpub, &stats_net_to_local, NULL);
+                net_to_local.pump_message();
             }
             if (sockets[3].revents & XS_POLLIN) {
-                pump_message(network_xpub, local_xsub, NULL, &subs_local_to_net);
+                net_to_local.pump_subscription();
             }
             if (sockets[4].revents & XS_POLLIN) {
                 handle_control_message();
             }
         }
     }
-}
-
-std::string DaemonContext::handle_connect_message(void *socket, std::string connection, conn_list_t &conn_list) {
-    std::string reply;
-    if (xs_connect(socket, connection.c_str()) < 0) {
-        reply = "FAILED ";
-        reply += xs_strerror(errno);
-    } else {
-        reply = "SUCCESS";
-        conn_list.push_back(connection);
-    }
-    return reply;
-}
-
-std::string DaemonContext::handle_bind_message(void *socket, std::string bind, conn_list_t &conn_list) {
-    std::string reply;
-    if (xs_bind(socket, bind.c_str()) < 0) {
-        reply = "FAILED ";
-        reply += xs_strerror(errno);
-    } else {
-        reply = "SUCCESS";
-        conn_list.push_back(bind);
-    }
-    return reply;
-}
-
-std::string DaemonContext::get_conn_list_string(const conn_list_t conn_list) {
-    std::string list;
-    list += "(";
-    for(conn_list_t::const_iterator it = conn_list.begin();
-        it != conn_list.end(); it++) {
-        list += *it;
-        if (it != conn_list.end() - 1) {
-            list += "; ";
-        }
-    }
-    list += ")";
-    return list;
-}
-
-std::string DaemonContext::get_stats_string(const stats_t stats) {
-    std::ostringstream oss;
-    oss << "(";
-    for(stats_t::const_iterator it = stats.begin();
-        it != stats.end(); it++) {
-        oss << it->first << ": (" << it->second.first << ", " << it->second.second << ")";
-        oss << "; ";
-    }
-    oss << ")";
-    return oss.str();
 }
 
 void DaemonContext::handle_control_message(void) {
@@ -265,49 +307,61 @@ void DaemonContext::handle_control_message(void) {
                                 xs_msg_size(&message));
     std::istringstream ctrl_iss(control_message);
     std::string command;
-    std::string reply;
+    std::ostringstream reply;
     std::string arg;
     ctrl_iss >> command;
-    ctrl_iss >> arg;
-    if (command == "NET_CONNECT") {
-        reply = handle_connect_message(network_xpub, arg, net_connections);
-    } else if (command == "NET_BIND") {
-        reply = handle_bind_message(network_xsub, arg, net_binds);
-    } else if (command == "LOCAL_CONNECT") {
-        reply = handle_connect_message(local_xpub, arg, local_connections);
-    } else if (command == "LOCAL_BIND") {
-        reply = handle_bind_message(local_xsub, arg, local_binds);
+    if (command == "CONNECT" || command == "BIND") {
+        SocketInfo *socket = NULL;
+        std::string socket_name;
+        ctrl_iss >> socket_name;
+        if (socket_name == "NET_XPUB") {
+            socket = &local_to_net.xpub;
+        } else if (socket_name == "NET_XSUB") {
+            socket = &net_to_local.xsub;
+        } else if (socket_name == "LOCAL_XPUB") {
+            socket = &net_to_local.xpub;
+        } else if (socket_name == "LOCAL_XSUB") {
+            socket = &local_to_net.xsub;
+        } else {
+            reply << "UNKNOWN SOCKET";
+        }
+        if (socket) {
+            std::string specifier; 
+            ctrl_iss >> specifier;
+            int ret;
+            if (command == "CONNECT") {
+                ret = socket->connect(specifier);
+            } else if (command == "BIND") {
+                ret = socket->bind(specifier);
+            } else {
+                //something wrong with the computer?
+                assert(false);
+            }
+            if (!ret) {
+                reply << "SUCCESS";
+            } else {
+                reply << "FAILURE: " << xs_strerror(ret);
+            }
+        }
     } else if (command == "STATS") {
-        reply += "NET_TO_LOCAL";
-        reply += get_stats_string(stats_net_to_local);
-        reply += ", \n";
-        reply += "LOCAL_TO_NET";
-        reply += get_stats_string(stats_local_to_net);
+        reply << "NET_TO_LOCAL{" << net_to_local.stats << "}\n";
+        reply << "LOCAL_TO_NET{" << local_to_net.stats << "}\n";
     } else if (command == "SUBS") {
+        reply << "TODO";
     } else if (command == "CONNECTIONS") {
-        reply += "LOCAL_BINDS";
-        reply += get_conn_list_string(local_binds);
-        reply += ", \n";
-        reply += "LOCAL_CONNECTIONS";
-        reply += get_conn_list_string(local_connections);
-        reply += ", \n";
-        reply += "NET_BINDS";
-        reply += get_conn_list_string(net_binds);
-        reply += ", \n";
-        reply += "NET_CONNECTIONS";
-        reply += get_conn_list_string(net_connections);
+        reply << "TODO";
     } else if (command == "PID") {
-        std::ostringstream pid_ss;
-        pid_ss << getpid();
-        reply += pid_ss.str();
+        reply << getpid();
+    } else if (command == "ID") {
+        reply << daemon_id;
     } else if (command == "STOP") {
         running = false;
-        reply = "SUCCESS";
+        reply << "SUCCESS";
     } else {
-       reply = "UNKNOWN";
+       reply << "UNKNOWN";
     } 
     //XXX: possible to get stuck in wrong state here?
-    if (xs_send(control_rep, reply.c_str(), reply.size(), XS_DONTWAIT) < 0) {
+    if (xs_send(control_rep, reply.str().c_str(), reply.str().size(), XS_DONTWAIT) < 0) {
         assert(errno & (EAGAIN | EINTR));
     }
 }

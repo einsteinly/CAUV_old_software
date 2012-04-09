@@ -34,7 +34,6 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     m_interrupted(false),
     daemon_connected(false) {
 
-
     //internal message queues
     send_queue_pull.bind("inproc://send_queue");
     send_queue_push.connect("inproc://send_queue");
