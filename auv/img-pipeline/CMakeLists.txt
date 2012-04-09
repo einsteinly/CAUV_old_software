@@ -13,7 +13,7 @@ endif()
 
 option (CAUV_POINTCLOUDS "Use PCL (enables sonar SLAM)" OFF)
 #option (CAUV_CLOUD_DUMP "Dump point-clouds to file" OFF)
-#option (CAUV_CLOUD_VISUALISATION "Local vis for clouds - means sonarSLAM needs an x-server!" OFF)
+option (CAUV_CLOUD_VISUALISATION "Include last cloud in map visualisation (potentially expensive)" OFF)
 
 if (CAUV_POINTCLOUDS)
     set (REQ_PCL_COMPONENTS common registration kdtree surface filters)
@@ -40,13 +40,13 @@ if (CAUV_POINTCLOUDS)
                       ${PCL_REGISTRATION_LIBRARIES}
                       ${PCL_KDTREE_LIBRARIES}
                       ${PCL_SURFACE_LIBRARIES}
-                      ${PCL_FILTERS_LIBRARIES})
+                      ${PCL_FILTERS_LIBRARIES}
+                      ${PCL_DEBUG_LIBRARIES})
     #endif()
 
-    #if (CAUV_CLOUD_VISUALISATION)
-    #    add_definitions(-DCAUV_CLOUD_VISUALISATION)
-    #    set (PCL_LIBS ${PCL_LIBS} ${PCL_VISUALIZATION_LIBRARIES})
-    #endif()
+    if (CAUV_CLOUD_VISUALISATION)
+        add_definitions(-DCAUV_CLOUD_VISUALISATION)
+    endif()
 
     include_directories (${PCL_INCLUDE_DIRS})
     add_definitions (${PCL_DEFINITIONS})
@@ -59,6 +59,7 @@ if (CAUV_POINTCLOUDS)
         nodes/sonar/mapping/scanMatchingICP.cpp
         nodes/sonar/mapping/scanMatchingNDT.cpp
         nodes/sonar/mapping/graphOptimiser.cpp
+        nodes/sonar/mapping/stuff.cpp
     )
     set (CONDITIONAL_LIBS ${CONDITIONAL_LIBS} ${PCL_LIBS} ${CLIPPER_LIBRARY})
     
@@ -67,6 +68,7 @@ if (CAUV_POINTCLOUDS)
             test_graphOptimiser
             nodes/sonar/mapping/test_graphOptimiser.cpp
             nodes/sonar/mapping/graphOptimiser.cpp
+            nodes/sonar/mapping/stuff.cpp
         )
         target_link_libraries (
             test_graphOptimiser
@@ -79,6 +81,7 @@ if (CAUV_POINTCLOUDS)
             nodes/sonar/mapping/scanMatchingICP.cpp
             nodes/sonar/mapping/scanMatchingNDT.cpp
             nodes/sonar/mapping/graphOptimiser.cpp
+            nodes/sonar/mapping/stuff.cpp
         )
         target_link_libraries (
             test_slamCloud

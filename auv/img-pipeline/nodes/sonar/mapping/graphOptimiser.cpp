@@ -29,17 +29,13 @@
 #include <debug/cauv_debug.h>
 
 #include "slamCloud.h"
+#include "stuff.h"
 
 using namespace cauv;
 using namespace cauv::imgproc;
 
 IncrementalPose IncrementalPose::from4dAffine(Eigen::Matrix4f const& a){
-    const Eigen::Matrix2f r = a.block<2,2>(0, 0);
-    const Eigen::Vector2f t = a.block<2,1>(0, 3);
-
-    const Eigen::Vector2f tmp = r * Eigen::Vector2f(1,0);
-    const float rz = std::atan2(tmp[1], tmp[0]);
-    return IncrementalPose(Eigen::Vector3f(t[0], t[1], rz));
+    return IncrementalPose(xyThetaFrom4DAffine(a));
 }
 
 IncrementalPose IncrementalPose::from4dAffineDiff(
@@ -48,14 +44,8 @@ IncrementalPose IncrementalPose::from4dAffineDiff(
     return from4dAffine(to) -= from4dAffine(from);
 }
 
-
 RelativePose RelativePose::from4dAffine(Eigen::Matrix4f const& a){
-    const Eigen::Matrix2f r = a.block<2,2>(0, 0);
-    const Eigen::Vector2f t = a.block<2,1>(0, 3);
-
-    const Eigen::Vector2f tmp = r * Eigen::Vector2f(1,0);
-    const float rz = std::atan2(tmp[1], tmp[0]);
-    return RelativePose(Eigen::Vector3f(t[0], t[1], rz));
+    return RelativePose(xyThetaFrom4DAffine(a));
 }
 
 Eigen::Matrix4f RelativePose::to4dAffine() const{
