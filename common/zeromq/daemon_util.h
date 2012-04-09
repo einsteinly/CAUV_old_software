@@ -12,7 +12,8 @@ class file_error : public std::runtime_error {
 
 void daemonize(void);
 
-void create_working_directory(std::string dir_path);
+//create a series of directories, like mkdir -p
+void create_path(std::string dir_path);
 
 bool get_lock_file(std::string lockfile);
 

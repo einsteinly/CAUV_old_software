@@ -67,6 +67,8 @@ public:
     
     virtual void joinGroup(const std::string &groupName);
     virtual void leaveGroup(const std::string &groupName);
+    virtual void subMessage(const Message &message);
+    virtual void unSubMessage(const Message &message);
     
     /**
      * @return The number of bytes sent

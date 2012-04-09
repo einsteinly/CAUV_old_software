@@ -41,10 +41,6 @@ class unique_lock;
 } // namespace boost
 #endif
 
-namespace cauv{
-class CauvNode;
-} // namespace cauv
-
 #include <utility/bash_cout.h>
 
 
@@ -100,7 +96,6 @@ class SmartStreamBase : public boost::noncopyable
         virtual ~SmartStreamBase();
 
         static void setLevel(int debug_level);
-        static void setCauvNode(cauv::CauvNode*);
         static void setProgramName(std::string const&);
         static void setLogfileName(std::string const&);
         static void setLogDirName(std::string const&);
@@ -113,7 +108,6 @@ class SmartStreamBase : public boost::noncopyable
     protected:
         struct Settings{
             int debug_level;
-            cauv::CauvNode* cauv_node;
             std::string program_name;
             std::string logfile_name;
             std::string logdir_name;
@@ -148,8 +142,6 @@ class SmartStreamBase : public boost::noncopyable
         std::list< manip_t > m_manipulators;
 
         virtual void printPrefix(std::ostream&);
-        // can't forward declare enums...
-        virtual int debugType() const;
 
         // initialise on first use
         static Settings& settings();
@@ -208,7 +200,6 @@ struct debug : public SmartStreamBase
     debug& operator<<(manip_t manip);
     
     virtual void printPrefix(std::ostream&);
-    virtual int debugType() const;
 
     private:
         int m_level;
@@ -220,7 +211,6 @@ struct debug : boost::noncopyable
     virtual ~debug(){ }
 
     static void setLevel(int){ }
-    static void setCauvNode(cauv::CauvNode*){ }
     static void setProgramName(std::string const&){ }
     static void setLogfileName(std::string const&){ }
 
@@ -256,7 +246,6 @@ struct error : public SmartStreamBase
     error& operator<<(manip_t manip);
     
     virtual void printPrefix(std::ostream&);
-    virtual int debugType() const;
 };
 
 struct warning : public SmartStreamBase
@@ -276,7 +265,6 @@ struct warning : public SmartStreamBase
     warning& operator<<(manip_t manip);
     
     virtual void printPrefix(std::ostream&);
-    virtual int debugType() const;
 };
 
 struct info : public SmartStreamBase
@@ -300,7 +288,6 @@ struct info : public SmartStreamBase
     }
     
     virtual void printPrefix(std::ostream&);
-    virtual int debugType() const;
 };
 
 #endif // ndef __CAUV_DEBUG_H__

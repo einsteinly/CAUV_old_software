@@ -23,7 +23,6 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <common/mailbox.h>
 #include <generated/messages.h>

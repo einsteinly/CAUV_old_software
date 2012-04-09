@@ -26,8 +26,12 @@ try:
 
 
     import IPython
-    from IPython.Shell import IPShellEmbed
-    s = IPShellEmbed()
+    if [int(v) for v in IPython.__version__.split('.')] < [0,11]:
+        from IPython.Shell import IPShellEmbed as InteractiveShellEmbed
+    else:
+        from IPython.frontend.terminal.embed import InteractiveShellEmbed
+
+    s = InteractiveShellEmbed()
     s()
 finally:
     node.stop()

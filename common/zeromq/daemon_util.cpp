@@ -30,7 +30,7 @@ void daemonize(void) {
     freopen("/dev/null","w",stderr);
 }
 
-void create_working_directory(std::string dir_path) {
+void create_path(std::string dir_path) {
     for(size_t ii = 1; ii < dir_path.size(); ii++) {
         if (dir_path[ii] == '/') {
             dir_path[ii] = '\0';

@@ -100,6 +100,7 @@ enum NodeType : int8 {
     FitEllipse,
     KMeansPoints,
     DrawEllipses,
+    Sobel,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -375,6 +376,21 @@ enum ParamValueType : int8 {
     DynamicEnumType,
     listFloatXYType,
     listEllipseType,
+}
+
+// These ids are reserved for internal messaging system and should not be sent
+//  or changed without changing related zeromq code
+group reserved
+{ 
+    message Connect : 222 
+    {
+    }
+    message NodeIDMarker : 223
+    {
+    }
+    message DaemonIDMarker : 224
+    {
+    }
 }
 
 group membership

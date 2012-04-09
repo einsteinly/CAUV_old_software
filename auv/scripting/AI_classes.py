@@ -190,7 +190,7 @@ class aiOptions(object):
     __metaclass__ = aiOptionsBase
     def __init__(self, options={}):
         #set values to default
-        self.__dict__.update(self.__class__.get_default_options())
+        self.__dict__.update(self.__class__.get_default_options()) #pylint: disable=E1101
         for opt, val in options.iteritems():
             setattr(self, opt, val)
     def __getattr__(self, attr):

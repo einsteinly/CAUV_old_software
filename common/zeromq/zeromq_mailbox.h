@@ -2,33 +2,27 @@
 #define CAUV_ZMQ_MAILBOX_H
 
 #include <common/mailbox.h>
+#include <common/mailbox_monitor.h>
+#include <generated/message_observers.h>
+#include <utility/threadsafe-observable.h>
+
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
-#include <zmq.hpp>
+#include <xs.hpp>
 
 #include <string>
 #include <map>
 #include <vector>
+#include <set>
 
 namespace cauv {
 
-class ZeroMQGroup : boost::noncopyable {
+class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public MessageSource, boost::noncopyable {
     public:
-    ZeroMQGroup(zmq::context_t &context, const std::string name, bool write_only = true);
-    zmq::pollitem_t poll_item;
-    zmq::socket_t push_skt;
-    zmq::socket_t sub_skt;
-    const std::string name;
-    bool write_only;
-};
-
-class ZeroMQMailboxEventMonitor;
-
-class ZeroMQMailbox : public Mailbox, boost::noncopyable {
-    public:
-    ZeroMQMailbox(void);
+    ZeroMQMailbox(const std::string name = "unknown");
     /**
      * @return The number of bytes sent
      */
@@ -42,19 +36,74 @@ class ZeroMQMailbox : public Mailbox, boost::noncopyable {
 
     virtual void joinGroup(const std::string &groupName);
     virtual void leaveGroup(const std::string &groupName);
+    virtual void subMessage(const Message &message);
+    virtual void unSubMessage(const Message &message);
 
-    friend class ZeroMQMailboxEventMonitor;
+    virtual void startMonitoringAsync();
+    virtual void startMonitoringSync();
+    virtual void stopMonitoring();
+    virtual bool isMonitoring();
+
+    virtual void addMessageObserver(boost::shared_ptr<MessageObserver>);
+    virtual void removeMessageObserver(boost::shared_ptr<MessageObserver>);
+    virtual void clearMessageObservers();
 
     private:
-    int send_message_to_group(boost::shared_ptr<const Message>, const std::string &groupName);
-    std::vector <boost::shared_ptr<ZeroMQGroup> > get_groups(void);
+    //most internal variables are *not* threadsafe and should only be accessed
+    //by the thread calling doMonitoring
+    const std::string name;         //node name
+    std::string sub_bind;           //xs connection string for this node's sub socket
+    xs::context_t zm_context;      //main zm_context
+    xs::socket_t pub;               //the main message publication socket
+    xs::socket_t sub;               //the main message subscription socket
+    xs::socket_t send_queue_push;   //inproc queue for messages (passed by pointer)
+    xs::socket_t send_queue_pull;
+    xs::socket_t sub_queue_push;    //inproc queue for subscriptions
+    xs::socket_t sub_queue_pull;
+    xs::socket_t daemon_control;    //used to communicate with vehicle_daemon
 
-    zmq::context_t zm_context;
+    boost::mutex m_send_mutex;      //guards send_queue_push socket
+    boost::mutex m_sub_mutex;       //guards send_sub_push socket
 
-    typedef std::map <std::string, boost::shared_ptr<ZeroMQGroup> > zm_group_map;
-    zm_group_map zm_groups;
+    //message ids that have been subscribed to by other nodes
+    typedef std::set<uint32_t> pubs_t;
+    pubs_t publications;
+
+    //message ids this node has subscribed to
+    typedef std::map<uint32_t,unsigned int> subs_count_t;
+    subs_count_t subscriptions;
+
+    typedef std::set<uint32_t> pids_t;
+    typedef std::set<std::string> connections_t;
+
+    //scan for unix domain sockets in dir and connect to them if the node that
+    //manages them is still alive
+    pids_t scan_ipc_dir(std::string dir);
+    //pids which we need to send connection strings to
+    pids_t send_connect_pids;
+    //xs connections strings that this node has connected to already
+    connections_t connections;
+
+    //pushed over sub_queue_push for subscriptions
+    struct SubscriptionMessage {
+        bool subscribe; //subscribe or unsubscribe
+        uint32_t msg_id;
+    };
+
+    void send_connect_message(uint32_t pid);
+    void handle_pub_message(void);
+    void handle_sub_message(void);
+    void handle_send_message(void);
+    void handle_subscription_message(void);
+    void handle_daemon_message(void);
+    void doMonitoring();
+
+    bool m_monitoring;
+    bool m_interrupted;
+    bool daemon_connected;
+    boost::thread m_thread;
     int m_group_gen;
-    boost::mutex m_event_monitor_mutex;
+
 };
 
 }

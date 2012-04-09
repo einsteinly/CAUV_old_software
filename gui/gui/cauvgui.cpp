@@ -29,7 +29,6 @@
 
 #include <gui/core/cauvplugins.h>
 
-#include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 

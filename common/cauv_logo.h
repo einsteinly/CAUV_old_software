@@ -12,35 +12,15 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef __CAUV_GLOBAL_H__
-#define __CAUV_GLOBAL_H__
+#ifndef __CAUV_LOGO_H__
+#define __CAUV_LOGO_H__
 
 #include <string>
 
 namespace cauv{
 
-class cauv_global
-{
-	public:
-		static cauv_global& current();
-
-        static void print_logo(
-            const char* colour_start,
-            const char* colour_end,
-            const char* shape_start,
-            const char* shape_end,
-            const std::string& module_name
-        );
-		static void print_module_header(const std::string& module_name);
-	
-    private:
-		static cauv_global* m_current;
-		cauv_global();
-
-	protected:
-		
-};
+void print_module_header(const std::string &module_name);
 
 } // namespace cauv
 
-#endif//__CAUV_GLOBAL_H__
+#endif//__CAUV_LOGO_H__

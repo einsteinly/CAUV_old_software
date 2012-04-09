@@ -37,9 +37,7 @@
 
 #include <utility/bash_cout.h>
 #include <utility/string.h>
-#include <generated/types/DebugType.h>
 #include <common/cauv_utils.h>
-#include <common/cauv_node.h>
 
 using namespace cauv;
 
@@ -73,31 +71,11 @@ SmartStreamBase::~SmartStreamBase()
         // always log
         printToStream(logFile());
     }
-    // TODO: possible nastiness when setCauvNode is called from a different
-    // thread while this is going on
-    // if there's a cauv_node set, and this isn't a recursive call, send debug messages
-    /*if(m_print && (debugType() != int(DebugType::Debug)) && settings().cauv_node && !recursive()){
-        recursive() = true;
-        std::ostringstream oss;
-        oss << settings().program_name << ":";
-        printToStream(oss);
-        std::cout << "debug() sending debug message:" << oss.str() << std::endl;
-        settings().cauv_node->send(
-            boost::make_shared<DebugMessage>((DebugType::e)debugType(), oss.str()),
-            Spread::service(SAFE_MESS)
-        );
-        recursive() = false;
-    }*/
 }
 
 void SmartStreamBase::setLevel(int debug_level)
 {
     settings().debug_level = debug_level;
-}
-
-void SmartStreamBase::setCauvNode(CauvNode* n)
-{
-    settings().cauv_node = n;
 }
 
 void SmartStreamBase::setProgramName(std::string const& n)
@@ -130,16 +108,11 @@ void SmartStreamBase::setLogDirName(std::string const& n)
 void SmartStreamBase::printPrefix(std::ostream&)
 {
 }
-int SmartStreamBase::debugType() const
-{
-    return DebugType::Info;
-}
 
 // initialise on first use
 SmartStreamBase::Settings& SmartStreamBase::settings(){
     static Settings s = {
         CAUV_DEBUG_LEVEL,
-        NULL,
         "unknown",
         "",
         ""
@@ -381,10 +354,6 @@ debug& debug::operator<<(manip_t manip)
 void debug::printPrefix(std::ostream&)
 {
 }
-int debug::debugType() const
-{
-    return DebugType::Debug;
-}
 
 #endif // !defined(CAUV_NO_DEBUG)
 
@@ -411,11 +380,6 @@ void error::printPrefix(std::ostream& os)
 {
     os << BashIntensity::Bold << "ERROR: " << BashIntensity::Normal;
 }
-int error::debugType() const
-{
-    return DebugType::Error;
-}
-
 
 /*** warning() << ***/ 
 warning::warning()
@@ -437,11 +401,6 @@ void warning::printPrefix(std::ostream& os)
 {
     os << BashIntensity::Bold << "WARNING: " << BashIntensity::Normal;
 }
-int warning::debugType() const
-{
-    return DebugType::Warning;
-}
-
 
 /*** info() << ***/
 info::info() : SmartStreamBase(std::cout)
@@ -455,8 +414,3 @@ info::~info()
 void info::printPrefix(std::ostream&)
 {
 }
-int info::debugType() const
-{
-    return DebugType::Info;
-}
-

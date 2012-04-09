@@ -17,6 +17,7 @@
 #include "broadcastPointsNode.h"
 #include "kmeansPointsNode.h"
 #include "drawEllipsesNode.h"
+#include "sobelNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -38,6 +39,7 @@ DEFINE_NFR(FirstAboveThresholdNode, NodeType::FirstAboveThreshold);
 DEFINE_NFR(BroadcastPointsNode, NodeType::BroadcastPoints);
 DEFINE_NFR(KMeansPointsNode, NodeType::KMeansPoints);
 DEFINE_NFR(DrawEllipsesNode, NodeType::DrawEllipses);
+DEFINE_NFR(SobelNode, NodeType::Sobel);
 
 } // namespace imgproc
 } // namespace cauv
