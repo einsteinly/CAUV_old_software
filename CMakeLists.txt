@@ -102,12 +102,13 @@ if (Boost_VERSION GREATER 104500)
 endif()
 
 
-add_subdirectory (messages-python)
+add_subdirectory (messages-python/msggen)
 
 set (GEND "${CMAKE_BINARY_DIR}/generated")
 set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
+set (MSGS ${CAUV_SOURCE_DIR}/messages-python/messages.msg)
 execute_process(
-    COMMAND ${PYMSGD}/msggen.py -l "c++" -an -o ${GEND} ${PYMSGD}/messages.msg
+    COMMAND ${PYMSGD}/msggen.py -l "c++" -an -o ${GEND} ${MSGS}
     OUTPUT_VARIABLE CAUV_MESSAGE_FILES
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )

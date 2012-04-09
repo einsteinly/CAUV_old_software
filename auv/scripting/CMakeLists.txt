@@ -47,11 +47,11 @@ add_custom_target(
 set (MSGD ${SRCD}/../../messages-python/)
 set (CHILD ${SRCD}/utils/childecode/)
 add_custom_target (childecode
-    DEPENDS ${MSGD}/messages.msg  ${CHILD}/decode.py.template ${SRCD}/../../.hg
-    COMMAND ${MSGD}/msggen.py -l chil -o ${CHILD} -t ${CHILD} ${MSGD}/messages.msg || true
+    DEPENDS ${MSGS}  ${CHILD}/decode.py.template ${SRCD}/../../.hg
+    COMMAND ${MSGD}/msggen.py -l chil -o ${CHILD} -t ${CHILD} ${MSGS} || true
     WORKING_DIRECTORY ${SRCD}
     COMMENT "generating decode_{HG_CHANGESET}.py for CHIL"
-    SOURCES ${MSGD}/messages.msg  ${CHILD}/decode.py.template
+    SOURCES ${MSGS}  ${CHILD}/decode.py.template
 )
 
 
