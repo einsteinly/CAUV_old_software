@@ -58,12 +58,12 @@ messages_file = os.path.abspath(args[0])
 #every build anyway
 if options.marker_file and os.path.exists(options.marker_file):
     dep_files = [messages_file] 
-    for root, filenames, dirnames in os.walk(options.template_dir):
+    for root, dirnames, filenames in os.walk(options.template_dir):
         for filename in fnmatch.filter(filenames, "*.template*"):
-            dep_files.append(filename)
-    for root, filenames, dirnames in os.walk(sys.argv[0]):
+            dep_files.append(os.path.join(root,filename))
+    for root, dirnames, filenames in os.walk(os.path.dirname(sys.argv[0])):
         for filename in fnmatch.filter(filenames, "*.py"):
-            dep_files.append(filename)
+            dep_files.append(os.path.join(root,filename))
     marker_mtime = os.path.getmtime(options.marker_file)
     for dep_file in dep_files:
         if marker_mtime < os.path.getmtime(dep_file):
