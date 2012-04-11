@@ -21,8 +21,11 @@ tokens = [
 literals = [ "{", "}", "(", ")", "<", ">", ",", ":", ";", "=", ".", "/" ]
 
 def t_INT(t):
-    r'\d+'
-    t.value = int(t.value)    
+    r'(0x)?\d+'
+    if t.value.startswith('0x'):
+        t.value = int(t.value,16)
+    else:
+        t.value = int(t.value)    
     return t
 
 def t_STRING(t):

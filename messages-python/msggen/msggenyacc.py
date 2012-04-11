@@ -8,6 +8,7 @@ class Expr:
         return cmp(str(self), str(other))
     def __hash__(self):
         return hash(str(self))
+
 class Group(Expr):
     def __init__(self, name, messages):
         self.name = name

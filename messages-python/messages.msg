@@ -141,13 +141,12 @@ enum ScriptCommand : int8 {
     Pause,
 }
 enum SensorUIDBase : int32 {
-    // !!! TODO: support hex integer literals...
     None = 0,
-    Camera = 16,  // cameras are 0x10 +- ID: range [0x1--0x1F]
-    Sonar = 48,   // sonars are 0x20 + ID: range [0x20--0x3F]
-    Network = 80, // network is just 0x50, but has a reserved range
-    Multiple = 128, // multiple sources is just 0x70 (no reserved range)
-    File = 256,   // files are 0x100 += ?: range[0x100--0xFFF]
+    Camera =   0x10,  // cameras are 0x10 +- ID: range [0x1--0x1F]
+    Sonar =    0x20,   // sonars are 0x20 + ID: range [0x20--0x3F]
+    Network =  0x50, // network is just 0x50, but has a reserved range
+    Multiple = 0x70, // multiple sources is just 0x70 (no reserved range)
+    File =     0x100,   // files are 0x100 += ?: range[0x100--0xFFF]
 }
 
 struct floatYPR
