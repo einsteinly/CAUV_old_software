@@ -13,6 +13,7 @@
 #include "GeminiNetwork.h"
 #include <cstdio>
 #include <cstring>
+#include <unistd.h>
 
 
 #pragma pack (push, 1)
@@ -551,7 +552,7 @@ bool CGeminiNetwork::CreateSocketRX()
     
       socketAddress.sin_family      = AF_INET;
       socketAddress.sin_port        = htons(52900);
-            socketResult = gethostname(hostName, sizeof(hostName));
+            socketResult = gethostname(hostName, sizeof(hostName));
 
       if (socketResult != INVALID_SOCKET)
       {
