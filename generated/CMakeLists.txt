@@ -1,6 +1,22 @@
 # abbreviate a little:
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 
+if(NOT EXISTS ${GEND}/message_files.cmake)
+    file(WRITE ${GEND}/message_files.cmake "")
+endif()
+
+set(GEN_CMAKE_CMDLINE ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${MSGS} 
+    --cmake-out ${GEND}/message_files.cmake --cmake-prefix CAUV_MESSAGE -m ${GEND}/msggen_marker)
+
+execute_process(COMMAND ${GEN_CMAKE_CMDLINE})
+
+add_custom_target (messages-gen
+    ${GEN_CMAKE_CMDLINE}
+    COMMENT "Running msggen.py for C++ messages"
+)
+
+include(${GEND}/message_files.cmake)
+
 add_library (
     messages STATIC
     ${CAUV_MESSAGE_FILES}
@@ -10,38 +26,6 @@ target_link_libraries (
     messages
 
     common
-)
-
-add_custom_command (
-    OUTPUT ${CAUV_MESSAGE_FILES}
-    COMMAND ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${MSGS}
-    DEPENDS ${PYMSGD}/msggen.py
-            ${PYMSGD}/templates/cpp/cppmess-serialise.template.h
-            ${PYMSGD}/templates/cpp/cppmess-serialise.template.cpp
-            ${PYMSGD}/templates/cpp/cppmess-message.template.h
-            ${PYMSGD}/templates/cpp/cppmess-message.template.cpp
-            ${PYMSGD}/templates/cpp/cppmess-messagetype.template.h
-            ${PYMSGD}/templates/cpp/cppmess-xgroup.template.h
-            ${PYMSGD}/templates/cpp/cppmess-xmessage.template.h
-            ${PYMSGD}/templates/cpp/cppmess-xmessage.template.cpp
-            ${PYMSGD}/templates/cpp/cppmess-xstruct.template.h
-            ${PYMSGD}/templates/cpp/cppmess-structs.template.cpp
-            ${PYMSGD}/templates/cpp/cppmess-xenum.template.h
-            ${PYMSGD}/templates/cpp/cppmess-xvariant.template.h
-            ${PYMSGD}/templates/cpp/cppmess-message_observers.template.h
-            ${PYMSGD}/templates/cpp/cppmess-message_observers.template.cpp
-            ${PYMSGD}/templates/cpp/cppmess-groupmap.template.cpp
-            ${PYMSGD}/templates/cpp/cppmess-groupmap.template.h
-            ${PYMSGD}/msggenyacc.py
-            ${PYMSGD}/msggenlex.py
-            ${MSGS}
-    COMMENT "Generating messages"
-)
-
-add_custom_target (
-    messages-gen
-    DEPENDS ${CAUV_MESSAGE_FILES}
-    COMMENT "Generating messages"
 )
 
 depends_on_messages(messages)

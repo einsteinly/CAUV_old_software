@@ -52,6 +52,7 @@ def get_output_files(tree):
 
     compilation_units = ["enums", "structs", "variants", "messages", "observers"]
     compilation_units.append("containers") # must be last in list
+    #these sets are filled in templates and used by containers template
     requiredMapTypes = set()
     requiredVectorTypes = set()
     output_files = []
@@ -62,8 +63,10 @@ def get_output_files(tree):
                      "requiredMapTypes": requiredMapTypes,
                      "requiredVectorTypes": requiredVectorTypes}
     tree.update(function_dict)
+    def get_includes():
+        return gencpp.getIncludedTypeNames(requiredMapTypes | requiredVectorTypes, "<generated/types/%s.h>")
     for cu in compilation_units:
-        includes = gencpp.getIncludedTypeNames(requiredMapTypes | requiredVectorTypes, "<generated/types/%s.h>")
+        includes = get_includes
         search_list = dict(tree)
         search_list.update({"includes": includes})
         output_files.append(OutputFile("boostpy-emit_{}.cpp.template".format(cu),

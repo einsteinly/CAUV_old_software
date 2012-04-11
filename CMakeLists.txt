@@ -107,28 +107,10 @@ add_subdirectory (messages-python/msggen)
 set (GEND "${CMAKE_BINARY_DIR}/generated")
 set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
 set (MSGS ${CAUV_SOURCE_DIR}/messages-python/messages.msg)
-execute_process(
-    COMMAND ${PYMSGD}/msggen.py -l "c++" -an -o ${GEND} ${MSGS}
-    OUTPUT_VARIABLE CAUV_MESSAGE_FILES
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
 macro(depends_on_messages TARGET)
-    foreach(F IN LISTS CAUV_MESSAGE_FILES)
-        file(RELATIVE_PATH FREL "${CMAKE_CURRENT_SOURCE_DIR}" "${F}")
-        set_source_files_properties("${FREL}"
-                                    PROPERTIES GENERATED TRUE)
-    endforeach()
     add_dependencies(${TARGET} messages-gen)
     include_directories(${GEND}/..)
 endmacro()
-
-
-foreach(F IN LISTS CAUV_MESSAGE_FILES)
-    if(${F} MATCHES ".*\\.h")
-        list(APPEND CAUV_MESSAGE_HEADERS ${F})
-    endif()
-endforeach()
 
 add_subdirectory (generated)
 add_subdirectory (common)
