@@ -32,7 +32,8 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     daemon_control(zm_context, XS_REQ),
     m_monitoring(false),
     m_interrupted(false),
-    daemon_connected(false) {
+    daemon_connected(false),
+    starting_up(false) {
 
     //internal message queues
     send_queue_pull.bind("inproc://send_queue");
@@ -76,13 +77,12 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     umask(old_umask);
 }
 
-static void delete_message_shared_ptr(void *data, void *hint) {
-#ifdef CAUV_DEBUG_MESSAGES
-    debug(7) << "deleting message shared pointer";
+static void delete_message_bytes(void *data, void *hint) {
+#ifdef CAUV_DEBUG_MESSAGE
+    debug(9) << "deleting message bytes shared pointer";
 #endif
-    boost::shared_ptr<const Message> *msg = 
-        reinterpret_cast<boost::shared_ptr<const Message>*>(hint);
-    delete msg;
+    const_svec_ptr *bytes = reinterpret_cast<const_svec_ptr*>(hint);
+    delete bytes;
 }
 
 int ZeroMQMailbox::sendMessage(boost::shared_ptr<const Message> message,
@@ -90,13 +90,21 @@ int ZeroMQMailbox::sendMessage(boost::shared_ptr<const Message> message,
     if(m_interrupted) {
         return 0;
     }
+    boost::unique_lock<boost::mutex> pub_lock(m_pub_map_mutex);
+    if (!publications.count(message->id()) && !starting_up) {
+        return 0;
+    }
+    pub_lock.unlock();
+    const_svec_ptr bytes = message->toBytes();
+    void *bytes_shared = reinterpret_cast<void*> (new const_svec_ptr(bytes));
+
+    //!!! ugly cast to remove constness
+    xs::message_t msg(const_cast<void*>(reinterpret_cast<const void*>(bytes->data())),
+                       bytes->size(), delete_message_bytes, bytes_shared);
+
     boost::lock_guard<boost::mutex> lock(m_send_mutex);
-    void *msg_shared_ptr = new boost::shared_ptr<const Message>(message);
-    xs::message_t message_wrap(msg_shared_ptr, sizeof(boost::shared_ptr<const Message>),
-                                delete_message_shared_ptr, msg_shared_ptr);
-    send_queue_push.send(message_wrap);
-    //doesn't actually report bytes written, since we don't know at this stage
-    return 1;
+    send_queue_push.send(msg);
+    return bytes->size();
 }
 
 int ZeroMQMailbox::sendMessage(boost::shared_ptr<const Message> message,
@@ -258,6 +266,7 @@ void ZeroMQMailbox::handle_pub_message (void) {
     if (len > sizeof(uint32_t) + 1) {
         return;
     }
+    boost::lock_guard<boost::mutex> lock(m_pub_map_mutex);
     if (is_sub) {
         debug(5) << "remote subscribed to message id" << sub_id;
         publications.insert(sub_id);
@@ -299,31 +308,13 @@ void ZeroMQMailbox::handle_sub_message(void) {
     notifyObservers(boost::make_shared<const svec_t>(dataptr,dataptr + inc_message.size()));
 }
 
-static void delete_message_bytes(void *data, void *hint) {
-#ifdef CAUV_DEBUG_MESSAGE
-    debug(9) << "deleting message bytes shared pointer";
-#endif
-    const_svec_ptr *bytes = reinterpret_cast<const_svec_ptr*>(hint);
-    delete bytes;
-}
-
 void ZeroMQMailbox::handle_send_message(void) {
     xs::message_t ptr_message;
     send_queue_pull.recv(&ptr_message);
-    boost::shared_ptr<const Message> *msg_ptr = reinterpret_cast<boost::shared_ptr<const Message>*>(ptr_message.data());
-    if (!publications.count((*msg_ptr)->id())) {
-        return;
-    }
-    const_svec_ptr bytes = (*msg_ptr)->toBytes();
-    void *bytes_shared = reinterpret_cast<void*> (new const_svec_ptr(bytes));
-
-    //!!! ugly cast to remove constness
-    xs::message_t msg(const_cast<void*>(reinterpret_cast<const void*>(bytes->data())),
-                       bytes->size(), delete_message_bytes, bytes_shared);
 #ifdef CAUV_DEBUG_MESSAGES
     debug(9) << "sending message";
 #endif
-    pub.send(msg);
+    pub.send(ptr_message);
 }
 
 void ZeroMQMailbox::handle_subscription_message(void) {
@@ -375,7 +366,7 @@ void ZeroMQMailbox::doMonitoring(void) {
           0, XS_POLLIN, 0
         }
     };
-    bool starting_up = true;
+    starting_up = true;
     int timeout = 50;
     struct timespec start_time;
     clock_gettime(CLOCK_MONOTONIC, &start_time);

@@ -53,7 +53,7 @@ class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public Message
     //by the thread calling doMonitoring
     const std::string name;         //node name
     std::string sub_bind;           //xs connection string for this node's sub socket
-    xs::context_t zm_context;      //main zm_context
+    xs::context_t zm_context;       //main zm_context
     xs::socket_t pub;               //the main message publication socket
     xs::socket_t sub;               //the main message subscription socket
     xs::socket_t send_queue_push;   //inproc queue for messages (passed by pointer)
@@ -64,6 +64,7 @@ class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public Message
 
     boost::mutex m_send_mutex;      //guards send_queue_push socket
     boost::mutex m_sub_mutex;       //guards send_sub_push socket
+    boost::mutex m_pub_map_mutex;   //guards publications map
 
     //message ids that have been subscribed to by other nodes
     typedef std::set<uint32_t> pubs_t;
@@ -104,6 +105,7 @@ class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public Message
     boost::thread m_thread;
     int m_group_gen;
 
+    bool starting_up;
 };
 
 }
