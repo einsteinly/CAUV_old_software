@@ -45,7 +45,7 @@ add_library (camera_client
 ) 
 target_link_libraries (camera_client
     cauv_debug
-    ${OpeNCV_LIBS}
+    ${OpenCV_LIBS}
     boost_system
     pthread
     rt
@@ -59,6 +59,7 @@ add_executable (camera_client_test
 )
 target_link_libraries (camera_client_test
     camera_client
+    utility
 )
 depends_on_messages(camera_client_test)
 

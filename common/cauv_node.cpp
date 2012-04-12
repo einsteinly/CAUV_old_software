@@ -33,9 +33,9 @@
 #include <generated/message_observers.h>
 #include <generated/types/DebugLevelMessage.h>
 #include <generated/types/MembershipChangedMessage.h>
+#include <utility/time.h>
 
 #include "cauv_node.h"
-#include "cauv_utils.h"
 #include "mailbox.h"
 
 using namespace cauv;

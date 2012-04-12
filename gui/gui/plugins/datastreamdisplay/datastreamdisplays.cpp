@@ -19,7 +19,7 @@
 
 #include <gui/core/widgets/videoscreen.h>
 #include "graphs.h"
-#include <common/cauv_utils.h>
+#include <utility/foreach.h>
 
 #include <QMdiSubWindow>
 #include <QModelIndexList>

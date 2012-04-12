@@ -28,10 +28,11 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <debug/cauv_debug.h>
-#include <common/cauv_utils.h>
-#include <common/image.h>
+#include <common/msg_classes/image.h>
 #include <utility/threadsafe-observable.h>
 #include <utility/rounding.h>
+#include <utility/foreach.h>
+#include <utility/string.h>
 #include <generated/types/TimeStamp.h>
 #include <generated/types/GeminiStatusMessage.h>
 #include <generated/types/SonarImageMessage.h>

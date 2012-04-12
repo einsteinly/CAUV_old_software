@@ -32,11 +32,23 @@
 #include <boost/thread.hpp>
 
 #include <utility/string.h>
-#include <common/cauv_utils.h>
-#include <common/blocking_queue.h>
+#include <utility/blocking_queue.h>
 #include <debug/cauv_debug.h>
 
 using namespace cauv;
+
+uint16_t cauv::sumOnesComplement(std::vector<uint16_t> bytes)
+{
+    uint32_t sum = 0;
+    foreach(uint16_t byte, bytes)
+    {
+        sum += byte;
+    }
+    while (sum >> 16)
+        sum = (sum >> 16) + (sum & 0xffff);
+
+    return ~(uint16_t)sum;
+}
 
 FTDIException::FTDIException(const std::string& msg) : m_errCode(-1), m_message(msg) {}
 FTDIException::FTDIException(const std::string& msg, int errCode, PICK_FTDI(Ftdi::Context,ftdi_context)* ftdic) : m_errCode(errCode)

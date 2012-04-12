@@ -22,8 +22,8 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <common/image.h>
-#include <common/math.h>
+#include <common/msg_classes/image.h>
+#include <utility/math.h>
 #include <debug/cauv_debug.h>
 #include <generated/types/SonarDataLine.h>
 #include <generated/types/PolarImage.h>

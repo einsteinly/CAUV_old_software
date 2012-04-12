@@ -19,7 +19,7 @@
 
 #include <boost/function.hpp>
 
-#include <common/data_stream.h>
+#include <utility/data_stream.h>
 #include <model/auv_model.h> 
 
 #include <gui/core/cauvbasicplugin.h>

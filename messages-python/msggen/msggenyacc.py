@@ -32,9 +32,10 @@ class Included(Expr):
         return s
 
 class Struct(Expr):
-    def __init__(self, name, fields):
+    def __init__(self, name, fields, include = None):
         self.name = name
         self.fields = fields
+        self.include = include
     def numEqualityFields(self):
         return len([f for f in self.fields if f.equality])
     def numCompareFields(self):
@@ -188,6 +189,7 @@ def p_list_empty(p):
         "base_types" : base_types,
         "included_types" : included_types
     }
+
 def p_list_group(p):
     "list : list group"
     p[1]["groups"].append(p[2])
@@ -213,7 +215,6 @@ def p_list_enum(p):
     p[1]["enums"].append(p[2])
     p[0] = p[1]
 
-
 def p_group(p):
     "group : GROUP STRING group_contents"
     p[0] = Group(p[2], p[3])
@@ -222,15 +223,17 @@ def p_group_contents(p):
     "group_contents : '{' message_list '}'"
     p[0] = p[2]    
 
-
 def p_struct(p):
     "struct : STRUCT STRING struct_contents"
     p[0] = Struct(p[2], p[3])
 
+def p_extern_struct(p):
+    "struct : STRUCT STRING includepath struct_contents"
+    p[0] = Struct(p[2], p[4], p[3])
+
 def p_struct_contents(p):
     "struct_contents : '{' field_list '}'"
     p[0] = p[2]
-
 
 def p_included(p):
     """included : STRUCT STRING ':' includepath
@@ -255,7 +258,6 @@ def p_path(p):
     else:
         p[0] = "".join(p[1:])
 
-
 def p_variant(p):
     "variant : VARIANT STRING variant_contents"
     p[0] = Variant(p[2], p[3])
@@ -264,7 +266,6 @@ def p_variant_contents(p):
     """variant_contents : '{' variant_type_list '}'
                         | '{' variant_type_list ',' '}'"""
     p[0] = p[2]
-
 
 def p_enum(p):
     "enum : ENUM STRING ':' type enum_contents"
@@ -366,7 +367,6 @@ def p_variant_type_list(p):
         p[1].append(p[3])
         p[0] = p[1]
 
-
 def p_type_base(p):
     "type : STRING"
     if p[1] in base_types:
@@ -383,6 +383,7 @@ def p_type_base(p):
 def p_type_list(p):
     "type : LIST '<' type '>'"
     p[0] = ListType(p[3])
+
 def p_type_map(p):
     "type : MAP '<' type ',' type '>'"
     p[0] = MapType(p[3], p[5])

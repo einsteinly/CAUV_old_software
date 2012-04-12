@@ -49,7 +49,7 @@ template<typename T> struct uniform_int_distribution: boost::uniform_int<T>{
 
 #include <opencv2/core/core.hpp>
 
-#include <common/cauv_utils.h>
+#include <utility/foreach.h>
 #include "../node.h"
 
 

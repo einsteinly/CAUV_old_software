@@ -13,7 +13,6 @@
  */
 
 /***  This is a generated file, do not edit ***/
-\#include <common/cauv_utils.h>
 \#include <debug/cauv_debug.h>
 
 #for $s in $structs
@@ -23,6 +22,7 @@
 using namespace cauv;
 
 #for $s in $structs
+#if s.include is None
 cauv::${s.name}::${s.name}() { }
 #if $len($s.fields) > 0
 cauv::${s.name}::${s.name}(#slurp
@@ -61,6 +61,7 @@ bool cauv::${s.name}::operator<(cauv::$s.name const& other) const
     #end for
     return false;
 }
+#end if
 #end if
 
 #end for 

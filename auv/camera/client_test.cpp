@@ -15,7 +15,7 @@
 #include "client.h"
 
 #include <debug/cauv_debug.h>
-#include <common/cauv_utils.h>
+#include <utility/time.h>
 
 #include <generated/types/TimeStamp.h>
 

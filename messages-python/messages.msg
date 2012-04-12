@@ -203,7 +203,7 @@ struct NodeOutputArc
     eq dst : NodeInput;
     eq output : string;
 }
-struct TimeStamp
+struct TimeStamp <utility/time.h>
 {
     // TODO: either use a base other than 1970, or more bits to store the
     // seconds
@@ -313,7 +313,7 @@ struct ScriptExecRequest
     id : string;
     seq : uint32;
 }
-struct UID
+struct UID <utility/uid.h>
 {
     eq cmp host : int32;   // unique (constant) per-host, eg IP address / end of MAC
     eq cmp sensor : int32; // unique (constant) per-sensor
@@ -345,8 +345,9 @@ struct DynamicEnum
     eq value : string;
     eq possible : list<string>;
 }
-class Image : <common/image.h>
-BoundedFloadBase subclass BoundedFloat : <common/bounded_float.h>
+
+class Image : <common/msg_classes/image.h>
+BoundedFloadBase subclass BoundedFloat : <common/msg_classes/bounded_float.h>
 
 variant ParamValue
 {

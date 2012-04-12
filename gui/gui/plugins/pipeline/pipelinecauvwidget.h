@@ -23,7 +23,7 @@
 
 #include <generated/message_observers.h>
 
-#include <common/cauv_utils.h>
+#include <utility/ratelimit.h>
 
 namespace Ui {
     class PipelineCauvWidget;

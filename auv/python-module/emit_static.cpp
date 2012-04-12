@@ -6,7 +6,7 @@
 #include <common/cauv_node.h>
 #include <common/mailbox.h>
 #include <common/mailbox.h>
-#include <common/bounded_float.h>
+#include <common/msg_classes/bounded_float.h>
 #include <generated/message_observers.h>
 #include <generated/types/message.h>
 #include <generated/types/MembershipChangedMessage.h>

@@ -24,7 +24,7 @@
 
 \#include <utility/string.h>
 \#include <utility/serialisation.h>
-\#include <common/cauv_utils.h>
+\#include <utility/foreach.h>
 \#include <debug/cauv_debug.h>
 
 \#include "types/message.h"

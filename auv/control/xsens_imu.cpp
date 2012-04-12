@@ -10,7 +10,7 @@
 #include <xsens/cmtpacket.h>
 
 #include <generated/types/floatYPR.h>
-#include <common/cauv_utils.h>
+#include <utility/foreach.h>
 #include <debug/cauv_debug.h>
 
 #include "xsens_imu.h"

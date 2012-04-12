@@ -4,9 +4,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <common/conic_section.h>
-#include <common/random.h>
-
+#include <utility/conic_section.h>
+#include <utility/random.h>
 
 namespace { // Anonymous namespace
 

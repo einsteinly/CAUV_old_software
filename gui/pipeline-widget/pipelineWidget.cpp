@@ -16,11 +16,11 @@
 #include <OpenGL/glu.h>
 #endif // else ndef __APPLE__
 
-#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
 #include <utility/defer.h>
 #include <utility/bash_cout.h>
+#include <utility/foreach.h>
 
 #include <generated/types/NodeInput.h>
 #include <generated/types/NodeOutput.h>

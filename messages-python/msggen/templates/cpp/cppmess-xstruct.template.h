@@ -28,9 +28,13 @@
 #for $i in $includes
 \#include ${i}
 #end for
+#if $s.include is not None
+\#include $s.include
+#end if
 
 namespace cauv{
 
+#if $s.include is None
 struct $s.name
 {
     #for $f in $s.fields
@@ -53,6 +57,7 @@ struct $s.name
     bool operator<($s.name const& other) const;
 #end if
 };
+#end if
 void serialise(svec_ptr, $s.name const&);
 int32_t deserialise(const_svec_ptr, uint32_t, $s.name&);
 std::string chil($s.name const&);

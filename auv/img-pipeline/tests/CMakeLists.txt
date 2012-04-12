@@ -27,7 +27,6 @@ add_executable(
 target_link_libraries(
     debug-test
     cauv_debug
-    common
 )
 
 

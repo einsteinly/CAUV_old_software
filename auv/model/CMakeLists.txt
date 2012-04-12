@@ -9,8 +9,8 @@ add_library (
 # libs
 target_link_libraries (
     model
-    common
     pthread
+    messages
 )
 depends_on_messages(model)
 
@@ -21,7 +21,7 @@ add_executable (
 
 target_link_libraries (
     model_test
-    common
     model
+    messages
 )
 depends_on_messages(model_test)

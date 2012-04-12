@@ -16,6 +16,8 @@
 #define __BROADCAST_IMAGE_NODE_H__
 
 #include "../node.h"
+#include <generated/types/CameraID.h>
+#include <generated/types/ImageMessage.h>
 
 namespace cauv{
 namespace imgproc{

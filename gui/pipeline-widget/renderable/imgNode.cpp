@@ -28,8 +28,9 @@
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <common/image.h>
+#include <common/msg_classes/image.h>
 #include <debug/cauv_debug.h>
+#include <utility/lock.h>
 
 #include "../util.h"
 

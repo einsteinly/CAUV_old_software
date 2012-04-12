@@ -24,13 +24,16 @@
     #define PICK_FTDI(A,B) B
 #endif
 
-#include <common/cauv_utils.h>
-#include <common/blocking_queue.h>
 #include <generated/message_observers.h>
 #include <generated/types/message.h>
 #include <debug/cauv_debug.h>
+#include <utility/blocking_queue.h>
+#include <utility/foreach.h>
+#include <utility/string.h>
 
 namespace cauv{
+
+uint16_t sumOnesComplement(std::vector<uint16_t> bytes);
 
 class FTDIException : public std::exception
 {

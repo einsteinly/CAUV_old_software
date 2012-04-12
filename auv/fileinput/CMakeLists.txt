@@ -12,4 +12,4 @@ target_link_libraries (
     common
     ${OpenCV_LIBS}
 )
-
+depends_on_messages(fileinput)

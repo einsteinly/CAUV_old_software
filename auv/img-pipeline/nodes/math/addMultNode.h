@@ -21,8 +21,6 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <common/cauv_utils.h>
-
 #include "../../node.h"
 
 

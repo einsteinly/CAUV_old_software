@@ -15,8 +15,8 @@
 #include <boost/thread.hpp>
 
 #include <generated/types/floatYPR.h>
-#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
+#include <utility/foreach.h>
 #include <generated/types/DebugMessage.h>
 
 #include "sbg_imu.h"

@@ -19,7 +19,7 @@
 \#include <boost/shared_ptr.hpp>
 
 \#include <utility/observable.h>
-\#include <common/image.h>
+\#include <utility/serialisation.h>
 
 \#include "types/message_type.h"
 

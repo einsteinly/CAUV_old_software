@@ -16,7 +16,7 @@
 
 #include <boost/bind.hpp>
 
-#include <common/cauv_utils.h>
+#include <utility/foreach.h>
 #include <generated/types/ControlGroup.h>
 #include <generated/types/DebugGroup.h>
 #include <generated/types/TelemetryGroup.h>

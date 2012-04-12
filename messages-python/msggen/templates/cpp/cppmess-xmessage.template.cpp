@@ -19,7 +19,6 @@
 
 \#include <utility/string.h>
 \#include <utility/serialisation.h>
-\#include <common/cauv_utils.h>
 \#include <debug/cauv_debug.h>
 
 using namespace cauv;

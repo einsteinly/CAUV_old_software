@@ -25,7 +25,9 @@ add_library (
 target_link_libraries (
     messages
 
-    common
+    special_messages
+    utility
+    cauv_debug
 )
 
 depends_on_messages(messages)

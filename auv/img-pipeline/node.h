@@ -31,8 +31,8 @@
 #include <utility/string.h>
 #include <utility/testable.h>
 #include <utility/throughput.h>
-#include <common/cauv_utils.h>
-#include <common/image.h>
+#include <utility/ratelimit.h>
+#include <common/msg_classes/image.h>
 #include <common/mailbox.h>
 #include <debug/cauv_debug.h>
 #include <generated/types/PipelineGroup.h>

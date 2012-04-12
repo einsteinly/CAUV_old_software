@@ -15,7 +15,7 @@
 #include "datastreamrecorder.h"
 
 #include <QSpinBox>
-#include <common/cauv_utils.h>
+#include <utility/foreach.h>
 
 using namespace cauv;
 

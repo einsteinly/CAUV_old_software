@@ -12,8 +12,8 @@
 #include <boost/array.hpp>
 #include <boost/optional.hpp>
 
-#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
+#include <utility/string.h>
 
 #include "seanet_packet.h"
 

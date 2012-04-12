@@ -37,7 +37,7 @@
 
 #include <utility/bash_cout.h>
 #include <utility/string.h>
-#include <common/cauv_utils.h>
+#include <utility/lock.h>
 
 using namespace cauv;
 
