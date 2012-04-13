@@ -48,6 +48,9 @@ class $className : public Message
         const $toCPPType($f.type)& get_${f.name}() const{ return ${f.name}(); }
         void ${f.name}($toCPPType($f.type) const& $f.name);
         void set_${f.name}($toCPPType($f.type) const& ${f.name}_value){ ${f.name}(${f.name}_value); }
+        #if $f.lazy
+        void get_${f.name}_inplace($toCPPType($f.type)& $f.name) const;
+        #end if
         
         #end for
 

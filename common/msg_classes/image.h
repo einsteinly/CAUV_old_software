@@ -21,10 +21,8 @@
 #include <opencv2/core/core.hpp>
 
 #include <utility/streamops.h>
-#include <utility/serialisation-types.h>
 
-#include <generated/types/TimeStamp.h>
-#include <generated/types/UID.h>
+#include "base_image.h"
 
 namespace cauv{
 
@@ -67,9 +65,7 @@ typedef boost::variant<
     PyramidMat
 > augmented_mat_t;
 
-class Image{
-        friend void serialise(svec_ptr, Image const&);
-        friend int32_t deserialise(const_svec_ptr, uint32_t i, Image&);
+class Image : public BaseImage {
     public:
         Image();
         Image(augmented_mat_t const& augmented_image);
@@ -79,18 +75,6 @@ class Image{
         Image& operator=(Image const& other);
         ~Image();
 
-        TimeStamp ts() const;
-        void ts(TimeStamp const&);
-        
-        // UID is unique to the instance in which a sensor records data, and
-        // can be used to associate derived data with other data deriving from
-        // the same sensor reading.
-        // If data derives from multiple sensors or multiple sensor readings or
-        // multiple sensors, then it should probably get a new UID at that
-        // point.
-        cauv::UID id() const;
-        void id(cauv::UID const& uid);
-        
         // Nodes that wish to support pyramid images (not implemented yet), or
         // polar images should use only the augmentedMat functions
         cv::Mat mat() const;
@@ -102,31 +86,17 @@ class Image{
         augmented_mat_t augmentedMat() const;
         void augmentedMat(augmented_mat_t const& mat);
 
-        void serializeQuality(int32_t);
+        virtual svec_t &bytes(void) const;
+        virtual void bytes(svec_t&);
 
+        virtual uint32_t channels(void) const;
+
+        //why is this float?
         float bits() const;
 
     private:
-        void setDefaultCompressParams();
-
         augmented_mat_t m_img;
-        TimeStamp m_ts;
-        std::string m_compress_fmt;
-        std::vector<int32_t> m_compress_params;
-        cauv::UID m_uid;
 };
-
-/* image serialisation */
-void serialise(svec_ptr p, Image const& v);
-int32_t deserialise(const_svec_ptr p, uint32_t i, Image& v);
-std::string chil(Image const&);
-
-template<typename charT, typename traits>
-std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, Image const&){
-    os << "{Image}";
-    return os;
-}
 
 } // namespace cauv
 

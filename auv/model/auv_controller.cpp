@@ -212,7 +212,9 @@ void AUVController::onDebugLevelMessage(DebugLevelMessage_ptr message) {
 
 void AUVController::onImageMessage(ImageMessage_ptr message) {
     try {
-        m_auv->cameras.at(message->get_source())->update(message->image());
+        Image in_image;
+        message->get_image_inplace(in_image);
+        m_auv->cameras.at(message->get_source())->update(in_image);
     } catch (std::out_of_range){
         error() << "invalid CameraID passed to controller in " << __FUNCTION__;
     }

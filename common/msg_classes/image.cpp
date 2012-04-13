@@ -25,6 +25,8 @@
 #include <debug/cauv_debug.h>
 #include <utility/serialisation.h>
 #include <utility/foreach.h>
+#include <generated/types/TimeStamp.h>
+#include <generated/types/UID.h>
 
 const static int Compress_JPEG_Quality = 95;
 
@@ -84,65 +86,43 @@ struct getImageSizeInBits: boost::static_visitor<float>{
 } // namespace cauv
 
 cauv::Image::Image()
-    : m_img(), m_ts(now()), m_compress_fmt(".jpg"), m_compress_params(), m_uid(mkUID())
+    : m_img() 
 {
-    setDefaultCompressParams();
 }
 
 cauv::Image::Image(augmented_mat_t const& img)
-    : m_img(img), m_ts(now()), m_compress_fmt(".jpg"), m_compress_params(), m_uid(mkUID())
+    : m_img(img)
 {
-    setDefaultCompressParams();
 }
 
 cauv::Image::Image(augmented_mat_t const& img, TimeStamp const& ts)
-    : m_img(img), m_ts(ts), m_compress_fmt(".jpg"), m_compress_params(), m_uid(mkUID())
+    : BaseImage(svec_t(), ts), m_img(img) 
 {
-    setDefaultCompressParams();
 }
 
 cauv::Image::Image(augmented_mat_t const& img, TimeStamp const& ts, UID const& id)
-    : m_img(img), m_ts(ts), m_compress_fmt(".jpg"), m_compress_params(), m_uid(id)
+    : BaseImage(svec_t(), ts, id), m_img(img) 
 {
-    setDefaultCompressParams();
 }
 
 // Copy constructor; take a deep copy of the image data
 cauv::Image::Image(Image const& other)
-    : m_img(boost::apply_visitor(cauv::clone(), other.m_img)),
-       m_ts(other.m_ts), 
-      m_compress_fmt(other.m_compress_fmt),
-      m_compress_params(other.m_compress_params){
+    : BaseImage(svec_t(), other.ts()),
+      m_img(boost::apply_visitor(cauv::clone(), other.m_img))
+{
 }
 
 // deep copy
-cauv::Image& cauv::Image::operator=(Image const& other){
+cauv::Image& cauv::Image::operator=(Image const& other) {
     m_img = boost::apply_visitor(cauv::clone(), other.m_img);
     m_ts = other.m_ts;
     m_compress_fmt = other.m_compress_fmt;
-    m_compress_params = other.m_compress_params;
     return *this;
 }
 
 cauv::Image::~Image(){
 }
 
-
-cauv::TimeStamp cauv::Image::ts() const{
-    return m_ts;
-}
-
-void cauv::Image::ts(cauv::TimeStamp const& t){
-    m_ts = t;
-}
-
-cauv::UID cauv::Image::id() const{
-    return m_uid;
-}
-
-void cauv::Image::id(cauv::UID const& uid){
-    m_uid = uid;
-}
 
 cv::Mat cauv::Image::mat() const {
     // will throw if this isn't the right type
@@ -163,39 +143,81 @@ void cauv::Image::augmentedMat(augmented_mat_t const& m){
     m_img = m;
 }
 
-void cauv::Image::serializeQuality(int q){
-    std::vector<int>::iterator i = std::find(m_compress_params.begin(),
-                                             m_compress_params.end(),
-                                             int(CV_IMWRITE_JPEG_QUALITY));
-    if(i != m_compress_params.end()){
-        if(++i != m_compress_params.end())
-            *i = q;
-        else
-            m_compress_params.push_back(q);
-    }else{
-        m_compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
-        m_compress_params.push_back(q);
+float cauv::Image::bits() const{
+    return boost::apply_visitor(getImageSizeInBits(), m_img);
+}
+
+uint32_t cauv::Image::channels(void) const {
+    if(boost::apply_visitor(getPrincipalMat(), m_img).channels() == 1) {
+        m_channels = 1;
+    } else {
+        m_channels = 3;
+    }
+    return m_channels;
+}
+
+cauv::svec_t &cauv::Image::bytes(void) const {
+    // !!! TODO: serialise augmented data
+    cv::Mat source = boost::apply_visitor(getPrincipalMat(), m_img);
+    cv::Mat converted;
+    std::vector<int> compress_params;
+    compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+    compress_params.push_back(serializeQuality());
+    switch(source.channels()) {
+        case 1:
+            if (source.type() != CV_8UC1)
+                source.convertTo(converted, CV_8UC1);
+            else
+                converted = source;
+            break;
+        case 3:
+        default:
+            if (source.type() != CV_8UC3)
+                source.convertTo(converted, CV_8UC3);
+            else
+                converted = source;
+            break;
+    }
+    m_bytes.reserve(converted.cols * converted.rows * converted.elemSize() * 0.2);
+    try {
+        cv::imencode(m_compress_fmt, converted, m_bytes, compress_params);
+    } catch(cv::Exception& e) {
+        error() << "OpenCV couldn't encode image:"
+                << "error:" << e.msg
+                << "format:" << m_compress_fmt 
+                << "quality:" << serializeQuality()
+                << "size:" << source.rows << "x" << source.cols;
+    }
+    return m_bytes;
+}
+
+void cauv::Image::bytes(svec_t &bytes) {
+    int load_flags;
+    if (m_channels == 3) {
+        load_flags = 1;
+    } else if (channels() == 1) {
+        load_flags = 0;
+    } else {
+        error() << "Tried to decode image with" << channels() << "channels!";
+        return;
+    } 
+    try {
+        m_img = cv::imdecode(cv::Mat(bytes), load_flags);
+    } catch (cv::Exception &e) {
+        error() << "OpenCV couldn't decode image:"
+                << "error:" << e.msg
+                << "format:" << m_compress_fmt
+                << "channels:" << channels();
     }
 }
 
 
-float cauv::Image::bits() const{
-   return boost::apply_visitor(getImageSizeInBits(), m_img);
-}
-
-
-void cauv::Image::setDefaultCompressParams(){
-    m_compress_params.clear();
-    m_compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
-    m_compress_params.push_back(Compress_JPEG_Quality);
-}
-
-void cauv::serialise(svec_ptr p, Image const& v){
+#if 0
+void serialise(svec_ptr p, Image const& v) {
     serialise(p, v.m_compress_fmt);
     serialise(p, v.m_compress_params);
     int32_t load_flags = -1;
     
-    // !!! TODO: serialise augmented data
     cv::Mat source = boost::apply_visitor(getPrincipalMat(), v.m_img);
     cv::Mat converted;
     switch(source.channels()){
@@ -238,13 +260,8 @@ void cauv::serialise(svec_ptr p, Image const& v){
     //          << __func__ << m_compress_fmt << m_compress_params << load_flags
     //          << "(" << pre << "->" << post << "bytes = " << post / pre << ")";
 }
-std::string cauv::chil(Image const& v){
-    svec_ptr p = boost::make_shared<svec_t>();
-    serialise(p, v);
-    return cauv::chil(*p);
-} 
 
-int32_t cauv::deserialise(const_svec_ptr p, uint32_t i, Image& v){
+int32_t deserialise(const_svec_ptr p, uint32_t i, Image& v){
     uint32_t b = i;
     b += deserialise(p, b, v.m_compress_fmt);
     b += deserialise(p, b, v.m_compress_params);
@@ -273,3 +290,4 @@ int32_t cauv::deserialise(const_svec_ptr p, uint32_t i, Image& v){
     //          << "(" << pre << "->" << post << "bytes = " << post / pre << ")";
     return b - i;
 }
+#endif

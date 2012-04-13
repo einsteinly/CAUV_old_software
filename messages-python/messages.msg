@@ -346,7 +346,7 @@ struct DynamicEnum
     eq possible : list<string>;
 }
 
-class Image : <common/msg_classes/image.h>
+class BaseImage : <common/msg_classes/base_image.h>
 BoundedFloadBase subclass BoundedFloat : <common/msg_classes/bounded_float.h>
 
 variant ParamValue
@@ -570,7 +570,7 @@ group image
     message Image : 4
     {
         source : CameraID;
-        lazy image : Image;
+        lazy image : BaseImage;
         time : TimeStamp;
     }
 }
@@ -858,7 +858,7 @@ group pl_gui
     {
         pipelineName : string;
         nodeId : int32;
-        lazy image : Image;
+        lazy image : BaseImage;
     }
 }
 

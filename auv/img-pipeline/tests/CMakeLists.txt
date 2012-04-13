@@ -6,7 +6,6 @@ add_executable(
 
 target_link_libraries(
     img-pipeline-tester
-    cauv_debug
     common
 )
 

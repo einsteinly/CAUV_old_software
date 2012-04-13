@@ -40,6 +40,7 @@
 #include <generated/types/NodeInputStatus.h>
 #include <generated/types/InputSchedType.h>
 #include <generated/types/SensorUIDBase.h>
+#include <generated/types/UID.h>
 
 #include "pipelineTypes.h"
 

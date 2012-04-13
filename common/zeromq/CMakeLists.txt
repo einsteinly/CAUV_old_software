@@ -42,7 +42,6 @@ add_executable(
 target_link_libraries(
     zmq_test 
 
-    cauv_debug 
     common
     zeromq_msg 
 )

@@ -62,6 +62,7 @@ class TexImg{
             int chs = img.mat().channels();
             if(img.mat().depth() != CV_8U || (chs!=3 && chs!=4 && chs!=1) ||
                !img.mat().isContinuous() || !img.mat().rows || !img.mat().cols){
+                error() << chs << img.mat().rows << img.mat().cols;
                 error() << "incompatible image type" << img;
                 m_img.reset();
             }
