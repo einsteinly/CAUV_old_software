@@ -76,6 +76,7 @@ SmartStreamBase::~SmartStreamBase()
 void SmartStreamBase::setLevel(int debug_level)
 {
     settings().debug_level = debug_level;
+    settings().changed = true;
 }
 
 void SmartStreamBase::setProgramName(std::string const& n)
@@ -84,6 +85,7 @@ void SmartStreamBase::setProgramName(std::string const& n)
     static bool set = false;
     if (!set) {
         settings().program_name = n;
+        settings().changed = true;
         set = true;
     }
 }
@@ -91,6 +93,7 @@ void SmartStreamBase::setProgramName(std::string const& n)
 void SmartStreamBase::setLogfileName(std::string const& n)
 {
     settings().logfile_name = n;
+    settings().changed = true;
 }
 
 void SmartStreamBase::setLogDirName(std::string const& n)
@@ -103,20 +106,36 @@ void SmartStreamBase::setLogDirName(std::string const& n)
         new_logdir = "./";
     }
     settings().logdir_name = new_logdir;
+    settings().changed = true;
 }
 
-void SmartStreamBase::printPrefix(std::ostream&)
-{
+SmartStreamBase::Settings SmartStreamBase::defaultSettings() {
+    //performance is better without stdio sync
+    //This is just here because it'll be called once
+    std::ios_base::sync_with_stdio(false);
+
+    Settings s;
+    char *debugLevelStr = getenv("CAUV_DEBUG_LEVEL");
+    if (debugLevelStr) {
+        s.debug_level = atoi(debugLevelStr);
+    } else {
+        s.debug_level = CAUV_DEBUG_LEVEL;
+    }
+    char *logdir = getenv("CAUV_LOG_DIR");
+    if (logdir) {
+        s.logdir_name = logdir;
+        if (*s.logdir_name.rbegin() != '/') {
+            s.logdir_name += "/";
+        }
+    }
+    s.program_name = "unknown";
+    s.changed = true;
+    return s;
 }
 
 // initialise on first use
 SmartStreamBase::Settings& SmartStreamBase::settings(){
-    static Settings s = {
-        CAUV_DEBUG_LEVEL,
-        "unknown",
-        "",
-        ""
-    };
+    static Settings s = defaultSettings();
     return s;
 }
 
@@ -146,7 +165,7 @@ void SmartStreamBase::printToStream(std::ostream& os)
         oss << "] ";
     }
 
-    printPrefix(oss);
+    oss << m_prefix;
 
     // make sure oss is stringised so that locale nastiness is all over
     // and done with
@@ -231,36 +250,33 @@ std::string const& logFilePrefix(){
 std::ofstream& SmartStreamBase::logFile()
 {
     static std::ofstream lf;
-    static std::string lfn = settings().logfile_name;
-    bool name_did_become_set = false;
-    std::string new_lfn;
 
-    //there's room for optimisation here (using a flag to indicate changes
-    //instead of doing a string comparison each time), not sure if it's worth it..
-    new_lfn = settings().logdir_name + logFilePrefix() + settings().program_name + ".log";
-    if(settings().logfile_name != new_lfn) {
-        if (settings().logfile_name.size()) {
-            name_did_become_set = true;
+    if (settings().changed) {
+        std::string new_lfn;
+        new_lfn = settings().logdir_name + logFilePrefix() + settings().program_name + ".log";
+        if(settings().logfile_name != new_lfn) {
+            bool new_file = true;
+            if (lf.is_open()) {
+                try {
+                    boost::filesystem::rename(settings().logfile_name, new_lfn);
+                    lf << "\n\n---------\n renamed from " << settings().logfile_name << "\n";
+                } catch (boost::filesystem::filesystem_error &e) {
+                    std::cerr << BashColour::Brown << "Log: Could not rename File: " << e.what() << BashControl::Reset << "\n";
+                    lf.close();
+                    new_file = false;
+                }
+            }
+            if (!lf.is_open()) {
+                lf.open(new_lfn.c_str(), std::ios::out | std::ios::app);
+                if (new_file) {
+                    lf << "\n\n----------\n" << settings().program_name << " Started" << std::endl;
+                } else {
+                    lf << "\n\n----------\n continued from " << settings().logfile_name << "\n";
+                }
+            }
+            settings().logfile_name = new_lfn;
         }
-        if(!settings().program_name.size()) {
-            settings().program_name = "unknown";
-        }
-        settings().logfile_name = new_lfn;
-    }
-    if(lfn != settings().logfile_name)
-    {
-        if(lf.is_open())
-            lf.close();
-        lfn = settings().logfile_name;
-    }
-    if(!lf.is_open())
-    {
-        lf.open(lfn.c_str(), std::ios::out | std::ios::app);
-        if(name_did_become_set)
-            lf << "\n\n----------\n" << settings().program_name
-               << " (continued from " << logFilePrefix() + "unknown.log)" << std::endl; 
-        else
-            lf << "\n\n----------\n" << settings().program_name << " Started" << std::endl;
+        settings().changed = false;
     }
     return lf;
 }
@@ -279,7 +295,7 @@ void SmartStreamBase::addOptions(boost::program_options::options_description& de
     namespace po = boost::program_options;
     desc.add_options ()
         ("verbose,v", po::value<int>()->implicit_value(1)->notifier(SmartStreamBase::setLevel), "Set the verbosity of debug messages")
-        ("logdir,L", po::value<std::string>()->default_value("")->notifier(SmartStreamBase::setLogDirName), "The directory to log debug messages to")
+        ("logdir,L", po::value<std::string>()->notifier(SmartStreamBase::setLogDirName), "The directory to log debug messages to")
     ;
 };
 
@@ -334,6 +350,9 @@ debug::debug(int level)
     : SmartStreamBase(std::cout, BashColour::Cyan),
       m_level(level)
 {
+    std::ostringstream oss;
+    oss << "D(" << level << "): ";
+    m_prefix = oss.str();
 }
 
 debug::~debug()
@@ -351,10 +370,6 @@ debug& debug::operator<<(manip_t manip)
     return *this;
 }
 
-void debug::printPrefix(std::ostream&)
-{
-}
-
 #endif // !defined(CAUV_NO_DEBUG)
 
 
@@ -364,6 +379,9 @@ error::error()
     : SmartStreamBase(std::cerr,
                       BashColour::Red)
 {
+    std::ostringstream oss;
+    oss << BashIntensity::Bold << "E: " << BashIntensity::Normal;
+    m_prefix = oss.str();
 }
 
 error::~error()
@@ -376,15 +394,13 @@ error& error::operator<<(manip_t manip)
     return *this;
 }
 
-void error::printPrefix(std::ostream& os)
-{
-    os << BashIntensity::Bold << "ERROR: " << BashIntensity::Normal;
-}
-
 /*** warning() << ***/ 
 warning::warning()
     : SmartStreamBase(std::cerr, BashColour::Brown)
 {
+    std::ostringstream oss;
+    oss << BashIntensity::Bold << "W: " << BashIntensity::Normal;
+    m_prefix = oss.str();
 }
 
 warning::~warning()
@@ -397,20 +413,12 @@ warning& warning::operator<<(manip_t manip)
     return *this;
 }
 
-void warning::printPrefix(std::ostream& os)
-{
-    os << BashIntensity::Bold << "WARNING: " << BashIntensity::Normal;
-}
-
 /*** info() << ***/
 info::info() : SmartStreamBase(std::cout)
 {
+    m_prefix = "I: ";
 }
 
 info::~info()
-{
-}
-
-void info::printPrefix(std::ostream&)
 {
 }
