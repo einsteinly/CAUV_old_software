@@ -17,9 +17,9 @@
 
 #include <boost/make_shared.hpp>
 
-#include <common/cauv_utils.h>
 #include <generated/message_observers.h>
 #include <generated/types/MembershipChangedMessage.h>
+#include <utility/foreach.h>
 
 #include "spread_messages.h"
 #include "mailbox_monitor.h"

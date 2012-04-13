@@ -27,7 +27,6 @@
 #include <boost/utility.hpp>
 
 #include <utility/string.h>
-#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
 #include "spread_mailbox.h"

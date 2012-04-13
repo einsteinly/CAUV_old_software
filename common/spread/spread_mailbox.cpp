@@ -10,7 +10,6 @@
 #include <ssrc/spread/Mailbox.h>
 
 #include <utility/string.h>
-#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
 using namespace std;
