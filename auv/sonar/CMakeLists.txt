@@ -9,6 +9,7 @@ depends_on_messages (sonar_accumulator)
 target_link_libraries (
     sonar_accumulator
     messages
+    opencv_image
 )
 
 # sources

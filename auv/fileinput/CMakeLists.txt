@@ -9,6 +9,7 @@ add_executable (
 target_link_libraries (
     fileinput
     common
+    opencv_image
     ${OpenCV_LIBS}
 )
 depends_on_messages(fileinput)

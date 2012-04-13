@@ -42,6 +42,15 @@ class $className : public Message
                      #end for
 #*                  *#);
         #end if
+        #if $m.numLazyFields() > 0
+        ${className}(#slurp
+                     #for i, f in $enumerate($m.fields)
+#*                  *##if $f.lazy#boost::shared_ptr< $toCPPType($f.type) > const& $f.name#slurp
+#*                  *##else#$toCPPType($f.type) const& $f.name#end if##slurp
+#*                  *##if $i < $len($m.fields) - 1#, #end if##slurp
+                     #end for
+#*                  *#);
+        #end if
 
         #for $f in $m.fields
         const $toCPPType($f.type)& ${f.name}() const;
@@ -72,19 +81,19 @@ class $className : public Message
         }
         mutable bool m_deserialised;
 
-    #for i, f in $enumerate($m.fields)
-        mutable $toCPPType($f.type) m_$f.name;
-    #end for
-
     #if $m.numLazyFields() > 0
         mutable std::set<int> m_lazy_fields_deserialised;
-        #for i, f in $enumerate($m.fields)
-            #if $f.lazy
-        mutable uint32_t m_lazy_field_${i}_offset;
-            #end if
-        #end for
     #end if
-        
+
+    #for i, f in $enumerate($m.fields)
+        #if f.lazy
+        mutable boost::shared_ptr< $toCPPType($f.type) > m_$f.name;
+        mutable uint32_t m_lazy_field_${i}_offset;
+        #else
+        mutable $toCPPType($f.type) m_$f.name;
+        #end if
+    #end for
+
         mutable const_svec_ptr m_bytes;
 #end if
 

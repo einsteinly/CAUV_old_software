@@ -195,7 +195,7 @@ void cauv::Image::bytes(svec_t &bytes) {
     int load_flags;
     if (m_channels == 3) {
         load_flags = 1;
-    } else if (channels() == 1) {
+    } else if (m_channels == 1) {
         load_flags = 0;
     } else {
         error() << "Tried to decode image with" << channels() << "channels!";

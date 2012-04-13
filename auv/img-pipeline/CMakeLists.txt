@@ -115,6 +115,7 @@ target_link_libraries (
     boost_date_time
     boost_filesystem
     boost_system
+    opencv_image
     ${OpenCV_LIBS}
     ${CONDITIONAL_LIBS}
 )

@@ -11,6 +11,7 @@ target_link_libraries (
     model
     pthread
     messages
+    opencv_image
 )
 depends_on_messages(model)
 

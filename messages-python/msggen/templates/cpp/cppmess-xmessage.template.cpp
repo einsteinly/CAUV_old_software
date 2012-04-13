@@ -27,17 +27,17 @@ using namespace cauv;
 #if $len($m.fields) > 0
 cauv::${className}::${className}()
     : Message($m.id, "$g.name"), m_deserialised(true),
-      #for i, f in $enumerate($m.fields)
-      m_${f.name}(),
-      #end for
       #if $m.numLazyFields() > 0
       m_lazy_fields_deserialised(),
+      #end if
       #for i, f in $enumerate($m.fields)
       #if $f.lazy
+      m_${f.name}(boost::make_shared< $toCPPType($f.type) >()),
       m_lazy_field_${i}_offset(0),
+      #else
+      m_${f.name}(),
       #end if
       #end for
-      #end if
       m_bytes(){
 }
 cauv::${className}::${className}(#slurp
@@ -46,21 +46,45 @@ cauv::${className}::${className}(#slurp
                            #end for
 #*                        *#)
     : Message($m.id, "$g.name"), m_deserialised(true),
-      #for i, f in $enumerate($m.fields)
-      m_${f.name}($f.name),
-      #end for
       #if $m.numLazyFields() > 0
       m_lazy_fields_deserialised(),
+      #end if
       #for i, f in $enumerate($m.fields)
       #if $f.lazy
+      m_${f.name}(boost::make_shared< $toCPPType($f.type) >($f.name)),
       m_lazy_field_${i}_offset(0),
+      #else
+      m_${f.name}($f.name),
       #end if
       #end for
-      #end if
       m_bytes(){
 }
 #else
 cauv::${className}::${className}() : Message($m.id, "$g.name") { }
+#end if
+
+#if $m.numLazyFields() > 0
+cauv::${className}::${className}(#slurp
+                     #for i, f in $enumerate($m.fields)
+#*                  *##if $f.lazy#boost::shared_ptr< $toCPPType($f.type) > const& $f.name#slurp
+#*                  *##else#$toCPPType($f.type) const& $f.name#end if##slurp
+#*                  *##if $i < $len($m.fields) - 1#, #end if##slurp
+                     #end for
+#*                  *#)
+    : Message($m.id, "$g.name"), m_deserialised(true),
+      #if $m.numLazyFields() > 0
+      m_lazy_fields_deserialised(),
+      #end if
+      #for i, f in $enumerate($m.fields)
+      #if $f.lazy
+      m_${f.name}($f.name),
+      m_lazy_field_${i}_offset(0),
+      #else
+      m_${f.name}($f.name),
+      #end if
+      #end for
+      m_bytes(){
+}
 #end if
 
 #for i, f in $enumerate($m.fields)
@@ -69,16 +93,22 @@ const $toCPPType($f.type)& cauv::$className::${f.name}() const{
     #if $f.lazy
     // Lazy field: may not be deserialised yet
     if(m_bytes && 0 == m_lazy_fields_deserialised.count($i)){
-        cauv::deserialise(m_bytes, m_lazy_field_${i}_offset, m_${f.name});
+        cauv::deserialise(m_bytes, m_lazy_field_${i}_offset, *m_${f.name});
         m_lazy_fields_deserialised.insert($i);
         if($m.numLazyFields() == m_lazy_fields_deserialised.size())
             m_bytes.reset();
     }
-    #end if
+    return *m_${f.name};
+    #else
     return m_${f.name};
+    #end if
 }
 void cauv::$className::${f.name}($toCPPType($f.type) const& $f.name){
+    #if $f.lazy
+    *m_$f.name = $f.name;
+    #else
     m_$f.name = $f.name;
+    #end if
 }
 
 #if $f.lazy
@@ -148,7 +178,7 @@ void cauv::serialise(svec_ptr p, $className const& v){
     cauv::serialise(p, uint32_t($m.id)); 
     #for f in $m.fields
     #if $f.lazy
-    serialiseLazyField(p, v.m_$f.name);
+    serialiseLazyField(p, *v.m_$f.name);
     #else
     cauv::serialise(p, v.m_$f.name);
     #end if
