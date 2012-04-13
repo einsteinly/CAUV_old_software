@@ -96,10 +96,7 @@ set (LIBS ${LIBS} ${Boost_LIBRARIES})
 include_directories (SYSTEM ${Boost_INCLUDE_DIRS})
 link_directories (${Boost_LIBRARY_DIRS})
 
-if (Boost_VERSION GREATER 104500)
-    message (STATUS "Warning: forcing use of boost filesystem version 2")
-    add_definitions (-DBOOST_FILESYSTEM_VERSION=2)
-endif()
+add_definitions (-DBOOST_FILESYSTEM_VERSION=3)
 
 
 add_subdirectory (messages-python/msggen)

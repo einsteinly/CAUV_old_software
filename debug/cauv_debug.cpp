@@ -288,7 +288,7 @@ int SmartStreamBase::parseOptions(int argc, char** argv) {
     po::options_description desc("Allowed options");
     po::positional_options_description pos;
     if(argv && argc) {
-        setProgramName(boost::filesystem::path(argv[0]).leaf());
+        setProgramName(boost::filesystem::path(argv[0]).leaf().native());
     }
     
     addOptions(desc, pos);

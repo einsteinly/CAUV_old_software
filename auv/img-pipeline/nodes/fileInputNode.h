@@ -108,9 +108,9 @@ class FileInputNode: public AsynchronousNode{
                 // continue until the directory is exhausted, or an image is
                 // successfully loaded
                 for(; m_iter != end; m_iter++){
-                    debug(4)  << "considering path:" << m_iter->string();
+                    debug(4)  << "considering path:" << m_iter->path().native();
                     if(!boost::filesystem::is_directory(m_iter->status())) {
-                        image = readImage(m_iter->string(), false);
+                        image = readImage(m_iter->path().native(), false);
                         if (!image.empty())
                         {
                             m_iter++;
