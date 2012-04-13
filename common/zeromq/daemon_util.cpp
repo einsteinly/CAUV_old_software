@@ -31,9 +31,11 @@ void daemonize(void) {
 }
 
 void create_path(std::string dir_path) {
-    for(size_t ii = 1; ii < dir_path.size(); ii++) {
-        if (dir_path[ii] == '/') {
-            dir_path[ii] = '\0';
+    for(size_t ii = 1; ii <= dir_path.size(); ii++) {
+        if (dir_path[ii] == '/' || ii == dir_path.size()) {
+            if (ii != dir_path.size()) {
+                dir_path[ii] = '\0';
+            }
             int err;
             err = mkdir(dir_path.c_str(), 0775);
             if (!(err == 0 || (err == -1 && errno == EEXIST))) {
@@ -41,7 +43,9 @@ void create_path(std::string dir_path) {
                         dir_path.c_str(),errno,strerror(errno));
                 throw file_error("Could not create directory!");
             }
-            dir_path[ii] = '/';
+            if (ii != dir_path.size()) {
+                dir_path[ii] = '/';
+            }
         }
     }
 }

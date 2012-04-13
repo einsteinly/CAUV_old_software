@@ -20,6 +20,7 @@ add_library(
     
     zeromq_mailbox.cpp
     zeromq_addresses.cpp
+    daemon_util.cpp
 )
 
 target_link_libraries(

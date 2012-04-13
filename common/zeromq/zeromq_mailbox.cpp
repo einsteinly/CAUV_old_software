@@ -1,5 +1,6 @@
 #include "zeromq_mailbox.h"
 #include "zeromq_addresses.h"
+#include "daemon_util.h"
 
 #include <unistd.h>
 #include <dirent.h>
@@ -43,6 +44,7 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     sub_queue_push.connect("inproc://sub_queue");
 
     std::string ipc_directory = get_ipc_directory();
+    create_path(ipc_directory);
 
     std::ostringstream sub_bind_ss;
     mode_t old_umask = umask(0);
