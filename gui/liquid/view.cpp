@@ -22,10 +22,7 @@
 
 #include <debug/cauv_debug.h>
 
-#include <common/cauv_utils.h>
-
 using namespace liquid;
-
 
 class ZoomFilter : public QObject {
     bool eventFilter(QObject *object, QEvent *event)

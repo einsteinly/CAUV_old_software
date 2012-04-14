@@ -1,5 +1,8 @@
 #ifndef __CAUV_PIVOT_H__
 #define __CAUV_PIVOT_H__
+#include "rounding.h"
+
+namespace cauv {
 
 template <typename TMin, typename TNeutral, typename TMax, typename TVal>
 inline static TVal pivot(TMin min, TNeutral neutral, TMax max, TVal value){
@@ -16,4 +19,6 @@ inline static TVal pivot(TMin min, TNeutral neutral, TMax max, TVal value){
         return clamp(0, (value - neutral) / rightRange, 1);
     }
 }
+
+} //namespace cauv
 #endif

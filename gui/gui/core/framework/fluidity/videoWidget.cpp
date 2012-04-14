@@ -20,7 +20,7 @@
 
 #include <boost/make_shared.hpp>
 
-#include <common/image.h>
+#include <common/msg_classes/image.h>
 #include <debug/cauv_debug.h>
 
 #include <generated/types/GuiImageMessage.h>
@@ -64,7 +64,8 @@ void VideoWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
 
 void VideoWidget::displayImage(boost::shared_ptr<const GuiImageMessage> p){
     m_image_msg = p;
-    Image t = m_image_msg->image();
+    Image t;
+    m_image_msg->get_image_inplace(t);
     cv::Mat m = t.mat();
     switch(m.type()){
         case CV_8UC3:

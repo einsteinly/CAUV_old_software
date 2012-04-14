@@ -21,10 +21,11 @@
 #include <QPropertyAnimation>
 #include <QGraphicsScene>
 
-#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
 #include <utility/qstring.h>
+#include <utility/foreach.h>
+#include <utility/time.h>
 
 #include <liquid/button.h>
 #include <liquid/nodeHeader.h>

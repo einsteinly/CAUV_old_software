@@ -43,7 +43,7 @@
 //!!! just for testing
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/model/nodes/groupingnode.h>
-#include <common/bounded_float.h>
+#include <common/msg_classes/bounded_float.h>
 #include "framework/elements/style.h"
 
 using namespace cauv;

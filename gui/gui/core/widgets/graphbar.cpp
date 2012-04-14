@@ -17,8 +17,7 @@
 #include <QPaintEvent>
 #include <QPainter>
 
-#include <common/cauv_utils.h>
-
+#include <utility/pivot.h>
 #include <debug/cauv_debug.h>
 
 #include <limits>

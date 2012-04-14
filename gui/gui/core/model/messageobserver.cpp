@@ -140,7 +140,8 @@ void DefaultGuiMessageObserver::onDebugLevelMessage(DebugLevelMessage_ptr messag
 
 void DefaultGuiMessageObserver::onImageMessage(ImageMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("image");
-    boost::shared_ptr<Image> shared_image= boost::make_shared<Image>(message->image());
+    boost::shared_ptr<Image> shared_image= boost::make_shared<Image>();
+    message->get_image_inplace(*shared_image);
     group->findOrCreate<ImageNode>(message->source())->update(shared_image);
 }
 

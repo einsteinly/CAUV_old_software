@@ -23,6 +23,7 @@
 #include <liquid/button.h>
 
 #include <utility/string.h>
+#include <utility/time.h>
 #include <generated/types/NodeType.h>
 
 #include "elements/style.h"

@@ -35,7 +35,7 @@
 
 #include <QStyleOptionSpinBox>
 
-#include <common/cauv_utils.h>
+#include <utility/pivot.h>
 
 namespace cauv {
 namespace gui {

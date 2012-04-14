@@ -29,7 +29,7 @@
 #include <qwt_plot_zoomer.h>
 #include <qwt_plot_panner.h>
 
-#include <common/cauv_utils.h>
+#include <utility/foreach.h>
 
 #include <gui/core/model/nodes/numericnode.h>
 

@@ -21,7 +21,7 @@
 #include "../widgets/videoscreen.h"
 #include "../widgets/graph.h"
 
-#include <common/cauv_utils.h>
+#include <utility/foreach.h>
 
 #include <QMdiSubWindow>
 #include <QModelIndexList>

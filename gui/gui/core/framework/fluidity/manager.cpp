@@ -20,9 +20,9 @@
 #include <boost/make_shared.hpp>
 
 #include <common/cauv_node.h>
-#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 #include <utility/bash_cout.h>
+#include <utility/foreach.h>
 
 #include <generated/types/PipelineGroup.h>
 #include <generated/types/Pl_GuiGroup.h>

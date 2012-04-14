@@ -32,6 +32,7 @@
 #include <generated/types/NodeOutputArc.h>
 
 #include <utility/bimap.h>
+#include <utility/time.h>
 
 #include "fluidity/types.h"
 

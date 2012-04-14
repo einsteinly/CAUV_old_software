@@ -19,7 +19,7 @@
 
 #include <gui/core/model/node.h>
 
-#include <common/image.h>
+#include <common/msg_classes/image.h>
 
 namespace cauv {
     namespace gui {

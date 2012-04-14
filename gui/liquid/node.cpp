@@ -22,9 +22,9 @@
 #include <QGraphicsLinearLayout>
 #include <QGraphicsSceneMouseEvent>
 
-#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
+#include <utility/foreach.h>
 
 #include "requiresCutout.h"
 #include "style.h"
