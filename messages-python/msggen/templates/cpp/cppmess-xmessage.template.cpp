@@ -113,6 +113,7 @@ void cauv::$className::${f.name}($toCPPType($f.type) const& $f.name){
 
 #if $f.lazy
 void cauv::$className::get_${f.name}_inplace($toCPPType($f.type) &$f.name) const {
+    checkDeserialised();
     if (m_bytes && 0 == m_lazy_fields_deserialised.count($i)) {
         cauv::deserialise(m_bytes, m_lazy_field_${i}_offset, ${f.name});
     }

@@ -36,7 +36,7 @@ class NetInputNode: public InputNode{
         NetInputNode(ConstructArgs const& args)
             : InputNode(args),
               ignored(0), processed(0), dropped(0), dropped_since(0), m_counters_lock(),
-              m_latest_image_msg(), m_processed_latest(true), m_latest_msg_lock() {
+              m_latest_image_msg(boost::make_shared<ImageMessage>()), m_processed_latest(true), m_latest_msg_lock() {
         }
 
         void init(){
