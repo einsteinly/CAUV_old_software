@@ -160,9 +160,12 @@ void XPubSubPair::pump_subscription(void) {
         return;
     }
     if (xs_msg_size(&message_buf) >= sizeof(uint32_t) + 1) {
-        const char *data = reinterpret_cast<const char*>(xs_msg_data(&message_buf));
+        char *data = reinterpret_cast<char*>(xs_msg_data(&message_buf));
         const char sub = *data; 
         const uint32_t msg_id = *reinterpret_cast<const uint32_t*>(data + 1);
+        if (msg_id == NODE_MARKER_MSGID && xs_msg_size(&message_buf) >= 2*sizeof(uint32_t) + 1) {
+            *(reinterpret_cast<uint32_t*>(data +1) + 1) |= 0x1 << 31;
+        }
         if (sub) {
             subs.insert(msg_id);
         } else {

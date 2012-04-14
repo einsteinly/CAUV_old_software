@@ -14,6 +14,7 @@
 #include <debug/cauv_debug.h>
 
 #include <generated/types/message.h>
+#include <generated/types/MembershipChangedMessage.h>
 #include <generated/groupmap.h>
 #include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
@@ -79,7 +80,7 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     umask(old_umask);
 }
 
-static void delete_message_bytes(void *data, void *hint) {
+static void delete_message_bytes(void *, void *hint) {
 #ifdef CAUV_DEBUG_MESSAGE
     debug(9) << "deleting message bytes shared pointer";
 #endif
@@ -88,7 +89,7 @@ static void delete_message_bytes(void *data, void *hint) {
 }
 
 int ZeroMQMailbox::sendMessage(boost::shared_ptr<const Message> message,
-                                       MessageReliability reliability) {
+                                       MessageReliability) {
     if(m_interrupted) {
         return 0;
     }
@@ -251,11 +252,18 @@ void ZeroMQMailbox::handle_pub_message (void) {
     //poor man's deserialisation for pid marker
     if (sub_id == NODE_MARKER_MSGID && len >= sizeof(uint32_t) * 2 + 1) {
         uint32_t pid = *(reinterpret_cast<uint32_t*>(data + 1) + 1);
-        debug(3) << "pid" << pid << "connected";
-        if (send_connect_pids.count(pid)) {
-            debug(3) << "sending connection for pid" << pid;
-            send_connect_message(pid);
-            send_connect_pids.erase(pid);
+        if (is_sub) {
+            debug(3) << "pid" << pid << "connected";
+            if (send_connect_pids.count(pid)) {
+                debug(3) << "sending connection for pid" << pid;
+                send_connect_message(pid);
+                send_connect_pids.erase(pid);
+            }
+            boost::shared_ptr<MembershipChangedMessage> change_msg = 
+                boost::make_shared<MembershipChangedMessage>("unknown");
+            BOOST_FOREACH(observer_ptr_t o, m_observers) {
+                o->onMembershipChangedMessage(change_msg);
+            }
         }
     }
 
