@@ -18,7 +18,7 @@ generated/      - generated headers that are shared between multiple targets
                   files.
 debug/          - debug output library
 utility/        - c++ files shared between gui/ and auv/ and anywhere else they
-                  are needed (headers only)
+                  are needed
 
 pitzdir/        - directory containing the files of the issue tracker (pitz):
                   to see a list of tasks from the command line, run:
@@ -93,12 +93,16 @@ Build System:
     python 2.7 with Cheetah, pylexyacc
 
 common:
-    boost- >= 1.43 (but go for the most recent available), including boost-python
+    boost- >= 1.44 (but go for the most recent available), including boost-python
     python 2.7
     OpenCV (>= 2.2)
     !!! These configure commands might not be necessary
+    either:
     spread (./configure --with-pic CFLAGS="-enable-shared -fPIC")
     libssrcspread (./configure --with-spread=/path/to/spread/install/probably/usr/local/ --enable-debug --disable-lua-binding --disable-perl-binding --disable-python-binding --enable-shared CXXFLAGS=-fPIC LDFLAGS=-fPIC CFLAGS=-fPIC --disable-ruby-binding --with-pic)
+    or:
+    libxs (compiled with libzmq compatibility)
+    pyzmq (compiled against libxs)
 
 auv:
     librt (this is include in libc6 most of the time)

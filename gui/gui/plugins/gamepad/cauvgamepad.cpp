@@ -18,12 +18,12 @@
 #include "gamepad/xboxinput.h"
 #include "gamepad/gamepadinput.h"
 
-#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 #include <gui/core/model/model.h>
 
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/model/nodes/groupingnode.h>
+#include <utility/foreach.h>
 
 using namespace cauv;
 using namespace cauv::gui;

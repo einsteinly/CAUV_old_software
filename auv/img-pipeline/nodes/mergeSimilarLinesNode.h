@@ -26,7 +26,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <common/math.h>
+#include <utility/math.h>
 
 #include <generated/types/Line.h>
 

@@ -17,7 +17,6 @@
 #include "msgsrc_mb_observer.h"
 
 #include <boost/thread/thread.hpp>
-#include <common/cauv_utils.h>
 
 #include <debug/cauv_debug.h>
 

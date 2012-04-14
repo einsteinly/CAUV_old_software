@@ -1,6 +1,5 @@
 #include <boost/make_shared.hpp>
 #include <common/cauv_node.h>
-#include <common/cauv_global.h>
 #include <debug/cauv_debug.h>
 #include <sensors/sensors.h>
 #include <vector>

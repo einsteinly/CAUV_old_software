@@ -21,7 +21,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <common/blocking_queue.h>
+#include <utility/blocking_queue.h>
 
 #include "pipelineTypes.h"
 

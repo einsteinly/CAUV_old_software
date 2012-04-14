@@ -27,7 +27,6 @@
 #include <boost/utility.hpp>
 
 #include <utility/string.h>
-#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
 #include "spread_mailbox.h"
@@ -127,6 +126,14 @@ void ReconnectingSpreadMailbox::leaveGroup(const std::string &groupName) {
         m_groups.erase(i);
         _doLeaveGroup(groupName);
     }
+}
+
+void ReconnectingSpreadMailbox::subMessage(const Message &message) {
+    joinGroup(message.group());
+}
+
+void ReconnectingSpreadMailbox::unSubMessage(const Message &message) {
+    //do nothing
 }
 
 /**

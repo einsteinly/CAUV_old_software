@@ -41,10 +41,6 @@ class unique_lock;
 } // namespace boost
 #endif
 
-namespace cauv{
-class CauvNode;
-} // namespace cauv
-
 #include <utility/bash_cout.h>
 
 
@@ -100,7 +96,6 @@ class SmartStreamBase : public boost::noncopyable
         virtual ~SmartStreamBase();
 
         static void setLevel(int debug_level);
-        static void setCauvNode(cauv::CauvNode*);
         static void setProgramName(std::string const&);
         static void setLogfileName(std::string const&);
         static void setLogDirName(std::string const&);
@@ -113,10 +108,10 @@ class SmartStreamBase : public boost::noncopyable
     protected:
         struct Settings{
             int debug_level;
-            cauv::CauvNode* cauv_node;
             std::string program_name;
             std::string logfile_name;
             std::string logdir_name;
+            bool changed;
         };
 
         // helper functions for derived classes
@@ -147,13 +142,11 @@ class SmartStreamBase : public boost::noncopyable
         std::list< std::string > m_stuffs;
         std::list< manip_t > m_manipulators;
 
-        virtual void printPrefix(std::ostream&);
-        // can't forward declare enums...
-        virtual int debugType() const;
-
+        static Settings defaultSettings();
         // initialise on first use
         static Settings& settings();
 
+        std::string m_prefix;
     private:
         void printToStream(std::ostream& os);
 
@@ -181,7 +174,6 @@ class SmartStreamBase : public boost::noncopyable
         static boost::scoped_ptr<mutex_t> m_mutex;
         boost::scoped_ptr<lock_t> m_lock;
 #endif
-
         std::ostream& m_stream;
         BashColour::e m_col;
         bool m_print;
@@ -207,9 +199,6 @@ struct debug : public SmartStreamBase
      */
     debug& operator<<(manip_t manip);
     
-    virtual void printPrefix(std::ostream&);
-    virtual int debugType() const;
-
     private:
         int m_level;
 };
@@ -220,7 +209,6 @@ struct debug : boost::noncopyable
     virtual ~debug(){ }
 
     static void setLevel(int){ }
-    static void setCauvNode(cauv::CauvNode*){ }
     static void setProgramName(std::string const&){ }
     static void setLogfileName(std::string const&){ }
 
@@ -254,9 +242,6 @@ struct error : public SmartStreamBase
     /* must handle manipulators (e.g. endl) separately:
      */
     error& operator<<(manip_t manip);
-    
-    virtual void printPrefix(std::ostream&);
-    virtual int debugType() const;
 };
 
 struct warning : public SmartStreamBase
@@ -274,9 +259,6 @@ struct warning : public SmartStreamBase
     /* must handle manipulators (e.g. endl) separately:
      */
     warning& operator<<(manip_t manip);
-    
-    virtual void printPrefix(std::ostream&);
-    virtual int debugType() const;
 };
 
 struct info : public SmartStreamBase
@@ -298,9 +280,6 @@ struct info : public SmartStreamBase
         _appendToManips(manip);
         return *this;
     }
-    
-    virtual void printPrefix(std::ostream&);
-    virtual int debugType() const;
 };
 
 #endif // ndef __CAUV_DEBUG_H__

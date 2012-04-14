@@ -20,7 +20,7 @@
 
 #include <boost/make_shared.hpp>
 
-#include <common/cauv_utils.h>
+#include <utility/foreach.h>
 #include <debug/cauv_debug.h>
 #include <generated/types/SonarControlMessage.h>
 

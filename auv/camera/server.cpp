@@ -21,8 +21,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <common/cauv_utils.h>
 #include <utility/bash_cout.h>
+#include <utility/foreach.h>
 #include <debug/cauv_debug.h>
 
 using namespace cauv;

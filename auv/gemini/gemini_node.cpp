@@ -1,10 +1,10 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
- * 
+ *
  * See license.txt for details.
- * 
+ *
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
@@ -20,15 +20,19 @@
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 #include <boost/thread.hpp>
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <debug/cauv_debug.h>
-#include <common/cauv_utils.h>
-#include <common/image.h>
+#include <common/msg_classes/image.h>
 #include <utility/threadsafe-observable.h>
 #include <utility/rounding.h>
+#include <utility/foreach.h>
+#include <utility/string.h>
 #include <generated/types/TimeStamp.h>
 #include <generated/types/GeminiStatusMessage.h>
 #include <generated/types/SonarImageMessage.h>
@@ -297,13 +301,13 @@ class ReBroadcaster: public GeminiObserver{
                 downsampled_image.size(),
                 0, 0, cv::INTER_LINEAR
             );
-            debug() << "sending SonarImageMessage:" << bearing_beams << "x" << resize_to_rangelines;            
+            debug() << "sending SonarImageMessage:" << bearing_beams << "x" << resize_to_rangelines;
             #else
             // !!! just rely on range compression, (now I understand how it
             // works...), otherwise all we really do is introduce aliasing:
             rangeConv = m_range / source_rangelines;
             resized_data = m_current_raw_data;
-            debug() << "sending SonarImageMessage:" << bearing_beams << "x" << source_rangelines;            
+            debug() << "sending SonarImageMessage:" << bearing_beams << "x" << source_rangelines;
             #endif
             m_node.send(m_current_msg);
         }
@@ -322,6 +326,9 @@ class ReBroadcaster: public GeminiObserver{
 class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                    public MessageObserver,
                    boost::noncopyable{
+    private:
+        typedef boost::mutex mutex_t;
+        typedef boost::unique_lock<mutex_t> lock_t;
     public:
         GeminiSonar(uint16_t sonar_id, uint32_t inter_ping_musec=1000000)
             : m_sos(1499.2f),
@@ -331,7 +338,13 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
               m_gain_percent(0),
               m_range_lines(200),
               m_ping_continuous(false),
-              m_conn_state(){
+              m_conn_state(),
+              m_ioservice(),
+              m_timer_ptr(boost::make_shared<boost::asio::deadline_timer>(boost::ref(m_ioservice))),
+              m_ioservice_thread(boost::bind(&GeminiSonar::runIOService, this)),
+              m_need_callback(),
+              m_need_callback_mux(),
+              m_stop(false){
             assert(!the_sonar);
             the_sonar = this;
             m_conn_state.ok = true;
@@ -339,6 +352,11 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         }
 
         ~GeminiSonar(){
+            m_stop = true;
+            m_timer_ptr->cancel();
+            m_ioservice.stop();
+            m_ioservice_thread.interrupt();
+            m_ioservice_thread.join();
             the_sonar = NULL;
         }
 
@@ -355,6 +373,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         void init(){
             int success = 0;
             m_conn_state.sonarId = 0;
+            lock_t l(m_gem_mux);
             success = GEM_StartGeminiNetworkWithResult(m_sonar_id);
             if(!success){
                 error() << "Could not start network connection to sonar" << m_sonar_id;
@@ -363,7 +382,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 // ('Evo' is the native mode for the sonar, John told us to use
                 // this mode, SeaNet is there for compatibility with Tritech's
                 // old software only. 'EvoC' means use range-line compression
-                GEM_SetGeminiSoftwareMode("EvoC");
+                char mode[] = "EvoC";
+                GEM_SetGeminiSoftwareMode(mode);
                 GEM_SetHandlerFunction(&CallBackFn);
             }
         }
@@ -384,6 +404,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 error() << "will not ping: connection not ok";
                 return;
             }
+            m_gem_mux.lock();
             GEM_AutoPingConfig(m_range, m_gain_percent, m_sos);
             if(m_range_lines <= 32){
                 GEM_SetGeminiEvoQuality(0);
@@ -404,8 +425,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             }
             // !!! FIXME this seems to cause lock-ups under high load, safer to
             // request another ping when we've received the last one in full
-            GEM_SetPingMode(m_ping_continuous);
-            GEM_SetInterPingPeriod(m_inter_ping_musec);
+            //GEM_SetPingMode(m_ping_continuous);
+            //GEM_SetInterPingPeriod(m_inter_ping_musec);
             debug() << "SendPingConfig: range" << m_range << "gain" << m_gain_percent;
             GEM_SendGeminiPingConfig();
         }
@@ -417,8 +438,14 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             m_gain_percent = m->gain();
             m_range_lines = m->rangeLines();
             m_inter_ping_musec = m->interPingPeriod() * 1e6 + 0.5;
-            m_ping_continuous = m->continuous();
-            applyConfigAndPing();
+            // switching to continuous: the applyConfigAndPing/setupNextPing
+            // loop, switching from continuous: make sure there is one last
+            // ping
+            if(m_ping_continuous != m->continuous()){
+                lock_t l(m_gem_mux);
+                m_ping_continuous = m->continuous();
+                applyConfigAndPing();
+            }
         }
 
     private:
@@ -445,7 +472,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             return r;
         }
         static std::string fmtShutdownStatus(uint32_t status){
-            mkStr r;        
+            mkStr r;
             if(status & 0x1) r << "Over-Temperature! ";
             if(status & 0x2) r << "Out of water! ";
             return r;
@@ -514,8 +541,9 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     m_conn_state.sonarAltIp = status_packet->m_sonarAltIp;
                 }
                 if(m_conn_state.sonarId != 0){
+                    lock_t l(m_gem_mux);
                     GEM_SetDLLSonarID(m_conn_state.sonarId);
-                   unsigned char ip_chrs[4] = {
+                    unsigned char ip_chrs[4] = {
                         (m_conn_state.sonarAltIp >> 24) & 0xff,
                         (m_conn_state.sonarAltIp >> 16) & 0xff,
                         (m_conn_state.sonarAltIp >> 8) & 0xff,
@@ -609,7 +637,6 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                             << "RX Error count:"<< ping_tail_ex->m_recvErrorCount
                             << "RX Total:"      << ping_tail_ex->m_packetCount
                             << "Lines lost:"    << ping_tail_ex->m_linesLostThisPing;
-
                     break;
 
                 case GEM_STATUS:
@@ -648,6 +675,9 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 if(status_packet)
                     the_sonar->onStatusPacket(status_packet);
 
+                if(ping_tail || ping_tail_ex)
+                    the_sonar->prepareNextPing();
+
                 boost::lock_guard<boost::recursive_mutex> l(the_sonar->m_observers_lock);
                 foreach(observer_ptr_t& p, the_sonar->m_observers){
                     if(ping_head)
@@ -672,6 +702,48 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             }
         }
 
+        // precondition: m_gem_mux is locked from a previous ping: this unlocks
+        // it unconditionally
+        void prepareNextPing(){
+            if(m_ping_continuous){
+                // set off another ping after m_inter_ping_musec:
+                lock_t l(m_need_callback_mux);
+                boost::system::error_code ec;
+                m_timer_ptr->expires_from_now(boost::posix_time::microseconds(m_inter_ping_musec), ec);
+                if(ec)
+                    error() << "setting callback:" << ec.message();
+                m_timer_ptr->async_wait(boost::bind(&GeminiSonar::onTimerExpiry, this, _1));
+                m_need_callback.notify_one();
+            }
+            m_gem_mux.unlock();
+        }
+
+        void onTimerExpiry(boost::system::error_code const& ec){
+            if(ec == boost::asio::error::operation_aborted){
+                debug() << "timer cancelled";
+            }else if(ec){
+                error() << "timer error: " << ec.message();
+            }else{
+                applyConfigAndPing();
+            }
+        }
+
+        void runIOService(){
+            while(true){
+                boost::system::error_code ec;
+                lock_t l(m_need_callback_mux);
+                std::size_t executed = m_ioservice.run(ec);
+                if(ec)
+                    debug() << "io_service error:" << ec.message();
+                if(m_stop)
+                    break;
+                if(!executed){
+                    m_ioservice.reset();
+                    m_need_callback.wait(l);
+                }
+            }
+        }
+
         float m_sos;
         uint16_t m_sonar_id;
         uint32_t m_inter_ping_musec;
@@ -686,6 +758,15 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             uint16_t sonarId;
             uint32_t sonarAltIp;
         } m_conn_state;
+
+        boost::asio::io_service m_ioservice;
+        boost::shared_ptr<boost::asio::deadline_timer> m_timer_ptr;
+        boost::thread m_ioservice_thread;
+        boost::condition_variable m_need_callback;
+        mutex_t m_need_callback_mux;
+        bool m_stop;
+
+        mutex_t m_gem_mux;
 
         // there should only be one instance of this at a time, keep track of
         // it so that callbacks can be dispatched

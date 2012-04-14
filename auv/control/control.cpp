@@ -10,9 +10,7 @@
 
 #include <utility/string.h>
 #include <utility/rounding.h>
-#include <common/cauv_global.h>
-#include <common/cauv_utils.h>
-#include <common/math.h>
+#include <utility/math.h>
 #include <common/mailbox.h>
 #include <debug/cauv_debug.h>
 #include <generated/types/TimeStamp.h>

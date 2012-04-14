@@ -34,6 +34,7 @@ auv/scripting/optimised.pipes
 auv/scripting/mission_state.shelf
 auv/python-module/emit_*.cpp
 messages-python/parsetab.py
+messages-python/msggen/parsetab.py
 auv/common/messages.cpp
 generated/*.h
 generated/*.cpp

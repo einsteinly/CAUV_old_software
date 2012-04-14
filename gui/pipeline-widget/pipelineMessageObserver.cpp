@@ -207,7 +207,9 @@ void PipelineGuiMsgObs::onGuiImageMessageBuffered(GuiImageMessage_ptr m){
         return;
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
     imgnode_ptr_t np = m_widget->imgNode(m->nodeId());
+    Image in_image;
+    m->get_image_inplace(in_image);
     if(np)
-        np->display(m->image());
+        np->display(in_image);
 }
 

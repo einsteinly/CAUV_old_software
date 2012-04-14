@@ -62,6 +62,7 @@ depends_on_messages(pipeline-widget)
 target_link_libraries (
     pipeline-widget
     common-shared
+    opencv_image
     ${FTGL_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${QT_LIBRARIES}

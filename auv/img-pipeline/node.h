@@ -31,8 +31,8 @@
 #include <utility/string.h>
 #include <utility/testable.h>
 #include <utility/throughput.h>
-#include <common/cauv_utils.h>
-#include <common/image.h>
+#include <utility/ratelimit.h>
+#include <common/msg_classes/image.h>
 #include <common/mailbox.h>
 #include <debug/cauv_debug.h>
 #include <generated/types/PipelineGroup.h>
@@ -40,6 +40,7 @@
 #include <generated/types/NodeInputStatus.h>
 #include <generated/types/InputSchedType.h>
 #include <generated/types/SensorUIDBase.h>
+#include <generated/types/UID.h>
 
 #include "pipelineTypes.h"
 
@@ -768,8 +769,8 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         /* keep track of the amount of data being processed */
         cauv::ThroughputCounter m_throughput_counter;
         
-        /* only send messages a subset of the time... */
-        int m_message_throttle;
+        /* don't send status messages too frequently! */
+        RateLimiter m_message_throttle;
 };
 
 template<typename char_T, typename traits>

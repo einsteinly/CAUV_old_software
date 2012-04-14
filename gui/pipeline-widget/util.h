@@ -18,7 +18,6 @@
 #include <cmath>
 
 #include <utility/rounding.h>
-#include <common/cauv_utils.h>
 
 // useful utility functions:
 template<typename T1, typename T2>

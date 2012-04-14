@@ -20,7 +20,7 @@
 
 #include <boost/thread/mutex.hpp>
 
-#include <common/image.h>
+#include <common/msg_classes/image.h>
 
 namespace cauv{
 namespace pw{

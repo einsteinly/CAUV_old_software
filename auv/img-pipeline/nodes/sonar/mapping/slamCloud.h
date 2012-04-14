@@ -33,16 +33,10 @@
 #include "scanMatching.h"
 #include "slamCloudPart.h"
 #include "common.h"
+#include "stuff.h"
 
 namespace cauv{
 namespace imgproc{
-
-// return value in double-precision floating point seconds (musec precision)
-static double operator-(cauv::TimeStamp const& left, cauv::TimeStamp const& right){
-    const double dsecs = left.secs - right.secs;
-    const double dmusecs = left.musecs - right.musecs;
-    return dsecs + 1e-6*dmusecs;
-}
 
 template<typename PointT>
 class SlamCloudGraph{
@@ -140,8 +134,7 @@ class SlamCloudGraph{
                 case 1:
                     assert(!m_all_scans.back()->relativeTo());
                     return m_all_scans.back()->globalTransform();
-                // this seems to harm performance!
-                /*default:{
+                default:{
                     // !!! TODO: use more than one previous point for smooth
                     // estimate?
                     location_vec::const_reverse_iterator i = m_all_scans.rbegin();
@@ -153,7 +146,7 @@ class SlamCloudGraph{
 
                     const float frac_speed = std::fabs((p-p1).norm() / (t-t1)) / m_max_speed;
                     Eigen::Matrix4f r = Eigen::Matrix4f::Identity();
-                    r.block<3,1>(0,3) = p1 + (p1-p2)*(t-t1)/(t1-t2);
+                    r.block<3,1>(0,3) = p;
                     if(frac_speed >= 1.0){
                         warning() << "predicted motion > max speed (x"
                                   << frac_speed << "), will throttle";
@@ -164,9 +157,9 @@ class SlamCloudGraph{
                         r.block<3,1>(0,3) = p1 + m_keyframe_spacing * (p1-p2).normalized();
                     }
                     return r;
-                }*/
-                default:
-                    return m_all_scans.back()->globalTransform();
+                }
+                //default:
+                //    return m_all_scans.back()->globalTransform();
             }
         }
 
@@ -186,6 +179,8 @@ class SlamCloudGraph{
                     transformation = Eigen::Matrix4f::Identity();
                     p->setRelativeToNone();
                     p->setRelativeTransform(transformation);
+                    const Eigen::Vector3f xyr = xyScaledTFromScanTransformation(p->globalTransform());
+                    m_key_scan_locations->push_back(PointT(xyr[0], xyr[1], xyr[2]));
                     return 1.0f;
                 }else{
                     debug() << "cloud not good enough for initialisation";
@@ -205,7 +200,7 @@ class SlamCloudGraph{
             float r = 0.0f;
 
             if(overlaps.size() == 0){
-                error() << "new scan falls outside map!";
+                error() << "new scan falls outside map! guess was:" << guess;
                 return 0;
             }
             // for each overlap (up to m_max_considered_overlaps), in order of
@@ -220,11 +215,13 @@ class SlamCloudGraph{
                 try{
                     cloud_ptr map_cloud = i->second;
                     base_cloud_ptr transformed = boost::make_shared<base_cloud_t>();
+                    relative_transformation = Eigen::Matrix4f::Identity();
                     float score = m.transformcloudToMatch(
                         map_cloud, p, guess, relative_transformation, transformed
                     );
+                    float age_penalty = std::log(1.0 + (p->time() - map_cloud->time()));
                     transformations.insert(std::make_pair(
-                        score,
+                        score / age_penalty,
                         mat_cloud_transformed_t(
                             relative_transformation, map_cloud, transformed
                         )
@@ -263,7 +260,15 @@ class SlamCloudGraph{
                     << "scores"
                     << transformations.rbegin()->first << "--"
                     << transformations.begin()->first;
-
+            
+            debug(5) << "transformations to map scans:";
+            typename cloud_constraint_map::const_iterator ti;
+            for(ti = transformations.begin(); ti != transformations.end(); ti++){
+                debug(5) << "score=" << ti->first << ", relative transformation=\n" << ti->second.mat;
+                const Eigen::Vector3f xyr = xyThetaFrom4DAffine(ti->second.mat);
+                debug(5) << "pos=" << xyr[0] << "," << xyr[1] << ": rotation=" << xyr[2]*180/M_PI << "deg";
+            }
+            
             // Choose the best *score* (not overlap) out of these matches, and use as the
             // parent for this scan:
             const cloud_ptr       parent_map_cloud   = transformations.rbegin()->second.cloud;
@@ -279,7 +284,7 @@ class SlamCloudGraph{
             
             // this scan is a key scan if it is more than a minimum distance
             // from other key-scans
-            const Eigen::Vector3f xyr = xytFromScanTransformation(p->globalTransform());
+            const Eigen::Vector3f xyr = xyScaledTFromScanTransformation(p->globalTransform());
             const PointT xyr_space_loc = PointT(xyr[0], xyr[1], xyr[2]);
             const float squared_keyframe_spacing = m_keyframe_spacing * m_keyframe_spacing;
             if(m_key_scan_locations->nearestSquaredDist(xyr_space_loc) > squared_keyframe_spacing){
@@ -288,12 +293,12 @@ class SlamCloudGraph{
                 p->setRelativeTransform(p->globalTransform());
                 p->setRelativeToNone();
                 m_key_scans.push_back(p);
-                m_key_scan_locations->points.push_back(PointT(xyr_space_loc));
+                m_key_scan_locations->push_back(PointT(xyr_space_loc));
                 m_all_scans.push_back(p);
-                debug() << "key frame at"
+                debug() << "key frame at:"
                         << transformation.block<3,1>(0, 3).transpose()
                         << ":" << std::sqrt(squared_keyframe_spacing)
-                        << "from previous scans";
+                        << "m from previous scans";
 
                 // If this is a new key scan, we need to re-run the graph
                 // optimiser:
@@ -308,6 +313,9 @@ class SlamCloudGraph{
                 // they can be prioritised
                 graph_optimiser.optimiseGraph(m_key_constraints, new_constraints);
                 m_graph_optimisation_count++;
+                transformation = p->globalTransform();
+                debug() << "post-optimisation, key frame at:"
+                        << transformation.block<3,1>(0, 3).transpose();
             }else{
                 // discard all the point data for non-key scans
                 m_all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
@@ -410,20 +418,20 @@ class SlamCloudGraph{
                 // return area of overlap as fraction of union of areas of input
                 // polys
                 // areas can be negative due to vertex order, hence the fabs-ing
-                const double union_area = std::fabs(ClipperLib::Area(solution[0]));
+                const double intersect_area = std::fabs(ClipperLib::Area(solution[0]));
                 const double a_area = std::fabs(ClipperLib::Area(clipper_poly_a));
                 const double b_area = std::fabs(ClipperLib::Area(clipper_poly_b));
 
-                debug(3) << "overlap pct =" << 1e-6*union_area
-                         << "/ (" << -1e-6*a_area << "+" << -1e-6*b_area << ") ="
-                         << union_area / (a_area + b_area) << "(m^2)";
-                return union_area / (a_area + b_area);
+                debug(3) << "overlap pct =" << 1e-6*intersect_area
+                         << "/ min(" << -1e-6*a_area << "," << -1e-6*b_area << ") ="
+                         << intersect_area / std::min(a_area,b_area);
+                return intersect_area / std::min(a_area,b_area);
             }else{
                 return 0;
             }
         }
         
-        // return area of conveh hull in m^2
+        // return area of convex hull in m^2
         static float area(cloud_ptr a){
            assert(a->size() != 0);
 
@@ -449,21 +457,22 @@ class SlamCloudGraph{
          * features, and how well it matches with itself, or something.
          */
         bool cloudIsGoodEnoughForInitialisation(cloud_ptr p) const{
-            return (p->size() > m_min_initial_points) &&
-                   (area(p) > m_min_initial_area);
+            const bool enough_points = (p->size() > m_min_initial_points);
+            const bool large_enough_area = enough_points && (area(p) > m_min_initial_area);
+            if(!enough_points)
+                debug() << "too few points for initialisation:" << p->size() << "<" << m_min_initial_points;
+            else if(!large_enough_area)
+                debug() << "too small area for initialisation:" << area(p) << "<" << m_min_initial_area;
+            return enough_points && large_enough_area;
         }
 
         /* Convert 4d affine transformation of a scan origin into 3D (x, y,
          * scaled rotation) space in which a constant distance metric is used
          * to decide on placement of new key scans
          */
-        Eigen::Vector3f xytFromScanTransformation(Eigen::Matrix4f const& a) const{
-            const Eigen::Matrix2f r = a.block<2,2>(0, 0);
-            const Eigen::Vector2f t = a.block<2,1>(0, 3);
-
-            const Eigen::Vector2f tmp = r * Eigen::Vector2f(1,0);
-            const float rz = std::atan2(tmp[1], tmp[0]);
-            return Eigen::Vector3f(t[0], t[1], m_rotation_scale * rz);
+        Eigen::Vector3f xyScaledTFromScanTransformation(Eigen::Matrix4f const& a) const{
+            const Eigen::Vector3f t = xyThetaFrom4DAffine(a);
+            return Eigen::Vector3f(t[0], t[1], m_rotation_scale * t[2]);
         }
 
         /* add constraints based on relative transformations, return the added
@@ -477,7 +486,7 @@ class SlamCloudGraph{
             
             while(it != end_it){
                 r.push_back(SlamCloudLocation::addConstraintBetween(
-                    p, it->second.cloud, it->second.mat
+                    it->second.cloud, p, it->second.mat
                 ));
                 it++;
             }

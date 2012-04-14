@@ -26,8 +26,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <debug/cauv_debug.h>
-
-#include <common/image.h>
+#include <common/msg_classes/image.h>
 
 using namespace cauv;
 using namespace cauv::gui;

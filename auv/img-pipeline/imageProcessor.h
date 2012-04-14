@@ -10,9 +10,10 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 
-#include <common/image.h>
-#include <common/cauv_utils.h>
+#include <common/msg_classes/image.h>
 #include <common/mailbox.h>
+#include <utility/ratelimit.h>
+#include <utility/foreach.h>
 #include <generated/message_observers.h>
 
 #include "pipelineTypes.h"

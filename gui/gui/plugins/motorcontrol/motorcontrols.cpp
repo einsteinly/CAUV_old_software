@@ -26,6 +26,7 @@
 #include <gui/core/model/model.h>
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/model/nodes/groupingnode.h>
+#include <utility/foreach.h>
 
 using namespace cauv;
 using namespace cauv::gui;

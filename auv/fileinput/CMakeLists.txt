@@ -8,8 +8,8 @@ add_executable (
 # libs
 target_link_libraries (
     fileinput
-    cauv_debug
     common
+    opencv_image
     ${OpenCV_LIBS}
 )
-
+depends_on_messages(fileinput)

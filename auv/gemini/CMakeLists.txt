@@ -14,6 +14,7 @@ target_link_libraries (
     common
     GeminiSDK
     pthread
+    opencv_image
     ${OpenCV_LIBS}
 )
 depends_on_messages(gemini_node)

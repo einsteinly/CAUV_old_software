@@ -100,6 +100,7 @@ enum NodeType : int8 {
     FitEllipse,
     KMeansPoints,
     DrawEllipses,
+    Sobel,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -140,13 +141,12 @@ enum ScriptCommand : int8 {
     Pause,
 }
 enum SensorUIDBase : int32 {
-    // !!! TODO: support hex integer literals...
     None = 0,
-    Camera = 16,  // cameras are 0x10 +- ID: range [0x1--0x1F]
-    Sonar = 48,   // sonars are 0x20 + ID: range [0x20--0x3F]
-    Network = 80, // network is just 0x50, but has a reserved range
-    Multiple = 128, // multiple sources is just 0x70 (no reserved range)
-    File = 256,   // files are 0x100 += ?: range[0x100--0xFFF]
+    Camera =   0x10,  // cameras are 0x10 +- ID: range [0x1--0x1F]
+    Sonar =    0x20,   // sonars are 0x20 + ID: range [0x20--0x3F]
+    Network =  0x50, // network is just 0x50, but has a reserved range
+    Multiple = 0x70, // multiple sources is just 0x70 (no reserved range)
+    File =     0x100,   // files are 0x100 += ?: range[0x100--0xFFF]
 }
 
 struct floatYPR
@@ -203,7 +203,7 @@ struct NodeOutputArc
     eq dst : NodeInput;
     eq output : string;
 }
-struct TimeStamp
+struct TimeStamp <utility/time.h>
 {
     // TODO: either use a base other than 1970, or more bits to store the
     // seconds
@@ -313,7 +313,7 @@ struct ScriptExecRequest
     id : string;
     seq : uint32;
 }
-struct UID
+struct UID <utility/uid.h>
 {
     eq cmp host : int32;   // unique (constant) per-host, eg IP address / end of MAC
     eq cmp sensor : int32; // unique (constant) per-sensor
@@ -345,8 +345,9 @@ struct DynamicEnum
     eq value : string;
     eq possible : list<string>;
 }
-class Image : <common/image.h>
-BoundedFloadBase subclass BoundedFloat : <common/bounded_float.h>
+
+class BaseImage : <common/msg_classes/base_image.h>
+BoundedFloadBase subclass BoundedFloat : <common/msg_classes/bounded_float.h>
 
 variant ParamValue
 {
@@ -375,6 +376,21 @@ enum ParamValueType : int8 {
     DynamicEnumType,
     listFloatXYType,
     listEllipseType,
+}
+
+// These ids are reserved for internal messaging system and should not be sent
+//  or changed without changing related zeromq code
+group reserved
+{ 
+    message Connect : 222 
+    {
+    }
+    message NodeIDMarker : 223
+    {
+    }
+    message DaemonIDMarker : 224
+    {
+    }
 }
 
 group membership
@@ -554,7 +570,7 @@ group image
     message Image : 4
     {
         source : CameraID;
-        lazy image : Image;
+        lazy image : BaseImage;
         time : TimeStamp;
     }
 }
@@ -842,7 +858,7 @@ group pl_gui
     {
         pipelineName : string;
         nodeId : int32;
-        lazy image : Image;
+        lazy image : BaseImage;
     }
 }
 

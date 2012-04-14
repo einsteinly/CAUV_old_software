@@ -10,12 +10,23 @@ link_directories (${Boost_LIBRARY_DIRS})
 
 include_directories (${AUV_SOURCE_DIR})
 
-add_executable(
-    serialisation-test
-    serialisation-test.cpp
+add_library(utility
+
+    math.cpp
+    string.cpp
+    uid.cpp
+    time.cpp
+    ratelimit.cpp
 )
 
-target_link_libraries(
-   serialisation-test
-   cauv_debug
-)
+if(CAUV_BUILD_TESTS)
+    add_executable(
+        serialisation-test
+        serialisation-test.cpp
+    )
+
+    target_link_libraries(
+       serialisation-test
+       cauv_debug
+    )
+endif()

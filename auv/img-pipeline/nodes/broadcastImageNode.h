@@ -16,6 +16,8 @@
 #define __BROADCAST_IMAGE_NODE_H__
 
 #include "../node.h"
+#include <generated/types/CameraID.h>
+#include <generated/types/ImageMessage.h>
 
 namespace cauv{
 namespace imgproc{
@@ -48,7 +50,7 @@ class BroadcastImageNode: public OutputNode{
 
             debug(4) << "BroadcastImageNode::doWork()" << camid << *img;
             img->serializeQuality(qual);
-            sendMessage(boost::make_shared<ImageMessage>((CameraID::e)camid, *img, now()), UNRELIABLE_MSG);
+            sendMessage(boost::make_shared<ImageMessage>((CameraID::e)camid, img, now()), UNRELIABLE_MSG);
 
         }
 

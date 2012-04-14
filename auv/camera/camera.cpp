@@ -4,8 +4,9 @@
 #include "camera_observer.h"
 #include "webcam.h"
 
-#include <common/cauv_utils.h>
 #include <utility/bash_cout.h>
+#include <utility/foreach.h>
+#include <utility/time.h>
 #include <debug/cauv_debug.h>
 
 using namespace cauv;
@@ -17,10 +18,10 @@ CameraException::CameraException(const std::string& _reason)
 
 ImageCaptureException::ImageCaptureException() : CameraException("Could not open camera device") {}
 
-
 Camera::Camera(const CameraID::e id) : m_id(id)
 {
 }
+
 Camera::~Camera()
 {
 }
@@ -30,9 +31,6 @@ CameraID::e Camera::id() const
     return m_id;
 }
 
-
-
-
 void Camera::broadcastImage(const cv::Mat& img)
 {
     foreach(observer_ptr_t o, m_observers)
@@ -40,8 +38,6 @@ void Camera::broadcastImage(const cv::Mat& img)
         o->onReceiveImage(m_id, img);
     }
 }
-
-
 
 CaptureThread::CaptureThread(Webcam &camera, const int interFrameDelay)
 	  : m_camera(camera), m_interFrameDelay(interFrameDelay), m_alive(true)

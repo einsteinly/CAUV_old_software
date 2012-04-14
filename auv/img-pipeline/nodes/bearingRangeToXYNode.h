@@ -80,7 +80,7 @@ class BearingRangeToXYNode: public Node{
                 r.reserve(m_polar_keypoints.size());
                 if(a.bearings->size() == 0 || a.ranges->size() == 0)
                     throw parameter_error("invalid polar image: no metadata");
-                debug() << "bearingRangeToXY: range" << a.ranges->at(0) << "--" << a.ranges->back();
+                debug(4) << "bearingRangeToXY: range" << a.ranges->at(0) << "--" << a.ranges->back();
                 foreach(KeyPoint const& k, m_polar_keypoints){
                     float bearing_idx = k.pt.x;
                     float range_idx = k.pt.y;
@@ -123,8 +123,8 @@ class BearingRangeToXYNode: public Node{
 
             augmented_mat_t in = img->augmentedMat();
             
-            debug() << "BearingRangeToXYNode:" << in_kps.size() << "kps, img:"
-                    << img->id() << "output will have uid:" << kps_uid;
+            debug(4) << "BearingRangeToXYNode:" << in_kps.size() << "kps, img:"
+                     << img->id() << "output will have uid:" << kps_uid;
             
             r.internalValue("keypoints") = InternalParamValue(
                 boost::apply_visitor(convertKeyPoints(in_kps), in), kps_uid

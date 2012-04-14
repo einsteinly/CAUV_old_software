@@ -144,6 +144,29 @@ NodeParam_Filters = {
     messaging.NodeType.GuiOutput  : filterGuiOutputNodeParameters
 }
 
+class ConvenientNode(object):
+    def __init__(self, model, node_id):
+        self.model = model
+        self.node_id = node_id
+
+    def setParam(self, param, value):
+        self.model.setParameterAsync(self.node_id, param, value)
+    
+    def connectOutput(self, output, other_node, input):
+        if isinstance(other_node, ConvenientNode):
+            other_node_id = other_node.node_id
+        else:
+            other_node_id = other_node
+        self.model.addArcAsync(self.node_id, output, other_node_id, input)
+    
+    def connectInput(self, input, other_node, output):
+        if isinstance(other_node, ConvenientNode):
+            other_node_id = other_node.node_id
+        else:
+            other_node_id = other_node
+        self.model.addArcAsync(other_node_id, output, self.node_id, input)
+
+
 class Model(messaging.MessageObserver):
     def __init__(self, node, pipeline_name = "default"):
         messaging.MessageObserver.__init__(self)
@@ -319,7 +342,12 @@ class Model(messaging.MessageObserver):
     def send(self, msg):
         # send to pipeline via self.__node
         self.__node.send(msg, "pipeline")
+    
 
+    def addNode(self, type):
+        # return a Node class that parameters can be set on directly (holds a
+        # reference to this object)
+        return ConvenientNode(self, self.addSynchronous(type))
 
     def addSynchronous(self, type, timeout=3.0):
         debug('addSynchronous %d = %s' % (type, str(messaging.NodeType(type))))
@@ -362,11 +390,7 @@ class Model(messaging.MessageObserver):
         self.parameter_set_condition.acquire()
         self.parameter_set = None
         self.parameter_set_wait_for = (node, param)
-        msg = messaging.SetNodeParameterMessage(
-            self.pipeline_name, node, param, value
-        )
-        debug('setParameterSynchronous: %s' % msg)
-        self.send(msg)
+        self.setParameterAsync(node, param, value)
         self.parameter_set_condition.wait(timeout)
         if self.parameter_set is None:
             self.parameter_set_condition.release()
@@ -374,9 +398,15 @@ class Model(messaging.MessageObserver):
         self.parameter_set_condition.release()
         return None
     
-    def addArcSynchronous(self, src, out, dst, inp, timeout=3.0):
-        self.arc_added_condition.acquire()
-        self.arc_added = None
+    def setParameterAsync(self, node, param, value):
+        msg = messaging.SetNodeParameterMessage(
+            self.pipeline_name, node, param, value
+        )
+        debug('set parameter: %s' % msg)        
+        self.send(msg)
+
+
+    def composeArc(self, src, out, dst, inp):
         fr = messaging.NodeOutput()
         fr.node = src
         fr.output = out
@@ -384,15 +414,25 @@ class Model(messaging.MessageObserver):
         to = messaging.NodeInput()
         to.node = dst
         to.input = inp
-        debug('add arc: %s --> %s' % (fr, to))
+        return fr, to
+    
+    def addArcSynchronous(self, src, out, dst, inp, timeout=3.0):
+        self.arc_added_condition.acquire()
+        self.arc_added = None
+        fr, to = self.composeArc(src, out, dst, inp)
         self.arc_added_wait_for = (fr, to)
-        self.send(messaging.AddArcMessage(self.pipeline_name, fr, to))
+        self.addArcAsync(src, out, dst, inp)
         self.arc_added_condition.wait(timeout)
         if self.arc_added is None:
             self.arc_added_condition.release()
             raise RuntimeError('No response from pipeline, is it running?')
         self.arc_added_condition.release()
         return None
+    
+    def addArcAsync(self, src, out, dst, inp):
+        fr, to = self.composeArc(src, out, dst, inp)
+        debug('add arc: %s --> %s' % (fr, to))        
+        self.send(messaging.AddArcMessage(self.pipeline_name, fr, to))
 
     # Overloads for observing pipeline-related messages:
 
@@ -450,17 +490,15 @@ class Model(messaging.MessageObserver):
         self.graph_description = copy.deepcopy(m)
         self.description_ready_condition.notify()
         self.description_ready_condition.release()
-
+    
     def onArcAddedMessage(self, m):
         if not self.checkName(m): return
         # oops, shouldn't have called a message field, 'from'
-        # !!! TODO: here LocalNodeInput and LocalNodeOutput strucutres are
-        # compared by string representation because apparently direct
-        # comparison is always false (even when they are the same...)
-        # This is not good.
         if self.arc_added_wait_for is not None and \
-           str(getattr(m, 'from')) == str(self.arc_added_wait_for[0]) and \
-           str(m.to) == str(self.arc_added_wait_for[1]):
+           getattr(m, 'from').node == self.arc_added_wait_for[0].node and \
+           getattr(m, 'from').output == self.arc_added_wait_for[0].output and \
+           m.to.node == self.arc_added_wait_for[1].node and \
+           m.to.input == self.arc_added_wait_for[1].input:
             self.arc_added_wait_for = None
             self.arc_added_condition.acquire()
             self.arc_added = copy.deepcopy(m)
