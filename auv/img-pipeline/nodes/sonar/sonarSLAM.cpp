@@ -21,6 +21,7 @@
 #include <boost/algorithm/string.hpp> // for iequals
 
 #include <pcl/point_types.h>
+#include <pcl/common/transforms.h>
 /*#ifdef CAUV_CLOUD_DUMP
 #include <pcl/io/pcd_io.h>
 #endif
@@ -33,6 +34,7 @@
 #include "mapping/slamCloud.h" 
 #include "mapping/scanMatching.h"
 #include "mapping/graphOptimiser.h"
+#include "mapping/stuff.h"
 
 #include "../../nodeFactory.h"
 
@@ -57,18 +59,6 @@ typedef cloud_t::Ptr cloud_ptr;
 // avoid including PCL stuff in the header:
 namespace cauv{
 namespace imgproc{
-
-/*
-static Eigen::Vector3f xythetaFrom4dAffine(Eigen::Matrix4f const& transform){
-    // split transform into affine parts:
-    const Eigen::Matrix3f rotate    = transform.block<3,3>(0, 0);
-    const Eigen::Vector3f translate = transform.block<3,1>(0, 3);
-
-    const Eigen::Vector3f t = rotate*Eigen::Vector3f(1,0,0);
-    const float rz = (180/M_PI)*std::atan2(t[1], t[0]);
-    return Eigen::Vector3f(translate[0], translate[1], rz);
-}
-*/
 
 // - static functions
 static void drawCircle(cv::Mat& image,
@@ -156,7 +146,9 @@ class SonarSLAMImpl{
             if(external_guess.block<3,1>(0,3).norm() > 1e-3)
                 warning() << "external translation prediction is ignored";
             guess.block<3,3>(0,0) = external_guess.block<3,3>(0,0);
-
+            
+            // return guess if no match
+            global_transformation = guess;
             return m_graph.registerScan(
                 scan, guess, scan_matcher, graph_optimiser, global_transformation
             );
@@ -297,11 +289,32 @@ class SonarSLAMImpl{
             m_vis_allframes_included = all_scans.size();
         }
 
-        void updateLastScanVis(){
+        void updateLastScanVis(cloud_ptr p, cv::Scalar const& colour){
+            m_vis_last_cloud = cv::Mat(cv::Size(m_vis_res[0], m_vis_res[1]), CV_8UC3, cv::Scalar(0));
+
+            Eigen::Matrix4f const& global_transform = p->globalTransform();
+            const Eigen::Vector2f image_pt = toVisCoords(
+                global_transform.block<3,1>(0,3)
+            );
+
+            for(std::size_t j = 0; j < p->size(); j++){
+                const Eigen::Vector2f pt = toVisCoords(
+                    p->globalTransform().block<3,3>(0,0) * (*p)[j].getVector3fMap() +
+                    p->globalTransform().block<3,1>(0,3)
+                );
+                drawCircle(
+                    m_vis_last_cloud, pt, 0.1/m_vis_metres_per_px,
+                    colour
+                );
+            }
         }
 
         cv::Mat const& vis() const{
             return m_vis_buffer;
+        }
+
+        cv::Mat const& lastScanVis() const{
+            return m_vis_last_cloud;
         }
 
     private:
@@ -500,9 +513,27 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     info() << "sonarSLAM scan confidence" << confidence;
 
     m_impl->updateVis();
+    
+    #ifdef CAUV_CLOUD_VISUALISATION
+    // potentially expensive: visualise every cloud:
+    if(confidence > 0){
+        // visualise at final position
+        m_impl->updateLastScanVis(scan, cv::Scalar(80, 80, 80));
+    }else{
+        // visualise at guessed position
+        scan->setRelativeToNone();
+        scan->setRelativeTransform(global_transformation);
+        m_impl->updateLastScanVis(scan, cv::Scalar(10, 10, 120));
+    }
+    #endif
 
-    if(m_impl->vis().rows > 0 && m_impl->vis().cols > 0)
-        r["cloud visualisation"] = boost::make_shared<Image>(m_impl->vis());
+    if(m_impl->vis().rows > 0 && m_impl->vis().cols > 0){
+        cv::Mat vis = m_impl->vis();//.clone();
+        if(m_impl->lastScanVis().rows == m_impl->vis().rows &&
+           m_impl->lastScanVis().cols == m_impl->vis().cols)
+            vis += m_impl->lastScanVis();
+        r["cloud visualisation"] = boost::make_shared<Image>(vis);
+    }
 
     r["training: keypoints"] = training_keypoints;
     r["training: keypoints image"] = inputs["keypoints image"];
@@ -615,7 +646,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
                 r["mosaic"] = boost::make_shared<Image>(m_impl->vis());
             }
 
-            Eigen::Vector3f xytheta = xythetaFrom4dAffine(final_transform);
+            Eigen::Vector3f xytheta = xyThetaFrom4dAffine(final_transform);
             info() << BashColour::Green
                    << "added transformed points at: " << xytheta[0] << "," << xytheta[1] << "rot=" << xytheta[2] << "degress";
 

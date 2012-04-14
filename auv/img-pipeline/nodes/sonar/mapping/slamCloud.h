@@ -33,16 +33,10 @@
 #include "scanMatching.h"
 #include "slamCloudPart.h"
 #include "common.h"
+#include "stuff.h"
 
 namespace cauv{
 namespace imgproc{
-
-// return value in double-precision floating point seconds (musec precision)
-static double operator-(cauv::TimeStamp const& left, cauv::TimeStamp const& right){
-    const double dsecs = left.secs - right.secs;
-    const double dmusecs = left.musecs - right.musecs;
-    return dsecs + 1e-6*dmusecs;
-}
 
 template<typename PointT>
 class SlamCloudGraph{
@@ -133,18 +127,14 @@ class SlamCloudGraph{
          * the previous transformations.
          * Returned transformation is in the global coordinate system
          */
-        Eigen::Matrix4f guessTransformationAtTime(TimeStamp const&/* t*/) const{
+        Eigen::Matrix4f guessTransformationAtTime(TimeStamp const& t) const{
             switch(m_all_scans.size()){
                 case 0:
                     return Eigen::Matrix4f::Identity();
                 case 1:
                     assert(!m_all_scans.back()->relativeTo());
                     return m_all_scans.back()->globalTransform();
-                // TODO: reinstate this now that transformation inverting has
-                // been sorted out...
-
-                // this seems to harm performance!
-                /*default:{
+                default:{
                     // !!! TODO: use more than one previous point for smooth
                     // estimate?
                     location_vec::const_reverse_iterator i = m_all_scans.rbegin();
@@ -156,7 +146,7 @@ class SlamCloudGraph{
 
                     const float frac_speed = std::fabs((p-p1).norm() / (t-t1)) / m_max_speed;
                     Eigen::Matrix4f r = Eigen::Matrix4f::Identity();
-                    r.block<3,1>(0,3) = p1 + (p1-p2)*(t-t1)/(t1-t2);
+                    r.block<3,1>(0,3) = p;
                     if(frac_speed >= 1.0){
                         warning() << "predicted motion > max speed (x"
                                   << frac_speed << "), will throttle";
@@ -167,9 +157,9 @@ class SlamCloudGraph{
                         r.block<3,1>(0,3) = p1 + m_keyframe_spacing * (p1-p2).normalized();
                     }
                     return r;
-                }*/
-                default:
-                    return m_all_scans.back()->globalTransform();
+                }
+                //default:
+                //    return m_all_scans.back()->globalTransform();
             }
         }
 
@@ -189,7 +179,7 @@ class SlamCloudGraph{
                     transformation = Eigen::Matrix4f::Identity();
                     p->setRelativeToNone();
                     p->setRelativeTransform(transformation);
-                    const Eigen::Vector3f xyr = xytFromScanTransformation(p->globalTransform());
+                    const Eigen::Vector3f xyr = xyScaledTFromScanTransformation(p->globalTransform());
                     m_key_scan_locations->push_back(PointT(xyr[0], xyr[1], xyr[2]));
                     return 1.0f;
                 }else{
@@ -210,7 +200,7 @@ class SlamCloudGraph{
             float r = 0.0f;
 
             if(overlaps.size() == 0){
-                error() << "new scan falls outside map!";
+                error() << "new scan falls outside map! guess was:" << guess;
                 return 0;
             }
             // for each overlap (up to m_max_considered_overlaps), in order of
@@ -229,8 +219,9 @@ class SlamCloudGraph{
                     float score = m.transformcloudToMatch(
                         map_cloud, p, guess, relative_transformation, transformed
                     );
+                    float age_penalty = std::log(1.0 + (p->time() - map_cloud->time()));
                     transformations.insert(std::make_pair(
-                        score,
+                        score / age_penalty,
                         mat_cloud_transformed_t(
                             relative_transformation, map_cloud, transformed
                         )
@@ -274,8 +265,8 @@ class SlamCloudGraph{
             typename cloud_constraint_map::const_iterator ti;
             for(ti = transformations.begin(); ti != transformations.end(); ti++){
                 debug(5) << "score=" << ti->first << ", relative transformation=\n" << ti->second.mat;
-                const Eigen::Vector3f xyr = xytFromScanTransformation(ti->second.mat);
-                debug(5) << "pos=" << xyr[0] << "," << xyr[1] << ": rotation=" << (xyr[2]/m_rotation_scale) * 180/M_PI << "deg";
+                const Eigen::Vector3f xyr = xyThetaFrom4DAffine(ti->second.mat);
+                debug(5) << "pos=" << xyr[0] << "," << xyr[1] << ": rotation=" << xyr[2]*180/M_PI << "deg";
             }
             
             // Choose the best *score* (not overlap) out of these matches, and use as the
@@ -293,7 +284,7 @@ class SlamCloudGraph{
             
             // this scan is a key scan if it is more than a minimum distance
             // from other key-scans
-            const Eigen::Vector3f xyr = xytFromScanTransformation(p->globalTransform());
+            const Eigen::Vector3f xyr = xyScaledTFromScanTransformation(p->globalTransform());
             const PointT xyr_space_loc = PointT(xyr[0], xyr[1], xyr[2]);
             const float squared_keyframe_spacing = m_keyframe_spacing * m_keyframe_spacing;
             if(m_key_scan_locations->nearestSquaredDist(xyr_space_loc) > squared_keyframe_spacing){
@@ -479,13 +470,9 @@ class SlamCloudGraph{
          * scaled rotation) space in which a constant distance metric is used
          * to decide on placement of new key scans
          */
-        Eigen::Vector3f xytFromScanTransformation(Eigen::Matrix4f const& a) const{
-            const Eigen::Matrix2f r = a.block<2,2>(0, 0);
-            const Eigen::Vector2f t = a.block<2,1>(0, 3);
-
-            const Eigen::Vector2f tmp = r * Eigen::Vector2f(1,0);
-            const float rz = std::atan2(tmp[1], tmp[0]);
-            return Eigen::Vector3f(t[0], t[1], m_rotation_scale * rz);
+        Eigen::Vector3f xyScaledTFromScanTransformation(Eigen::Matrix4f const& a) const{
+            const Eigen::Vector3f t = xyThetaFrom4DAffine(a);
+            return Eigen::Vector3f(t[0], t[1], m_rotation_scale * t[2]);
         }
 
         /* add constraints based on relative transformations, return the added
