@@ -176,7 +176,8 @@ void cauv::serialise(svec_ptr p, $className const& v){
     ## reserve estimated minimum message size
     p->reserve(#echo 4 *(1 + len($m.fields))#);
     ## message type
-    cauv::serialise(p, uint32_t($m.id)); 
+    cauv::serialise(p, uint32_t($m.id));
+    cauv::serialise(p, uint32_t($hex($m.check_hash)));
     #for f in $m.fields
     #if $f.lazy
     serialiseLazyField(p, *v.m_$f.name);
@@ -186,8 +187,8 @@ void cauv::serialise(svec_ptr p, $className const& v){
     #end for
 }
 void cauv::$className::deserialise() const{
-    ## message ID comes first
-    uint32_t offset = 4;
+    ## message ID + hash comes first
+    uint32_t offset = 8;
     #if $m.numLazyFields() > 0
     uint32_t skip = 0;
     m_lazy_fields_deserialised.clear();

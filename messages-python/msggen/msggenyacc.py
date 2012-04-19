@@ -2,34 +2,47 @@ import ply.yacc as yacc
 
 # Get the token map from the lexer.  This is required.
 from msggenlex import tokens
+import hashlib
 
 class Expr:
     def __cmp__(self, other):
         return cmp(str(self), str(other))
+    #used for storing in dict, *not* for message hashes
     def __hash__(self):
         return hash(str(self))
+
+def indent(string):
+    return "\n".join(("    {}".format(x) for x in string.split('\n')))
+
+def block_fmt(type, name, members):
+    members_str = "\n".join((repr(x) for x in members))
+    return "\n{t} {n} \n{{\n{m}\n}}".format(t=type, n=name, m=indent(members_str))
 
 class Group(Expr):
     def __init__(self, name, messages):
         self.name = name
         self.messages = messages
     def __repr__(self):
-        s = "group %s\n" % self.name
-        s = s + "{\n"
-        for c in self.messages:
-            s = s + "\n".join(map(lambda x: "    %s" % x, ("%s" % c).split("\n"))) + "\n"
-        s = s + "}"
-        return s
+        return block_fmt("group", self.name, self.messages)
 
 class Included(Expr):
-    def __init__(self, type, name, location, superclass = None):
+    def __init__(self, type, name, location, version = 0, superclass = None):
         self.type = type
         self.name = name
         self.location = location
         self.superclass = superclass
+        self.version = version
     def __repr__(self):
-        s = "%s %s : %s\n" % (self.type, self.name, self.location)
+        if self.superclass is None:
+            s = "{} {} : {}\n".format(self.type, self.name, self.location)
+        else:
+            s = "{} subclass {} : {}\n".format(self.superclass, 
+                            self.type, self.name, self.location)
         return s
+    def add_to_hash(self, hash):
+        hash.update(str(self.version))
+        if self.superclass is not None:
+            self.superclass.add_to_hash(hash)
 
 class Struct(Expr):
     def __init__(self, name, fields, include = None):
@@ -41,24 +54,20 @@ class Struct(Expr):
     def numCompareFields(self):
         return len([f for f in self.fields if f.compare])
     def __repr__(self):
-        s = "struct %s\n" % self.name
-        s = s + "{\n"
-        for c in self.fields:
-            s = s + "\n".join(map(lambda x: "    %s" % x, ("%s" % c).split("\n"))) + "\n"
-        s = s + "}"
-        return s
+        return block_fmt("struct", self.name, self.fields)
+    def add_to_hash(self, hash):
+        for field in self.fields:
+            field.add_to_hash(hash)
 
 class Variant(Expr):
     def __init__(self, name, types):
         self.name = name
         self.types = types
     def __repr__(self):
-        s = "variant %s\n" % self.name
-        s += "{\n"
-        for t in self.types:
-            s += "\n".join(map(lambda x: "    %s" % x, ("%s" % t).split("\n"))) + "\n"
-        s += "}"
-        return s
+        return block_fmt("variant", self.name, self.types)
+    def add_to_hash(self, hash):
+        for type in self.types:
+            type.add_to_hash(hash)
 
 class Enum(Expr):
     def __init__(self, name, type, values):
@@ -66,12 +75,11 @@ class Enum(Expr):
         self.type = type
         self.values = values
     def __repr__(self):
-        s = "enum %s : %s\n" % (self.name, self.type)
-        s = s + "{\n"
-        for c in self.values:
-            s = s + "\n".join(map(lambda x: "    %s" % x, ("%s" % c).split("\n"))) + "\n"
-        s = s + "}"
-        return s
+        return block_fmt("enum", "{} : {}".format(self.name, self.type), self.values)
+    def add_to_hash(self, hash):
+        self.type.add_to_hash(hash)
+        for value in self.values:
+            value.add_to_hash(hash)
 
 class EnumVal(Expr):
     def __init__(self, name, value):
@@ -79,6 +87,8 @@ class EnumVal(Expr):
         self.value = value
     def __repr__(self):
         return "%s = %s" % (self.name, self.value)
+    def add_to_hash(self, hash):
+        hash.update(str(self.value))
 
 class Message(Expr):
     def __init__(self, name, id, fields):
@@ -90,12 +100,12 @@ class Message(Expr):
         return len([f for f in self.fields if f.lazy])
 
     def __repr__(self):
-        s = "message %s : %d\n" % (self.name, self.id)
-        s = s + "{\n"
-        for c in self.fields:
-            s = s + "\n".join(map(lambda x: "    %s" % x, ("%s" % c).split("\n"))) + "\n"
-        s = s + "}"
-        return s
+        return block_fmt("message", "{} : {}".format(self.name, self.id), self.fields)
+
+    def add_to_hash(self, hash):
+        hash.update(str(self.id))
+        for field in self.fields:
+            field.add_to_hash(hash)
 
 class Field(Expr):
     def __init__(self, name, type, lazy=False, equality=False, compare=False):
@@ -113,36 +123,51 @@ class Field(Expr):
         if self.compare:
             modifiers.append('cmp')
         return "%s %s : %s" % (' '.join(modifiers), self.name, self.type)
+    def add_to_hash(self, hash):
+        self.type.add_to_hash(hash)
+        hash.update(str(self.lazy))
+        #equality/compare doesn't affect serialisation format
 
 class BaseType(Expr):
     def __init__(self, name):
         self.name = name
     def __repr__(self):
         return "%s" % (self.name)
+    def add_to_hash(self, hash):
+        hash.update(self.name)
 
 class EnumType(Expr):
     def __init__(self, enum):
         self.enum = enum
     def __repr__(self):
         return "enum %s" % (self.enum.name)
+    def add_to_hash(self, hash):
+        self.enum.add_to_hash(hash)
 
 class StructType(Expr):
     def __init__(self, struct):
         self.struct = struct
     def __repr__(self):
         return "struct %s" % (self.struct.name)
+    def add_to_hash(self, hash):
+        self.struct.add_to_hash(hash)
 
 class VariantType(Expr):
     def __init__(self, variant):
         self.variant = variant
     def __repr__(self):
         return "variant %s" % (self.variant.name)
+    def add_to_hash(self, hash):
+        self.variant.add_to_hash(hash)
 
 class ListType(Expr):
     def __init__(self, valType):
         self.valType = valType
     def __repr__(self):
         return "list< %s >" % (self.valType)
+    def add_to_hash(self, hash):
+        hash.update("list")
+        self.valType.add_to_hash(hash)
 
 class MapType(Expr):
     def __init__(self, keyType, valType):
@@ -150,13 +175,48 @@ class MapType(Expr):
         self.valType = valType
     def __repr__(self):
         return "map< %s, %s >" % (self.keyType, self.valType)
+    def add_to_hash(self, hash):
+        hash.update("map")
+        self.keyType.add_to_hash(hash)
+        self.valType.add_to_hash(hash)
 
 class IncludedType(Expr):
     def __init__(self, included):
         self.included = included
     def __repr__(self):
         return "%s" % (self.included.name)
+    def add_to_hash(self, hash):
+        hash.update("included")
+        self.included.add_to_hash(hash)
     
+class DefinitionTree(dict):
+    def __repr__(self):
+        return "\n".join(("\n".join((repr(y) for y in self[x])) for x in self))
+
+    def build_lookup(self):
+        self.lookup = {}
+        for l in self:
+            self.lookup[l] = {}
+            try:
+                for m in self[l]:
+                    m.tree = self 
+                    self.lookup[l][m.name] = m
+            except AttributeError:
+                print(l)
+                pass
+        for field in field_types:
+            field.tree = self
+
+    def lookup_type(self, name, type=None):
+        if type is not None:
+            return self.lookup[type][name]
+        else:
+            for t in self.lookup:
+                try:
+                    return self.lookup[t][name]
+                except KeyError:
+                    pass
+        raise KeyError("Unknown type {}".format(name))
 
 msg_ids = {}
 
@@ -173,22 +233,46 @@ base_types = set([
     "float",
     "double"
 ])
+
 included_types = []
 groups = []
 structs = []
 variants = []
 enums = []
+field_types = []
+
+type_map = [
+    (EnumType, enums),
+    (StructType, structs),
+    (VariantType, variants),
+    (IncludedType, included_types)
+]
+
+def lookup_type(name):
+    ret = None
+    if name in base_types:
+        ret = BaseType(name);
+    for type, typelist in type_map:
+        matches = [x for x in typelist if x.name == name]
+        if matches:
+            if len(matches) > 1 or ret is not None:
+                raise ValueError("multiple definitions of \"{}\" found".format(name))
+            ret = type(matches[0])
+    if ret is None:
+        raise ValueError("Undefined type \"{}\"!".format(name))
+    else:
+        return ret
 
 def p_list_empty(p):
     "list : "
-    p[0] = {
+    p[0] = DefinitionTree({
         "groups" : groups,
         "structs" : structs,
         "variants" : variants,
         "enums" : enums,
         "base_types" : base_types,
         "included_types" : included_types
-    }
+    })
 
 def p_list_group(p):
     "list : list group"
@@ -236,13 +320,13 @@ def p_struct_contents(p):
     p[0] = p[2]
 
 def p_included(p):
-    """included : STRUCT STRING ':' includepath
-                | CLASS STRING ':' includepath"""
-    p[0] = Included(p[1], p[2], p[4])
+    """included : STRUCT STRING ':' includepath VERSION INT
+                | CLASS STRING ':' includepath VERSION INT"""
+    p[0] = Included(p[1], p[2], p[4], p[6])
 
 def p_included_sub(p):
     "included : STRING SUBCLASS STRING ':' includepath"
-    p[0] = Included('class', p[3], p[5], superclass = p[1])
+    p[0] = Included('class', p[3], p[5], superclass = lookup_type(p[1]))
 
 def p_includepath(p):
     """includepath : '<' path '>'
@@ -312,9 +396,8 @@ def p_message_list(p):
 def p_message(p):
     "message : MSG STRING ':' INT msg_contents"
     if p[4] in msg_ids:
-        print "Duplicate message id ", p[4], " for ", p[2], " message"
-        print "    Previously used for ", msg_ids[p[4]]
-        raise SyntaxError
+        raise ValueError("Duplicate message id {} for {} message\n".format(p[4], p[2]) +
+                         "    Previously used for {}".format(msg_ids[p[4]]))
         
     msg_ids[p[4]] = p[2]
     p[0] = Message(p[2], p[4], p[5])
@@ -369,16 +452,7 @@ def p_variant_type_list(p):
 
 def p_type_base(p):
     "type : STRING"
-    if p[1] in base_types:
-        p[0] = BaseType(p[1]);
-    elif p[1] in map(lambda e: e.name, enums):
-        p[0] = EnumType(filter(lambda e: e.name == p[1], enums)[0])
-    elif p[1] in map(lambda s: s.name, structs):
-        p[0] = StructType(filter(lambda s: s.name == p[1], structs)[0])
-    elif p[1] in map(lambda v: v.name, variants):
-        p[0] = VariantType(filter(lambda v: v.name == p[1], variants)[0])
-    elif p[1] in map(lambda u: u.name, included_types):
-        p[0] = IncludedType(filter(lambda u: u.name == p[1], included_types)[0])
+    p[0] = lookup_type(p[1])
 
 def p_type_list(p):
     "type : LIST '<' type '>'"

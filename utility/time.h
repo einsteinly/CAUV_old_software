@@ -20,6 +20,7 @@
 
 namespace cauv {
 
+// TimeStamps use posix time (i.e., no timezones!)
 struct TimeStamp
 {
     int32_t secs;
@@ -33,7 +34,10 @@ TimeStamp now();
 
 std::string now(std::string const& format);
 
-void msleep(unsigned msecs);
+// can return negative values if you pass a time in the future!
+int64_t millisecondsSince(TimeStamp const& t);
+
+void msleep(uint32_t milliseconds);
 
 // TODO: somewhat complicated because timestamp is serialisable
 /*#include <string>

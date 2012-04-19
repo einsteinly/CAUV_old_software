@@ -346,8 +346,9 @@ struct DynamicEnum
     eq possible : list<string>;
 }
 
-class BaseImage : <common/msg_classes/base_image.h>
-BoundedFloadBase subclass BoundedFloat : <common/msg_classes/bounded_float.h>
+//fmt_ver should be bumped if image serialisation format changes
+class BaseImage : <common/msg_classes/base_image.h> fmt_ver 1
+BoundedFloatBase subclass BoundedFloat : <common/msg_classes/bounded_float.h>
 
 variant ParamValue
 {

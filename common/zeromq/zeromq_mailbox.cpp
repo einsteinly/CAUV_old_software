@@ -12,12 +12,12 @@
 #include <algorithm>
 
 #include <debug/cauv_debug.h>
+#include <utility/time.h>
 
 #include <generated/types/message.h>
 #include <generated/types/MembershipChangedMessage.h>
 #include <generated/groupmap.h>
 #include <boost/make_shared.hpp>
-#include <boost/foreach.hpp>
 #include <boost/thread/locks.hpp>
 
 namespace cauv {
@@ -378,17 +378,12 @@ void ZeroMQMailbox::doMonitoring(void) {
     };
     starting_up = true;
     int timeout = 50;
-    struct timespec start_time;
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
+    const TimeStamp start_time = now();
     while (!m_interrupted || starting_up) {
         //use C API for this part because it's simpler
         int rc = xs_poll(sockets, sizeof(sockets)/sizeof(xs::pollitem_t), timeout);
         if (starting_up) {
-            struct timespec current_time;
-            clock_gettime(CLOCK_MONOTONIC, &current_time);
-            int diff = (current_time.tv_sec - start_time.tv_sec) * 1000;
-            diff += (current_time.tv_nsec - start_time.tv_nsec) / 1000000L;
-            if ((send_connect_pids.empty() && daemon_connected) || diff > 200) {
+            if ((send_connect_pids.empty() && daemon_connected) || millisecondsSince(start_time) > 200) {
                 if (!send_connect_pids.empty()) {
                     warning() << "some sockets have not connected yet, starting up anyway";
                 }
