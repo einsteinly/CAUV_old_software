@@ -40,8 +40,13 @@ std::string cauv::now(std::string const& format){
     return oss.str();
 }
 
-void cauv::msleep(unsigned msecs){
-    boost::this_thread::sleep(boost::posix_time::milliseconds(msecs));
+int64_t cauv::millisecondsSince(TimeStamp const& t){
+    TimeStamp n = now();
+    return int64_t(n.secs - t.secs)*1000 + int64_t((n.musecs - t.musecs)/1000);
+}
+
+void cauv::msleep(uint32_t milliseconds){
+    boost::this_thread::sleep(boost::posix_time::milliseconds(milliseconds));
 }
 
 
