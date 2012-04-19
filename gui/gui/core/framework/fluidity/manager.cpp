@@ -393,7 +393,7 @@ fnode_ptr Manager::addNode(NodeType::e const& type, node_id_t const& id){
         r = new FNode(*this, id, type);
         m_nodes.insert(node_id_map_t::value_type(r, id));
         m_scene->addItem(r);
-        r->setPos(m_focus_scenepos + QPointF(qrand()%50, qrand()%50));
+        r->setPos(m_focus_scenepos + QPointF(qrand()%250-125, qrand()%250-125));
         // this is a bit annoying
         //_layoutSoonIfNothingHappens();
     }
@@ -415,7 +415,7 @@ fnode_ptr Manager::addNode(NodeAddedMessage_ptr m){
         r = new FNode(*this, m);
         m_nodes.insert(node_id_map_t::value_type(r, id));
         m_scene->addItem(r);
-        r->setPos(m_focus_scenepos + QPointF(qrand()%50, qrand()%50));
+        r->setPos(m_focus_scenepos + QPointF(qrand()%250-125, qrand()%250-125));
         // this is a bit annoying        
         //_layoutSoonIfNothingHappens();
     }

@@ -19,6 +19,7 @@
 #include <QApplication>
 #include <QGesture>
 #include <QDebug>
+#include <QPixmapCache>
 
 #include <debug/cauv_debug.h>
 
@@ -65,6 +66,10 @@ LiquidView::LiquidView(QWidget * parent) : QGraphicsView(parent),
     setTransformationAnchor(QGraphicsView::AnchorViewCenter);
     
     centerOn(0,0);
+    
+    const int cache_kbytes = 1024 * 32; // 32 MB, default is 10
+    if(QPixmapCache::cacheLimit() < cache_kbytes) 
+        QPixmapCache::setCacheLimit(cache_kbytes); 
     
     setRenderHints(QPainter::Antialiasing |
                    QPainter::TextAntialiasing |
