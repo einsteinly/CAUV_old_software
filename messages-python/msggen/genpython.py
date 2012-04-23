@@ -43,19 +43,28 @@ def addNestedTypes(list_types, map_types):
     for kt, vt in map_types:
         addR(kt)
         addR(vt)
-    recursed = addNestedTypes(rl, rm)
-    return (list_types | rl | recursed[0],
-            map_types | rm | recursed[1])
+    recursed_list, recursed_map = addNestedTypes(rl, rm)
+    return (list_types | rl | recursed_list,
+            map_types | rm | recursed_map)
     
 def get_output_files(tree):
     OutputFile = collections.namedtuple("OutputFile", ["template_file", "output_file", "search_list"])
 
-    compilation_units = ["enums", "structs", "variants", "messages", "observers"]
-    compilation_units.append("containers") # must be last in list
-    #these sets are filled in templates and used by containers template
+    compilation_units = ["enums", "structs", "variants", "messages", "observers", "containers"]
     requiredMapTypes = set()
     requiredVectorTypes = set()
+    #Urg, nested generator syntax      \/ this flattens the 'group' list to messages
+    for field_cont in tree['structs'] + [m for g in tree['groups'] for m in g.messages]:
+        for field in field_cont.fields:
+            if isSTLMap(field.type):
+                requiredMapTypes.add((field.type.keyType, field.type.valType))
+            if isSTLVector(field.type):
+                requiredVectorTypes.add(field.type.valType)
+    requiredVectorTypes, requiredMapTypes = addNestedTypes(requiredVectorTypes, requiredMapTypes)
+    includes = gencpp.getIncludedTypeNames(requiredMapTypes | requiredVectorTypes, "<generated/types/%s.h>")
+
     output_files = []
+
     function_dict = {"toCPPType": gencpp.toCPPType,
                      "isSTLVector": isSTLVector,
                      "isSTLMap": isSTLMap,
@@ -63,10 +72,8 @@ def get_output_files(tree):
                      "requiredMapTypes": requiredMapTypes,
                      "requiredVectorTypes": requiredVectorTypes}
     tree.update(function_dict)
-    def get_includes():
-        return gencpp.getIncludedTypeNames(requiredMapTypes | requiredVectorTypes, "<generated/types/%s.h>")
+
     for cu in compilation_units:
-        includes = get_includes
         search_list = dict(tree)
         search_list.update({"includes": includes})
         output_files.append(OutputFile("boostpy-emit_{}.cpp.template".format(cu),
@@ -82,6 +89,5 @@ def get_output_files(tree):
                                                    "emit_{}_message.cpp".format(message.name.lower()),
                                                    search_list))
 
-        requiredVectorTypes, requiredMapTypes = addNestedTypes(requiredVectorTypes, requiredMapTypes)
 
     return output_files

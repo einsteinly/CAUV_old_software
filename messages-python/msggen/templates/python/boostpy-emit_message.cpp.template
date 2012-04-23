@@ -38,14 +38,6 @@ namespace {
 }
 
 void emit${m.name}Message(){
-    #for $i, $f in enumerate($m.fields)
-        #if $isSTLVector($f.type)
-            $requiredVectorTypes.add($f.type.valType)
-        #else if $isSTLMap($f.type)
-            $requiredMapTypes.add(($f.type.keyType, $f.type.valType))
-        #end if
-    #end for
-
     bp::class_<$className,
                bp::bases<Message>
               >("$className", bp::init<>())
