@@ -36,15 +36,6 @@ struct ${s.name}Pickler: bp::pickle_suite{
 
 void emitStructs(){
 #for $s in $structs
-    ## Add required vector/map types
-    #for $i, $f in enumerate($s.fields)
-        #if $isSTLVector($f.type)
-            $requiredVectorTypes.add($f.type.valType)
-        #else if $isSTLMap($f.type)
-            $requiredMapTypes.add(($f.type.keyType, $f.type.valType))
-        #end if
-    #end for
-
     bp::class_<${s.name}/*,
                boost::shared_ptr<${s.name}>*/
               >("${s.name}")

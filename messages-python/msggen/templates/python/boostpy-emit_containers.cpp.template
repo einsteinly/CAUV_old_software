@@ -94,7 +94,7 @@ void emitContainers(){
     ;
     from_python_sequence<$vect, variable_capacity_policy>();
 
-#end for
+    #end for
 
     // STL Maps: TODO: unambiguous names!
     #for $kt, $vt in $requiredMapTypes

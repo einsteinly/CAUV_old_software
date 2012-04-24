@@ -202,7 +202,6 @@ class DefinitionTree(dict):
                     m.tree = self 
                     self.lookup[l][m.name] = m
             except AttributeError:
-                print(l)
                 pass
         for field in field_types:
             field.tree = self
