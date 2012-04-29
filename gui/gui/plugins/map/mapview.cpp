@@ -30,7 +30,6 @@ MapView::MapView() :
     m_marbleWidget = new Marble::MarbleWidget(this);
     m_marbleWidget->setMapThemeId("earth/openstreetmap/openstreetmap.dgml");
     layout()->addWidget(m_marbleWidget);
-    m_marbleWidget->setShowGps(true);
 
     m_tabs.append(m_marbleWidget);
 
