@@ -215,7 +215,7 @@ void CauvNode::stopNode(){
 CauvNode::CauvNode(const std::string& name)
     : m_name(name),
 #ifdef ZEROMQ_MESSAGING
-      m_zeromq_mailbox(boost::make_shared<ZeroMQMailbox>()),
+      m_zeromq_mailbox(boost::make_shared<ZeroMQMailbox>(name)),
       m_mailbox(m_zeromq_mailbox),
       m_event_monitor(m_zeromq_mailbox),
 #else
