@@ -31,11 +31,15 @@ add_executable (camera_server
 target_link_libraries (camera_server
     cauv_debug
     ${OpenCV_LIBS}
-    ${libdc1394_LIBRARIES}
     boost_system
     pthread
     rt
 )
+if (CAUV_USE_DC1394)
+    target_link_libraries (camera_server
+        ${libdc1394_LIBRARIES}
+    )
+endif()
 depends_on_messages(camera_server)
 cauv_install(camera_server)
 
