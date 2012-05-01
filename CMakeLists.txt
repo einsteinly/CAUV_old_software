@@ -98,6 +98,9 @@ link_directories (${Boost_LIBRARY_DIRS})
 
 add_definitions (-DBOOST_FILESYSTEM_VERSION=3)
 
+find_package (TBB REQUIRED)
+include_directories (SYSTEM ${TBB_INCLUDE_DIRS})
+link_directories (${TBB_LIBRARY_DIRS})
 
 add_subdirectory (messages-python/msggen)
 
