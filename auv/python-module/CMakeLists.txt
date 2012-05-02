@@ -100,13 +100,18 @@ endif()
 
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 set (RCFILE ${CAUV_SOURCE_DIR}/pylint.rc)
+set (PYLINT_M ${CMAKE_CURRENT_BINARY_DIR}/pylint_m)
 file (GLOB PY_FILES "${SRCD}/cauv/*.py")
-add_custom_target(
-    run-pylint-module ALL
+add_custom_command(
+    OUTPUT ${PYLINT_M}
     DEPENDS ${PY_FILES}    
-    COMMAND pylint -E --rcfile=${RCFILE} ${PY_FILES} || true
+    COMMAND touch ${PYLINT_M} && pylint -E --rcfile=${RCFILE} ${PY_FILES} || true
     WORKING_DIRECTORY ${SRCD}
     COMMENT "running pylint on python module *.py"
     SOURCES ${PY_FILES}
 )
 
+add_custom_target (
+    run-pylint-module ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pylint_m
+)

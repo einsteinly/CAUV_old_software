@@ -33,15 +33,21 @@ add_dependencies(scripting python-module)
 
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 set (RCFILE ${CAUV_SOURCE_DIR}/pylint.rc)
+set (PYLINT_M ${CMAKE_CURRENT_BINARY_DIR}/pylint_m)
 file (GLOB PY_FILES "${SRCD}/*.py")
 file (GLOB EXTRA_PY_FILES "${SRCD}/*/*.py")
-add_custom_target(
-    run-pylint-scripting ALL
+
+add_custom_command(
+    OUTPUT ${PYLINT_M}
     DEPENDS ${PY_FILES}
-    COMMAND pylint -E --rcfile=${RCFILE} ${PY_FILES} ${EXTRA_PY_FILES} || true
+    COMMAND touch ${PYLINT_M} && pylint -E --rcfile=${RCFILE} ${PY_FILES} ${EXTRA_PY_FILES} || true
     WORKING_DIRECTORY ${SRCD}    
     COMMENT "running pylint on scripting/*.py"
     SOURCES ${PY_FILES}
+)
+add_custom_target (
+    run-pylint-scripting ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pylint_m
 )
 
 set (MSGD ${SRCD}/../../messages-python/)
