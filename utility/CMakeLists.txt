@@ -17,6 +17,7 @@ add_library(utility
     uid.cpp
     time.cpp
     ratelimit.cpp
+    random.cpp
 )
 
 if(CAUV_BUILD_TESTS)
