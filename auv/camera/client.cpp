@@ -64,7 +64,7 @@ SharedImage* CameraServerConnection::getUnGuardedImage(uint32_t camera_id, uint3
         throw std::runtime_error("could not connect to camera server");
 
     ImageRequest req = {
-        camera_id, w, h
+        static_cast<int32_t>(camera_id), w, h
     };
     boost::asio::write(*m_socket, boost::asio::buffer((uint8_t*)&req, sizeof(req)));
 

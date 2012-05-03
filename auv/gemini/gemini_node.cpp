@@ -451,10 +451,10 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
     private:
         static std::string fmtIp(uint32_t ip4_addr){
             uint8_t ipchrs[4] = {
-                (ip4_addr >> 24) & 0xff,
-                (ip4_addr >> 16) & 0xff,
-                (ip4_addr >>  8) & 0xff,
-                (ip4_addr >>  0) & 0xff
+                static_cast<uint8_t>((ip4_addr >> 24) & 0xff),
+                static_cast<uint8_t>((ip4_addr >> 16) & 0xff),
+                static_cast<uint8_t>((ip4_addr >>  8) & 0xff),
+                static_cast<uint8_t>((ip4_addr >>  0) & 0xff)
             };
             return mkStr() << int(ipchrs[0]) << "."
                            << int(ipchrs[1]) << "."
@@ -544,10 +544,10 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     lock_t l(m_gem_mux);
                     GEM_SetDLLSonarID(m_conn_state.sonarId);
                     unsigned char ip_chrs[4] = {
-                        (m_conn_state.sonarAltIp >> 24) & 0xff,
-                        (m_conn_state.sonarAltIp >> 16) & 0xff,
-                        (m_conn_state.sonarAltIp >> 8) & 0xff,
-                        (m_conn_state.sonarAltIp >> 0) & 0xff
+                        static_cast<uint8_t>((m_conn_state.sonarAltIp >> 24) & 0xff),
+                        static_cast<uint8_t>((m_conn_state.sonarAltIp >> 16) & 0xff),
+                        static_cast<uint8_t>((m_conn_state.sonarAltIp >> 8) & 0xff),
+                        static_cast<uint8_t>((m_conn_state.sonarAltIp >> 0) & 0xff)
                     };
                     unsigned char nm_chrs[4] = {
                         255,255,255,0
