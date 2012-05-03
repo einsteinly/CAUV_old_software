@@ -27,33 +27,39 @@ typedef std::map<uint32_t,std::pair <unsigned int, unsigned long int> > stats_t;
 typedef std::vector<std::string> conn_list_t;
 
 std::ostream &operator<<(std::ostream &os, const conn_list_t &conn_list) {
+    os << "[";
     for(conn_list_t::const_iterator it = conn_list.begin();
         it != conn_list.end(); it++) {
 
-        os << *it;
+        os << "\"" << *it << "\"";
         if (it != conn_list.end() - 1) {
-            os << "; ";
+            os << ", ";
         }
     }
+    os << "]";
     return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const subscriptions_t &subs) {
+    os << "[";
     for(subscriptions_t::const_iterator it = subs.begin();
         it != subs.end(); it++) {
-
-        os << *it;
+        os << *it << ", ";
     }
+    os << "null";
+    os << "]";
     return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const stats_t &stats) {
+    os << "[";
     for(stats_t::const_iterator it = stats.begin();
         it != stats.end(); it++) {
 
-        os << it->first << ": (" << it->second.first << ", " << it->second.second << ")";
-        os << "; ";
+        os << "{ \"id\": " << it->first << ", \"messages\": " << it->second.first << ", \"bytes\": " << it->second.second << "}";
+        os << ", ";
     }
+    os << "]";
     return os;
 }
 
@@ -69,8 +75,10 @@ class SocketInfo {
 };
 
 std::ostream &operator<<(std::ostream &os, const SocketInfo &info) {
-    os << "CONNECTIONS(" << info.connections << ")\n";
-    os << "BINDS(" << info.binds << ")\n";
+    os << "{";
+    os << "\"connections\" :" << info.connections << ",\n";
+    os << "\"binds\" : " << info.binds << "\n";
+    os << "}";
     return os;
 }
 
@@ -232,7 +240,8 @@ DaemonContext::DaemonContext(const std::string vehicle_name, const std::string w
     std::string sub_buf;
     uint32_t msgid = DAEMON_MARKER_MSGID;
     sub_buf += "\1";
-    sub_buf += std::string(reinterpret_cast<char*>(&msgid),sizeof(msgid));
+    sub_buf += std::string(reinterpret_cast<char*>(&msgid) ,sizeof(msgid));
+    sub_buf += std::string(reinterpret_cast<char*>(&daemon_id), sizeof(daemon_id));
     assert(xs_send(local_to_net.xsub.skt, sub_buf.c_str(), sub_buf.size(), 0) >= 0);
 }
 
@@ -313,6 +322,8 @@ void DaemonContext::handle_control_message(void) {
     std::ostringstream reply;
     std::string arg;
     ctrl_iss >> command;
+    reply << "{";
+    std::string error;
     if (command == "CONNECT" || command == "BIND") {
         SocketInfo *socket = NULL;
         std::string socket_name;
@@ -340,29 +351,37 @@ void DaemonContext::handle_control_message(void) {
                 //something wrong with the computer?
                 assert(false);
             }
-            if (!ret) {
-                reply << "SUCCESS";
-            } else {
-                reply << "FAILURE: " << xs_strerror(ret);
+            if (ret) {
+                error = xs_strerror(ret);
             }
         }
     } else if (command == "STATS") {
-        reply << "NET_TO_LOCAL{" << net_to_local.stats << "}\n";
-        reply << "LOCAL_TO_NET{" << local_to_net.stats << "}\n";
+        reply << "\"net_to_local\" : " << net_to_local.stats << ",\n";
+        reply << "\"local_to_net\" : " << local_to_net.stats << ",\n";
     } else if (command == "SUBS") {
-        reply << "TODO";
+        reply << "\"net_to_local\" : " << net_to_local.subs << ",\n";
+        reply << "\"local_to_net\" : " << local_to_net.subs << ",\n";
     } else if (command == "CONNECTIONS") {
-        reply << "TODO";
+        reply << "\"net_xpub\" : " << local_to_net.xpub << ",\n";
+        reply << "\"net_xsub\" : " << net_to_local.xsub << ",\n";
+        reply << "\"local_xpub\" : " << net_to_local.xpub << ",\n";
+        reply << "\"local_xsub\" : " << local_to_net.xsub << ",\n";
     } else if (command == "PID") {
-        reply << getpid();
+        reply << "\"pid\" : " << getpid() << ", ";
     } else if (command == "ID") {
-        reply << daemon_id;
+        reply << "\"id\" : " << daemon_id << ", ";
     } else if (command == "STOP") {
         running = false;
-        reply << "SUCCESS";
     } else {
-       reply << "UNKNOWN";
+        error = "Unknown command";
     } 
+    if (error.size()) {
+        reply << "\"success\" : false, ";
+        reply << "\"error\" : \"" << error << "\"";
+    } else {
+        reply << "\"success\" : true";
+    }
+    reply << "}";
     //XXX: possible to get stuck in wrong state here?
     if (xs_send(control_rep, reply.str().c_str(), reply.str().size(), XS_DONTWAIT) < 0) {
         assert(errno & (EAGAIN | EINTR));
