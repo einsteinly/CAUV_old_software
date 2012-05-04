@@ -16,6 +16,7 @@
 
 #include <generated/types/message.h>
 #include <generated/types/MembershipChangedMessage.h>
+#include <generated/types/DaemonConnectedMessage.h>
 #include <generated/groupmap.h>
 #include <boost/make_shared.hpp>
 #include <boost/thread/locks.hpp>
@@ -250,6 +251,7 @@ void ZeroMQMailbox::handle_pub_message (void) {
     uint32_t sub_id = *reinterpret_cast<uint32_t*>(data + 1); 
 
     //poor man's deserialisation for pid marker
+    //really needs replacing, it happens too often now
     if (sub_id == NODE_MARKER_MSGID && len >= sizeof(uint32_t) * 2 + 1) {
         uint32_t pid = *(reinterpret_cast<uint32_t*>(data + 1) + 1);
         if (is_sub) {
@@ -268,8 +270,14 @@ void ZeroMQMailbox::handle_pub_message (void) {
     }
 
     if (sub_id == DAEMON_MARKER_MSGID) {
-        debug() << "connected to daemon";
+        uint32_t daemon_id = *(reinterpret_cast<uint32_t*>(data + 1) + 1);
+        debug() << "connected to daemon" << daemon_id;
         daemon_connected = true;
+        boost::shared_ptr<DaemonConnectedMessage> connect_msg =
+            boost::make_shared<DaemonConnectedMessage>(daemon_id);
+        BOOST_FOREACH(observer_ptr_t o, m_observers) {
+            o->onDaemonConnectedMessage(connect_msg);
+        }
         return;
     }
 

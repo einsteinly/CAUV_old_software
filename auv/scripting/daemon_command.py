@@ -2,9 +2,10 @@
 
 import zmq
 import argparse
-import readline
 import sys
 import os
+import utils.zmqfuncs
+import argparse
 
 vehicle_name = 'red_herring'
 ipc_dir = '/tmp/cauv/'
@@ -17,8 +18,16 @@ if os.getenv('CAUV_VEHICLE_NAME') is not None:
 
 control_rel = 'daemon/control'
 
-if len(sys.argv) > 1:
-    arg = sys.argv[1]
+parser = argparse.ArgumentParser(description="Run a command as a daemon")
+parser.add_argument('--dir','-d',help='Daemon control dir')
+parser.add_argument('--vehicle','-v', help='Vehicle name')
+parser.add_argument('--ipc-dir', '-i', help='Vehicle name')
+parser.add_argument('commands', help='Commands to run', nargs = argparse.REMAINDER)
+
+opts = parser.parse_args()
+
+if opts.dir:
+    arg = opts.dir
     if 'control' in os.listdir(arg):
         ipc_dir = arg
         control_rel = 'control'
@@ -35,9 +44,15 @@ if len(sys.argv) > 1:
 
 c = zmq.Context(1)
 s = zmq.Socket(c, zmq.REQ)
-s.connect("ipc://" + ipc_dir + '/' + vehicle_name + '/' + control_rel)
+s.connect("ipc://{}/daemon/control".format(utils.zmqfuncs.get_vehicle_dir(opts.ipc_dir, opts.vehicle)))
 
-while True:
-    command = raw_input(">")
-    s.send(command)
-    print(' '.join(s.recv_multipart()))
+if opts.commands:
+    for command in opts.commands:
+        s.send(command)
+        print(' '.join(s.recv_multipart()))
+else:
+    import readline
+    while True:
+        command = raw_input(">")
+        s.send(command)
+        print(' '.join(s.recv_multipart()))

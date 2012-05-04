@@ -59,6 +59,7 @@ std::ostream &operator<<(std::ostream &os, const stats_t &stats) {
         os << "{ \"id\": " << it->first << ", \"messages\": " << it->second.first << ", \"bytes\": " << it->second.second << "}";
         os << ", ";
     }
+    os << "null";
     os << "]";
     return os;
 }

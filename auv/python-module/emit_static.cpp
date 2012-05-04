@@ -313,6 +313,8 @@ void emitCauvNode(){
          .def("join", wrap(&CauvNode::joinGroup))
          .def("addObserver", wrap(&CauvNode::addMessageObserver))
          .def("removeObserver", wrap(&CauvNode::removeMessageObserver))
+         .def("subMessage", wrap(&CauvNode::subMessage))
+         .def("unSubMessage", wrap(&CauvNode::unSubMessage))
          .def("parseOptions", &CauvNodeWrapper::parseOptions)
          //.def("foo", wrap(&CauvNodeWrapper::foo))
          .add_property("mailbox", &CauvNodeWrapper::get_mailbox)

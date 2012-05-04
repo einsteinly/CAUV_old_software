@@ -366,7 +366,7 @@ variant ParamValue
 }
 
 //these are zmq messaging specific
-group internal
+group zmq_internal
 { 
     // These ids are reserved for internal messaging system and should not be sent
     //  or changed without changing related zeromq code
@@ -377,13 +377,18 @@ group internal
     {
     }
 
-    //these message ids aren't special like the 3 above
+    //these message ids aren't special like the 2 above
     message DaemonConnections : 225
     {
         connect_strings : list<string>;
     }
-    message Connect : 222 
+    message DaemonConnected : 226
     {
+        daemon_id: uint32;
+    }
+    message DaemonAnnounce : 227 
+    {
+        daemon_id: uint32;
         connect_string : string;
     }
 }

@@ -15,7 +15,7 @@ def load_session(filename):
     for suffix, mode, type in imp.get_suffixes():
         if args.session.endswith(suffix):
             with open(args.session, mode) as session_file:
-                return imp.load_module("session", session_file, ".", (suffix, mode, type))
+                return imp.load_module("session", session_file, "", (suffix, mode, type))
     raise SessionNotFound()
 
 parser = argparse.ArgumentParser(description = "Start up and monitor CAUV nodes and other programs", add_help = False)

@@ -1,19 +1,11 @@
 import os
 import errno
 import collections
+import util.zmqfuncs
 
 Process = collections.namedtuple("Process",['name', 'work_dir', 'pid_func', 'importance', 'cmds'])
 
-def get_vehicle_dir():
-    env_dir = os.getenv('CAUV_IPC_DIR')
-    if env_dir is None:
-        env_dir = '/tmp/cauv'
-    env_vehicle = os.getenv('CAUV_VEHICLE_NAME')
-    if env_vehicle is None:
-        env_vehicle = 'red_herring'
-    return os.path.join(env_dir, env_vehicle)
-
-def node_pid(node_name, vehicle_dir = get_vehicle_dir()):
+def node_pid(node_name, vehicle_dir = util.zmqfuncs.get_vehicle_dir()):
     def get_pid():
         if not os.path.exists(vehicle_dir):
             return None
@@ -32,7 +24,7 @@ def node_pid(node_name, vehicle_dir = get_vehicle_dir()):
         return None
     return get_pid
 
-def zmq_daemon_pid(vehicle_dir = get_vehicle_dir()):
+def zmq_daemon_pid(vehicle_dir = util.zmqfuncs.get_vehicle_dir()):
     import zmq
     def get_pid():
         c = zmq.Context()
