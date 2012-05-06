@@ -14,6 +14,9 @@ def get_vehicle_dir(ipc_dir = None, vehicle_name = None):
         vehicle_name = 'red_herring'
     return os.path.join(ipc_dir, vehicle_name)
 
+class Timeout(Exception):
+    pass
+
 class DaemonControl:
     def __init__(self, vehicle_name = None, ipc_dir = None):
         self.zmq_context = zmq.Context(1)
@@ -22,10 +25,16 @@ class DaemonControl:
         debug("Connecting to daemon via {}".format(daemon_control_str))
         self.ctrl_s = zmq.Socket(self.zmq_context, zmq.REQ)
         self.ctrl_s.connect(daemon_control_str)
+        self.ctrl_s.setsockopt(zmq.LINGER, 100)
+        self.poller = zmq.Poller()
+        self.poller.register(self.ctrl_s, zmq.POLLIN)
 
-    def run_cmd(self, cmd, strip_code = True):
+    def run_cmd(self, cmd, strip_code = True, timeout = 1000):
         self.ctrl_s.send(cmd)
-        ret = json.loads(self.ctrl_s.recv())
+        if self.poller.poll(timeout):
+            ret = json.loads(self.ctrl_s.recv())
+        else:
+            raise Timeout("Timed out waiting for reply from daemon")
         if not ret['success']:
             error("Error running daemon command {} : {}".format(cmd, ret['error']))
         if strip_code:

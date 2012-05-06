@@ -1,11 +1,12 @@
 import os
 import errno
 import collections
-import util.zmqfuncs
+import utils.zmqfuncs
+from cauv.debug import debug, info, warning, error
 
-Process = collections.namedtuple("Process",['name', 'work_dir', 'pid_func', 'importance', 'cmds'])
+Process = collections.namedtuple("Process",['name', 'work_dir', 'pid_func', 'death_callback', 'user', 'cmds'])
 
-def node_pid(node_name, vehicle_dir = util.zmqfuncs.get_vehicle_dir()):
+def node_pid(node_name, vehicle_dir = utils.zmqfuncs.get_vehicle_dir()):
     def get_pid():
         if not os.path.exists(vehicle_dir):
             return None
@@ -24,19 +25,26 @@ def node_pid(node_name, vehicle_dir = util.zmqfuncs.get_vehicle_dir()):
         return None
     return get_pid
 
-def zmq_daemon_pid(vehicle_dir = util.zmqfuncs.get_vehicle_dir()):
-    import zmq
+def zmq_daemon_pid(ipc_dir = None, vehicle_name = None):
     def get_pid():
-        c = zmq.Context()
-        s = zmq.Socket(c, zmq.REQ)
-        s.connect("ipc://{}/daemon/control".format(vehicle_dir))
-        s.send("PID")
-        s.setsockopt(zmq.LINGER,0)
-        p = zmq.Poller()
-        p.register(s, zmq.POLLIN)
-        if len(p.poll(100)):
-            pid = s.recv(copy=True, flags=zmq.NOBLOCK)
-            return int(pid)
-        return None
+        ctrl = utils.zmqfuncs.DaemonControl(vehicle_name, ipc_dir)
+        try:
+            return(ctrl.run_cmd("PID")["pid"])
+        except utils.zmqfuncs.Timeout:
+            return None
     return get_pid
+
+def restart(n_times = 0):
+    vals = {'restarts' : 0}
+    def death_callback(proc):
+        vals['restarts'] += 1
+        if n_times == 0 or vals['restarts'] <= n_times:
+            return True
+        else: 
+            warning("Process {} died too many times. Not restarting".format(proc.name))
+            return False
+    return death_callback
+
+def panic(proc):
+    raise RuntimeError("Important process {} crashed! panic!".format(proc.name))
 
