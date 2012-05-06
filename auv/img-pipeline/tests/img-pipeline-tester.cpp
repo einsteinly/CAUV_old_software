@@ -485,7 +485,7 @@ int main(int argc, char **argv)
     }
 
     node = new ImgPipeTestNode(tests);
-    node->run();
+    node->run(false);
     cleanup();
     return 0;
 }

@@ -57,6 +57,7 @@ void CauvNode::run(bool synchronous)
     info() << "Module: " << m_name;
     info() << "Version:\n" << Version_Information;
 
+    m_running = true;
 #ifndef ZEROMQ_MESSAGING
     if (m_spread_mailbox) {
         m_spread_mailbox->connect(MakeString() << m_port << "@" << m_server, m_name);
@@ -64,8 +65,6 @@ void CauvNode::run(bool synchronous)
 #endif
     if(!synchronous)
         m_event_monitor->startMonitoringAsync();
-
-    m_running = true;
 
     onRun();
 

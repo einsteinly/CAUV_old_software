@@ -157,15 +157,14 @@ pid = d_ctrl.run_cmd("PID")['pid']
 debug("Connected to daemon control with PID {}".format(pid))
 d_ctrl.run_cmd("BIND NET_XSUB tcp://*:{}".format(opts.port))
 try:
-    n = cauv.node.Node('daemon-man', args)
+    n = cauv.node.Node('daemon-man', args, run_now = False)
     obs = connObserver(n, opts.port, ip_str, d_ctrl)
     n.subMessage(messaging.DaemonAnnounceMessage())
     n.subMessage(messaging.DaemonConnectionsMessage())
     n.subMessage(messaging.DaemonConnectedMessage())
     if opts.peer:
         obs.try_connect('tcp://{}:{}'.format(opts.peer, opts.peer_port))
-    # there's a race condition with starting up the node, so send afterwards as
-    # well
+    n.run(False)
     obs.announce()
     obs.send_connections()
 
