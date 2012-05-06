@@ -148,13 +148,13 @@ if args.core_dumps:
     core_pattern = "/tmp/corefiles/%e.%d.%t.%p"
     try:
         try:
-            os.mkdir("/tmp/corefiles")
+            os.mkdir("/tmp/corefiles", 0777)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 error("Could not create corefile directory")
                 raise
         with open("/proc/sys/kernel/core_pattern", "r") as pattern_file:
-            if pattern_file.read() != core_pattern:
+            if not pattern_file.read().startswith(core_pattern):
                 with open("/proc/sys/kernel/core_pattern", "w") as pattern_w_file:
                     pattern_w_file.write(core_pattern)
         soft, hard = resource.getrlimit(resource.RLIMIT_CORE)
