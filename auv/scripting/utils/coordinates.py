@@ -5,17 +5,18 @@ import math
 # CAUV Modules:
 import cauv.messaging as messaging 
 
-#principal component of Earth along polar and equatorial axis
-Earth_b = 6356752.3142 # polar
+#principal component of Earth along polar and equatorial axis (WGS84 coordinate system)
+Earth_b = 6356752.314245 # polar
 Earth_a = 6378137.00 # equatorial 
+
 
 class NorthEastDepthCoord:
     #coordinates in metres North, East and Down w.r.t. to the reference corner
-    def __init__(self, x, y, z):
+    def __init__(self, north, east, depth):
         # z is positive depth
-        self.north = x
-        self.east = y
-        self.depth = z
+        self.north = north
+        self.east = east
+        self.depth = depth
     def __repr__(self):
         return '(%s, %s, %s)' % (self.north, self.east, self.depth)
 
@@ -28,11 +29,12 @@ def metresPerDegreeLongitude(at_latitude_degrees):
     return abs(Earth_a * math.cos(beta) * math.radians(1))
 
 def metresPerDegreeLatitude(at_latitude_degrees):
+    # TODO maybe improve approx; atm 1st degree    
     return Earth_b * math.radians(1)
 
 class LLACoord:
     def __init__(self, lat_deg, lng_deg, alt_m):
-        # in degrees! altitude in metres above WGS84 ellipsoid
+        # in degrees north & east! altitude in metres above WGS84 ellipsoid
         self.latitude = lat_deg
         self.longitude = lng_deg
         self.altitude = alt_m
@@ -48,6 +50,19 @@ class LLACoord:
             new_lng = self.longitude + xyz[1] / metresPerDegreeLongitude(self.latitude)
             new_alt = self.altitude + xyz[2]
         return LLACoord(new_lat, new_lng, new_alt)
+
+    def differenceInMetres(self, lla_coord):
+        # subtract this from another LLACoord, returning the result as a
+        # NorthEastDepthCoord (in metres). Sign is that relative to this, i.e.
+        # if lla_coord is north of this, r.north will be positive
+        mean_latitude = (self.latitude + lla_coord.latitude) / 2
+        north = (self.latitude - lla_coord.latitude) * \
+            metresPerDegreeLatitude(mean_latitude)
+        east = (lla_coord.longitude - self.longitude) * \
+            metresPerDegreeLongitude(mean_latitude)
+        depth = self.altitude - lla_coord.altitude
+        return NorthEastDepthCoord(north, east, depth)
+
     def __repr__(self):
         return '(%s, %s, %s)' % (self.latitude, self.longitude, self.altitude)
 

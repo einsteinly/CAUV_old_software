@@ -230,7 +230,7 @@ struct PolarImage
     // Note that these are *bearings* not angles (ie, clockwise from forwards, not
     // anticlockwise from x axis (wherever that is...))
     bearing_bins: list<int32>;
-    // number of bins = round(rangeEnd-rangeStart) / rangeConversion)
+    // number of bins = round((rangeEnd-rangeStart) / rangeConversion)
     rangeStart: float;
     rangeEnd: float;
     // rangeConversion = length of 1 bin in metres
@@ -988,10 +988,13 @@ group simulation
 {
     message SimPosition : 800
     {
-        latitude : double;
-        longitude : double;
-        altitude : float;
-        orientation : floatYPR;
-        speed : floatXYZ;
+        latitude : double;  // in degrees EAST, WGS84
+        longitude : double; // in degrees north, WGS84
+        altitude : float;   // in metres above WGS84
+        orientation : floatYPR; // yaw is degrees bearing from north,
+                                // pitch is degrees up from horizontal,
+                                // roll is degrees ?? from horizontal
+
+        speed : floatXYZ; // metres per second, some arbitrary local coordinate system: TODO: fix this!
     }
 }

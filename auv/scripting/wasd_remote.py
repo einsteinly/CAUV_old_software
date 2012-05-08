@@ -117,10 +117,10 @@ class WASDRemote(msg.MessageObserver):
 
         if event.keysym_num == 97: # a
             if self.auv.current_bearing is not None:
-                self.bearing += Bearing_Inc
+                self.bearing -= Bearing_Inc
         elif event.keysym_num == 100: # d
             if self.auv.current_bearing is not None:
-                self.bearing -= Bearing_Inc
+                self.bearing += Bearing_Inc
             
         self.update()
       
