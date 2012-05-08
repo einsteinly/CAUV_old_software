@@ -38,25 +38,21 @@ class LLACoord:
         self.latitude = lat_deg  # degrees north WGS84
         self.longitude = lng_deg # degrees east WGS84
         self.altitude = alt_m    # metres above WGS84 ellipsoid
+    @classmethod
+    def fromWGS84(cls, wgs84):
+        return cls(wgs84.latitude, wgs84.longitude, wgs84.altitude)
     def __add__(self, ned):
         # add NorthEastDepth coord (a cartesian vector) 'ned' to the current latitude/longitude
-        
-        # add XYZ in metres onto the current latitude/longitude/altitude
-        # z is positive altitude (-ve depth)
-        if isinstance(ned, messaging.floatXYZ):
-            xyz = ned
-            print 'WARNING!!!! this function is B0rked: you can\'t add XYZ to lat/long without specifying a coordinate system! You should use a NorthEastDepthCoord instead'
-            print 'assuming first coordinate is WGS84 Eastings, second coordinate is WGS84 Northings'            
-            new_lat = self.latitude  + xyz.y / metresPerDegreeLatitude(self.latitude)
-            new_lng = self.longitude + xyz.x / metresPerDegreeLongitude(self.latitude)
-            new_alt = self.altitude + xyz.z
-        elif isinstance(ned, NorthEastDepthCoord):
+        if isinstance(ned, NorthEastDepthCoord):
             new_lat = self.latitude + ned.north / metresPerDegreeLatitude(self.latitude)
             new_lng = self.longitude + ned.east / metresPerDegreeLongitude(self.latitude)
             new_alt = self.altitude - ned.depth
         else:
-            print 'WARNING: you passed something that wasn\'t a NorthEastDepthCoord to add to a latitude/longitude coordinate:'
-            print 'assuming first coordinate is WGS84 Eastings, second coordinate is WGS84 Northings'
+            raise Exception('you can\'t add XYZ to lat/long without specifying'
+                'a coordinate system! You should use a NorthEastDepthCoord'
+                'instead'
+            )
+            xyz = ned
             new_lat = self.latitude  + xyz[1] / metresPerDegreeLatitude(self.latitude)
             new_lng = self.longitude + xyz[0] / metresPerDegreeLongitude(self.latitude)
             new_alt = self.altitude + xyz[2]

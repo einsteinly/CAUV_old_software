@@ -9,6 +9,7 @@ from cauv.debug import debug, warning, error, info
 
 # Standard Library Modules
 import Tkinter as tk
+import threading
 
 Depth_Inc = 0.1
 Bearing_Inc = 2
@@ -20,10 +21,11 @@ class WASDRemote(msg.MessageObserver):
     def __init__(self, node):
         msg.MessageObserver.__init__(self)
         self.node = node
-        self.node.join('gui')
-        self.node.join('telemetry')
+        self.node.subMessage(msg.TelemetryMessage())
+        self.node.subMessage(msg.MotorStateMessage())
         self.node.addObserver(self)        
         self.auv = control.AUV(node)
+        self.motor_state_lock = threading.Lock()
         self.motor_state = {}
         self.motor_state[msg.MotorID.Prop] = 0
         self.motor_state[msg.MotorID.HBow] = 0
@@ -35,6 +37,7 @@ class WASDRemote(msg.MessageObserver):
         self.depth = 0
         self.strafe = 0
         self.prop = 0
+        self.last_telemetry_lock = threading.Lock()
         self.last_telemetry = None
 
         self.tk = tk.Tk()
@@ -55,19 +58,35 @@ class WASDRemote(msg.MessageObserver):
 
     def onMotorStateMessage(self, m):
         debug('motor state: %s' % m)
+        self.motor_state_lock.acquire()        
         self.motor_state[m.motorId] = m.speed
+        self.motor_state_lock.release()        
+
+    def motorState(self):
+        self.motor_state_lock.acquire()
+        r = copy.deepcopy(self.motor_state)
+        self.motor_state_lock.release()
+        return r
 
     def onTelemetryMessage(self, m):
+        last_telemetry_lock.acquire()
         self.last_telemetry = m
+        last_telemetry_lock.release()
+
+    def telemetry(self):
+        last_telemetry_lock.acquire()
+        r = self.last_telemetry
+        last_telemetry_lock.release()
+        return r;
 
     def motorText(self):
         r = ''
-        for k,v in self.motor_state.iteritems():
+        for k,v in self.motorState().iteritems():
             r += '%s=%s ' % (k,v)
         return r
     
     def telemetryText(self):
-        r = str(self.last_telemetry)
+        r = str(self.telemetry())
         if r.find('{') != -1:
             r = r[r.find('{'):r.rfind('}')]
         return r

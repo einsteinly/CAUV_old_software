@@ -815,7 +815,7 @@ void GeminiNode::onRun()
 	    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
     }
 
-    joinGroup("sonarctl");
+    subMessage(GeminiControlMessage());
     m_sonar->addObserver(boost::make_shared<ReBroadcaster>(boost::ref(*this)));
     this->addMessageObserver(m_sonar);
 

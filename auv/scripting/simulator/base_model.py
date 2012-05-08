@@ -79,7 +79,7 @@ class Model(messaging.MessageObserver):
         self.thread.daemon = False
         self.keep_going = True
 
-        node.join("gui")
+        node.subMessage(messaging.MotorStateMessage())
         node.addObserver(self)
 
     def start(self):

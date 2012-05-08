@@ -34,7 +34,7 @@ class GPSNode():
                 else: climb = 0;
             
                 info("Location: [lat %f, lon %f, alt %f]" % (report.lat, report.lon, report.alt))
-                self.__node.send(msg.GPSLocationMessage(report.lat, report.lon, report.alt, track, speed, climb))
+                self.__node.send(msg.GPSLocationMessage(msg.WGS84Coord(report.lat, report.lon, report.alt), track, speed, climb))
 
     
 if __name__ == '__main__':
