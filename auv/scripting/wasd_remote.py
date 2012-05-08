@@ -102,9 +102,10 @@ class WASDRemote(msg.MessageObserver):
             self.depth += Depth_Inc
         
         if event.keysym_num == 65363: # Right
-            self.strafe = Strafe
-        elif event.keysym_num == 65361: # Left
+            # !!! I think this is right, need to check against real red-herring
             self.strafe = -Strafe
+        elif event.keysym_num == 65361: # Left
+            self.strafe = Strafe
         else:
             self.strafe = 0
 
