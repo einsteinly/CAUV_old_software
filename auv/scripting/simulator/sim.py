@@ -47,7 +47,7 @@ def runLoop(auv_model, node):
     while True:
         time.sleep(0.1)
         (lt, ln, al, ori, speed) = auv_model.position()
-        node.send(messaging.SimPositionMessage(lt, ln, al, ori, speed))
+        node.send(messaging.SimPositionMessage(messaging.WGS84Coord(lt, ln, al), ori, speed))
         info('displ=%s\tvel=%s\tori=%s\tomega=%s\t' %
             (fmtArr(auv_model.displacement),
              fmtArr(auv_model.velocity),

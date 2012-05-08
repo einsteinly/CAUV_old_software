@@ -61,7 +61,8 @@ class Model(messaging.MessageObserver):
         self.node = node
         self.update_frequency = 10.0
         self.datum = coordinates.Simulation_Datum
-
+        
+        # displacement in x (East), y (North), z (Altitude)
         self.displacement = np.array((0.0,0.0,-5))
         self.velocity = np.array((0.0,0.0,0.0))
         
@@ -78,7 +79,7 @@ class Model(messaging.MessageObserver):
         self.thread.daemon = False
         self.keep_going = True
 
-        node.join("gui")
+        node.subMessage(messaging.MotorStateMessage())
         node.addObserver(self)
 
     def start(self):
@@ -121,7 +122,10 @@ class Model(messaging.MessageObserver):
         raise NotImplementedError('derived classes must implement this')
 
     def position(self):
-        r = self.datum + self.displacement
+        ned = coordinates.NorthEastDepthCoord(
+            self.displacement[1], self.displacement[0], -self.displacement[2]
+        )
+        r = self.datum + ned
         return float(r.latitude),\
                float(r.longitude),\
                float(r.altitude),\

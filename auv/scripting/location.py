@@ -83,9 +83,9 @@ class Location(messaging.MessageObserver):
     def getLocation(self):
         info('getting Location')
         r = messaging.LocationMessage()
-        r.latitude = self.location.north
-        r.longitude = self.location.east
-        r.altitude = -self.location.depth
+        r.location = messaging.WGS84Coord(
+            self.location.north, self.location.east, -self.location.depth
+        )
         r.speed = messaging.floatXYZ(self.speed.x, self.speed.y, self.speed.z)
         return r
 
@@ -104,6 +104,6 @@ if __name__ == '__main__':
             time.sleep(3)
             ll = d.getLocation()
             info('%s : %s' % (d.location, ll))
-            node.send(messaging.LocationMessage(ll.latitude,ll.longitude,ll.altitude,messaging.floatXYZ(0, 0, 0)))
+            node.send(messaging.LocationMessage(ll.location,messaging.floatXYZ(0, 0, 0)))
     finally:
         node.stop()

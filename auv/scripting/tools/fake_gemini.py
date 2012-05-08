@@ -25,6 +25,16 @@ def wrapAngleIntoPlusOrMinusPi(angle):
     while angle < -math.pi:
         angle = angle + math.pi*2
     return angle
+  
+def boundingRect(pt_sequence):
+    min = list(pt_sequence[0])
+    max = list(pt_sequence[0])
+    for pt in pt_sequence:
+        if pt[0] < min[0]: min[0] = pt[0]
+        if pt[0] > max[0]: max[0] = pt[0]
+        if pt[1] < min[1]: min[1] = pt[1]
+        if pt[1] > max[1]: max[1] = pt[1]
+    return (min, max)
 
 # Image origin is BOTTOM LEFT, rows (y) increase upwards (North), columns (x) increase
 # to the right (East)
@@ -43,7 +53,7 @@ class Environment(object):
         )
 
     def llaToImageCoords(self, latlong):
-        northeast = latlong.differenceInMetres(self.datum)
+        northeast = self.datum.differenceInMetresTo(latlong)
         x = northeast.east
         y = northeast.north
         return self.xyToImageCoords((x,y))
@@ -53,16 +63,6 @@ class Environment(object):
         # but in metres rather than pixels, and with a different origin)
         x = xy[0]; y = xy[1]
         return np.array((x / self.m_per_px - self.origin[0], y / self.m_per_px - self.origin[1]))
-    
-    def _boundingRect(self, pt_sequence):
-        min = list(pt_sequence[0])
-        max = list(pt_sequence[0])
-        for pt in pt_sequence:
-            if pt[0] < min[0]: min[0] = pt[0]
-            if pt[0] > max[0]: max[0] = pt[0]
-            if pt[1] < min[1]: min[1] = pt[1]
-            if pt[1] > max[1]: max[1] = pt[1]
-        return (min, max)
     
     def _getLineImageCoords(self, xy, start_angle, end_angle, length, res):
         # x,y:    in pixel-units from pixel origin
@@ -82,17 +82,22 @@ class Environment(object):
 
         start_direction = np.array((math.cos(start_angle), math.sin(start_angle)))
         end_direction   = np.array((math.cos(end_angle), math.sin(end_angle)))
-
-        def isPxInImage(x,y):
-            return x >= 0 and y > 0 and x < self.image.size[0] and y <= self.image.size[1]
         
         # these are significant optimisations!
         xy_x = xy[0]
         xy_y = xy[1]
         image_sizey = self.image.size[1]
+        image_sizex = self.image.size[0]
         atan2 = math.atan2
         getpixel = self.image.getpixel
+        _boundingRect = boundingRect
 
+        def isPxInImage(x,y):
+            return x >= 0 and y > 0 and x < image_sizex and y <= image_sizey
+        
+        c2 = xy
+        c4 = xy
+        rmax = 0
         for bin in xrange(0,res):
             support_px = [0.0]
             value = [0.0]
@@ -113,15 +118,15 @@ class Environment(object):
             #    |
             #    o--> x
             #
-            rmin = bin * float(length)/res
+            rmin = rmax
             rmax = (bin+1) * float(length)/res
             rmin_sq = rmin**2
             rmax_sq = rmax**2
-            c1 = xy + start_direction * rmin
+            c1 = c2
             c2 = xy + start_direction * rmax
-            c3 = xy + end_direction * rmin
+            c3 = c4
             c4 = xy + end_direction * rmax
-            bbox_min, bbox_max = self._boundingRect((c1,c2,c3,c4))
+            bbox_min, bbox_max = _boundingRect((c1,c2,c3,c4))
             #print 'corners:', c1, c2, c3, c4
             ##print 'bbox:', bbox_min, bbox_max
 
@@ -136,10 +141,6 @@ class Environment(object):
                         value[0] += getpixel(
                              (x, image_sizey - y)
                         )[0]
-            
-            #import dis
-            #print dis.dis(pushPx)
-            #sys.exit(0)
             
             for x in xrange(int(math.floor(bbox_min[0])),int(math.ceil(bbox_max[0]))):
                 # more micro-optimisations... do I regret not writing this in c++? yes.
@@ -227,7 +228,7 @@ class FakeGemini(msg.MessageObserver):
     
     def onGeminiControlMessage(self, m):
         self.setConfig(m)
-        print m
+        debug(str(m))
 
     def mainLoop(self):
         while True:
@@ -238,6 +239,7 @@ class FakeGemini(msg.MessageObserver):
                 continue
             time.sleep(config.interPingPeriod)
             position = self.position()
+            ts = msg.now()
             if not position:
                 debug('no sim position yet!')
                 continue
@@ -269,7 +271,7 @@ class FakeGemini(msg.MessageObserver):
             #    image : PolarImage;
             #}
 
-            latlong = coordinates.LLACoord(position.latitude, position.longitude, position.altitude)
+            latlong = coordinates.LLACoord.fromWGS84(position.location)
 
             beam_bearings = self.gemBeamBearings()
 
@@ -284,7 +286,9 @@ class FakeGemini(msg.MessageObserver):
                     bearing_bins.append(a-(next_a-a)/2)
                 bearing_bins.append(a+(next_a-a)/2)
             
-            print 'at:', latlong, ' = pixels:', self.env.llaToImageCoords(latlong), 'look bearing:', position.orientation.yaw
+            debug('at:%s =pixels:%s look bearing:%s' % (
+                latlong, self.env.llaToImageCoords(latlong), position.orientation.yaw
+            ))
 
             beams = []
             for i, a in enumerate(bearing_bins): 
@@ -325,13 +329,12 @@ class FakeGemini(msg.MessageObserver):
                 0.0,
                 config.range,
                 config.range / float(config.rangeLines),
-                msg.now()
+                ts
             )
 
             assert(round((config.range) / (config.range / float(config.rangeLines))) == len(beams[0]))
 
             self.node.send(msg.SonarImageMessage(msg.SonarID.Gemini, img))
-            print '.'
 
 
 if __name__ == '__main__':
