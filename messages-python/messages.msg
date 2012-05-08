@@ -364,33 +364,32 @@ variant ParamValue
     list<floatXY>,
     list<Ellipse>,
 }
-// !!! should generate this for each variant
-enum ParamValueType : int8 {
-    int32Type, floatType, stringType, boolType,
-    listCornerType, listLineType, listCircleType, listFloatType,
-    listKeyPointType,
-    BoundedFloatType,
-    listint32Type,
-    ImageRegionType,
-    RangeType,
-    floatXYType,
-    DynamicEnumType,
-    listFloatXYType,
-    listEllipseType,
-}
 
-// These ids are reserved for internal messaging system and should not be sent
-//  or changed without changing related zeromq code
-group reserved
+//these are zmq messaging specific
+group zmq_internal
 { 
-    message Connect : 222 
-    {
-    }
+    // These ids are reserved for internal messaging system and should not be sent
+    //  or changed without changing related zeromq code
     message NodeIDMarker : 223
     {
     }
     message DaemonIDMarker : 224
     {
+    }
+
+    //these message ids aren't special like the 2 above
+    message DaemonConnections : 225
+    {
+        connect_strings : list<string>;
+    }
+    message DaemonConnected : 226
+    {
+        daemon_id: uint32;
+    }
+    message DaemonAnnounce : 227 
+    {
+        daemon_id: uint32;
+        connect_string : string;
     }
 }
 

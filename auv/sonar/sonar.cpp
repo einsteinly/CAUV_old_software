@@ -80,10 +80,6 @@ void SonarNode::onRun()
     addMessageObserver(boost::make_shared<SonarControlMessageObserver>(m_sonar));
     
     m_sonar->init();
-
-    while (true) {
-	    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-    }
 }
 
 void SonarNode::addOptions(boost::program_options::options_description& desc,

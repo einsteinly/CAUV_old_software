@@ -47,7 +47,12 @@ class CauvNode
         virtual ~CauvNode();
         virtual void stopNode();
 
-        void run(bool synchronous=false);
+        /* syncronous refers to the processing of messages. If true, onRun
+         * should not block or messages will not be delivered.
+         * Else, onRun can block. In either case run() will not return until
+         * the node has been stopped
+         */
+        void run(bool synchronous=true);
         bool isRunning();
 
         int defaultOptions();

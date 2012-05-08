@@ -288,9 +288,33 @@ def p_list_included(p):
     p[1]["included_types"].append(p[2])
     p[0] = p[1]
 
+def variant_enum_str(t):
+    if isinstance(t, BaseType):
+        return t.name
+    elif isinstance(t, EnumType):
+        return t.enum.name
+    elif isinstance(t, StructType):
+        return t.struct.name
+    elif isinstance(t, VariantType):
+        return t.variant.name
+    elif isinstance(t, IncludedType):
+        return t.included.name
+    elif isinstance(t, ListType):
+        vt = variant_enum_str(t.valType)
+        return "list{}".format(vt[0].upper() + vt[1:])
+    elif isinstance(t, MapType):
+        kt = variant_enum_str(t.keyType)
+        vt = variant_enum_str(t.ValueType)
+        return "map{}{}".format(kt[0].upper() + kt[1:], vt[0].upper(), vt[1:])
+    else:
+        print "ERROR: " + repr(t) + " is not a type"
+        return "ERROR"
+
 def p_list_variant(p):
     "list : list variant"
     p[1]["variants"].append(p[2])
+    values = [EnumVal(variant_enum_str(v[1]) + 'Type', v[0]) for v in enumerate(p[2].types)]
+    p[1]["enums"].append(Enum(p[2].name + 'Type', BaseType('int8'), values))
     p[0] = p[1]
 
 def p_list_enum(p):

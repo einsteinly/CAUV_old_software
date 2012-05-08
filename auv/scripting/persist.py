@@ -9,6 +9,7 @@ import contextlib
 import shelve
 import traceback
 import argparse
+import time
 
 Default_Groups_To_Join = (
     'control',
@@ -98,7 +99,7 @@ class PersistObserver(msg.MessageObserver):
         func = OnAnyMessage(name, self.__shelf).onMessage
         setattr(self, 'on%sMessage' % name, func)
 
-def persistMainLoop(cauv_node, shelf, auto):
+def persistMainLoop(cauv_node, shelf, auto, silent = False):
     po = PersistObserver(cauv_node, shelf, Default_Groups_To_Join,
                          Default_Messages_To_Watch, auto)
     help_str = 'available commands: "set" - broadcast saved '+\
@@ -106,20 +107,24 @@ def persistMainLoop(cauv_node, shelf, auto):
                '"auto on" / "auto off" - control automatic ' +\
                'parameter broadcast on membership change'
     try:
-        print help_str
-        while True:
-            s = raw_input('\n> ')
-            s = s.lower().strip()
-            if s == 'exit':
-                break
-            elif s == 'set':
-                sendSavedMessages(cauv_node, shelf)
-            elif s == 'auto on':
-                po.setAuto(True)
-            elif s == 'auto off':
-                po.setAuto(False)
-            else:
-                print help_str
+        if silent:
+            while True:
+                time.sleep(10000)
+        else:
+            print help_str
+            while True:
+                s = raw_input('\n> ')
+                s = s.lower().strip()
+                if s == 'exit':
+                    break
+                elif s == 'set':
+                    sendSavedMessages(cauv_node, shelf)
+                elif s == 'auto on':
+                    po.setAuto(True)
+                elif s == 'auto off':
+                    po.setAuto(False)
+                else:
+                    print help_str
 
     except KeyboardInterrupt:
         pass
@@ -153,6 +158,8 @@ if __name__ == '__main__':
     p.add_argument('-n', '--no-auto', dest='auto', default=True,
                  action='store_false', help="don't automatically set parameters" +\
                  "when CAUV Nodes connect to the messaging system")
+    p.add_argument('-s', '--silent', action='store_true',
+                  help="don\'t prompt for commands")
 
     opts, args = p.parse_known_args()
 
@@ -162,7 +169,7 @@ if __name__ == '__main__':
     if opts.restore:
         sendSavedMessages(cauv_node, shelf)
     try:
-        persistMainLoop(cauv_node, shelf, opts.auto)
+        persistMainLoop(cauv_node, shelf, opts.auto, opts.silent)
     finally:
         print 'finally...'
         cauv_node.stop()

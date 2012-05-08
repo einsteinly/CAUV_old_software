@@ -69,7 +69,9 @@ class DrawEllipsesNode: public Node{
                         cv::Size(p.majorRadius,p.minorRadius),
                         p.angle * 180/M_PI,
                         0, 360,
-                        cv::Scalar(40,255,40)
+                        CV_RGB(40,255,40),
+                        3,
+                        CV_AA
                     );
                 }
                 return out;

@@ -59,7 +59,7 @@ class SobelNode: public Node{
             cv::Mat operator()(cv::Mat m) const
             {
                 cv::Mat ret;
-                cv::Sobel(m, ret, xorder, yorder, size);
+                cv::Sobel(m, ret, -1, xorder, yorder, size);
                 return ret;
             }
 
