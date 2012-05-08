@@ -58,7 +58,7 @@ int main(int argc, char** argv)
     if(ret != 0) return ret;
 
     try {
-        node->run();
+        node->run(false);
 
         info() << "Waiting for CauvNode to finish...";
         while(node->isRunning()) sleep(10);

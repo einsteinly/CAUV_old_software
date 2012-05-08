@@ -888,7 +888,7 @@ int main(int argc, char** argv)
     node = new GeminiNode();
     try{
         if(node->parseOptions(argc, argv) == 0)
-            node->run();
+            node->run(false);
     }catch(boost::program_options::error& e){
         error() << e.what();
     }

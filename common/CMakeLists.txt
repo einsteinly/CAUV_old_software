@@ -6,8 +6,6 @@ else()
     add_subdirectory(spread)
 endif()
 
-add_subdirectory(supermess)
-
 add_subdirectory(msg_classes)
 
 set (

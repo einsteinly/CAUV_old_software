@@ -15,6 +15,7 @@
 #include "localMaximaNode.h"
 #include "firstAboveThresholdNode.h"
 #include "broadcastPointsNode.h"
+#include "fitEllipseNode.h"
 #include "kmeansPointsNode.h"
 #include "drawEllipsesNode.h"
 #include "sobelNode.h"
@@ -37,6 +38,7 @@ DEFINE_NFR(GlobalMaximumNode, NodeType::GlobalMaximum);
 DEFINE_NFR(LocalMaximaNode, NodeType::LocalMaxima);
 DEFINE_NFR(FirstAboveThresholdNode, NodeType::FirstAboveThreshold);
 DEFINE_NFR(BroadcastPointsNode, NodeType::BroadcastPoints);
+DEFINE_NFR(FitEllipseNode, NodeType::FitEllipse);
 DEFINE_NFR(KMeansPointsNode, NodeType::KMeansPoints);
 DEFINE_NFR(DrawEllipsesNode, NodeType::DrawEllipses);
 DEFINE_NFR(SobelNode, NodeType::Sobel);

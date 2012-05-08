@@ -7,6 +7,7 @@
 #include <common/mailbox.h>
 #include <common/mailbox.h>
 #include <common/msg_classes/bounded_float.h>
+#include <utility/time.h>
 #include <generated/message_observers.h>
 #include <generated/types/message.h>
 #include <generated/types/MembershipChangedMessage.h>
@@ -311,6 +312,8 @@ void emitCauvNode(){
          .def("onRun", wrap(&CauvNodeWrapper::onRun))
          .def("send", wrap(&CauvNode::send))
          .def("join", wrap(&CauvNode::joinGroup))
+         .def("subMessage", wrap(&CauvNode::subMessage))
+         .def("unSubMessage", wrap(&CauvNode::unSubMessage))
          .def("addObserver", wrap(&CauvNode::addMessageObserver))
          .def("removeObserver", wrap(&CauvNode::removeMessageObserver))
          .def("parseOptions", &CauvNodeWrapper::parseOptions)
@@ -331,6 +334,7 @@ void emitAIMessageObserver(){
 
 void emitPostGenerated(){
     bp::def("mkByteVec", mkByteVec);
+    bp::def("now", (TimeStamp(*)())&now);
     
     // lacking in doc comments...
     bp::class_<BoundedFloat,

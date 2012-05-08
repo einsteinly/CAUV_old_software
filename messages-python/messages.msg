@@ -230,7 +230,7 @@ struct PolarImage
     // Note that these are *bearings* not angles (ie, clockwise from forwards, not
     // anticlockwise from x axis (wherever that is...))
     bearing_bins: list<int32>;
-    // number of bins = round(rangeEnd-rangeStart) / rangeConversion)
+    // number of bins = round((rangeEnd-rangeStart) / rangeConversion)
     rangeStart: float;
     rangeEnd: float;
     // rangeConversion = length of 1 bin in metres
@@ -364,33 +364,32 @@ variant ParamValue
     list<floatXY>,
     list<Ellipse>,
 }
-// !!! should generate this for each variant
-enum ParamValueType : int8 {
-    int32Type, floatType, stringType, boolType,
-    listCornerType, listLineType, listCircleType, listFloatType,
-    listKeyPointType,
-    BoundedFloatType,
-    listint32Type,
-    ImageRegionType,
-    RangeType,
-    floatXYType,
-    DynamicEnumType,
-    listFloatXYType,
-    listEllipseType,
-}
 
-// These ids are reserved for internal messaging system and should not be sent
-//  or changed without changing related zeromq code
-group reserved
+//these are zmq messaging specific
+group zmq_internal
 { 
-    message Connect : 222 
-    {
-    }
+    // These ids are reserved for internal messaging system and should not be sent
+    //  or changed without changing related zeromq code
     message NodeIDMarker : 223
     {
     }
     message DaemonIDMarker : 224
     {
+    }
+
+    //these message ids aren't special like the 2 above
+    message DaemonConnections : 225
+    {
+        connect_strings : list<string>;
+    }
+    message DaemonConnected : 226
+    {
+        daemon_id: uint32;
+    }
+    message DaemonAnnounce : 227 
+    {
+        daemon_id: uint32;
+        connect_string : string;
     }
 }
 
@@ -988,10 +987,13 @@ group simulation
 {
     message SimPosition : 800
     {
-        latitude : double;
-        longitude : double;
-        altitude : float;
-        orientation : floatYPR;
-        speed : floatXYZ;
+        latitude : double;  // in degrees EAST, WGS84
+        longitude : double; // in degrees north, WGS84
+        altitude : float;   // in metres above WGS84
+        orientation : floatYPR; // yaw is degrees bearing from north,
+                                // pitch is degrees up from horizontal,
+                                // roll is degrees ?? from horizontal
+
+        speed : floatXYZ; // metres per second, some arbitrary local coordinate system: TODO: fix this!
     }
 }

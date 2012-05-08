@@ -103,7 +103,7 @@ add_executable (
     nodes/nodes2.cpp
     nodes/math/mathNodes.cpp
     nodes/sonar/sonarNodes.cpp
-    #nodes/fitEllipseNode.cpp
+    nodes/fitEllipseNode.cpp
     ${CONDITIONAL_SOURCE_FILES}
 )
 cauv_install ( img-pipeline )
@@ -113,12 +113,14 @@ target_link_libraries (
     img-pipeline
 
     common
+    utility
     sonar_accumulator
     camera_client
     boost_date_time
     boost_filesystem
     boost_system
     opencv_image
+    tbb
     ${OpenCV_LIBS}
     ${CONDITIONAL_LIBS}
 )

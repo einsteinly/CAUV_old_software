@@ -1,7 +1,7 @@
 project (pipeline-widget)
 
 # FTGL (for text rendering)
-find_package (FTGL)
+find_package (FTGL REQUIRED)
 include_directories (${FTGL_INCLUDE_DIRS})
 
 find_package (GraphViz REQUIRED)
