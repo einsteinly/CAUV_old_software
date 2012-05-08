@@ -119,5 +119,9 @@ class Gemini:
         self.__node.send(messaging.GeminiControlMessage(
             self.__range, self.__gain, self.__range_lines, self.__continuous, self.__inter_ping_delay
         ))
-
+    
+    def __repr__(self):
+        return 'range:%s gain:%s rangeLines:%s continuous:%s interPingDelay:%s' % (
+            self.__range, self.__gain, self.__range_lines, self.__continuous, self.__inter_ping_delay
+        )
 

@@ -102,9 +102,10 @@ class WASDRemote(msg.MessageObserver):
             self.depth += Depth_Inc
         
         if event.keysym_num == 65363: # Right
-            self.strafe = Strafe
-        elif event.keysym_num == 65361: # Left
+            # !!! I think this is right, need to check against real red-herring
             self.strafe = -Strafe
+        elif event.keysym_num == 65361: # Left
+            self.strafe = Strafe
         else:
             self.strafe = 0
 
@@ -117,10 +118,10 @@ class WASDRemote(msg.MessageObserver):
 
         if event.keysym_num == 97: # a
             if self.auv.current_bearing is not None:
-                self.bearing += Bearing_Inc
+                self.bearing -= Bearing_Inc
         elif event.keysym_num == 100: # d
             if self.auv.current_bearing is not None:
-                self.bearing -= Bearing_Inc
+                self.bearing += Bearing_Inc
             
         self.update()
       
