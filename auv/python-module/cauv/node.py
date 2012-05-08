@@ -10,6 +10,7 @@ import threading
 import traceback
 import sys
 import os
+import atexit
 
 class Observer(messaging.MessageObserver):
     pass
@@ -56,16 +57,21 @@ class Node(messaging.CauvNode):
         debug('stopping messaging thread...')
         messaging.CauvNode.stop(self)
         debug('joining messaging thread...')
-        #self.__t.join() can't join the current thread
+        try: 
+            self.__t.join()
+        except RuntimeError:
+            #tried to join current thread
+            pass
 
     def __run(self):
         debug('cauv.Node running')   
+        atexit.register(self.stop)
         try:
             messaging.CauvNode.run(self,True)
         except:
             error(traceback.format_exc())
-        finally:
             self.stop()
+        finally:
             debug('CAUV Node stopped')
 
     def run(self, synchronous = True):
@@ -73,8 +79,7 @@ class Node(messaging.CauvNode):
             self.__run()
         else:
             self.__t = threading.Thread(target=self.__run)
-            # TODO: False?
-            self.__t.daemon = False
+            self.__t.daemon = True
             self.__t.start()
 
     def send(self, message, groups=None, service_level=messaging.MessageReliability.RELIABLE_MSG):
