@@ -7,6 +7,7 @@
 #include <common/mailbox.h>
 #include <common/mailbox.h>
 #include <common/msg_classes/bounded_float.h>
+#include <common/msg_classes/wgs84_coord.h>
 #include <utility/time.h>
 #include <generated/message_observers.h>
 #include <generated/types/message.h>
@@ -341,5 +342,11 @@ void emitPostGenerated(){
                bp::bases<BoundedFloatBase>,
                boost::shared_ptr<BoundedFloat> 
               >("BoundedFloat",bp::init<float,float,float,BoundedFloatType::e>())
+        ;
+
+    bp::class_<WGS84Coord,
+               bp::bases<LatLongAlt>,
+               boost::shared_ptr<WGS84Coord>
+              >("WGS84Coord",bp::init<float,float,float>())
         ;
 }

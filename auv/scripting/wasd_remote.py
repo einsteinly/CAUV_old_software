@@ -10,6 +10,7 @@ from cauv.debug import debug, warning, error, info
 # Standard Library Modules
 import Tkinter as tk
 import threading
+import copy
 
 Depth_Inc = 0.1
 Bearing_Inc = 2
@@ -69,14 +70,14 @@ class WASDRemote(msg.MessageObserver):
         return r
 
     def onTelemetryMessage(self, m):
-        last_telemetry_lock.acquire()
+        self.last_telemetry_lock.acquire()
         self.last_telemetry = m
-        last_telemetry_lock.release()
+        self.last_telemetry_lock.release()
 
     def telemetry(self):
-        last_telemetry_lock.acquire()
+        self.last_telemetry_lock.acquire()
         r = self.last_telemetry
-        last_telemetry_lock.release()
+        self.last_telemetry_lock.release()
         return r;
 
     def motorText(self):
