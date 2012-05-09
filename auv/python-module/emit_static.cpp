@@ -347,6 +347,6 @@ void emitPostGenerated(){
     bp::class_<WGS84Coord,
                bp::bases<LatLongAlt>,
                boost::shared_ptr<WGS84Coord>
-              >("WGS84Coord",bp::init<float,float,float>())
+              >("WGS84Coord",bp::init<double,double,float>())
         ;
 }

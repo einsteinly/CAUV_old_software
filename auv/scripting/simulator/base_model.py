@@ -125,6 +125,7 @@ class Model(messaging.MessageObserver):
         ned = coordinates.NorthEastDepthCoord(
             self.displacement[1], self.displacement[0], -self.displacement[2]
         )
+        debug('%s' % ned, 3)
         r = self.datum + ned
         return float(r.latitude),\
                float(r.longitude),\
