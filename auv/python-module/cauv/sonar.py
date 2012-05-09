@@ -100,19 +100,19 @@ class Gemini:
     def __init__(self, node):
         '''Python interface to the Gemini multibeam sonar.'''
         self.__node  = node
-        self.range = 20 # m
-        self.gain  = 60 # 0--100
+        self.current_range = 20 # m
+        self.current_gain  = 60 # 0--100
         self.range_lines = 1000 # ~200 - ~8000?, about 1024 is sensible
-        self.continuous = False
+        self.ping_continuous = False
         self.inter_ping_delay = 0.5 # seconds 
     
-    def range(self, range):
+    def range(self, r):
         '''Set the range in metres (1--120); longer ranges produce lots more data but support lower frame-rates.'''
-        self.range = range
+        self.current_range = r
         self.update()
-    def gain(self, gain):
+    def gain(self, g):
         '''Set the gain (0--100), 40-70 are sensible values.'''
-        self.gain = gain
+        self.current_gain = g
         self.update()
     def rangeLines(self, numLines):
         '''Set the number of returned range lines (spaced out evenly over 0--range metres) for gemini images.'''
@@ -120,7 +120,7 @@ class Gemini:
         self.update()
     def continuous(self, ping_continuously):
         '''Ping repeatedly, with delay inter_ping_delay.'''
-        self.continuous = ping_continuously
+        self.ping_continuous = ping_continuously
         self.update()
     def interPingDelay(self, inter_ping_delay):
         '''Set inter-ping delay (floating point seconds) for continuous pinging.'''
@@ -128,14 +128,14 @@ class Gemini:
         self.update()
     def update(self):
         '''Send the current config to the sonar, triggers a ping if ping_continuously is not set.'''
-        if self.continuous and self.inter_ping_delay < 0.05 + 2.0 * self.range / 1400:
+        if self.ping_continuous and self.inter_ping_delay < 0.05 + 2.0 * self.range / 1400:
             warning('setting a dangerously low inter-ping value!')
         self.__node.send(messaging.GeminiControlMessage(
-            self.range, self.gain, self.range_lines, self.continuous, self.inter_ping_delay
+            self.current_range, self.current_gain, self.range_lines, self.ping_continuous, self.inter_ping_delay
         ))
     
     def __repr__(self):
         return 'range:%s gain:%s rangeLines:%s continuous:%s interPingDelay:%s' % (
-            self.range, self.gain, self.range_lines, self.continuous, self.inter_ping_delay
+            self.current_range, self.current_gain, self.range_lines, self.ping_continuous, self.inter_ping_delay
         )
 
