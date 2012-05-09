@@ -1,127 +1,141 @@
-import messaging
+'''Python interface for controlling the SeaSprite and Gemini sonars.'''
 
+# CAUV
+import messaging
 from debug import warning, debug
 
+# Standard Library
 from math import pi
 
-class Sonar:
+class SeaSprite:
     def __init__(self, node):
+        '''Python interface to the SeaSprite scanning sonar.'''        
         self.__node = node
-        self._direction = 0
-        self._width = 6400
-        self._gain = 255
-        self._range = 50000
-        self._rangeRes = 100
-        self._angularRes = 16
-
-    _exact_degree_ratio = 17 # 6400 / 360
-    _exact_radian_ratio = 3200 / pi # 6400 / 2pi
+        self.current_direction = 0
+        self.current_width = 6400
+        self.current_gain = 255
+        self.current_range = 50000
+        self.current_range_res = 100
+        self.current_angular_res = 16
 
     def direction(self, val):
-        #update direction
-        self._direction = val
+        '''Set beam direction to 'val' native units (degrees*6400/360).'''
+        self.current_direction = int(round(val))
         self.update()
 
     def directionDegrees(self, val):
-        # updates direction to val degrees
-        self._direction = val * 6400 // 360 # force integer division
+        '''Set beam direction to 'val' degrees.'''
+        self.current_direction = int(round(val * 6400 // 360))
         self.update()
 
     def directionRadians(self, val):
-        # updates direction to val radians
-        self._direction = int(round(val * 6400 / pi))
+        '''Set beam direction to 'val' radians.'''
+        self.current_direction = int(round(val * 6400 / pi))
         self.update()
 
     def width(self, val):
-        #update width
-        self._width = val
+        '''Set scan-width in native units (degrees*6400/360).'''
+        self.current_width = val
         self.update()
 
     def widthDegrees(self, val):
-        # updates width to val degrees
-        self._width = val * 6400 // 360 # force integer division
+        '''Set scan-width in degrees.'''
+        self.current_width = int(round(val * 6400 // 360))
         self.update()
 
     def widthRadians(self, val):
-        # updates width to val radians
-        self._width = int(round(val * 6400 / pi))
+        '''Set scan-width in radians.'''
+        self.current_width = int(round(val * 6400 / pi))
         self.update()
 
     def gain(self, val):
-        # val is an unsigned byte, [0, 255]
-        self._gain = val
+        '''Set the gain: possible values are 0--255.'''
+        if val < 0 or val > 255:
+            raise ValueError('Gain value must be in range 0--255.')
+        self.current_gain = int(round(val))
         self.update()
 
     def range(self, val):
-        # val is in mm and non-negative
-        self._range = val
+        '''Set range in mm. Possible values are 5000--100000'''
+        if val <= 0:
+            raise ValueError('Range must be > 0')
+        self.current_range = int(round(val))
         self.update()
 
     def rangeRes(self, val):
-        # val is in mm and non-negative
-        self._rangeRes = val
+        '''Set range resolution in mm.'''
+        self.current_range_res = int(round(val))
         self.update()
 
     def angularRes(self, val):
-        #update angularRes
-        self._angularRes = val
+        '''Set Angular resolution in native units (degrees*6400/360). Lower (higher-value) angular resolution means faster scans.'''
+        self.current_angular_res = int(round(val))
         self.update()
 
     def angularResDegrees(self, val):
-        # updates angularRes to val degrees
-        self._angluarRes = val * 6400 // 360 # force integer division
+        '''Set Angular resolution in degrees. Lower (higher-value) angular resolution means faster scans.'''
+        self.current_angular_res = val * 6400 // 360 # force integer division
         self.update()
 
     def angularResRadians(self, val):
-        # updates angularRes to val radians
-        self._angularRes = int(round(val * 6400 / pi))
+        '''Set Angular resolution in radians. Lower (higher-value) angular resolution means faster scans.'''
+        self.current_angular_res = int(round(val * 6400 / pi))
         self.update()
 
     def update(self):
-        self.__node.send(messaging.SonarControlMessage(self._direction, self._width, self._gain, self._range, self._rangeRes, self._angularRes))
+        '''Send the current config to the sonar.'''        
+        self.__node.send(messaging.SonarControlMessage(
+            self.current_direction,
+            self.current_width,
+            self.current_gain,
+            self.current_range,
+            self.current_range_res,
+            self.current_angular_res
+        ))
 
+# compatibility
+Sonar = SeaSprite
 
 class Gemini:
     def __init__(self, node):
+        '''Python interface to the Gemini multibeam sonar.'''
         self.__node  = node
-        self.__range = 20 # m
-        self.__gain  = 60 # 0--100
-        self.__range_lines = 1000 # ~200 - ~8000?, about 1024 is sensible
-        self.__continuous = False
-        self.__inter_ping_delay = 0.5 # seconds 
+        self.range = 20 # m
+        self.gain  = 60 # 0--100
+        self.range_lines = 1000 # ~200 - ~8000?, about 1024 is sensible
+        self.continuous = False
+        self.inter_ping_delay = 0.5 # seconds 
     
     def range(self, range):
-        # set the range (metres, 1--120), longer ranges produce lots more data,
-        # at lower frame-rates.
-        self.__range = range
+        '''Set the range in metres (1--120); longer ranges produce lots more data but support lower frame-rates.'''
+        self.range = range
         self.update()
     def gain(self, gain):
-        # set the gain (0--100), 40-70 are sensible values
-        self.__gain = gain
+        '''Set the gain (0--100), 40-70 are sensible values.'''
+        self.gain = gain
         self.update()
     def rangeLines(self, numLines):
-        # set the number of returned range lines (spaced out evenly over
-        # 0--range metres) for gemini images
-        self.__range_lines = numLines
+        '''Set the number of returned range lines (spaced out evenly over 0--range metres) for gemini images.'''
+        self.range_lines = numLines
         self.update()
     def continuous(self, ping_continuously):
-        # ping continuously? If true, make sure that interPingDelay is set high
-        # enough to allow the data to be returned!
-        self.__continuous = ping_continuously
+        '''Ping repeatedly, with delay inter_ping_delay.'''
+        self.continuous = ping_continuously
         self.update()
     def interPingDelay(self, inter_ping_delay):
-        # set inter-ping delay (floating point seconds) for continuous pinging.
-        self.__inter_ping_delay = inter_ping_delay
+        '''Set inter-ping delay (floating point seconds) for continuous pinging.'''
+        self.inter_ping_delay = inter_ping_delay
         self.update()
     def update(self):
-        if self.__continuous and self.__inter_ping_delay < 0.05 + 2.0 * self.__range / 1400:
+        '''Send the current config to the sonar, triggers a ping if ping_continuously is not set.'''
+        if self.continuous and self.inter_ping_delay < 0.05 + 2.0 * self.range / 1400:
             warning('setting a dangerously low inter-ping value!')
         self.__node.send(messaging.GeminiControlMessage(
-            self.__range, self.__gain, self.__range_lines, self.__continuous, self.__inter_ping_delay
+            self.range, self.gain, self.range_lines, self.continuous, self.inter_ping_delay
         ))
     
     def __repr__(self):
         return 'range:%s gain:%s rangeLines:%s continuous:%s interPingDelay:%s' % (
-            self.__range, self.__gain, self.__range_lines, self.__continuous, self.__inter_ping_delay
+            self.range, self.gain, self.range_lines, self.continuous, self.inter_ping_delay
         )
 
