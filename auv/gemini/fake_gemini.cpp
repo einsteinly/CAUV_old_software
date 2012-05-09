@@ -12,6 +12,10 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
+#include <string>
+#include <vector>
+#include <stdexcept>
+
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 #include <boost/ref.hpp>
@@ -286,6 +290,10 @@ class FakeGemini: public MessageObserver{
                 const float range = gemcontrol->range();
                 const float rangeLines = gemcontrol->rangeLines();
                 const int num_beams = 256;
+
+                debug() << "at:" << pos
+                        << " =pixels:" << m_environment.latLongToImgCoords(pos).transpose()
+                        << " look bearing:" << yaw;
 
                 std::vector<uint8_t> beams;
                 beams.reserve(num_beams*rangeLines);

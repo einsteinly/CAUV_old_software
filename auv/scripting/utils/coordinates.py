@@ -18,7 +18,7 @@ class NorthEastDepthCoord:
         self.east = east
         self.depth = depth
     def __repr__(self):
-        return '(%s, %s, %s)' % (self.north, self.east, self.depth)
+        return '(North=%s, East=%s, Depth=%s)' % (self.north, self.east, self.depth)
 
 # See
 # en.wikipedia.org/wiki/Geographic_coordinate_system#Expressing_latitude_and_longitude_as_linear_units

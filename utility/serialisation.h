@@ -51,7 +51,7 @@ inline static void copyBytes(svec_ptr p, T& CAUV_RESTRICT v){
     );
 }
 template<typename T>
-inline static int32_t unCopyBytes(const_svec_ptr p, uint32_t i, T& v){
+inline static int32_t unCopyBytes(const_svec_ptr p, uint32_t i, T& CAUV_RESTRICT v){
     v = reinterpret_cast<T const&>((*p)[i]);
     return sizeof(T);
 }
@@ -131,7 +131,7 @@ inline std::string chil(uint16_t const& v){
 inline void serialise(svec_ptr p, uint32_t const& v){
     impl::copyBytes(p, v);
 }
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, uint32_t& v){
+inline int32_t deserialise(const_svec_ptr p, uint32_t i, uint32_t& CAUV_RESTRICT v){
     return impl::unCopyBytes(p, i, v);
 }
 inline std::string chil(uint32_t const& v){
@@ -202,7 +202,7 @@ inline std::string chil(std::string const& v){
 /* prototypes:
  */
 template<typename T>
-inline void serialise(svec_ptr p, std::vector<T> const& v);
+inline void serialise(svec_ptr p, std::vector<T> const& CAUV_RESTRICT v);
 template<typename T>
 inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::vector<T>& v);
 
@@ -218,7 +218,7 @@ inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::map<S,T>& v);
 
 
 template<typename T>
-inline void serialise(svec_ptr p, std::vector<T> const& v){
+inline void serialise(svec_ptr p, std::vector<T> const& CAUV_RESTRICT v){
     assert(v.size() < 0x80000000);
     int32_t num = int32_t(v.size());
     // 2 * p->size to preserve O(Length) amortized time with the gcc
@@ -234,7 +234,7 @@ inline void serialise(svec_ptr p, std::vector<T> const& v){
 }
 
 template<typename T>
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::vector<T>& v){
+inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::vector<T>& CAUV_RESTRICT v){
     int32_t b = i;
     int32_t num = 0;
     b += deserialise(p, b, num);
