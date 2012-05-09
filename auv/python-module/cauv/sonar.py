@@ -128,7 +128,7 @@ class Gemini:
         self.update()
     def update(self):
         '''Send the current config to the sonar, triggers a ping if ping_continuously is not set.'''
-        if self.ping_continuous and self.inter_ping_delay < 0.05 + 2.0 * self.range / 1400:
+        if self.ping_continuous and self.inter_ping_delay < 0.05 + 2.0 * self.current_range / 1400:
             warning('setting a dangerously low inter-ping value!')
         self.__node.send(messaging.GeminiControlMessage(
             self.current_range, self.current_gain, self.range_lines, self.ping_continuous, self.inter_ping_delay
