@@ -16,7 +16,7 @@
 #include "firstAboveThresholdNode.h"
 #include "broadcastPointsNode.h"
 #include "fitEllipseNode.h"
-//#include "kmeansPointsNode.h"
+#include "kmeansPointsNode.h"
 #include "drawEllipsesNode.h"
 #include "sobelNode.h"
 #ifdef CAUV_USE_CVBLOB
@@ -42,10 +42,12 @@ DEFINE_NFR(LocalMaximaNode, NodeType::LocalMaxima);
 DEFINE_NFR(FirstAboveThresholdNode, NodeType::FirstAboveThreshold);
 DEFINE_NFR(BroadcastPointsNode, NodeType::BroadcastPoints);
 DEFINE_NFR(FitEllipseNode, NodeType::FitEllipse);
-//DEFINE_NFR(KMeansPointsNode, NodeType::KMeansPoints);
+DEFINE_NFR(KMeansPointsNode, NodeType::KMeansPoints);
 DEFINE_NFR(DrawEllipsesNode, NodeType::DrawEllipses);
 DEFINE_NFR(SobelNode, NodeType::Sobel);
+#ifdef CAUV_USE_CVBLOB
 DEFINE_NFR(BlobNode, NodeType::Blob);
+#endif
 
 } // namespace imgproc
 } // namespace cauv
