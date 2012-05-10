@@ -19,6 +19,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 #include <boost/ref.hpp>
+#include <boost/thread.hpp>
 
 #include <Eigen/Dense>
 
@@ -238,6 +239,9 @@ class Environment{
 };
 
 class FakeGemini: public MessageObserver{
+    private:
+        typedef boost::mutex mutex_t;
+        typedef boost::unique_lock<mutex_t> lock_t;
     public:
         FakeGemini(
             Environment const& env,
@@ -252,34 +256,42 @@ class FakeGemini: public MessageObserver{
         }
 
         void start(){
-            mainLoop();
+            boost::thread t(boost::bind(&FakeGemini::mainLoop, this));
         }
 
         virtual void onSimPositionMessage(SimPositionMessage_ptr p){
+            lock_t l(m_update_mux);
             m_inited |= GotSimPos;
             m_position = p;
         }
 
         virtual void onGeminiControlMessage(GeminiControlMessage_ptr p){
+            lock_t l(m_update_mux);
             m_inited |= GotGemControl;
             m_gemcontrol = p;
         }
 
-        void mainLoop() const{
+        void mainLoop(){
             for(;;){
                 if(!(m_inited & GotGemControl)){
                     debug() << "no gemini control messages received";
                     msleep(1000);
                     continue;
                 }
+
+                m_update_mux.lock();
                 const GeminiControlMessage_ptr gemcontrol = m_gemcontrol; 
+                m_update_mux.unlock();
+
                 msleep(gemcontrol->interPingPeriod() * 1000);
 
                 if(!(m_inited & GotSimPos)){
                     debug() << "no sim position messages received";
                     continue;
                 }
+                m_update_mux.lock();                
                 SimPositionMessage_ptr p = m_position;
+                m_update_mux.unlock();                
                 const WGS84Coord pos = p->location(); 
                 const float yaw = p->orientation().yaw;
                 const TimeStamp ts = now();
@@ -357,7 +369,8 @@ class FakeGemini: public MessageObserver{
 
         enum {GotSimPos = 1, GotGemControl = 2};
         int m_inited;
-
+        
+        mutex_t m_update_mux;
         SimPositionMessage_ptr   m_position;
         GeminiControlMessage_ptr m_gemcontrol;
 };

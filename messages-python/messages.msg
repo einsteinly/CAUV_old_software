@@ -151,10 +151,22 @@ enum SensorUIDBase : int32 {
 
 struct floatYPR
 {
+    // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+    // Pitch = degrees UP from plane (- euler right->left axis)
+    // Roll  = degrees rolling to the right (euler back->front axis)
     yaw : float;
     pitch : float;
     roll : float;
 }
+// YPR is a stupid way of doing things, at some point, every YPR will be
+// replaced with this:
+//struct quat
+//{
+//    q0 : float; // imaginary x
+//    q1 : float; // imaginary y
+//    q2 : float; // imaginary z
+//    q3 : float; // real part
+//}
 struct floatXYZ
 {
     eq x : float;
@@ -531,6 +543,9 @@ group state
 {
     message State : 81
     {
+        // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+        // Pitch = degrees UP from plane (- euler right->left axis)
+        // Roll  = degrees rolling to the right (euler back->front axis)
         orientation : floatYPR;
     }
 }
@@ -539,6 +554,9 @@ group telemetry
 {
     message Telemetry : 3
     {
+        // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+        // Pitch = degrees UP from plane (- euler right->left axis)
+        // Roll  = degrees rolling to the right (euler back->front axis)
         orientation : floatYPR;
         depth : float;
     }
@@ -996,9 +1014,11 @@ group simulation
     message SimPosition : 800
     {
         location : WGS84Coord;
-        orientation : floatYPR; // yaw is degrees bearing from north,
-                                // pitch is degrees up from horizontal,
-                                // roll is degrees ?? from horizontal
+
+        // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+        // Pitch = degrees UP from plane (- euler right->left axis)
+        // Roll  = degrees rolling to the right (euler back->front axis)
+        orientation : floatYPR;
 
         speed : floatXYZ; // metres per second, some arbitrary local coordinate system: TODO: fix this!
     }
