@@ -152,18 +152,21 @@ class Quaternion(object):
 
     def rotate(self, v, vec_construct=Vec3):
         '''Rotate xyz vector v, returning a newly created vector with vec_construct'''
-        t0 =  self.q3 * self.q0
-        t1 =  self.q3 * self.q1
-        t2 =  self.q3 * self.q2
-        t3 = -self.q0 * self.q0
-        t4 =  self.q0 * self.q1
-        t5 =  self.q0 * self.q2
-        t6 = -self.q1 * self.q1
-        t7 =  self.q1 * self.q2
-        t8 = -self.q2 * self.q2
-        d = vec_construct((t6 + t8) * v[0] + (t4 - t2) * v[1] + (t1 + t5) * v[2],
-                          (t2 + t4) * v[0] + (t3 + t8) * v[1] + (t7 - t0) * v[2],
-                          (t5 - t1) * v[0] + (t0 + t7) * v[1] + (t3 + t6) * v[2])
+        # yes this optimisation is worthwhile
+        q0, q1, q2, q3 = (self.q0, self.q1, self.q2, self.q3)
+        v0, v1, v2 = (v[0], v[1], v[2])
+        t0 =  q3 * q0
+        t1 =  q3 * q1
+        t2 =  q3 * q2
+        t3 = -q0 * q0
+        t4 =  q0 * q1
+        t5 =  q0 * q2
+        t6 = -q1 * q1
+        t7 =  q1 * q2
+        t8 = -q2 * q2
+        d = vec_construct((t6 + t8) * v0 + (t4 - t2) * v1 + (t1 + t5) * v2,
+                          (t2 + t4) * v0 + (t3 + t8) * v1 + (t7 - t0) * v2,
+                          (t5 - t1) * v0 + (t0 + t7) * v1 + (t3 + t6) * v2)
         return v + (d * 2)
 
     def __add__(self, other):

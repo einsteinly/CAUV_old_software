@@ -56,37 +56,12 @@ def angleMean(angle_sequence):
         r += 2*math.pi
     return r
 
-
-def calculateYaw(q):
-    '''Angle in radians about global Z axis (down->up)'''
-    x = np.array((1,0,0))
-    y = np.array((0,1,0))
-    xr = q.rotate(x, mkVec)
-    yr = q.rotate(y, mkVec)
-    yaw_according_to_x = math.atan2(xr[1],xr[0])
-    yaw_according_to_y = math.atan2(-yr[0],yr[1])
-    #print 'yaw_according_to_x= ', yaw_according_to_x, 'yaw_according_to_y =', yaw_according_to_y
+def yawFromxy(x, y):
+    yaw_according_to_x = math.atan2(x[1],x[0])
+    yaw_according_to_y = math.atan2(-y[0],y[1])
     return angleMean((yaw_according_to_x, yaw_according_to_y))
 
-def calculateRoll(q):
-    '''Angle from horizontal in radians about local y axis (back->front)'''
-    Y = np.array((0,1,0))
-    Z = np.array((0,0,1))
-    y = q.rotate(Y, mkVec)
-    z = q.rotate(Z, mkVec)
-    y_cross_Z = np.cross(y,Z)
-    len_y_cross_Z = sum(y_cross_Z**2)**0.5
-    if len_y_cross_Z < 1e-6:
-        warning('gimbal lock!')
-        return 0
-    return math.atan2(np.dot(z,y_cross_Z/len_y_cross_Z),np.dot(z,Z))
-
-def calculatePitch(q):
-    '''Angle from horizontal in radians about local x axis (left->right): positive is up!'''
-    X = np.array((1,0,0))
-    Z = np.array((0,0,1))
-    x = q.rotate(X, mkVec)
-    z = q.rotate(Z, mkVec)
+def pitchFromxzZ(x, z, Z):
     x_cross_Z = np.cross(x,Z)
     len_x_cross_Z = sum(x_cross_Z**2)**0.5
     if len_x_cross_Z < 1e-6:
@@ -94,11 +69,54 @@ def calculatePitch(q):
         return 0
     return math.atan2(np.dot(z,x_cross_Z/len_x_cross_Z),np.dot(z,Z))
 
+def rollFromyzZ(y, z, Z):
+    y_cross_Z = np.cross(y,Z)
+    len_y_cross_Z = sum(y_cross_Z**2)**0.5
+    if len_y_cross_Z < 1e-6:
+        warning('gimbal lock!')
+        return 0
+    return math.atan2(np.dot(z,y_cross_Z/len_y_cross_Z),np.dot(z,Z))
+
+def calculateYPRRadians(q):
+    '''Return (Yaw, Pitch, Roll) in radians. This is substantially faster (but equivalent) to using the individual methods.'''
+    X = np.array((1,0,0))
+    Y = np.array((0,1,0))
+    Z = np.array((0,0,1))
+    x = q.rotate(X, mkVec)
+    y = q.rotate(Y, mkVec)
+    z = q.rotate(Z, mkVec)
+    yaw = yawFromxy(x, y)
+    pitch = pitchFromxzZ(x, z, Z)
+    roll = rollFromyzZ(y, z, Z)
+    return (yaw, pitch, roll)
+
+def calculateYaw(q):
+    '''Angle in radians about global Z axis (down->up)'''
+    X = np.array((1,0,0))
+    Y = np.array((0,1,0))
+    x = q.rotate(X, mkVec)
+    y = q.rotate(Y, mkVec)
+    return yawFromxy(x, y)
+
+def calculateRoll(q):
+    '''Angle from horizontal in radians about local y axis (back->front)'''
+    Y = np.array((0,1,0))
+    Z = np.array((0,0,1))
+    y = q.rotate(Y, mkVec)
+    z = q.rotate(Z, mkVec)
+    return rollFromyzZ(y,z,Z)
+
+def calculatePitch(q):
+    '''Angle from horizontal in radians about local x axis (left->right): positive is up!'''
+    X = np.array((1,0,0))
+    Z = np.array((0,0,1))
+    x = q.rotate(X, mkVec)
+    z = q.rotate(Z, mkVec)
+    return pitchFromxzZ(x,z,Z)
+
 def orientationToYPR(q):
     '''Calculate the yaw, pitch and roll implied by a quaternion, and convert them to degrees'''
-    yaw = calculateYaw(q)
-    pitch = calculatePitch(q)
-    roll = calculateRoll(q)
+    yaw, pitch, roll = calculateYPRRadians(q)
     # NB: converting to our silly on-the-wire angle format here
     return messaging.floatYPR(360-math.degrees(yaw), math.degrees(pitch), math.degrees(roll))
 
@@ -115,9 +133,10 @@ class MotorStates(object):
         return 'p=%4s hb=%4s hs=%4s vb=%4s vs=%4s' % (self.Prop, self.HBow, self.HStern, self.VBow, self.VStern)
 
 class Model(messaging.MessageObserver):
-    def __init__(self, node):
+    def __init__(self, node, profile=False):
         messaging.MessageObserver.__init__(self)
         self.node = node
+        self.profile = profile
         self.update_frequency = 10.0
         self.datum = coordinates.Simulation_Datum
         
@@ -142,7 +161,7 @@ class Model(messaging.MessageObserver):
 
         self.update_lock = threading.Lock()
 
-        self.thread = threading.Thread(target = self.runLoop)
+        self.thread = threading.Thread(target = self.runLoopWrapper)
         self.thread.daemon = False
         self.keep_going = True
 
@@ -154,6 +173,12 @@ class Model(messaging.MessageObserver):
     def stop(self):
         self.keep_going = False
         self.thread.join()
+    def runLoopWrapper(self):
+        if self.profile:
+            import cProfile as profile
+            profile.runctx('self.runLoop()', globals(), locals(), 'sim.profile')
+        else:
+            self.runLoop()
     def runLoop(self):
         tprev = datetime.datetime.now()
         tdelta = datetime.timedelta(seconds=1.0/self.update_frequency)
@@ -189,15 +214,19 @@ class Model(messaging.MessageObserver):
         raise NotImplementedError('derived classes must implement this')
 
     def position(self):
+        self.update_lock.acquire()        
         ned = coordinates.NorthEastDepthCoord(
             self.displacement[1], self.displacement[0], -self.displacement[2]
         )
+        ori = self.orientation
+        vel = self.velocity
+        self.update_lock.release()
         debug('%s' % ned, 3)
         r = self.datum + ned
         return float(r.latitude),\
                float(r.longitude),\
                float(r.altitude),\
-               orientationToYPR(self.orientation),\
-               messaging.floatXYZ(*(float(x) for x in self.velocity))
+               orientationToYPR(ori),\
+               messaging.floatXYZ(*(float(x) for x in vel))
 
 

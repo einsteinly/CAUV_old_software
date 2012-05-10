@@ -93,11 +93,11 @@ Drag_J = np.array((Max_Yaw_Moment / 45.0,   # yaw
                    Max_Pitch_Moment / 5.0)) # pitch
 
 class Model(base_model.Model):
-    def __init__(self, node):
+    def __init__(self, node, profile=False):
         self.tzero = None
         self.last_t = self.relativeTime()
         self.last_state_sent = self.relativeTime()
-        base_model.Model.__init__(self, node)
+        base_model.Model.__init__(self, node, profile=profile)
 
     def relativeTime(self):
         '''return relative time in floating point seconds since tzero'''

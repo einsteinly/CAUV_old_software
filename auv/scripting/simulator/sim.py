@@ -29,9 +29,6 @@ from cauv.debug import debug, error, warning, info
 import base_model
 
 
-def fmtQuat(q):
-    return str(base_model.orientationToYPR(q))
-
 def fmtArr(a):
     r = ''
     for x in a:
@@ -44,14 +41,17 @@ def fmtArr(a):
 def runLoop(auv_model, node):
     auv_model.start()
     while True:
-        time.sleep(0.1)
+        # this is just a print-loop, the work is done in a separate thread,
+        # running at a configurable tick-rate
+        time.sleep(0.2)
         (lt, ln, al, ori, speed) = auv_model.position()
         debug('lat:%.12g lon:%.12g alt:%.12g' % (lt, ln, al), 3)
         node.send(messaging.SimPositionMessage(messaging.WGS84Coord(lt, ln, al), ori, speed))
+
         info('displ=%s\tvel=%s\tori=%s\tomega=%s\t' %
             (fmtArr(auv_model.displacement),
              fmtArr(auv_model.velocity),
-             fmtQuat(auv_model.orientation),
+             ori,
              fmtArr(auv_model.angular_velocity))
         )
 
@@ -60,6 +60,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='simulate vehicle motion')
     parser.add_argument('-n', '--vehicle', dest='vehicle',
         help='name of vehicle to model', default='red-herring')
+    parser.add_argument('-p', '--profile', dest='profile', action='store_true')
 
     opts,args  = parser.parse_known_args()
 
@@ -68,8 +69,8 @@ if __name__ == '__main__':
 
     node = cauv.node.Node('py-sim',args)
     model = None
-    try:
-        model = vehicle_module.Model(node)
+    try: 
+        model = vehicle_module.Model(node, profile=opts.profile)
         runLoop(model, node)
     finally:
         if model is not None:
