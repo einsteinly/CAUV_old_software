@@ -11,11 +11,6 @@ import traceback
 import argparse
 import time
 
-Default_Groups_To_Join = (
-    'control',
-    'sonarctl'
-)
-
 Default_Messages_To_Watch = (
     'BearingAutopilotParams',
     'DepthAutopilotParams',
@@ -85,17 +80,16 @@ class OnAnyMessage:
         self.shelf.sync()
 
 class PersistObserver(msg.MessageObserver):
-    def __init__(self, node, shelf, groups, watch_list, auto):
+    def __init__(self, node, shelf, watch_list, auto):
         msg.MessageObserver.__init__(self)
         self.__node = node
         self.__shelf = shelf
         self.__auto = auto
         if auto:
-            node.join('membership') 
-        for group in groups:
-            node.join(group)
+            node.subMessage(msg.MembershipChangedMessage())
         for message in watch_list:
             debug('Listening for %s messages' % message)
+            node.subMessage(getattr(msg, message+'Message')())
             self.attachOnMessageFunc(message)
         node.addObserver(self)
 
@@ -112,8 +106,7 @@ class PersistObserver(msg.MessageObserver):
         setattr(self, 'on%sMessage' % name, func)
 
 def persistMainLoop(cauv_node, shelf, auto, silent = False):
-    po = PersistObserver(cauv_node, shelf, Default_Groups_To_Join,
-                         Default_Messages_To_Watch, auto)
+    po = PersistObserver(cauv_node, shelf, Default_Messages_To_Watch, auto)
     help_str = 'available commands: "set" - broadcast saved '+\
                'parameters, "exit" - stop monitoring and exit, '+\
                '"auto on" / "auto off" - control automatic ' +\

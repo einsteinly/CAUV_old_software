@@ -11,8 +11,8 @@ class AUV(messaging.MessageObserver):
     def __init__(self, node):
         messaging.MessageObserver.__init__(self)
         self.__node = node
-        node.subMessage(messaging.TelemetryMessage())
         node.addObserver(self)
+        node.subMessage(messaging.TelemetryMessage())
         self.current_bearing = None
         self.current_depth = None
         self.current_pitch = None
