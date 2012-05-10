@@ -23,9 +23,15 @@ Default_Messages_To_Watch = (
     'PitchAutopilotParams',
     'SetMotorMap',
     'MotorRampRate',
-    'SonarControl'
-    #'GeminiControl'
+    'SonarControl',
+    'GeminiControl'
 )
+
+# Consider messages with different values in ID fields to be different
+# messages:
+Message_ID_Fields = {
+    'SetMotorMap': 'motor'
+}
 
 Ignore_Message_Attrs = (
     'group',
@@ -35,11 +41,12 @@ Ignore_Message_Attrs = (
 
 def sendSavedMessages(node, shelf):
     info('restoring saved settings...')
-    for msg_name in shelf:
+    for mad_id in shelf:
+        msg_name = mad_id.split(':')[0]
         if not msg_name in Default_Messages_To_Watch:
             continue
         try:
-            attrs = shelf[msg_name]
+            attrs = shelf[mad_id]
             info('restoring saved %s: %s' % (msg_name, attrs))
             m = dictToMessage(msg_name, attrs)
             node.send(m)
@@ -68,7 +75,12 @@ class OnAnyMessage:
         self.shelf = shelf
     def onMessage(self, m):
         debug('onMessage expect %sMessage have %s' % (self.message_name, m))
-        self.shelf[self.message_name] = dictFromMessage(m)
+        if self.message_name in Message_ID_Fields: 
+            msg_id_field = getattr(m, str(Message_ID_Fields[self.message_name]))
+            save_as_id = "%s:%s" % (self.message_name, msg_id_field)
+        else:
+            save_as_id = self.message_name
+        self.shelf[save_as_id] = dictFromMessage(m)
         # don't take any chances
         self.shelf.sync()
 

@@ -3,21 +3,23 @@
 # Standard Library Modules
 import operator
 import datetime
+import math
 
 # Third Party Modules
-import Quaternion # BSD licensed: http://pypi.python.org/pypi/Quaternion/
-from Quaternion import Quat
 import numpy as np # BSD-type license
 
 # CAUV Modules
 import base_model
-from base_model import rotate, globalYaw
+from base_model import calculateRoll, mkVec
 from utils.hacks import tdToFloatSeconds
+from utils.quaternion import Quaternion
 import cauv.messaging as messaging
 from cauv.debug import debug, error, warning, info
 
 
 # Rigid body model:
+#
+# Vehicle coordinate system: y is forwards, x is right, z is up
 #
 # Plan view:
 # ==========
@@ -97,7 +99,7 @@ class Model(base_model.Model):
         base_model.Model.__init__(self, node)
 
     def relativeTime(self):
-        # return relative time in floating point seconds since tzero
+        '''return relative time in floating point seconds since tzero'''
         if self.tzero is None:
             self.tzero = datetime.datetime.now()
         return tdToFloatSeconds(datetime.datetime.now() - self.tzero)
@@ -106,9 +108,11 @@ class Model(base_model.Model):
         # state is stored in:
         # self.displacement = (x,y,z)   - global coordinates
         # self.velocity = (x,y,z)       - global coordinates
-        # self.orientation = Quat(...)  - about vehicle centre:
-        #   a_global_vec = rotate(local vec, orientation)
-        #   a_local_vec = rotate(global vec, orientation.inv())
+        # self.orientation = Quat(...)  - of vehicle relative to the
+        #                                 world x=East,y=North,z=Up
+        #                                 coords
+        #   a_local_vec = orientation.inverse().rotate(global vec)
+        #   a_global_vec = orientation.rotate(local vec)
         # self.angular_velocity = (dYaw/dt, dRoll/dt, dPitch/dt)
         #
         # yaw is rotation about the z axis
@@ -120,6 +124,15 @@ class Model(base_model.Model):
 
         now = self.relativeTime()
         dt = now - self.last_t
+        if dt > 10:
+            warning('processUpdate called too infrequently! Maximum time step will be 10 seconds.')
+            dt = 10
+        if dt < 0:
+            warning('Clock skew!')
+            if dt < -10:
+                error('FATAL: Clock skewed by more than 10 seconds!')
+                stop()
+                return
 
         # Update velocity with forces:
         
@@ -134,11 +147,13 @@ class Model(base_model.Model):
             (hbow_force, vbow_force, hstern_force, vstern_force, prop_force)
         )
 
-        #debug('local force = %s' % local_force)
+        #debug('local force (R,F,U) = %s' % local_force)
         
         # now in global coordinates:
-        global_force = rotate(local_force, self.orientation)
-        drag_force   = -Drag_F * self.velocity        
+        global_force = self.orientation.rotate(local_force, mkVec)
+        #debug('global force (E,N,U) = %s' % global_force)
+        drag_force   = -Drag_F * self.velocity
+
         weight_force = weight_vec * Weight
         if self.displacement[2] > 0: 
             p = min(self.displacement[2], 0.4)
@@ -157,7 +172,7 @@ class Model(base_model.Model):
         hstern_moment = np.cross(hstern_force, HStern_At)
         vstern_moment = np.cross(vstern_force, VStern_At)
         prop_moment   = np.cross(prop_force, Prop_At) # expect this to be zero!
-        weight_local_force = rotate(weight_force, self.orientation.inv())
+        weight_local_force = self.orientation.inverse().rotate(weight_force, mkVec)
         weight_moment = np.cross(weight_local_force, Weight_At) # this is zero anyway...
         
         local_moment = sum(
@@ -168,45 +183,33 @@ class Model(base_model.Model):
         )
         #debug('local moment = %s' % local_moment)
 
-        # convert moment to (yaw, roll, pitch) = (about z axis, about y axis, about x axis)
-
-        # !!! FIXME not sure why this -ve is required here - might be because
-        # yaw/roll are mixed around in the quaternion...
-        local_moment = np.array((
-            local_moment[2], local_moment[1], -local_moment[0]
-        ))
-
         # drag moments:
         drag_moment = -Drag_J * self.angular_velocity
 
         # roll-restoring moment:
         # could model this as a pendulum with trig and stuff, but since the
         # vehicle shouldn't ever be rolling anyway...
-        roll = self.orientation.equatorial[1]
-        # handle wrap-around from 360-0
-        while roll > 180:
-            roll = roll - 360
-        roll_moment = np.array((0, -self.angular_velocity[1]-2*roll, 0))
+        roll = calculateRoll(self.orientation)
+        roll_moment = np.array((0, -self.angular_velocity[1]-2*(180/math.pi)*roll, 0))
+        #roll_moment = np.array((0,0,0))
 
         moment = sum((local_moment, drag_moment, roll_moment))
 
         # apply moment to angular velocity:
-        domega = moment * dt / np.array((Izz, Iyy, Ixx))
+        domega = moment * dt / np.array((Ixx, Iyy, Izz))
         self.angular_velocity += domega
 
         # Update positions with velocities:
         self.displacement += self.velocity * dt
-        dorientation = Quat(self.angular_velocity * dt)
+        dorientation = Quaternion.fromEuler(self.angular_velocity * dt)
         self.orientation *= dorientation
 
         self.last_t = now
 
         # last thing: renormalise orientation:
-        normalised_orientation  = Quat(Quaternion.normalize(self.orientation.q))
-        if sum((normalised_orientation.equatorial -
-                self.orientation.equatorial) ** 2) > 0.0001:
+        if self.orientation.sxx() > 1.0001 or self.orientation.sxx() < 0.9999:
             debug('orientation quat denormalised: it will be renormalised')
-            self.orientation = self.normalised_o
+            self.orientation = normalised_orientation
         
         # last last thing: send messages reflecting the new state: this has to
         # be rate-limited since it can cause more motor state message to be
@@ -230,11 +233,7 @@ class Model(base_model.Model):
         if pressure < 0:
             pressure = 0
         
-        # on-the-wire convention for bearing is positive-clockwise
-        global_yaw = globalYaw(self.orientation)
-        pitch = float(self.orientation.equatorial[2])
-        roll = float(self.orientation.equatorial[1])
-        orientation = messaging.floatYPR(global_yaw, pitch, roll)
+        orientation = base_model.orientationToYPR(self.orientation)
         #print 'pressure=', pressure, 'orientation=', orientation
         self.node.send(messaging.PressureMessage(pressure, pressure))
         self.node.send(messaging.StateMessage(orientation))
