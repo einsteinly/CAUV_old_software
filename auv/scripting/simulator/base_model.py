@@ -58,7 +58,7 @@ def angleMean(angle_sequence):
 
 
 def calculateYaw(q):
-    '''Note that the value is returned IS NOT A BEARING: it's a normal mathematical angle from the global x axis, counterclockwise'''
+    '''Angle in radians about global Z axis (down->up)'''
     x = np.array((1,0,0))
     y = np.array((0,1,0))
     xr = q.rotate(x, mkVec)
@@ -69,6 +69,7 @@ def calculateYaw(q):
     return angleMean((yaw_according_to_x, yaw_according_to_y))
 
 def calculateRoll(q):
+    '''Angle from horizontal in radians about local y axis (back->front)'''
     Y = np.array((0,1,0))
     Z = np.array((0,0,1))
     y = q.rotate(Y, mkVec)
@@ -81,6 +82,7 @@ def calculateRoll(q):
     return math.atan2(np.dot(z,y_cross_Z/len_y_cross_Z),np.dot(z,Z))
 
 def calculatePitch(q):
+    '''Angle from horizontal in radians about local x axis (left->right): positive is up!'''
     X = np.array((1,0,0))
     Z = np.array((0,0,1))
     x = q.rotate(X, mkVec)
@@ -90,17 +92,15 @@ def calculatePitch(q):
     if len_x_cross_Z < 1e-6:
         warning('gimbal lock!')
         return 0
-    return math.atan2(-np.dot(z,x_cross_Z/len_x_cross_Z),np.dot(z,Z))
+    return math.atan2(np.dot(z,x_cross_Z/len_x_cross_Z),np.dot(z,Z))
 
 def orientationToYPR(q):
     '''Calculate the yaw, pitch and roll implied by a quaternion, and convert them to degrees'''
     yaw = calculateYaw(q)
     pitch = calculatePitch(q)
     roll = calculateRoll(q)
-    #if pitch < 0:
-    #    pitch = pitch + math.pi*2
-    # NB: converting yaw to bearing here!
-    return messaging.floatYPR( math.degrees(yaw), math.degrees(pitch), math.degrees(roll))
+    # NB: converting to our silly on-the-wire angle format here
+    return messaging.floatYPR(360-math.degrees(yaw), math.degrees(pitch), math.degrees(roll))
 
 class MotorStates(object):
     def __init__(self):
@@ -126,10 +126,14 @@ class Model(messaging.MessageObserver):
         self.velocity = np.array((0.0,0.0,0.0))
         
         # Rotation applied from East,North,Altitude coordinate system to the vehicle
-        # euler angles = (pitch, roll, yaw)
+        # euler angles = (pitch, roll, -yaw)
         self.orientation = Quaternion.fromEuler(
-            (math.radians(20), math.radians(0), math.radians(180))
+            (math.radians(0), math.radians(0), math.radians(0))
         )
+        #print math.degrees(calculatePitch(self.orientation))
+        #assert(44 < math.degrees(calculatePitch(self.orientation)) < 46)
+        #print math.degrees(calculateYaw(self.orientation))
+        #assert(89 < math.degrees(calculateYaw(self.orientation)) < 91)
 
         # In the vehicle-local coordinate system:
         self.angular_velocity = np.array((0.0,0.0,0.0)) # about x, about y, about z

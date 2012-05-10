@@ -22,9 +22,6 @@ class WASDRemote(msg.MessageObserver):
     def __init__(self, node):
         msg.MessageObserver.__init__(self)
         self.node = node
-        self.node.subMessage(msg.TelemetryMessage())
-        self.node.subMessage(msg.MotorStateMessage())
-        self.node.addObserver(self)        
         self.auv = control.AUV(node)
         self.motor_state_lock = threading.Lock()
         self.motor_state = {}
@@ -56,9 +53,13 @@ class WASDRemote(msg.MessageObserver):
         self.demandlabel.grid(row=2, column=1)
 
         self.display_tick()
+        
+        self.node.addObserver(self)
+        self.node.subMessage(msg.TelemetryMessage())
+        self.node.subMessage(msg.MotorStateMessage())
 
     def onMotorStateMessage(self, m):
-        debug('motor state: %s' % m)
+        debug('motor state: %s' % m, 3)
         self.motor_state_lock.acquire()        
         self.motor_state[m.motorId] = m.speed
         self.motor_state_lock.release()        
@@ -122,7 +123,6 @@ class WASDRemote(msg.MessageObserver):
             self.depth += Depth_Inc
         
         if event.keysym_num == 65363: # Right
-            # !!! I think this is right, need to check against real red-herring
             self.strafe = -Strafe
         elif event.keysym_num == 65361: # Left
             self.strafe = Strafe

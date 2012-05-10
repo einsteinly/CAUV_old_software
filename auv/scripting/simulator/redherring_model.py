@@ -67,8 +67,9 @@ VBow_At   = np.array((0, 0.8,0)); VBow_Vec   = np.array((   0,   0,-1.0))
 VStern_At = np.array((0,-0.8,0)); VStern_Vec = np.array((   0,   0,-1.0))
 Prop_At   = np.array((0,-0.9,0)); Prop_Vec   = np.array((   0, 1.0,   0))
 Mass      = 37.0      # kg
-Weight    = 0.1       # N upwards (i.e., slightly buoyant)
-Weight_At = np.array((0,0,0))
+Displacement = 37.1   # kg
+Weight_At = np.array((0,0,-0.1))
+Buoyancy_At = np.array((0,0,0.05))
 Length    = 1.3       # length in m, used for moment calculation only
 Ixx = Izz = (Mass*(Length**2)/12.0) # kg m^2
 Iyy = Ixx / 4
@@ -119,7 +120,8 @@ class Model(base_model.Model):
         # pitch is rotation about the x axis
         # roll is rotation about the y axis
         #
-        weight_vec = np.array((0,0,1))
+        weight_vec = np.array((0,0,-1))
+        buoyancy_vec = np.array((0,0,1))
         #debug(str(s))
 
         now = self.relativeTime()
@@ -154,46 +156,43 @@ class Model(base_model.Model):
         #debug('global force (E,N,U) = %s' % global_force)
         drag_force   = -Drag_F * self.velocity
 
-        weight_force = weight_vec * Weight
+        weight_force = weight_vec * Mass * 9.81
+        buoyancy_force = buoyancy_vec * Displacement * 9.81
         if self.displacement[2] > 0: 
             p = min(self.displacement[2], 0.4)
-            debug('auv appears to be above the surface: applying corrective weight', 3)
-            weight_force = -weight_vec * 37*(p/0.4)
+            debug('auv appears to be above the surface', 3)
+            buoyancy_force -= buoyancy_force * (p/0.4)
 
-        force = sum((global_force, drag_force, weight_force))
+        force = sum((global_force, drag_force, weight_force, buoyancy_force))
 
         self.velocity += force * dt / Mass
 
         # and angular velocities with moments:
         # these moments are (about x axis, about y axis, about z axis)
         # in vehicle-local coordinates:
-        hbow_moment   = np.cross(hbow_force, HBow_At)
-        vbow_moment   = np.cross(vbow_force, VBow_At)
-        hstern_moment = np.cross(hstern_force, HStern_At)
-        vstern_moment = np.cross(vstern_force, VStern_At)
-        prop_moment   = np.cross(prop_force, Prop_At) # expect this to be zero!
-        weight_local_force = self.orientation.inverse().rotate(weight_force, mkVec)
-        weight_moment = np.cross(weight_local_force, Weight_At) # this is zero anyway...
+        hbow_moment   = np.cross(HBow_At, hbow_force)
+        vbow_moment   = np.cross(VBow_At, vbow_force)
+        hstern_moment = np.cross(HStern_At, hstern_force)
+        vstern_moment = np.cross(VStern_At, vstern_force)
+        prop_moment   = np.cross(Prop_At, prop_force) # expect this to be zero!
+        weight_local_force   = self.orientation.inverse().rotate(weight_force, mkVec)
+        buoyancy_local_force = self.orientation.inverse().rotate(buoyancy_force, mkVec)
+        weight_moment = np.cross(Weight_At, weight_local_force)
+        buoyancy_moment = np.cross(Buoyancy_At, buoyancy_local_force)
         
         local_moment = sum(
             (hbow_moment, vbow_moment,
              hstern_moment, vstern_moment,
              prop_moment,
-             weight_moment)
+             weight_moment,
+             buoyancy_moment)
         )
         #debug('local moment = %s' % local_moment)
 
         # drag moments:
         drag_moment = -Drag_J * self.angular_velocity
 
-        # roll-restoring moment:
-        # could model this as a pendulum with trig and stuff, but since the
-        # vehicle shouldn't ever be rolling anyway...
-        roll = calculateRoll(self.orientation)
-        roll_moment = np.array((0, -self.angular_velocity[1]-2*(180/math.pi)*roll, 0))
-        #roll_moment = np.array((0,0,0))
-
-        moment = sum((local_moment, drag_moment, roll_moment))
+        moment = sum((local_moment, drag_moment))
 
         # apply moment to angular velocity:
         domega = moment * dt / np.array((Ixx, Iyy, Izz))
