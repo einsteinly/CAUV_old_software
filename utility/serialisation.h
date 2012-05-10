@@ -39,10 +39,16 @@ namespace cauv{
  * int32_t deserialise(const_svec_ptr, uint32_t, T&);
  */
 
+/* Note that the svec_ptr (a shared pointer) is passed in by const reference as
+ * an optimisation.
+ */
+typedef svec_ptr const& svec_ptr_cref;
+typedef const_svec_ptr const& const_svec_ptr_cref;
+
 namespace impl{
 /* helper function: serialise by copying bytes */
 template<typename T>
-inline static void copyBytes(svec_ptr p, T& CAUV_RESTRICT v){
+inline static void copyBytes(svec_ptr_cref p, T& CAUV_RESTRICT v){
     svec_ptr::element_type* const CAUV_RESTRICT restrict_p = p.get();
     restrict_p->insert(
         restrict_p->end(),
@@ -51,7 +57,7 @@ inline static void copyBytes(svec_ptr p, T& CAUV_RESTRICT v){
     );
 }
 template<typename T>
-inline static int32_t unCopyBytes(const_svec_ptr p, uint32_t i, T& CAUV_RESTRICT v){
+inline static int32_t unCopyBytes(const_svec_ptr_cref p, uint32_t i, T& CAUV_RESTRICT v){
     v = reinterpret_cast<T const&>((*p)[i]);
     return sizeof(T);
 }
@@ -78,97 +84,97 @@ const static char* B16_LUT[] = {
 
 /* declare overloads for supported types
  */
-inline void serialise(svec_ptr p, int8_t const& v){
+inline void serialise(svec_ptr_cref p, int8_t const& v){
     impl::copyBytes(p, v);
 }
-inline int32_t deserialise(const_svec_ptr p, uint32_t i , int8_t& v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i , int8_t& v){
     return impl::unCopyBytes(p, i, v);
 }
 inline std::string chil(int8_t const& v){
     return mkStr() << int32_t(v);
 }
 
-inline void serialise(svec_ptr p, int16_t const& v){
+inline void serialise(svec_ptr_cref p, int16_t const& v){
     impl::copyBytes(p, v);
 }
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, int16_t& v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, int16_t& v){
     return impl::unCopyBytes(p, i, v);
 }
 inline std::string chil(int16_t const& v){
     return mkStr() << v;
 }
 
-inline void serialise(svec_ptr p, int32_t const& v){
+inline void serialise(svec_ptr_cref p, int32_t const& v){
     impl::copyBytes(p, v);
 }
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, int32_t& v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, int32_t& v){
     return impl::unCopyBytes(p, i, v);
 }
 inline std::string chil(int32_t const& v){
     return mkStr() << v;
 }
 
-inline void serialise(svec_ptr p, uint8_t const& v){
+inline void serialise(svec_ptr_cref p, uint8_t const& v){
     impl::copyBytes(p, v);
 }
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, uint8_t& v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, uint8_t& v){
     return impl::unCopyBytes(p, i, v);
 }
 inline std::string chil(uint8_t const& v){
     return mkStr() << uint32_t(v);
 }
 
-inline void serialise(svec_ptr p, uint16_t const& v){
+inline void serialise(svec_ptr_cref p, uint16_t const& v){
     impl::copyBytes(p, v);
 }
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, uint16_t& v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, uint16_t& v){
     return impl::unCopyBytes(p, i, v);
 }
 inline std::string chil(uint16_t const& v){
     return mkStr() << v;
 }
 
-inline void serialise(svec_ptr p, uint32_t const& v){
+inline void serialise(svec_ptr_cref p, uint32_t const& v){
     impl::copyBytes(p, v);
 }
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, uint32_t& CAUV_RESTRICT v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, uint32_t& CAUV_RESTRICT v){
     return impl::unCopyBytes(p, i, v);
 }
 inline std::string chil(uint32_t const& v){
     return mkStr() << v;
 }
 
-inline void serialise(svec_ptr p, char const& v){
+inline void serialise(svec_ptr_cref p, char const& v){
     impl::copyBytes(p, v);
 }
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, char& v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, char& v){
     return impl::unCopyBytes(p, i, v);
 } 
 
-inline void serialise(svec_ptr p, float const& v){
+inline void serialise(svec_ptr_cref p, float const& v){
     impl::copyBytes(p, v);
 }
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, float& v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, float& v){
     return impl::unCopyBytes(p, i, v);
 }
 inline std::string chil(float const& v){
     return mkStr() << std::setprecision(8) << v;
 }
 
-inline void serialise(svec_ptr p, double const& v){
+inline void serialise(svec_ptr_cref p, double const& v){
     impl::copyBytes(p, v);
 }
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, double& v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, double& v){
     return impl::unCopyBytes(p, i, v);
 }
 inline std::string chil(double const& v){
     return mkStr() << std::setprecision(16) << v;
 }
 
-inline void serialise(svec_ptr p, bool const& v){
+inline void serialise(svec_ptr_cref p, bool const& v){
     serialise(p, int32_t(v));
 }
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, bool& v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, bool& v){
     int32_t t = 0;
     uint32_t r = deserialise(p, i, t);
     v = t;
@@ -178,11 +184,11 @@ inline std::string chil(bool const& v){
     return mkStr() << std::noboolalpha << v;
 }
 
-inline void serialise(svec_ptr p, std::string const& v){
+inline void serialise(svec_ptr_cref p, std::string const& v){
     serialise(p, uint32_t(v.size()));
     p->insert(p->end(), (byte const*)v.data(), (byte const*)v.data()+v.size());
 }
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::string& v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, std::string& v){
     uint32_t n = 0;
     i += deserialise(p, i, n);
     v.assign((char*)&(p->operator[](i)), n);
@@ -202,23 +208,23 @@ inline std::string chil(std::string const& v){
 /* prototypes:
  */
 template<typename T>
-inline void serialise(svec_ptr p, std::vector<T> const& CAUV_RESTRICT v);
+inline void serialise(svec_ptr_cref p, std::vector<T> const& CAUV_RESTRICT v);
 template<typename T>
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::vector<T>& v);
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, std::vector<T>& v);
 
 template<typename S, typename T>
-inline void serialise(svec_ptr p, std::pair<S,T> const& v);
+inline void serialise(svec_ptr_cref p, std::pair<S,T> const& v);
 template<typename S, typename T>
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::pair<S,T>& v);
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, std::pair<S,T>& v);
 
 template<typename S, typename T>
-inline void serialise(svec_ptr p, std::map<S,T> const& v);
+inline void serialise(svec_ptr_cref p, std::map<S,T> const& v);
 template<typename S, typename T>
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::map<S,T>& v);
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, std::map<S,T>& v);
 
 
 template<typename T>
-inline void serialise(svec_ptr p, std::vector<T> const& CAUV_RESTRICT v){
+inline void serialise(svec_ptr_cref p, std::vector<T> const& CAUV_RESTRICT v){
     assert(v.size() < 0x80000000);
     int32_t num = int32_t(v.size());
     // 2 * p->size to preserve O(Length) amortized time with the gcc
@@ -234,7 +240,7 @@ inline void serialise(svec_ptr p, std::vector<T> const& CAUV_RESTRICT v){
 }
 
 template<typename T>
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::vector<T>& CAUV_RESTRICT v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, std::vector<T>& CAUV_RESTRICT v){
     int32_t b = i;
     int32_t num = 0;
     b += deserialise(p, b, num);
@@ -272,13 +278,13 @@ inline std::string chil(std::vector<byte> const& V){
 }
 
 template<typename S, typename T>
-inline void serialise(svec_ptr p, std::pair<S,T> const& v){
+inline void serialise(svec_ptr_cref p, std::pair<S,T> const& v){
     serialise(p, v.first);
     serialise(p, v.second);
 }
 
 template<typename S, typename T>
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::pair<S,T>& v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, std::pair<S,T>& v){
     uint32_t b = i;
     b += deserialise(p, b, v.first);
     b += deserialise(p, b, v.second);
@@ -291,7 +297,7 @@ inline std::string chil(std::pair<S,T> const& v){
 
 
 template<typename S, typename T>
-inline void serialise(svec_ptr p, std::map<S,T> const& v){
+inline void serialise(svec_ptr_cref p, std::map<S,T> const& v){
     assert(v.size() < 0x80000000);
     int32_t num = int32_t(v.size());
 
@@ -308,7 +314,7 @@ inline void serialise(svec_ptr p, std::map<S,T> const& v){
 }
 
 template<typename S, typename T>
-inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::map<S,T>& v){
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, std::map<S,T>& v){
     int32_t b = i;
     int32_t num = 0;
     b += deserialise(p, b, num);
