@@ -1,3 +1,5 @@
+'''This module provides an interface for manipulating the image processing pipeline.'''
+
 import messaging
 from debug import debug, warning, error, info
 
@@ -168,6 +170,7 @@ class ConvenientNode(object):
 
 
 class Model(messaging.MessageObserver):
+    '''The Model class represents an image pipeline, and provides methods to manipulate its state.'''
     def __init__(self, node, pipeline_name = "default"):
         messaging.MessageObserver.__init__(self)
         self.__node = node
@@ -193,18 +196,25 @@ class Model(messaging.MessageObserver):
         self.arc_added_wait_for = None
         self.arc_added = None
 
-        node.join("pl_gui")
         node.addObserver(self)
+        node.subMessage(messaging.NodeAddedMessage())
+        node.subMessage(messaging.NodeRemovedMessage())
+        node.subMessage(messaging.NodeParametersMessage())
+        node.subMessage(messaging.GraphDescriptionMessage())
+        node.subMessage(messaging.ArcAddedMessage())
 
     def clear(self):
+        '''Remove all nodes from the pipeline.'''
         self.send(messaging.ClearPipelineMessage(self.pipeline_name))
 
     def save(self, picklefname, timeout=3.0):
+        '''Save the pipeline to file 'picklefname'.'''
         with open(picklefname, 'wb') as outf:
             saved = self.get(timeout)
             pickle.dump(saved, outf)
     
     def load(self, picklefname, timeout=3.0):
+        '''Load the pipeline from 'picklefname', this will clear any existing pipeline.'''
         with open(picklefname, 'rb') as inf:
             #saved = pickle.load(inf)
             saved = FilterUnpickler(file).load()
@@ -212,14 +222,18 @@ class Model(messaging.MessageObserver):
     
     @staticmethod
     def loadFile(file):
+        '''Load a pipeline file from disk, and return its contents. This does not manipulate the image pipeline.'''
         #saved = pickle.load(inf)
         saved = FilterUnpickler(file).load()
         return saved
     
+    # !!! TODO: this should probably be a classmethod
     def dumpFile(self, file, state):
+        '''Save a passed pipeline state to a file. This does not manipulate the image pipeline.'''
         pickle.dump(file, state)
 
     def get(self, timeout=3.0):
+        '''Grab the state from the image pipeline, save it and return it.'''
         graph = self.__getSynchronousGraphDescription(timeout)
         if graph is None:
             raise RuntimeError(
@@ -262,6 +276,7 @@ class Model(messaging.MessageObserver):
         return s
     
     def set(self, state, timeout=3.0, clear=True):
+        '''Set the state of the image pipeline based on 'state'.'''
         #NOTE PLEASE MAKE SURE ANY CHANGES ARE REFLECTED IN AI_PIPELINE_MANAGER (since it overides this method)
         if clear: self.clear()
         id_map = {}
@@ -340,16 +355,16 @@ class Model(messaging.MessageObserver):
             #        print 'set outarc:', id_map[id], output, other, input
    
     def send(self, msg):
-        # send to pipeline via self.__node
+        '''Send a message to the pipeline group.'''
         self.__node.send(msg, "pipeline")
     
 
     def addNode(self, type):
-        # return a Node class that parameters can be set on directly (holds a
-        # reference to this object)
+        '''Return a Node object (corresponding to a node in the image pipeline) that can be used to manipulate the corresponding image pipeline node.'''
         return ConvenientNode(self, self.addSynchronous(type))
 
     def addSynchronous(self, type, timeout=3.0):
+        '''Add a node, wait for it to be added, return the ID of the added node. Raises a RuntimeError if a timeout occurs.'''
         debug('addSynchronous %d = %s' % (type, str(messaging.NodeType(type))))
         self.node_added_condition.acquire()
         self.node_added = None
@@ -370,6 +385,7 @@ class Model(messaging.MessageObserver):
         return r
         
     def removeSynchronous(self, node, timeout=3.0):
+        '''Remove a node, wait for it to be removed. Raises a RuntimeError if a timeout occurs.'''
         debug('removeSynchronous %d' % (node,))
         self.node_removed_condition.acquire()
         self.node_removed = None
@@ -387,6 +403,7 @@ class Model(messaging.MessageObserver):
         return None
     
     def setParameterSynchronous(self, node, param, value, timeout=3.0):
+        '''Set a node parameter, wait for it to be set. Raises a RuntimeError if a timeout occurs.'''
         self.parameter_set_condition.acquire()
         self.parameter_set = None
         self.parameter_set_wait_for = (node, param)
@@ -537,9 +554,7 @@ class Model(messaging.MessageObserver):
         self.description_ready_condition.acquire()
         self.graph_description = None
         self.send(messaging.GraphRequestMessage(self.pipeline_name));
-        #print '!!\t\twaiting on condition...'
         self.description_ready_condition.wait(timeout)
-        #print '!!\t\tnotified'
         self.description_ready_condition.release()
         return self.graph_description
                 

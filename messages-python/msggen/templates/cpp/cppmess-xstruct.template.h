@@ -20,6 +20,7 @@
 \#include <vector>
 \#include <list>
 \#include <map>
+\#include <iomanip>
 \#include <boost/cstdint.hpp>
 \#include <utility/streamops.h>
 \#include <utility/serialisation-types.h>
@@ -68,7 +69,11 @@ std::basic_ostream<char_T, traits>& operator<<(
 {
     os << "$s.name {";
     #for i, f in $enumerate($s.fields)
+        #if hasattr($f.type, "name") and $f.type.name == "double"
+    os << " $f.name = " << std::setprecision(12) << s.$f.name#if $i < $len($s.fields) - 1#<< ","#end if#;
+        #else
     os << " $f.name = " << s.$f.name#if $i < $len($s.fields) - 1#<< ","#end if#;
+        #end if
     #end for
     os << " }";
     return os;

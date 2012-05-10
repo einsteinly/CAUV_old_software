@@ -152,10 +152,22 @@ enum SensorUIDBase : int32 {
 
 struct floatYPR
 {
+    // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+    // Pitch = degrees UP from plane (- euler right->left axis)
+    // Roll  = degrees rolling to the right (euler back->front axis)
     yaw : float;
     pitch : float;
     roll : float;
 }
+// YPR is a stupid way of doing things, at some point, every YPR will be
+// replaced with this:
+//struct quat
+//{
+//    q0 : float; // imaginary x
+//    q1 : float; // imaginary y
+//    q2 : float; // imaginary z
+//    q3 : float; // real part
+//}
 struct floatXYZ
 {
     eq x : float;
@@ -166,6 +178,16 @@ struct floatXY
 {
     eq x : float;
     eq y : float;
+}
+struct LatLongAlt
+{
+    // note that the reference geoid, and how the latitude/longitude/altitude
+    // parameters are interpreted are actually defined by the base class.
+    // Currently there is only one base class: WGS84Coord, which uses these
+    // definitions:
+    latitude : double;  // degrees north
+    longitude : double; // degrees east
+    altitude : float;   // metres up
 }
 struct NodeInput
 {
@@ -350,6 +372,8 @@ struct DynamicEnum
 //fmt_ver should be bumped if image serialisation format changes
 class BaseImage : <common/msg_classes/base_image.h> fmt_ver 1
 BoundedFloatBase subclass BoundedFloat : <common/msg_classes/bounded_float.h>
+LatLongAlt subclass WGS84Coord : <common/msg_classes/wgs84_coord.h>
+floatXYZ subclass NorthEastDepth : <common/msg_classes/north_east_depth.h>
 
 variant ParamValue
 {
@@ -520,6 +544,9 @@ group state
 {
     message State : 81
     {
+        // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+        // Pitch = degrees UP from plane (- euler right->left axis)
+        // Roll  = degrees rolling to the right (euler back->front axis)
         orientation : floatYPR;
     }
 }
@@ -528,6 +555,9 @@ group telemetry
 {
     message Telemetry : 3
     {
+        // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+        // Pitch = degrees UP from plane (- euler right->left axis)
+        // Roll  = degrees rolling to the right (euler back->front axis)
         orientation : floatYPR;
         depth : float;
     }
@@ -547,16 +577,12 @@ group telemetry
     }
     message Location : 88
     {
-        latitude : double;
-        longitude : double;
-        altitude : float;
+        location : WGS84Coord;
         speed : floatXYZ;
     }
     message GPSLocation : 89
     {
-        latitude : double;
-        longitude : double;
-        altitude : float;
+        location : WGS84Coord;
         track : float;
         speed: float;
         climb: float;
@@ -988,12 +1014,12 @@ group simulation
 {
     message SimPosition : 800
     {
-        latitude : double;  // in degrees EAST, WGS84
-        longitude : double; // in degrees north, WGS84
-        altitude : float;   // in metres above WGS84
-        orientation : floatYPR; // yaw is degrees bearing from north,
-                                // pitch is degrees up from horizontal,
-                                // roll is degrees ?? from horizontal
+        location : WGS84Coord;
+
+        // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+        // Pitch = degrees UP from plane (- euler right->left axis)
+        // Roll  = degrees rolling to the right (euler back->front axis)
+        orientation : floatYPR;
 
         speed : floatXYZ; // metres per second, some arbitrary local coordinate system: TODO: fix this!
     }

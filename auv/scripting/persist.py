@@ -11,11 +11,6 @@ import traceback
 import argparse
 import time
 
-Default_Groups_To_Join = (
-    'control',
-    'sonarctl'
-)
-
 Default_Messages_To_Watch = (
     'BearingAutopilotParams',
     'DepthAutopilotParams',
@@ -23,9 +18,15 @@ Default_Messages_To_Watch = (
     'PitchAutopilotParams',
     'SetMotorMap',
     'MotorRampRate',
-    'SonarControl'
-    #'GeminiControl'
+    'SonarControl',
+    'GeminiControl'
 )
+
+# Consider messages with different values in ID fields to be different
+# messages:
+Message_ID_Fields = {
+    'SetMotorMap': 'motor'
+}
 
 Ignore_Message_Attrs = (
     'group',
@@ -35,11 +36,12 @@ Ignore_Message_Attrs = (
 
 def sendSavedMessages(node, shelf):
     info('restoring saved settings...')
-    for msg_name in shelf:
+    for mad_id in shelf:
+        msg_name = mad_id.split(':')[0]
         if not msg_name in Default_Messages_To_Watch:
             continue
         try:
-            attrs = shelf[msg_name]
+            attrs = shelf[mad_id]
             info('restoring saved %s: %s' % (msg_name, attrs))
             m = dictToMessage(msg_name, attrs)
             node.send(m)
@@ -68,22 +70,26 @@ class OnAnyMessage:
         self.shelf = shelf
     def onMessage(self, m):
         debug('onMessage expect %sMessage have %s' % (self.message_name, m))
-        self.shelf[self.message_name] = dictFromMessage(m)
+        if self.message_name in Message_ID_Fields: 
+            msg_id_field = getattr(m, str(Message_ID_Fields[self.message_name]))
+            save_as_id = "%s:%s" % (self.message_name, msg_id_field)
+        else:
+            save_as_id = self.message_name
+        self.shelf[save_as_id] = dictFromMessage(m)
         # don't take any chances
         self.shelf.sync()
 
 class PersistObserver(msg.MessageObserver):
-    def __init__(self, node, shelf, groups, watch_list, auto):
+    def __init__(self, node, shelf, watch_list, auto):
         msg.MessageObserver.__init__(self)
         self.__node = node
         self.__shelf = shelf
         self.__auto = auto
         if auto:
-            node.join('membership') 
-        for group in groups:
-            node.join(group)
+            node.subMessage(msg.MembershipChangedMessage())
         for message in watch_list:
             debug('Listening for %s messages' % message)
+            node.subMessage(getattr(msg, message+'Message')())
             self.attachOnMessageFunc(message)
         node.addObserver(self)
 
@@ -100,8 +106,7 @@ class PersistObserver(msg.MessageObserver):
         setattr(self, 'on%sMessage' % name, func)
 
 def persistMainLoop(cauv_node, shelf, auto, silent = False):
-    po = PersistObserver(cauv_node, shelf, Default_Groups_To_Join,
-                         Default_Messages_To_Watch, auto)
+    po = PersistObserver(cauv_node, shelf, Default_Messages_To_Watch, auto)
     help_str = 'available commands: "set" - broadcast saved '+\
                'parameters, "exit" - stop monitoring and exit, '+\
                '"auto on" / "auto off" - control automatic ' +\

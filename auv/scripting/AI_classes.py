@@ -277,9 +277,9 @@ class fakeAUV(messaging.MessageObserver):
         self.pitchCV.release()
         
     def onLocationMessage(self, m):
-        self.latitude = m.latitude
-        self.longitude = m.longitude
-        self.altitude = m.altitude
+        self.latitude = m.location.latitude
+        self.longitude = m.location.longitude
+        self.altitude = m.location.altitude
         self.speed = m.speed
     
     def getBearing(self):

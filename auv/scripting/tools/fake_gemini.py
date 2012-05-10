@@ -239,6 +239,7 @@ class FakeGemini(msg.MessageObserver):
                 continue
             time.sleep(config.interPingPeriod)
             position = self.position()
+            ts = msg.now()
             if not position:
                 debug('no sim position yet!')
                 continue
@@ -270,7 +271,7 @@ class FakeGemini(msg.MessageObserver):
             #    image : PolarImage;
             #}
 
-            latlong = coordinates.LLACoord(position.latitude, position.longitude, position.altitude)
+            latlong = coordinates.LLACoord.fromWGS84(position.location)
 
             beam_bearings = self.gemBeamBearings()
 
@@ -328,7 +329,7 @@ class FakeGemini(msg.MessageObserver):
                 0.0,
                 config.range,
                 config.range / float(config.rangeLines),
-                msg.now()
+                ts
             )
 
             assert(round((config.range) / (config.range / float(config.rangeLines))) == len(beams[0]))
