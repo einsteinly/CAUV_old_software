@@ -104,9 +104,9 @@ class SlamCloudGraph{
                        float keyframe_spacing,
                        float min_initial_points,
                        float good_keypoint_distance){
-            if(overlap_threshold > 0.5){
+            if(overlap_threshold > 1.0){
                 warning() << "invalid overlap threshold" << overlap_threshold
-                          << "(>0.5) will be ignored";
+                          << "(>1.0) will be ignored";
                 overlap_threshold = m_overlap_threshold;
             }
             m_overlap_threshold = overlap_threshold;
@@ -140,10 +140,23 @@ class SlamCloudGraph{
                     location_vec::const_reverse_iterator i = m_all_scans.rbegin();
                     const Eigen::Vector3f p1 = (*i)->globalTransform().block<3,1>(0,3);
                     const TimeStamp t1 = (*i)->time();
-                    const Eigen::Vector3f p2 = (*++i)->globalTransform().block<3,1>(0,3);
-                    const TimeStamp t2 = (*i)->time();
+                    Eigen::Vector3f p2 = (*++i)->globalTransform().block<3,1>(0,3);
+                    TimeStamp t2 = (*i)->time();
+                    while(t2.secs == t1.secs && t1.musecs == t2.musecs && ++i != m_all_scans.rend()){
+                        p2 = (*++i)->globalTransform().block<3,1>(0,3);
+                        t2 = (*i)->time();
+                    }
+                    if(t2.secs == t1.secs && t1.musecs == t2.musecs){
+                        debug() << "all scans have the same timestamp!";
+                        return m_all_scans.back()->globalTransform();
+                    }
                     const Eigen::Vector3f p = p1 + (p1-p2)*(t-t1)/(t1-t2);
-
+                    debug() << "p1:" << p1.transpose() << "t1:" << t1
+                            << "p2:" << p2.transpose() << "t2:" << t2;
+                    if(t-t1 < 1e-4){
+                        debug() << "guess transformation in < 0.1 ms!";
+                        return m_all_scans.back()->globalTransform();
+                    }
                     const float frac_speed = std::fabs((p-p1).norm() / (t-t1)) / m_max_speed;
                     Eigen::Matrix4f r = Eigen::Matrix4f::Identity();
                     r.block<3,1>(0,3) = p;
@@ -345,7 +358,8 @@ class SlamCloudGraph{
                     nbad++;
                 }
             }
-            debug() << float(ngood)/(nbad+ngood) << "keypoints proved good";
+            debug() << ngood << "/" << (nbad+ngood) << "="
+                    << float(ngood)/(nbad+ngood) << "keypoints proved good";
 
             return r;
         }
@@ -497,7 +511,7 @@ class SlamCloudGraph{
 
 
         // - private data
-        float m_overlap_threshold; // a fraction (0--0.5)
+        float m_overlap_threshold; // a fraction (0--1.0)
         float m_keyframe_spacing;  // in metres
         float m_min_initial_points; // for first keyframe
         float m_min_initial_area;   //

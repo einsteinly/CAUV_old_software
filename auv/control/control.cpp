@@ -563,7 +563,7 @@ class ControlLoops : public MessageObserver, public IMUObserver
             
             double test_values[] = {-200, -150, -100, -50, -4, 0, 3, 50, 100, 150, 200};
             for(int i = 0; i < 11; i++)
-                debug() << "new map example: " << test_values[i] << "->" << motorMap(test_values[i], m->motor());
+                debug(5) << "new map example: " << test_values[i] << "->" << motorMap(test_values[i], m->motor());
         }
 
     private:
@@ -892,7 +892,6 @@ ControlNode::ControlNode() : CauvNode("Control")
 {
     joinGroup("control");
     joinGroup("external");
-    addMessageObserver(boost::make_shared<DebugMessageObserver>(1));
 
     m_controlLoops = boost::make_shared<ControlLoops>(mailbox());
     addMessageObserver(m_controlLoops);
