@@ -328,7 +328,12 @@ class ReIndexer(Indexer):
                         n_since_last_keyframe += 1
                     # TODO: merge this logic with the same from the Logger
                     # class:
-                    msgId = long(line[line.find(' '):line.find('(')])
+                    try:
+                        msgId = long(line[line.find(' '):line.find('(')])
+                    except ValueError:
+                        print('Strange line!')
+                        print(line)
+                        msgId = 333
                     t_range = recorded_msg_types.get(msgId, (record_time, record_time))
                     if record_time < t_range[0]:
                         t_range = (record_time, t_range[1])

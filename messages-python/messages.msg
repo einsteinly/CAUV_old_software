@@ -101,6 +101,7 @@ enum NodeType : int8 {
     KMeansPoints,
     DrawEllipses,
     Sobel,
+    Blob,
 }
 enum NodeStatus : int8 {
     None = 0,
