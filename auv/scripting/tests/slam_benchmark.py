@@ -13,6 +13,7 @@ import cauv
 import cauv.messaging as msg
 import cauv.pipeline as pipeline
 import cauv.control as control
+import cauv.sonar as sonar
 import cauv.node
 
 
@@ -21,14 +22,26 @@ class Benchmarker(object):
         self.node = node
         self.pl = pipeline.Model(node) 
         self.auv = control.AUV(node)
+        self.gemini = sonar.Gemini(node)
         self.test_name = test_name
-        
+       
         self.video_output_nodes = []
 
         self.setup()
 
     def setup(self):
+        self.auv.stop()
+        self.auv.bearingParams(1, 0, 10, -1, 1, 1, 1, 1, 100) # slower than normal!
+        self.gemini.interPingDelay(6)
+        self.gemini.range(20)
+        self.gemini.gain(60)
+        self.gemini.rangeLines(400)
+        self.gemini.continuous(True)
         self.loadPipeline()
+        # give the GUI time to get sorted out
+        time.sleep(3)
+        # now set the data flowing:
+        self.gemini.interPingDelay(0.2)        
 
     def teardown(self):
         # make sure videos get written:
@@ -44,7 +57,9 @@ class Benchmarker(object):
         sonar_in.p('Sonar ID').set(2)
         sonar_in.p('Resolution').set(800)
         copy1 = pl.addNode(nt.Copy)
+        guio = pl.addNode(nt.GuiOutput)
         sonar_in.o('polar image').connect(copy1.i('image'))
+        sonar_in.o('image (synced)').connect(guio.i('image_in'))
         medf = pl.addNode(nt.MedianFilter)
         medf.p('kernel').set(1)
         copy1.o('image copy').connect(medf.i('image'))
@@ -56,7 +71,7 @@ class Benchmarker(object):
         mix1  = pl.addNode(nt.Mix)
         mix1.p('absolute value').set(False)
         mix1.p('image fac').set(-6.0)
-        mix1.p('mix fac').set(-2.0)
+        mix1.p('mix fac').set(2.0)
         medf.o('image (not copied)').connect(mix1.i('mix'))
         blur1.o('image (not copied)').connect(mix1.i('image'))
         copy3 = pl.addNode(nt.Copy)
@@ -84,12 +99,12 @@ class Benchmarker(object):
         sslam.p('euclidean fitness').set(1e-7)
         sslam.p('feature merge distance').set(0.1)
         sslam.p('graph iters').set(10)
-        sslam.p('keyframe spacing').set(2.0)
+        sslam.p('keyframe spacing').set(2)
         sslam.p('match algorithm').set('ICP')
         # !!! TODO: sensitivity to this:
-        sslam.p('max correspond dist').set(25.0) 
+        sslam.p('max correspond dist').set(50.0) 
         # !!! TODO: sensitivity to this:
-        sslam.p('max iters').set(40)
+        sslam.p('max iters').set(10)
         sslam.p('overlap threshold').set(0.5)
         sslam.p('reject threshold').set(0.5)
         sslam.p('score threshold').set(5.0) # too high?
@@ -133,12 +148,32 @@ class Benchmarker(object):
         self.video_output_nodes.append(viz_video_out)
 
     def runTest(self):
-        time.sleep(5.0)
-        pass
+        self.auv.bearingAndWait(6)
+        self.auv.bearingAndWait(0)
+        self.auv.prop(80)
+        time.sleep(30)
+        self.auv.prop(0)
+
+        self.auv.bearingAndWait(90)
+        self.auv.prop(80)
+        time.sleep(30)
+        self.auv.prop(0)
+
+        self.auv.bearingAndWait(180)
+        self.auv.prop(80)
+        time.sleep(30)
+        self.auv.prop(0)
+
+        self.auv.bearingAndWait(270)
+        self.auv.prop(80)
+        time.sleep(30)
+        self.auv.prop(0)
+
+        self.auv.stop()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("name", default=datetime.datetime.utcnow().strftime('slam-benchmark-%Y%m%d%H%M%S'))
+    parser.add_argument("name", nargs='?', default=datetime.datetime.utcnow().strftime('slam-benchmark-%Y%m%d%H%M%S'))
 
     opts, unknown_args = parser.parse_known_args()
     node = cauv.node.Node('py-slamb', unknown_args)
