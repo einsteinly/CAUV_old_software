@@ -146,27 +146,88 @@ NodeParam_Filters = {
     messaging.NodeType.GuiOutput  : filterGuiOutputNodeParameters
 }
 
-class ConvenientNode(object):
+class ConvenientObject(object):
     def __init__(self, model, node_id):
         self.model = model
         self.node_id = node_id
 
+class ConvenientInput(ConvenientObject):
+    def __init__(self, model, node_id, input_id):
+        super(ConvenientInput, self).__init__(model, node_id)
+        self.input_id = input_id
+    def connect(self, co):
+        self.model.addArcAsync(co.node_id, co.output_id, self.node_id, self.input_id)
+
+class ConvenientOutput(ConvenientObject):
+    def __init__(self, model, node_id, output_id):
+        super(ConvenientOutput, self).__init__(model, node_id)
+        self.output_id = output_id
+    def connect(self, ci):
+        self.model.addArcAsync(self.node_id, self.output_id, ci.node_id, ci.input_id)
+
+class ConvenientParam(ConvenientObject):
+    def __init__(self, model, node_id, param_id):
+        super(ConvenientParam, self).__init__(model, node_id)
+        self.param_id = param_id
+    def set(self, value):
+        self.model.setParameterAsync(self.node_id, self.param_id, value)
+
+class ConvenientNode(ConvenientObject):
+    def __init__(self, model, node_id, params, inputs, outputs):
+        super(ConvenientNode, self).__init__(model, node_id)
+        self.valid_params = set()
+        self.valid_inputs = set()
+        self.valid_outputs = set()
+        for kv in params:
+            self.valid_params.add(kv.key().input)
+        for kv in inputs:
+            self.valid_inputs.add(kv.key().input)
+        for kv in outputs:
+            self.valid_outputs.add(kv.key().output)
     def setParam(self, param, value):
         self.model.setParameterAsync(self.node_id, param, value)
-    
     def connectOutput(self, output, other_node, input):
         if isinstance(other_node, ConvenientNode):
             other_node_id = other_node.node_id
         else:
             other_node_id = other_node
-        self.model.addArcAsync(self.node_id, output, other_node_id, input)
-    
+        self.checkOutput(output)
+        self.model.addArcAsync(self.node_id, output, other_node_id, input) 
     def connectInput(self, input, other_node, output):
         if isinstance(other_node, ConvenientNode):
             other_node_id = other_node.node_id
         else:
             other_node_id = other_node
-        self.model.addArcAsync(other_node_id, output, self.node_id, input)
+        self.check_input(input)
+        self.model.addArcAsync(other_node_id, output, self.node_id, input) 
+    def checkInput(self, id):
+        if id not in self.valid_inputs:
+            warning('unknown node input: %s (node:%s)' % (id, self.node_id))
+    def checkOutput(self, id):
+        if id not in self.valid_outputs:
+            warning('unknown node output: %s (node:%s)' % (id, self.node_id))
+    def checkParam(self, id):
+        if id not in self.valid_params:
+            warning('unknown node parameter: %s (node:%s)' % (id, self.node_id))
+    def remove(self):
+        return self.x() 
+    def output(self, id):
+        return self.o(id)
+    def input(self, id):
+        return self.i(id)
+    def param(self, id):
+        return self.p(id)
+    def o(self, id):
+        self.checkOutput(id)
+        return ConvenientOutput(self.model, self.node_id, id) 
+    def i(self, id):
+        self.checkInput(id)
+        return ConvenientInput(self.model, self.node_id, id)
+    def p(self, id):
+        self.checkParam(id)
+        return ConvenientParam(self.model, self.node_id, id)
+    def x(self):
+        return self.model.removeSynchronous(self.node_id)
 
 
 class Model(messaging.MessageObserver):
@@ -359,12 +420,22 @@ class Model(messaging.MessageObserver):
         self.__node.send(msg, "pipeline")
     
 
-    def addNode(self, type):
+    def addNode(self, type, timeout=3.0):
         '''Return a Node object (corresponding to a node in the image pipeline) that can be used to manipulate the corresponding image pipeline node.'''
-        return ConvenientNode(self, self.addSynchronous(type))
+        return self.addSynchronous(type, timeout, return_class=True)
 
-    def addSynchronous(self, type, timeout=3.0):
-        '''Add a node, wait for it to be added, return the ID of the added node. Raises a RuntimeError if a timeout occurs.'''
+    def addSynchronous(self, type, timeout=3.0, return_class=False):
+        '''Add a node, wait for it to be added, return the ID of the added node.
+            
+            Raises a RuntimeError if a timeout occurs.
+            
+            If return_class is set to true, then instead of just the node id, a
+            class representing the image pipeline node is returned, with
+            attributes initialised from the inputs, outputs and parameters of
+            the node.
+
+            addNode() calls this function with return_class=True
+        '''
         debug('addSynchronous %d = %s' % (type, str(messaging.NodeType(type))))
         self.node_added_condition.acquire()
         self.node_added = None
@@ -379,8 +450,17 @@ class Model(messaging.MessageObserver):
         if self.node_added is None:
             self.node_added_condition.release()
             raise RuntimeError('No response from pipeline, is it running?')
-        r = self.node_added.nodeId
-        debug('Node id = %d' %(r,))
+        if return_class:
+            r = ConvenientNode(
+                self,
+                self.node_added.nodeId,
+                self.node_added.params,
+                self.node_added.inputs,
+                self.node_added.outputs
+            )
+        else:
+            r = self.node_added.nodeId
+            debug('Node id = %d' %(r,))
         self.node_added_condition.release()
         return r
         
