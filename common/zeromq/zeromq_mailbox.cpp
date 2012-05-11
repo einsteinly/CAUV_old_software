@@ -36,7 +36,7 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     m_monitoring(false),
     m_interrupted(false),
     daemon_connected(false),
-    starting_up(false) {
+    starting_up(true) {
 
     //internal message queues
     send_queue_pull.bind("inproc://send_queue");
@@ -92,10 +92,14 @@ static void delete_message_bytes(void *, void *hint) {
 int ZeroMQMailbox::sendMessage(boost::shared_ptr<const Message> message,
                                        MessageReliability) {
     if(m_interrupted) {
+        warning() << "Message send to interrupted messagebox!";
         return 0;
     }
     boost::unique_lock<boost::mutex> pub_lock(m_pub_map_mutex);
     if (!publications.count(message->id()) && !starting_up) {
+#ifdef CAUV_DEBUG_MESSAGE
+        debug(6) << "Not sending message because no subscriptions for" << message->id();
+#endif
         return 0;
     }
     pub_lock.unlock();
@@ -330,7 +334,7 @@ void ZeroMQMailbox::handle_send_message(void) {
     xs::message_t ptr_message;
     send_queue_pull.recv(&ptr_message);
 #ifdef CAUV_DEBUG_MESSAGES
-    debug(9) << "sending message";
+    debug(6) << "sending message";
 #endif
     pub.send(ptr_message);
 }
@@ -371,14 +375,14 @@ void ZeroMQMailbox::doMonitoring(void) {
         { pub,
           0, XS_POLLIN, 0
         },
+        { sub_queue_pull,
+          0, XS_POLLIN, 0
+        },
         { sub,
           0, XS_POLLIN, 0
         },
         { send_queue_pull,
           0, 0, 0
-        },
-        { sub_queue_pull,
-          0, XS_POLLIN, 0
         },
         { daemon_control,
           0, XS_POLLIN, 0
@@ -400,7 +404,7 @@ void ZeroMQMailbox::doMonitoring(void) {
                 }
                 starting_up = false;
                 timeout = 300;
-                sockets[2].events |= XS_POLLIN;
+                sockets[3].events |= XS_POLLIN;
                 debug() << "mailbox started up, sending messages now";
             }
         }
@@ -430,11 +434,11 @@ void ZeroMQMailbox::doMonitoring(void) {
         //messages
         if (sockets[0].revents & XS_POLLIN) {
             handle_pub_message();
-        } else if (sockets[3].revents & XS_POLLIN) {
-            handle_subscription_message();
         } else if (sockets[1].revents & XS_POLLIN) {
-            handle_sub_message();
+            handle_subscription_message();
         } else if (sockets[2].revents & XS_POLLIN) {
+            handle_sub_message();
+        } else if (sockets[3].revents & XS_POLLIN) {
             handle_send_message();
         }
 

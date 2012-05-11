@@ -35,23 +35,35 @@ class ThresholdMaskNode: public Node{
         }
 
     protected:
-
+        struct applyThreshold: boost::static_visitor<void>{
+            applyThreshold(int threshold) : m_thresh(threshold){ }
+            void operator()(cv::Mat a) const{
+                const int max_value = 255;
+                cv::threshold(a, a, m_thresh, max_value, cv::THRESH_BINARY);
+            }
+            void operator()(NonUniformPolarMat a) const{
+                operator()(a.mat);
+            }
+            void operator()(PyramidMat) const{
+                error() << "not implemented";
+            }
+            private:
+            const int m_thresh;
+        };
         void doWork(in_image_map_t& inputs, out_map_t& r){
 
             int threshold = param<int>("threshold (>= is masked)");         
 
-            cv::Mat img = inputs["channel (not copied)"]->mat();
-            
-            const int max_value=255;
             try {
-                cv::threshold(img, img, threshold, max_value, cv::THRESH_BINARY);
+                augmented_mat_t m = inputs["channel (not copied)"]->augmentedMat();
+                boost::apply_visitor(applyThreshold(threshold), m);
+                r["output mask"] = boost::make_shared<Image>(m);
             }catch(cv::Exception& e){
                 error() << "ThresholdMaskNode:\n\t"
                         << e.err << "\n\t"
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
 
-            r["output mask"] = boost::make_shared<Image>(img);
             
         }
     
