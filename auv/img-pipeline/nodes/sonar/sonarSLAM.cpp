@@ -137,16 +137,12 @@ class SonarSLAMImpl{
         float registerScan(cloud_ptr scan,
                            PairwiseMatcher<pt_t> const& scan_matcher,
                            GraphOptimiser const& graph_optimiser,
-                           Eigen::Matrix4f const& external_guess,
+                           Eigen::Matrix4f const& rotation_guess_relative_to_last_scan, 
                            Eigen::Matrix4f& global_transformation){
-            Eigen::Matrix4f guess = m_graph.guessTransformationAtTime(scan->time());
+            Eigen::Matrix4f guess = m_graph.guessTransformationAtTime(
+                scan->time(), rotation_guess_relative_to_last_scan
+            );
 
-            // use rotation from external guess, and translation from internal
-            // guess:
-            if(external_guess.block<3,1>(0,3).norm() > 1e-3)
-                warning() << "external translation prediction is ignored";
-            guess.block<3,3>(0,0) = external_guess.block<3,3>(0,0);
-            
             // return guess if no match
             global_transformation = guess;
             return m_graph.registerScan(
@@ -494,9 +490,10 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     }
 
     GraphOptimiserV1 graph_optimiser(graph_iters);
-
-    Eigen::Matrix4f relative_transformation_guess = Eigen::Matrix4f::Identity();
-    relative_transformation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
+    
+    debug () << "external delta theta =" << delta_theta * 180 / 3.14159 << "degrees";
+    Eigen::Matrix4f relative_rotation_guess = Eigen::Matrix4f::Identity();
+    relative_rotation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
         Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ())
     );
 
@@ -506,7 +503,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
         scan,
         *scan_matcher,
         graph_optimiser,
-        relative_transformation_guess,
+        relative_rotation_guess,
         global_transformation
     );
 

@@ -10,11 +10,11 @@ processes = [
     Process('persist',        '{SDIR}', node_pid('persist'),  restart(), None,
         ['{SDIR}/persist.py -rs']
     ),
-    #Process('img-pipeline',   '{BDIR}', node_pid('img-pipe'), panic,     None,
-    #    ['{BDIR}/auv/bin/img-pipeline']
-    #),
+    Process('img-pipeline',   '{BDIR}', node_pid('img-pipe'), panic,     None,
+        ['{BDIR}/auv/bin/img-pipeline']
+    ),
     Process('fake-gemini',    '{BDIR}', node_pid('FakeGem'),  panic,     None,
-        ['{BDIR}/auv/bin/fake_gemini -e /Users/james/Documents/IIB/Project/test_environment_mid.png -s 0.05 -x -100 -y -100']
+        ['{BDIR}/auv/bin/fake_gemini -e /Users/james/Documents/IIB/Project/test_environment_dense_mid.png -s 0.05 -x -50 -y -50']
     ),
     Process('slam-benchmark', '{SDIR}', node_pid('py-slamb'), panic,     None,
         ['{SDIR}/tests/slam_benchmark.py']

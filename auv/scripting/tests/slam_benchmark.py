@@ -31,7 +31,9 @@ class Benchmarker(object):
 
     def setup(self):
         self.auv.stop()
-        self.auv.bearingParams(1, 0, 10, -1, 1, 1, 1, 1, 100) # slower than normal!
+        self.auv.hbowMap(0,0)
+        self.auv.hsternMap(0,0)
+        self.auv.bearingParams(1, 0, 0, -1, 1, 1, 1, 1, 10) # much slower than normal!
         self.gemini.interPingDelay(6)
         self.gemini.range(20)
         self.gemini.gain(60)
@@ -99,15 +101,15 @@ class Benchmarker(object):
         sslam.p('euclidean fitness').set(1e-7)
         sslam.p('feature merge distance').set(0.1)
         sslam.p('graph iters').set(10)
-        sslam.p('keyframe spacing').set(2)
+        sslam.p('keyframe spacing').set(1)
         sslam.p('match algorithm').set('ICP')
         # !!! TODO: sensitivity to this:
-        sslam.p('max correspond dist').set(2.0) 
+        sslam.p('max correspond dist').set(1) 
         # !!! TODO: sensitivity to this:
-        sslam.p('max iters').set(10)
+        sslam.p('max iters').set(80)
         sslam.p('overlap threshold').set(0.5)
-        sslam.p('reject threshold').set(0.5)
-        sslam.p('score threshold').set(1.0)
+        sslam.p('reject threshold').set(0.05)
+        sslam.p('score threshold').set(0.05)
         sslam.p('transform eps').set(1e-9)
         sslam.p('weight test').set(-1.0)
         sslam.p('xy metres/px').set(0.01) # unused, anyway
@@ -123,8 +125,8 @@ class Benchmarker(object):
         br_to_xy.o('keypoints').connect(sslam.i('keypoints'))
         delay.o('image out (not copied)').connect(correl.i('Image B'))
         clamp = pl.addNode(nt.ClampFloat)
-        clamp.p('Max').set(0.1)
-        clamp.p('Min').set(-0.1)
+        clamp.p('Max').set(0.2)
+        clamp.p('Min').set(-0.2)
         correl.o('max correl location').connect(clamp.i('Value'))
         clamp.o('Value').connect(sslam.i('delta theta'))
         resize = pl.addNode(nt.Resize)

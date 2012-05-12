@@ -125,9 +125,12 @@ class SlamCloudGraph{
 
         /* Guess a transformation for a time based on simple extrapolation of
          * the previous transformations.
-         * Returned transformation is in the global coordinate system
+         * Returned transformation is in the global coordinate system.
          */
-        Eigen::Matrix4f guessTransformationAtTime(TimeStamp const& t) const{
+        Eigen::Matrix4f guessTransformationAtTime(
+            TimeStamp const& t,
+            Eigen::Matrix4f const& rotation_guess_relative_to_last_scan
+        ) const{
             switch(m_all_scans.size()){
                 case 0:
                     return Eigen::Matrix4f::Identity();
@@ -137,6 +140,8 @@ class SlamCloudGraph{
                 default:{
                     // !!! TODO: use more than one previous point for smooth
                     // estimate?
+                    Eigen::Matrix4f r = m_all_scans.back()->globalTransform() * rotation_guess_relative_to_last_scan;
+                    
                     location_vec::const_reverse_iterator i = m_all_scans.rbegin();
                     const Eigen::Vector3f p1 = (*i)->globalTransform().block<3,1>(0,3);
                     const TimeStamp t1 = (*i)->time();
@@ -148,17 +153,16 @@ class SlamCloudGraph{
                     }
                     if(t2.secs == t1.secs && t1.musecs == t2.musecs){
                         debug() << "all scans have the same timestamp!";
-                        return m_all_scans.back()->globalTransform();
+                        return r;
                     }
                     const Eigen::Vector3f p = p1 + (p1-p2)*(t-t1)/(t1-t2);
-                    debug() << "p1:" << p1.transpose() << "t1:" << t1
-                            << "p2:" << p2.transpose() << "t2:" << t2;
+                    debug(3) << "p1:" << p1.transpose() << "t1:" << t1
+                             << "p2:" << p2.transpose() << "t2:" << t2;
                     if(t-t1 < 1e-4){
                         debug() << "guess transformation in < 0.1 ms!";
-                        return m_all_scans.back()->globalTransform();
+                        return r;
                     }
                     const float frac_speed = std::fabs((p-p1).norm() / (t-t1)) / m_max_speed;
-                    Eigen::Matrix4f r = Eigen::Matrix4f::Identity();
                     r.block<3,1>(0,3) = p;
                     if(frac_speed >= 1.0){
                         warning() << "predicted motion > max speed (x"
