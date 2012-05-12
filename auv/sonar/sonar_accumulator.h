@@ -30,7 +30,7 @@ namespace cauv{
 struct SonarDataLine;
 struct PolarImage;
 class Image;
-class NonUniformPolarMat;
+struct NonUniformPolarMat;
 
 float msgPolarAngleToRadians(int32_t angle);
 
