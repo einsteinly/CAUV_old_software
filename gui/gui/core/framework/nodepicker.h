@@ -29,6 +29,7 @@ namespace gui {
 
 class NodeTreeItemBase;
 class NodeItemModel;
+class NumericDelegate;
 
 /**
 * Node filtering by entering a part of the path
@@ -79,7 +80,7 @@ public:
     virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
 
 public Q_SLOTS:
-    void addNumericDelegateToColumn(int col);
+    boost::shared_ptr<NumericDelegate> addNumericDelegateToColumn(int col, int height=23);
 
 private Q_SLOTS:
     void forceEdit(QModelIndex const& index);

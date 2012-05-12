@@ -58,9 +58,13 @@ public:
     QSize sizeHint(const QStyleOptionViewItem &option,
                    const QModelIndex &index) const;
 
+    void setSizeHint(const QSize size);
+
 protected:
     std::map<boost::shared_ptr<Node>, boost::shared_ptr<QAbstractItemDelegate> > m_delegates;
     std::map<node_type, boost::shared_ptr<QAbstractItemDelegate> > m_default_delegates;
+    QSize m_sizeHint;
+    bool m_hasSizeHint;
 };
 
 

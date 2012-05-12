@@ -30,7 +30,8 @@ using namespace cauv::gui;
 #include "nodepicker.h"
 
 
-NodeDelegateMapper::NodeDelegateMapper(QObject *){}
+NodeDelegateMapper::NodeDelegateMapper(QObject *):
+    m_hasSizeHint(false){}
 
 void NodeDelegateMapper::registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate){
     m_default_delegates[nodeType] = delegate;
@@ -105,11 +106,25 @@ void NodeDelegateMapper::paint(QPainter *painter, const QStyleOptionViewItem &op
     } else QStyledItemDelegate::paint(painter, option, index);
 }
 
-QSize NodeDelegateMapper::sizeHint(const QStyleOptionViewItem &,
-                                   const QModelIndex &) const{
-    return QSize(100, 21);
+QSize NodeDelegateMapper::sizeHint(const QStyleOptionViewItem &option,
+                                   const QModelIndex &index) const{
+    if (m_hasSizeHint){
+        return m_sizeHint;
+    } else {
+        const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
+        try {
+            boost::shared_ptr<QAbstractItemDelegate> delegate = getDelegate(node);
+            return delegate->sizeHint(option, index);
+        } catch (std::out_of_range){
+            return QStyledItemDelegate::sizeHint(option, index);
+        }
+    }
 }
 
+void NodeDelegateMapper::setSizeHint(const QSize sizeHint) {
+    m_sizeHint = sizeHint;
+    m_hasSizeHint = true;
+}
 
 
 NumericDelegate::NumericDelegate(NodeTreeView * tree, QObject * parent) : QStyledItemDelegate(parent), m_view(tree) {
