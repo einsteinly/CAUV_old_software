@@ -102,12 +102,12 @@ class Benchmarker(object):
         sslam.p('keyframe spacing').set(2)
         sslam.p('match algorithm').set('ICP')
         # !!! TODO: sensitivity to this:
-        sslam.p('max correspond dist').set(50.0) 
+        sslam.p('max correspond dist').set(2.0) 
         # !!! TODO: sensitivity to this:
         sslam.p('max iters').set(10)
         sslam.p('overlap threshold').set(0.5)
         sslam.p('reject threshold').set(0.5)
-        sslam.p('score threshold').set(5.0) # too high?
+        sslam.p('score threshold').set(1.0)
         sslam.p('transform eps').set(1e-9)
         sslam.p('weight test').set(-1.0)
         sslam.p('xy metres/px').set(0.01) # unused, anyway
@@ -151,22 +151,22 @@ class Benchmarker(object):
         self.auv.bearingAndWait(6)
         self.auv.bearingAndWait(0)
         self.auv.prop(80)
-        time.sleep(30)
+        time.sleep(77)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(90)
         self.auv.prop(80)
-        time.sleep(30)
+        time.sleep(77)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(180)
         self.auv.prop(80)
-        time.sleep(30)
+        time.sleep(77)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(270)
         self.auv.prop(80)
-        time.sleep(30)
+        time.sleep(77)
         self.auv.prop(0)
 
         self.auv.stop()

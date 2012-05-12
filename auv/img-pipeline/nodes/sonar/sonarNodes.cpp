@@ -19,6 +19,7 @@
 #include "polarImageToXYNode.h"
 #include "sonarImageEdgeNode.h"
 #include "learnedKeyPointsNode.h"
+#include "bearingRangeCropNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -29,6 +30,7 @@ DEFINE_NFR(SonarShadowFilterNode, NodeType::SonarShadowFilter);
 DEFINE_NFR(PolarImageToXYNode, NodeType::PolarImageToXY);
 DEFINE_NFR(SonarImageEdgeNode, NodeType::SonarImageEdge);
 DEFINE_NFR(LearnedKeyPointsNode, NodeType::LearnedKeyPoints);
+DEFINE_NFR(BearingRangeCropNode, NodeType::BearingRangeCrop);
 
 } // namespace imgproc
 } // namespace cauv

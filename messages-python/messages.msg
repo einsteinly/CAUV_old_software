@@ -102,6 +102,7 @@ enum NodeType : int8 {
     DrawEllipses,
     Sobel,
     Blob,
+    BearingRangeCrop,
 }
 enum NodeStatus : int8 {
     None = 0,
