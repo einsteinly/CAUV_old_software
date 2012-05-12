@@ -21,6 +21,9 @@ def load_session(filename):
                 return imp.load_module("session", session_file, "", (suffix, mode, type))
     raise SessionNotFound()
 
+def currentUser():
+    return pwd.getpwuid(os.getuid())[0]
+
 parser = argparse.ArgumentParser(description = "Start up and monitor CAUV nodes and other programs", add_help = False)
 
 parser.add_argument("--session", "-s", help="session file to use")
@@ -47,7 +50,7 @@ parser.add_argument("--bin-dir",     "-b",  help="binary files directory",      
 parser.add_argument("--script-dir",  "-p",  help="script files directory",                   default = '.')
 parser.add_argument("--log-dir",     "-l",  help="log directory for files")
 parser.add_argument("--kill",        "-k",  help="Kill all processes in session",            nargs='?', type=int, const=15)
-parser.add_argument("--user",        "-u",  help="Default user to run processes as")
+parser.add_argument("--user",        "-u",  help="Default user to run processes as",         default=currentUser())
 
 args = parser.parse_args()
 
@@ -74,8 +77,13 @@ class WatchProcess:
         debug('running \'{}\' in directory {} as {}'.format(command, work_dir, username))
         try:
             uid, gid = pwd.getpwnam(username)[2:4]
-            os.setresgid(gid,gid,gid)
-            os.setresuid(uid,uid,uid)
+            if sys.platform == 'darwin':
+                # no such thing as a saved id...
+                os.setgid(gid)
+                os.setuid(uid)
+            else:
+                os.setresgid(gid,gid,gid)
+                os.setresuid(uid,uid,uid)
         except OSError as e:
             if e.errno == errno.EPERM:
                 warning("Can't change user. Running as current user instead")
