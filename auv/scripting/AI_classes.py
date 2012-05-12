@@ -167,7 +167,7 @@ class aiOptionsBase(type):
                 else:
                     new_attrs['_not_transmittable_'+key] = value
                     if not callable(value):
-                        warning('Option %s will not appear as is not a valid type' %key)
+                        warning('Option %s on %s will not appear as is not a valid type' %(key, name))
             else:
                 new_attrs[key] = value
         new_cls = super(aiOptionsBase, cls).__new__(cls, name, bases, new_attrs)

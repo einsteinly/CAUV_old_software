@@ -17,6 +17,8 @@
 
 #include <opencv2/core/core.hpp>
 
+#include <utility/math.h>
+
 #include "../../node.h"
 
 namespace cauv{
@@ -50,8 +52,9 @@ class BearingRangeCropNode: public Node{
             applyCrop(float range_start, float range_end, float bearing_start, float bearing_end)
                 : m_range_start(range_start),
                   m_range_end(range_end),
-                  m_bearing_start(bearing_start),
-                  m_bearing_end(bearing_end){
+                  // convert to radians!
+                  m_bearing_start(radians(bearing_start)),
+                  m_bearing_end(radians(bearing_end)){
             }
             augmented_mat_t operator()(cv::Mat a) const{
                 error() << "bearing-range crop does not support xy images";
@@ -66,22 +69,26 @@ class BearingRangeCropNode: public Node{
                 std::vector<float>::const_iterator range_bin_end = std::lower_bound(
                     a.ranges->begin(), a.ranges->end(), m_range_end
                 );
-                std::vector<float>::const_iterator bearing_bin_start = std::upper_bound(
-                    a.bearings->begin(), a.bearings->end(), m_bearing_start
-                );
-                std::vector<float>::const_iterator bearing_bin_end = std::upper_bound(
-                    a.bearings->begin(), a.bearings->end(), m_bearing_end
-                );
+                // so the bearings are stored in radians, and in HIGH -> LOW order
+                std::vector<float> rev_bearings(a.bearings->rbegin(), a.bearings->rend());
+                int bearing_bin_start = std::upper_bound(
+                    rev_bearings.begin(), rev_bearings.end(), m_bearing_start
+                ) - rev_bearings.begin();
+                int bearing_bin_end = std::lower_bound(
+                    rev_bearings.begin(), rev_bearings.end(), m_bearing_end
+                ) - rev_bearings.begin();
 
                 const int range_px_start = range_bin_start - a.ranges->begin();
                 const int range_px_width = range_bin_end - range_bin_start;
-                const int bearing_px_start = bearing_bin_start - a.bearings->begin();
+                const int bearing_px_start = bearing_bin_start;
                 const int bearing_px_width = bearing_bin_end - bearing_bin_start;
 
                 cv::Rect roi = cv::Rect(bearing_px_start, range_px_start, bearing_px_width, range_px_width);
                 
                 r.ranges   = boost::make_shared< std::vector<float> >(range_bin_start, range_bin_end);
-                r.bearings = boost::make_shared< std::vector<float> >(range_bin_start, range_bin_end);
+                r.bearings = boost::make_shared< std::vector<float> >(
+                    a.bearings->begin()+bearing_bin_start, a.bearings->begin()+bearing_bin_end
+                );
 
                 r.mat = a.mat(roi).clone();
 
