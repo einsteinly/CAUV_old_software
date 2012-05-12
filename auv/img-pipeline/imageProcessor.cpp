@@ -25,6 +25,19 @@ using namespace cauv::imgproc;
 ImageProcessor::ImageProcessor(mb_ptr_t mb)
     : m_nodes_lock(), m_nodes(), m_nodes_rev(), m_input_nodes(), m_scheduler(),
       m_name("---"), m_mailbox_lock(), m_mailbox(mb){
+
+    /*m_mailbox->subMessage(ImageMessage());
+    m_mailbox->subMessage(SonarDataMessage());
+    m_mailbox->subMessage(SonarImageMessage());
+    m_mailbox->subMessage(AddNodeMessage());
+    m_mailbox->subMessage(RemoveNodeMessage());
+    m_mailbox->subMessage(SetNodeParameterMessage());
+    m_mailbox->subMessage(AddArcMessage());
+    m_mailbox->subMessage(RemoveArcMessage());
+    m_mailbox->subMessage(GraphRequestMessage());
+    m_mailbox->subMessage(ForceExecRequestMessage());
+    m_mailbox->subMessage(ClearPipelineMessage());
+    m_mailbox->subMessage(PipelineDiscoveryRequestMessage());*/
 }
 
 void ImageProcessor::start(std::string const& name){
