@@ -111,7 +111,6 @@ class HoughCirclesNode: public OutputNode{
                 Circle c;
                 c.centre.x = circles[i][0] / width;
                 c.centre.y = circles[i][1] / height;
-                c.centre.z = 0;
                 c.radius = circles[i][2] * 2 / (width + height);
                 msg_circles.push_back(c);
             }

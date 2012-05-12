@@ -100,7 +100,7 @@ class ShiTomasiCornersNode: public Node{
             const float height = img.rows;
             debug(2) << "ShiTomasiCorners: detected" << cv_corners.size() << "corners:";
             foreach(const cv::Point2f &p, cv_corners) {
-                const floatXYZ centre(p.x / width, p.y / height, 0);
+                const floatXY centre(p.x / width, p.y / height);
                 const Corner c(centre, blockSize, 0, 1); 
                 debug(6) << c;
                 corners.push_back(c);
