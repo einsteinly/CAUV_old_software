@@ -24,20 +24,38 @@ class BlobNode: public Node{
         }
 
     protected:
+        struct findBlobs: boost::static_visitor<cvb::CvBlobs> {
+            public:
+            cvb::CvBlobs operator()(const cv::Mat mat) const {
+                return getBlobs(mat);
+            }
+            cvb::CvBlobs operator()(const NonUniformPolarMat pmat) const {
+                return getBlobs(pmat.mat);
+            }
+            cvb::CvBlobs operator()(const PyramidMat pymat) const {
+                throw parameter_error("pyramidal images not supported");
+            }
+            private:
+            cvb::CvBlobs getBlobs(cv::Mat mat) const {
+                cv::Mat labelimg(mat.size(), cv::DataType<cvb::CvLabel>::type);
+                IplImage label_ipl = labelimg;
+                //IplImage *labelimg = cvCreateImage(img.size(), IPL_DEPTH_LABEL, 1);
+                IplImage in_image = mat;
+                cvb::CvBlobs blobs;
+                cvb::cvLabel(&in_image, &label_ipl, blobs);
+                return blobs;
+            }
+        };
         void doWork(in_image_map_t& inputs, out_map_t& r){
-            cv::Mat img = inputs["channel (not copied)"]->mat();
-            IplImage *labelimg = cvCreateImage(img.size(), IPL_DEPTH_LABEL, 1);
-            IplImage in_image = img;
             cvb::CvBlobs blobs;
-            const int max_value=255;
             try {
-                cvb::cvLabel(&in_image, labelimg, blobs);
-            }catch(cv::Exception& e){
+                augmented_mat_t m = inputs["channel (not copied)"]->augmentedMat();
+                blobs = boost::apply_visitor(findBlobs(), m);
+            } catch(cv::Exception& e) {
                 error() << "BlobNode:\n\t"
                         << e.err << "\n\t"
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
-            cvReleaseImage(&labelimg);
             cvb::cvFilterByArea(blobs, param<int>("min_area"), 100000);
             std::vector<Ellipse> kps;
             kps.reserve(blobs.size());

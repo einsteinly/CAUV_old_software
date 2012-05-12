@@ -74,8 +74,7 @@ add_custom_target (python-module ALL
     COMMENT "Python module target: depending on .py files"
 )
 
-string(TOLOWER "${CMAKE_BUILD_TYPE}" CAUV_INTERFACE_DEST_FOLDER )
-install(TARGETS cauvinterface LIBRARY DESTINATION ${CAUV_PYTHON_INSTALL_PATH}/${CAUV_INTERFACE_DEST_FOLDER})
+install(TARGETS cauvinterface LIBRARY DESTINATION ${CAUV_PYTHON_INSTALL_PATH})
 install(DIRECTORY ${SRCD}/cauv DESTINATION ${CAUV_PYTHON_INSTALL_PATH}
         FILES_MATCHING PATTERN "*.py")
 

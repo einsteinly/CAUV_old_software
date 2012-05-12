@@ -22,20 +22,20 @@ class script(aiScript):
         self.last_set = None
         self.heading_to = None
     def run(self):
-        self.waypoints = (vec(0,0), vec(4.5,4.5), vec(-4.5,-6))
-        #while True:
-            #ans = raw_input('Mark waypoint (y/n)')
-            #if ans == 'y':
-                #self.waypoints.append(self.auv.position)
-                #self.last_set = self.auv.position
-            #elif ans == 'n':
-                #break
-            #else:
-                #debug("Didn't enter valid answer")
+        #self.waypoints = (vec(0,0), vec(4.5,4.5), vec(-4.5,-6))
+        while True:
+            ans = raw_input('Mark waypoint (y/n)')
+            if ans == 'y':
+                self.waypoints.append(self.auv.position)
+                self.last_set = self.auv.position
+            elif ans == 'n':
+                break
+            else:
+                debug("Didn't enter valid answer")
         debug("Waypoints were set at "+str(self.waypoints))
         if self.auv.position == None:
             #no position data, wait for broadcast
-            time.sleep(1.0)
+            time.sleep(5.0)
             if self.auv.position == None:
                 #if still none, then give up (since clearly not getting location
                 return 'FAILURE'
