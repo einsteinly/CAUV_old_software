@@ -15,6 +15,7 @@
 #include "manager.h"
 
 #include <QGraphicsScene>
+#include <QGraphicsView>
 #include <QTimer>
 
 #include <boost/make_shared.hpp>
@@ -197,6 +198,13 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
     
     AnimationPermittedState(*this, false);
 
+    typedef QMap<QGraphicsView*,QGraphicsView::ViewportUpdateMode> view_updatestate_qmap;
+    view_updatestate_qmap saved_view_update_states;
+    foreach(QGraphicsView* view, m_scene->views()){
+        saved_view_update_states.insert(view, view->viewportUpdateMode());
+        view->setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
+    }
+
     // remove nodes that shouldn't exist
     node_id_map_t::right_iterator i;
     node_type_map_t::const_iterator j;
@@ -268,6 +276,10 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
     }
 
     _layoutSoonIfNothingHappens();
+
+    view_updatestate_qmap::const_iterator mi = saved_view_update_states.begin();
+    for(; mi != saved_view_update_states.end(); mi++)
+        mi.key()->setViewportUpdateMode(mi.value());
 }
 
 void Manager::onNodeParameters(NodeParametersMessage_ptr m){
