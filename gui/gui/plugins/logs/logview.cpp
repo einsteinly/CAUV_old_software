@@ -17,8 +17,8 @@
 
 #include <QTextEdit>
 
-#include <common/cauv_utils.h>
 #include <model/auv_model.h>
+#include <utility/foreach.h>
 
 using namespace cauv;
 

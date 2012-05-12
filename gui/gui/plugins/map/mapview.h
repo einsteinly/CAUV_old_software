@@ -66,8 +66,8 @@ namespace cauv {
         }
 
         Marble::GeoDataCoordinates position() const {
-            qreal lng = m_auv->sensors.location->latest().longitude();
-            qreal lat = m_auv->sensors.location->latest().latitude();
+            qreal lng = m_auv->sensors.location->latest().location().longitude;
+            qreal lat = m_auv->sensors.location->latest().location().latitude;
             qreal alt = 100;//m_auv->sensors.location->latest().altitude();
 
             info() << lat << lng << alt;

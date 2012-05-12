@@ -18,10 +18,9 @@
 #include "gamepad/xboxinput.h"
 #include "gamepad/gamepadinput.h"
 
-#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 #include <model/auv_model.h>
-
+#include <utility/foreach.h>
 
 using namespace cauv;
 

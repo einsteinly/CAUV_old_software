@@ -328,7 +328,12 @@ class ReIndexer(Indexer):
                         n_since_last_keyframe += 1
                     # TODO: merge this logic with the same from the Logger
                     # class:
-                    msgId = long(line[line.find(' '):line.find('(')])
+                    try:
+                        msgId = long(line[line.find(' '):line.find('(')])
+                    except ValueError:
+                        print('Strange line!')
+                        print(line)
+                        msgId = 333
                     t_range = recorded_msg_types.get(msgId, (record_time, record_time))
                     if record_time < t_range[0]:
                         t_range = (record_time, t_range[1])
@@ -1064,8 +1069,8 @@ def testLogCoverage(loops=200):
         l.log(m.TelemetryMessage(m.floatYPR(-23.5e6, -21,-0), -123.456))
         l.log(m.BatteryUseMessage(12.34,56.78,-0.000001))
         l.log(m.ProcessStatusMessage('\0some process', 'status\r', 100.0, 1.0e2, 0xffffffff))
-        l.log(m.LocationMessage(1.234567890123456789, 2.345678901234567890, 3.456789012345678901, m.floatXYZ(0,0,0)))
-        l.log(m.GPSLocationMessage(0.1,0.2,0.3,0.4,0.5,0.6))
+        l.log(m.LocationMessage(m.WGS84Coord(1.234567890123456789, 2.345678901234567890, 3.456789012345678901), m.floatXYZ(0,0,0)))
+        l.log(m.GPSLocationMessage(m.WGS84Coord(0.1,0.2,0.3),0.4,0.5,0.6))
         l.log(m.SonarLocationMessage(m.floatXY(-1,2)))
         # !!! TODO: images?
         #l.log(m.ImageMessage(m.CameraID.Forward,None,m.TimeStamp(0x7fffffff,-0x8000000)))

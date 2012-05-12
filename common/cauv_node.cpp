@@ -20,11 +20,10 @@
 #include <boost/filesystem.hpp>
 
 #include <utility/string.h>
-#include <common/cauv_global.h> 
+#include <common/cauv_logo.h> 
 
 #ifdef ZEROMQ_MESSAGING
 #include <common/zeromq/zeromq_mailbox.h>
-#include <common/zeromq/zeromq_mailbox_monitor.h>
 #else
 #include <common/spread/spread_rc_mailbox.h>
 #include <common/spread/mailbox_monitor.h>
@@ -34,9 +33,9 @@
 #include <generated/message_observers.h>
 #include <generated/types/DebugLevelMessage.h>
 #include <generated/types/MembershipChangedMessage.h>
+#include <utility/time.h>
 
 #include "cauv_node.h"
-#include "cauv_utils.h"
 #include "mailbox.h"
 
 using namespace cauv;
@@ -49,16 +48,16 @@ const static char Version_Information[] = {
 CauvNode::~CauvNode()
 {
     info() << "Shutting down node";
-    debug::setCauvNode(NULL);
     m_event_monitor->stopMonitoring();
 }
 
 void CauvNode::run(bool synchronous)
 {
-    cauv_global::print_module_header(m_name);
+    print_module_header(m_name);
     info() << "Module: " << m_name;
     info() << "Version:\n" << Version_Information;
 
+    m_running = true;
 #ifndef ZEROMQ_MESSAGING
     if (m_spread_mailbox) {
         m_spread_mailbox->connect(MakeString() << m_port << "@" << m_server, m_name);
@@ -66,10 +65,6 @@ void CauvNode::run(bool synchronous)
 #endif
     if(!synchronous)
         m_event_monitor->startMonitoringAsync();
-
-    debug::setCauvNode(this);
-
-    m_running = true;
 
     onRun();
 
@@ -92,10 +87,27 @@ void CauvNode::onRun()
 
 void CauvNode::joinGroup(std::string const& group)
 {
+    info() << "Group-based subscriptions are deprecated. Switch to subMessage() if possible";
     if(m_mailbox)
         m_mailbox->joinGroup(group);
     else
         error() << "CauvNode::joinGroup: no mailbox";
+}
+
+void CauvNode::subMessage(const Message &message)
+{
+    if (m_mailbox)
+        m_mailbox->subMessage(message);
+    else
+        error() << "CauvNode::subMessage: no mailbox";
+}
+
+void CauvNode::unSubMessage(const Message &message)
+{
+    if (m_mailbox)
+        m_mailbox->subMessage(message);
+    else
+        error() << "CauvNode::unSubMessage: no mailbox";
 }
 
 void CauvNode::addMessageObserver(boost::shared_ptr<MessageObserver> o)
@@ -150,7 +162,7 @@ int CauvNode::defaultOptions()
 int CauvNode::parseOptions(int argc, char** argv)
 {
     if(argv && argc)
-        debug::setProgramName(boost::filesystem::path(argv[0]).leaf());
+        debug::setProgramName(boost::filesystem::path(argv[0]).leaf().native());
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
     po::positional_options_description pos;
@@ -170,8 +182,10 @@ void CauvNode::addOptions(boost::program_options::options_description& desc,
     namespace po = boost::program_options;
     desc.add_options()
         ("help,h", "Print this help message")
+#ifndef ZEROMQ_MESSAGING
         ("server,s", po::value<std::string>(&m_server)->default_value("localhost"), "Spread server address for messages")
         ("port,p", po::value<unsigned int>(&m_port)->default_value(16707), "Spread server port for messages")
+#endif
         ("version,V", "show version information")
     ;
 }
@@ -200,9 +214,9 @@ void CauvNode::stopNode(){
 CauvNode::CauvNode(const std::string& name)
     : m_name(name),
 #ifdef ZEROMQ_MESSAGING
-      m_zeromq_mailbox(boost::make_shared<ZeroMQMailbox>()),
+      m_zeromq_mailbox(boost::make_shared<ZeroMQMailbox>(name)),
       m_mailbox(m_zeromq_mailbox),
-      m_event_monitor(boost::make_shared<ZeroMQMailboxEventMonitor>(m_zeromq_mailbox)),
+      m_event_monitor(m_zeromq_mailbox),
 #else
       m_spread_mailbox(boost::make_shared<ReconnectingSpreadMailbox>()),
       m_mailbox(m_spread_mailbox),
@@ -213,6 +227,6 @@ CauvNode::CauvNode(const std::string& name)
     debug::setProgramName(name);
     
     addMessageObserver(boost::make_shared<DBGLevelObserver>());
-    joinGroup("debug");
+    subMessage(DebugLevelMessage());
 }
 

@@ -9,11 +9,7 @@ import contextlib
 import shelve
 import traceback
 import argparse
-
-Default_Groups_To_Join = (
-    'control',
-    'sonarctl'
-)
+import time
 
 Default_Messages_To_Watch = (
     'BearingAutopilotParams',
@@ -26,6 +22,12 @@ Default_Messages_To_Watch = (
     'GeminiControl'
 )
 
+# Consider messages with different values in ID fields to be different
+# messages:
+Message_ID_Fields = {
+    'SetMotorMap': 'motor'
+}
+
 Ignore_Message_Attrs = (
     'group',
     'chil',
@@ -34,9 +36,12 @@ Ignore_Message_Attrs = (
 
 def sendSavedMessages(node, shelf):
     info('restoring saved settings...')
-    for msg_name in shelf:
+    for mad_id in shelf:
+        msg_name = mad_id.split(':')[0]
+        if not msg_name in Default_Messages_To_Watch:
+            continue
         try:
-            attrs = shelf[msg_name]
+            attrs = shelf[mad_id]
             info('restoring saved %s: %s' % (msg_name, attrs))
             m = dictToMessage(msg_name, attrs)
             node.send(m)
@@ -65,22 +70,26 @@ class OnAnyMessage:
         self.shelf = shelf
     def onMessage(self, m):
         debug('onMessage expect %sMessage have %s' % (self.message_name, m))
-        self.shelf[self.message_name] = dictFromMessage(m)
+        if self.message_name in Message_ID_Fields: 
+            msg_id_field = getattr(m, str(Message_ID_Fields[self.message_name]))
+            save_as_id = "%s:%s" % (self.message_name, msg_id_field)
+        else:
+            save_as_id = self.message_name
+        self.shelf[save_as_id] = dictFromMessage(m)
         # don't take any chances
         self.shelf.sync()
 
 class PersistObserver(msg.MessageObserver):
-    def __init__(self, node, shelf, groups, watch_list, auto):
+    def __init__(self, node, shelf, watch_list, auto):
         msg.MessageObserver.__init__(self)
         self.__node = node
         self.__shelf = shelf
         self.__auto = auto
         if auto:
-            node.join('membership') 
-        for group in groups:
-            node.join(group)
+            node.subMessage(msg.MembershipChangedMessage())
         for message in watch_list:
             debug('Listening for %s messages' % message)
+            node.subMessage(getattr(msg, message+'Message')())
             self.attachOnMessageFunc(message)
         node.addObserver(self)
 
@@ -96,28 +105,31 @@ class PersistObserver(msg.MessageObserver):
         func = OnAnyMessage(name, self.__shelf).onMessage
         setattr(self, 'on%sMessage' % name, func)
 
-def persistMainLoop(cauv_node, shelf, auto):
-    po = PersistObserver(cauv_node, shelf, Default_Groups_To_Join,
-                         Default_Messages_To_Watch, auto)
+def persistMainLoop(cauv_node, shelf, auto, silent = False):
+    po = PersistObserver(cauv_node, shelf, Default_Messages_To_Watch, auto)
     help_str = 'available commands: "set" - broadcast saved '+\
                'parameters, "exit" - stop monitoring and exit, '+\
                '"auto on" / "auto off" - control automatic ' +\
                'parameter broadcast on membership change'
     try:
-        print help_str
-        while True:
-            s = raw_input('\n> ')
-            s = s.lower().strip()
-            if s == 'exit':
-                break
-            elif s == 'set':
-                sendSavedMessages(cauv_node, shelf)
-            elif s == 'auto on':
-                po.setAuto(True)
-            elif s == 'auto off':
-                po.setAuto(False)
-            else:
-                print help_str
+        if silent:
+            while True:
+                time.sleep(10000)
+        else:
+            print help_str
+            while True:
+                s = raw_input('\n> ')
+                s = s.lower().strip()
+                if s == 'exit':
+                    break
+                elif s == 'set':
+                    sendSavedMessages(cauv_node, shelf)
+                elif s == 'auto on':
+                    po.setAuto(True)
+                elif s == 'auto off':
+                    po.setAuto(False)
+                else:
+                    print help_str
 
     except KeyboardInterrupt:
         pass
@@ -151,6 +163,8 @@ if __name__ == '__main__':
     p.add_argument('-n', '--no-auto', dest='auto', default=True,
                  action='store_false', help="don't automatically set parameters" +\
                  "when CAUV Nodes connect to the messaging system")
+    p.add_argument('-s', '--silent', action='store_true',
+                  help="don\'t prompt for commands")
 
     opts, args = p.parse_known_args()
 
@@ -159,9 +173,4 @@ if __name__ == '__main__':
     
     if opts.restore:
         sendSavedMessages(cauv_node, shelf)
-    try:
-        persistMainLoop(cauv_node, shelf, opts.auto)
-    finally:
-        print 'finally...'
-        cauv_node.stop()
-
+    persistMainLoop(cauv_node, shelf, opts.auto, opts.silent)

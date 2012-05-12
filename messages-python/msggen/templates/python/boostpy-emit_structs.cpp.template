@@ -1,0 +1,61 @@
+/* Copyright 2011 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ * 
+ * See license.txt for details.
+ * 
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
+/***  This is a generated file, do not edit ***/
+\#include "workarounds.h" // _must_ be first
+\#include <boost/python.hpp>
+
+\#include "emit_generated.h"
+#for $s in $structs
+\#include <generated/types/${s.name}.h>
+#end for
+
+namespace bp = boost::python;
+using namespace cauv;
+
+#for $s in $structs
+struct ${s.name}Pickler: bp::pickle_suite{
+    static bp::tuple getinitargs(${s.name} const& #if $len($s.fields)#a#end if#){
+        return bp::make_tuple(
+            #for $i, $f in enumerate($s.fields)#a.${f.name}#if $i != $len($s.fields) - 1#,#end if# #end for
+        );
+    }
+};
+#end for
+
+void emitStructs(){
+#for $s in $structs
+    bp::class_<${s.name}/*,
+               boost::shared_ptr<${s.name}>*/
+              >("${s.name}")
+        #if $len($s.fields) != 0
+        ## Keyword constructor (still needs all the keys
+        .def( bp::init< #for $i, $f in enumerate($s.fields)#$toCPPType($f.type)#if $i != $len($s.fields) - 1#,#end if# #end for#>( (
+            #for $i, $f in enumerate($s.fields)
+                bp::arg("$f.name")#if $i != $len($s.fields) - 1#,#end if#
+            #end for
+            ) )
+        )
+        #end if
+        .def(bp::self_ns::str(bp::self_ns::self))
+        .def(bp::self_ns::repr(bp::self_ns::self))
+        .def_pickle(${s.name}Pickler())
+        #for $f in $s.fields
+        .def_readwrite("${f.name}", &$s.name::$f.name)
+        #end for
+    ;
+
+#end for
+}
+

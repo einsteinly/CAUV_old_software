@@ -1,30 +1,18 @@
-# required libraries:
-find_package (OpenCV REQUIRED)
-
 option(CAUV_ZEROMQ_MESSAGING "use zeromq for messaging instead of spread" OFF)
-option(CAUV_ZMQ3 "use zmq3 for zeromq" OFF)
 if(CAUV_ZEROMQ_MESSAGING)
-    if(CAUV_ZMQ3)
-        add_subdirectory(zeromq3)
-    else()
-        add_subdirectory(zeromq)
-    endif()
+    add_subdirectory(zeromq)
     add_definitions(-DZEROMQ_MESSAGING)
 else()
     add_subdirectory(spread)
 endif()
 
-add_subdirectory(supermess)
+add_subdirectory(msg_classes)
 
 set (
     common_files
 
-    cauv_global.cpp
+    cauv_logo.cpp
     cauv_node.cpp
-    cauv_utils.cpp
-    image.cpp
-    math.cpp
-    #random.cpp
 )
 
 set (
@@ -32,15 +20,16 @@ set (
 
     messages
     cauv_debug
-    ${OpenCV_LIBS}
+    utility
     boost_thread
     boost_date_time
     boost_iostreams
     boost_signals
     boost_program_options
+    special_messages
 )
 
-if (ZEROMQ_MESSAGING)
+if (CAUV_ZEROMQ_MESSAGING)
     list(APPEND common_links zeromq_msg)
 else()
     list(APPEND common_links spread_msg)

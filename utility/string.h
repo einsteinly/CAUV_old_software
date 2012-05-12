@@ -17,6 +17,7 @@
 
 #include <sstream>
 #include <string>
+#include <set>
 
 #include <boost/cstdint.hpp>
 
@@ -76,6 +77,10 @@ T fromStr(const char* v){
     T t;
     s >> t;
     return t;
+}
+
+namespace cauv {
+std::string implode( const std::string &glue, const std::set<std::string> &pieces );
 }
 
 #endif // ndef __CAUV_UTILITY_STRING_H__

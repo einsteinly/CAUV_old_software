@@ -4,9 +4,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <common/conic_section.h>
-#include <common/random.h>
-
+#include <utility/conic_section.h>
+#include <utility/random.h>
 
 namespace { // Anonymous namespace
 
@@ -75,7 +74,7 @@ namespace { // Anonymous namespace
                 std::vector<cv::Point> sample;
                 sample = cauv::randomSubset(edgePoints, n);
 
-                cv::RotatedRect ellipseSampleFit = fitEllipse(sample);
+                cv::RotatedRect ellipseSampleFit = cv::fitEllipse(cv::Mat(sample));
                 // Normalise ellipse to have width as the major axis.
                 if (ellipseSampleFit.size.height > ellipseSampleFit.size.width)
                 {
@@ -149,7 +148,7 @@ namespace { // Anonymous namespace
                     }
 
                     // Refit ellipse to inliers
-                    ellipseInlierFit = fitEllipse(inliers);
+                    ellipseInlierFit = cv::fitEllipse(cv::Mat(inliers));
                     conicInlierFit = ConicSection(ellipseInlierFit);
 
                     // Normalise ellipse to have width as the major axis.

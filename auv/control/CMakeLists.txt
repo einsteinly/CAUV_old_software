@@ -25,7 +25,6 @@ cauv_install ( control )
 # libs
 target_link_libraries (
     control
-    cauv_debug
 
     boost_serialization
     common
@@ -34,7 +33,7 @@ target_link_libraries (
     pthread
     ${ftdi_LIBRARIES}
 
-	SbgComSerial
-	boost_thread
+    SbgComSerial
+    boost_thread
 )
 depends_on_messages(control)

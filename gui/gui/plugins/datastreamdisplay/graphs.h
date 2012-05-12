@@ -20,8 +20,8 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <common/data_stream.h>
-#include <common/data_stream_tools.h>
+#include <utility/data_stream.h>
+#include <utility/data_stream_tools.h>
 
 #include <gui/core/datastreamdragging.h>
 

@@ -10,9 +10,7 @@
 
 #include <utility/string.h>
 #include <utility/rounding.h>
-#include <common/cauv_global.h>
-#include <common/cauv_utils.h>
-#include <common/math.h>
+#include <utility/math.h>
 #include <common/mailbox.h>
 #include <debug/cauv_debug.h>
 #include <generated/types/TimeStamp.h>
@@ -565,7 +563,7 @@ class ControlLoops : public MessageObserver, public IMUObserver
             
             double test_values[] = {-200, -150, -100, -50, -4, 0, 3, 50, 100, 150, 200};
             for(int i = 0; i < 11; i++)
-                debug() << "new map example: " << test_values[i] << "->" << motorMap(test_values[i], m->motor());
+                debug(5) << "new map example: " << test_values[i] << "->" << motorMap(test_values[i], m->motor());
         }
 
     private:
@@ -675,10 +673,10 @@ class ControlLoops : public MessageObserver, public IMUObserver
                 oldvalue = newvalue;
                 if(m_mcb){
                     if(mid == MotorID::Prop)
-                        m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                        m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
                     // VBow is the wrong way around, this set-up is for the
                     // ducts to be on the bottom, as set on Red Herring on 22/3/2012
-                    if(mid != MotorID::VBow)
+                    else if(mid != MotorID::VBow)
                         m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
                     else
                         m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
@@ -714,9 +712,9 @@ class DeviceControlObserver : public MessageObserver
         {
             m_mcb = mcb;
         }
-        void set_xsens(boost::shared_ptr<IMU> xsens)
+        void set_imu(boost::shared_ptr<IMU> imu)
         {
-            m_xsens = xsens;
+            m_imu = imu;
         }
         
         virtual void onLightMessage(LightMessage_ptr m)
@@ -741,18 +739,17 @@ class DeviceControlObserver : public MessageObserver
 
         virtual void onCalibrateNoRotationMessage(CalibrateNoRotationMessage_ptr m)
         {
-      /*      if (m_xsens) {
-                m_xsens->calibrateNoRotation(m->duration());
+            boost::shared_ptr<XsensIMU> xsens = boost::dynamic_pointer_cast<XsensIMU>(m_imu);
+            if (xsens) {
+                xsens->calibrateNoRotation(m->duration());
             }
             else
                 warning() << "Tried to perform no rotation calibration, but there's no XSens";
-*/
-#warning calibration commented out
         }
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
-        boost::shared_ptr<IMU> m_xsens;
+        boost::shared_ptr<IMU> m_imu;
 };
 
 class TelemetryBroadcaster : public MessageObserver, public IMUObserver
@@ -895,7 +892,6 @@ ControlNode::ControlNode() : CauvNode("Control")
 {
     joinGroup("control");
     joinGroup("external");
-    addMessageObserver(boost::make_shared<DebugMessageObserver>(1));
 
     m_controlLoops = boost::make_shared<ControlLoops>(mailbox());
     addMessageObserver(m_controlLoops);
@@ -1099,7 +1095,7 @@ void ControlNode::onRun()
     }
 
     if (m_imu) {
-        m_deviceControl->set_xsens(m_imu);
+        m_deviceControl->set_imu(m_imu);
         
         m_imu->addObserver(boost::make_shared<DebugIMUObserver>(5));
         m_imu->addObserver(m_telemetryBroadcaster);

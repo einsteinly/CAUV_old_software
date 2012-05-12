@@ -74,6 +74,7 @@ if (${CAUV_BUILD_SIM})
         ${OSGVIEWER_LIBRARY}
         ${OSGGA_LIBRARY}
         ${OSGDB_LIBRARY}
+        ${OPENTHREADS_LIBRARY}
     )
         
 

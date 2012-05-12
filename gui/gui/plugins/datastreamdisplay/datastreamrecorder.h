@@ -17,7 +17,7 @@
 
 #include <QWidget>
 
-#include <common/data_stream_tools.h>
+#include <utility/data_stream_tools.h>
 
 #include "datastreamdisplay/ui_datastreamrecorder.h"
 

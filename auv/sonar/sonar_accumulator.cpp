@@ -22,8 +22,8 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <common/image.h>
-#include <common/math.h>
+#include <common/msg_classes/image.h>
+#include <utility/math.h>
 #include <debug/cauv_debug.h>
 #include <generated/types/SonarDataLine.h>
 #include <generated/types/PolarImage.h>
@@ -217,7 +217,7 @@ bool SonarAccumulator::setWholeImage(PolarImage const& image){
     const float cy = radius;
     const float bscale = radius * image.rangeConversion / image.rangeEnd;
 
-    debug() << "radius =" << radius << "rows=" << m.rows << "cols=" << m.cols << "rangeEnd=" << image.rangeEnd;
+    debug(2) << "radius =" << radius << "rows=" << m.rows << "cols=" << m.cols << "rangeEnd=" << image.rangeEnd;
 
     gem_cached.ensureTablesFor(bearing_bins);
 

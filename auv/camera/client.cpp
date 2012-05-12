@@ -18,9 +18,9 @@
 #include <boost/ref.hpp>
 
 #include <debug/cauv_debug.h>
-#include <common/cauv_utils.h>
 
 #include <generated/types/TimeStamp.h>
+#include <utility/string.h>
 
 #include "server_shared.h"
 

@@ -24,7 +24,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
-#include <common/cauv_utils.h>
 #include <utility/rounding.h>
 
 #include <boost/version.hpp>

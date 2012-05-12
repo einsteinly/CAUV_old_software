@@ -24,6 +24,7 @@
 
 #include <sonar/sonar_accumulator.h>
 #include <utility/bash_cout.h>
+#include <utility/rounding.h>
 
 #include <generated/types/SonarDataMessage.h>
 #include <generated/types/SonarImageMessage.h>

@@ -100,12 +100,16 @@ enum NodeType : int8 {
     FitEllipse,
     KMeansPoints,
     DrawEllipses,
+    Sobel,
+    Blob,
 }
 enum NodeStatus : int8 {
     None = 0,
     AllowQueue = 1,
     ExecQueued = 2,
-    Executing = 4
+    Executing = 4,
+    WaitingForSync = 8,
+    Bad = 16,
 }
 enum NodeInputStatus : int8 {
     Old = 0, New = 1, Invalid = 2
@@ -138,21 +142,32 @@ enum ScriptCommand : int8 {
     Pause,
 }
 enum SensorUIDBase : int32 {
-    // !!! TODO: support hex integer literals...
     None = 0,
-    Camera = 16,  // cameras are 0x10 +- ID: range [0x1--0x1F]
-    Sonar = 48,   // sonars are 0x20 + ID: range [0x20--0x3F]
-    Network = 80, // network is just 0x50, but has a reserved range
-    Multiple = 128, // multiple sources is just 0x70 (no reserved range)
-    File = 256,   // files are 0x100 += ?: range[0x100--0xFFF]
+    Camera =   0x10,  // cameras are 0x10 +- ID: range [0x1--0x1F]
+    Sonar =    0x20,   // sonars are 0x20 + ID: range [0x20--0x3F]
+    Network =  0x50, // network is just 0x50, but has a reserved range
+    Multiple = 0x70, // multiple sources is just 0x70 (no reserved range)
+    File =     0x100,   // files are 0x100 += ?: range[0x100--0xFFF]
 }
 
 struct floatYPR
 {
+    // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+    // Pitch = degrees UP from plane (- euler right->left axis)
+    // Roll  = degrees rolling to the right (euler back->front axis)
     yaw : float;
     pitch : float;
     roll : float;
 }
+// YPR is a stupid way of doing things, at some point, every YPR will be
+// replaced with this:
+//struct quat
+//{
+//    q0 : float; // imaginary x
+//    q1 : float; // imaginary y
+//    q2 : float; // imaginary z
+//    q3 : float; // real part
+//}
 struct floatXYZ
 {
     eq x : float;
@@ -163,6 +178,16 @@ struct floatXY
 {
     eq x : float;
     eq y : float;
+}
+struct LatLongAlt
+{
+    // note that the reference geoid, and how the latitude/longitude/altitude
+    // parameters are interpreted are actually defined by the base class.
+    // Currently there is only one base class: WGS84Coord, which uses these
+    // definitions:
+    latitude : double;  // degrees north
+    longitude : double; // degrees east
+    altitude : float;   // metres up
 }
 struct NodeInput
 {
@@ -201,7 +226,7 @@ struct NodeOutputArc
     eq dst : NodeInput;
     eq output : string;
 }
-struct TimeStamp
+struct TimeStamp <utility/time.h>
 {
     // TODO: either use a base other than 1970, or more bits to store the
     // seconds
@@ -228,7 +253,7 @@ struct PolarImage
     // Note that these are *bearings* not angles (ie, clockwise from forwards, not
     // anticlockwise from x axis (wherever that is...))
     bearing_bins: list<int32>;
-    // number of bins = round(rangeEnd-rangeStart) / rangeConversion)
+    // number of bins = round((rangeEnd-rangeStart) / rangeConversion)
     rangeStart: float;
     rangeEnd: float;
     // rangeConversion = length of 1 bin in metres
@@ -311,7 +336,7 @@ struct ScriptExecRequest
     id : string;
     seq : uint32;
 }
-struct UID
+struct UID <utility/uid.h>
 {
     eq cmp host : int32;   // unique (constant) per-host, eg IP address / end of MAC
     eq cmp sensor : int32; // unique (constant) per-sensor
@@ -343,8 +368,12 @@ struct DynamicEnum
     eq value : string;
     eq possible : list<string>;
 }
-class Image : <common/image.h>
-BoundedFloadBase subclass BoundedFloat : <common/bounded_float.h>
+
+//fmt_ver should be bumped if image serialisation format changes
+class BaseImage : <common/msg_classes/base_image.h> fmt_ver 1
+BoundedFloatBase subclass BoundedFloat : <common/msg_classes/bounded_float.h>
+LatLongAlt subclass WGS84Coord : <common/msg_classes/wgs84_coord.h>
+floatXYZ subclass NorthEastDepth : <common/msg_classes/north_east_depth.h>
 
 variant ParamValue
 {
@@ -360,19 +389,33 @@ variant ParamValue
     list<floatXY>,
     list<Ellipse>,
 }
-// !!! should generate this for each variant
-enum ParamValueType : int8 {
-    int32Type, floatType, stringType, boolType,
-    listCornerType, listLineType, listCircleType, listFloatType,
-    listKeyPointType,
-    BoundedFloatType,
-    listint32Type,
-    ImageRegionType,
-    RangeType,
-    floatXYType,
-    DynamicEnumType,
-    listFloatXYType,
-    listEllipseType,
+
+//these are zmq messaging specific
+group zmq_internal
+{ 
+    // These ids are reserved for internal messaging system and should not be sent
+    //  or changed without changing related zeromq code
+    message NodeIDMarker : 223
+    {
+    }
+    message DaemonIDMarker : 224
+    {
+    }
+
+    //these message ids aren't special like the 2 above
+    message DaemonConnections : 225
+    {
+        connect_strings : list<string>;
+    }
+    message DaemonConnected : 226
+    {
+        daemon_id: uint32;
+    }
+    message DaemonAnnounce : 227 
+    {
+        daemon_id: uint32;
+        connect_string : string;
+    }
 }
 
 group membership
@@ -501,6 +544,9 @@ group state
 {
     message State : 81
     {
+        // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+        // Pitch = degrees UP from plane (- euler right->left axis)
+        // Roll  = degrees rolling to the right (euler back->front axis)
         orientation : floatYPR;
     }
 }
@@ -509,6 +555,9 @@ group telemetry
 {
     message Telemetry : 3
     {
+        // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+        // Pitch = degrees UP from plane (- euler right->left axis)
+        // Roll  = degrees rolling to the right (euler back->front axis)
         orientation : floatYPR;
         depth : float;
     }
@@ -528,16 +577,12 @@ group telemetry
     }
     message Location : 88
     {
-        latitude : double;
-        longitude : double;
-        altitude : float;
+        location : WGS84Coord;
         speed : floatXYZ;
     }
     message GPSLocation : 89
     {
-        latitude : double;
-        longitude : double;
-        altitude : float;
+        location : WGS84Coord;
         track : float;
         speed: float;
         climb: float;
@@ -552,7 +597,7 @@ group image
     message Image : 4
     {
         source : CameraID;
-        lazy image : Image;
+        lazy image : BaseImage;
         time : TimeStamp;
     }
 }
@@ -816,6 +861,8 @@ group pl_gui
         pipelineName : string;
         nodeId : int32;
         status : NodeStatus;
+        throughput : float; // bits/second
+        frequency : float; // Hz
     }
 
     message InputStatus : 122
@@ -838,7 +885,7 @@ group pl_gui
     {
         pipelineName : string;
         nodeId : int32;
-        lazy image : Image;
+        lazy image : BaseImage;
     }
 }
 
@@ -967,10 +1014,13 @@ group simulation
 {
     message SimPosition : 800
     {
-        latitude : double;
-        longitude : double;
-        altitude : float;
+        location : WGS84Coord;
+
+        // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+        // Pitch = degrees UP from plane (- euler right->left axis)
+        // Roll  = degrees rolling to the right (euler back->front axis)
         orientation : floatYPR;
-        speed : floatXYZ;
+
+        speed : floatXYZ; // metres per second, some arbitrary local coordinate system: TODO: fix this!
     }
 }

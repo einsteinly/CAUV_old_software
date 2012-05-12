@@ -101,6 +101,13 @@ class bad_input_error: public img_pipeline_error{
         input_id m_iid;
 };
 
+class user_attention_error: public img_pipeline_error{
+    public:
+        user_attention_error(std::string const& str)
+            : img_pipeline_error("parameter error: " + str){
+        }
+};
+
 } // namespace imgproc
 } // namespace cauv
 

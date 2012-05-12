@@ -15,8 +15,8 @@
 #include "graphs.h"
 #include "datastreamdisplay/ui_graphs.h"
 
-#include <common/cauv_utils.h>
-#include <common/data_stream_tools.h>
+#include <utility/data_stream_tools.h>
+#include <utility/string.h>
 
 #include <boost/bind.hpp>
 

@@ -3,12 +3,14 @@
 # This module provides an as-user-friendly-as-possible wrapper around the
 # 'messaging' module (which exports the c++ messaging interface directly)
 #
-import threading
-import traceback
 from cauv import messaging
 from cauv.debug import debug, error, warning, info, setDebugName
 from utils import fileCached
+import threading
+import traceback
 import sys
+import os
+import atexit
 
 class Observer(messaging.MessageObserver):
     pass
@@ -30,61 +32,57 @@ def getVersionInfo():
     return (summary, diff)
 
 class Node(messaging.CauvNode):
-    def __init__(self, name, args = None):
+    def __init__(self, name, args = None, run_now = True):
         setDebugName(name)
         info('CAUV Python Node Initialisation...') 
+        messaging.CauvNode.__init__(self, name)
         try:
-            lc = getVersionInfo()[1]
-            if lc:
-                warning('Running with uncommitted local changes:\n%s' % lc)
+            if os.getenv('CAUV_SHUTUP') is not None:
+                lc = getVersionInfo()[1]
+                if lc:
+                    warning('Running with uncommitted local changes:\n%s' % lc)
         except IOError:
             # stupid OS X... apparently my os module was compiled wrong
             pass
-        messaging.CauvNode.__init__(self, name)
         if args is None:
             #this sets up default options
             self.parseOptions(sys.argv[0:1])
         else:
             self.parseOptions(sys.argv[0:1] + args)
-        
-        #''' # synchronous version (python starts a thread)
-        debug('CauvNode.__run thread...')   
-        self.__t = threading.Thread(target=self.__run)
-        # TODO: False?
-        self.__t.daemon = False
-        self.__t.start()
-        ''' blocks and calls back into onrun??
-        # asynchronous version (thread started in libcommon):
-        debug('CAUV Node: run asynchronous')
-        self.__callRunWithTryFinally(False)
-        '''
 
+        if run_now:
+            self.run(False)
     
-    def __callRunWithTryFinally(self, synchronous):
-         # synchronous = True => Consume this thread
-        try:
-            self.run(synchronous)
-        except:
-            error(traceback.format_exc())
-        finally:
-            self.stop()
-            debug('CAUV Node clearing up...')
-        debug('CAUV Node run thread exiting...')
-
     def stop(self):
         debug('stopping messaging thread...')
         messaging.CauvNode.stop(self)
         debug('joining messaging thread...')
-        #self.__t.join() can't join the current thread
+        try: 
+            self.__t.join()
+        except RuntimeError:
+            #tried to join current thread
+            pass
 
     def __run(self):
-        self.__callRunWithTryFinally(False)
-    
+        debug('cauv.Node running')   
+        atexit.register(self.stop)
+        try:
+            messaging.CauvNode.run(self,True)
+        except:
+            error(traceback.format_exc())
+            self.stop()
+        finally:
+            debug('CAUV Node stopped')
+
+    def run(self, synchronous = True):
+        if synchronous:
+            self.__run()
+        else:
+            self.__t = threading.Thread(target=self.__run)
+            self.__t.daemon = True
+            self.__t.start()
+
     def send(self, message, groups=None, service_level=messaging.MessageReliability.RELIABLE_MSG):
         if groups == None:
             groups = message.group
         self.mailbox.send(message, service_level, groups)
-    
-    #def receive(self, timeout):
-    #    return self.mailbox.receive(timeout)
-

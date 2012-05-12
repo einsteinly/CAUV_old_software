@@ -33,25 +33,31 @@ add_dependencies(scripting python-module)
 
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 set (RCFILE ${CAUV_SOURCE_DIR}/pylint.rc)
+set (PYLINT_M ${CMAKE_CURRENT_BINARY_DIR}/pylint_m)
 file (GLOB PY_FILES "${SRCD}/*.py")
 file (GLOB EXTRA_PY_FILES "${SRCD}/*/*.py")
-add_custom_target(
-    run-pylint-scripting ALL
+
+add_custom_command(
+    OUTPUT ${PYLINT_M}
     DEPENDS ${PY_FILES}
-    COMMAND pylint -E --rcfile=${RCFILE} ${PY_FILES} ${EXTRA_PY_FILES} || true
+    COMMAND touch ${PYLINT_M} && pylint -E --rcfile=${RCFILE} ${PY_FILES} ${EXTRA_PY_FILES} || true
     WORKING_DIRECTORY ${SRCD}    
     COMMENT "running pylint on scripting/*.py"
     SOURCES ${PY_FILES}
+)
+add_custom_target (
+    run-pylint-scripting ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pylint_m
 )
 
 set (MSGD ${SRCD}/../../messages-python/)
 set (CHILD ${SRCD}/utils/childecode/)
 add_custom_target (childecode
-    DEPENDS ${MSGD}/messages.msg  ${CHILD}/decode.py.template ${SRCD}/../../.hg
-    COMMAND ${MSGD}/msggen.py -l chil -o ${CHILD} -t ${CHILD} ${MSGD}/messages.msg || true
+    DEPENDS ${MSGS}  ${CHILD}/decode.py.template ${SRCD}/../../.hg
+    COMMAND ${MSGD}/msggen.py -l chil -o ${CHILD} -t ${CHILD} ${MSGS} || true
     WORKING_DIRECTORY ${SRCD}
     COMMENT "generating decode_{HG_CHANGESET}.py for CHIL"
-    SOURCES ${MSGD}/messages.msg  ${CHILD}/decode.py.template
+    SOURCES ${MSGS}  ${CHILD}/decode.py.template
 )
 
 

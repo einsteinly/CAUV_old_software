@@ -28,6 +28,8 @@ if (CAUV_DEBUG_MESSAGES)
     add_definitions(-DCAUV_DEBUG_MESSAGES)
 endif()
 
+option(CAUV_BUILD_TESTS "Build test programs" ON)
+
 # Definitions (overridable) for Debug / Release
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG CAUV_DEBUG_LEVEL=1)
 
@@ -94,38 +96,21 @@ set (LIBS ${LIBS} ${Boost_LIBRARIES})
 include_directories (SYSTEM ${Boost_INCLUDE_DIRS})
 link_directories (${Boost_LIBRARY_DIRS})
 
-if (Boost_VERSION GREATER 104500)
-    message (STATUS "Warning: forcing use of boost filesystem version 2")
-    add_definitions (-DBOOST_FILESYSTEM_VERSION=2)
-endif()
+add_definitions (-DBOOST_FILESYSTEM_VERSION=3)
 
+find_package (TBB REQUIRED)
+include_directories (SYSTEM ${TBB_INCLUDE_DIRS})
+link_directories (${TBB_LIBRARY_DIRS})
 
-add_subdirectory (messages-python)
+add_subdirectory (messages-python/msggen)
 
 set (GEND "${CMAKE_BINARY_DIR}/generated")
 set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
-execute_process(
-    COMMAND ${PYMSGD}/msggen.py -l "c++" -an -o ${GEND} ${PYMSGD}/messages.msg
-    OUTPUT_VARIABLE CAUV_MESSAGE_FILES
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
+set (MSGS ${CAUV_SOURCE_DIR}/messages-python/messages.msg)
 macro(depends_on_messages TARGET)
-    foreach(F IN LISTS CAUV_MESSAGE_FILES)
-        file(RELATIVE_PATH FREL "${CMAKE_CURRENT_SOURCE_DIR}" "${F}")
-        set_source_files_properties("${FREL}"
-                                    PROPERTIES GENERATED TRUE)
-    endforeach()
     add_dependencies(${TARGET} messages-gen)
     include_directories(${GEND}/..)
 endmacro()
-
-
-foreach(F IN LISTS CAUV_MESSAGE_FILES)
-    if(${F} MATCHES ".*\\.h")
-        list(APPEND CAUV_MESSAGE_HEADERS ${F})
-    endif()
-endforeach()
 
 add_subdirectory (generated)
 add_subdirectory (common)

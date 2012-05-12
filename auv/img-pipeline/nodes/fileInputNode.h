@@ -97,6 +97,7 @@ class FileInputNode: public AsynchronousNode{
                     if(image.empty()){
                         debug() << "video stream seems to have finished";
                         closeVideo();
+                        throw user_attention_error("video steam has finished");
                     }
                 }
             }else{
@@ -107,9 +108,9 @@ class FileInputNode: public AsynchronousNode{
                 // continue until the directory is exhausted, or an image is
                 // successfully loaded
                 for(; m_iter != end; m_iter++){
-                    debug(4)  << "considering path:" << m_iter->string();
+                    debug(4)  << "considering path:" << m_iter->path().native();
                     if(!boost::filesystem::is_directory(m_iter->status())) {
-                        image = readImage(m_iter->string(), false);
+                        image = readImage(m_iter->path().native(), false);
                         if (!image.empty())
                         {
                             m_iter++;
@@ -121,6 +122,8 @@ class FileInputNode: public AsynchronousNode{
                     warning() << "no images in directory" << fname;
                 // NB: allowQueue not cleared
             }
+            if(image.rows == 0 || image.cols == 0)
+                throw user_attention_error("invalid image:" + fname);
             r.internalValue("image") = boost::make_shared<Image>(image, now(), mkUID(SensorUIDBase::File + m_instance_num, ++m_seq));
         }
 

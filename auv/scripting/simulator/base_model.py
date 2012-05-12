@@ -4,23 +4,23 @@
 import datetime
 import threading
 import time
+import math
 
 # Third Party Modules
-# unfortunately this requires numpy...
-from Quaternion import Quat # BSD licensed: http://pypi.python.org/pypi/Quaternion/
 import numpy as np # BSD-type license
 
 # CAUV Modules
 from utils import coordinates
+from utils.quaternion import Quaternion
 import cauv
 import cauv.messaging as messaging
 from cauv.debug import debug, error, warning, info
 from utils.hacks import tdToFloatSeconds
 
-
 # If there exists a python rigid body dynamics simulator that actually works,
 # please use that instead of dealing directly with quaternions!
 
+'''
 # Note about our use of Quat: the library is geared up for astronomical angles
 # (right ascension, declination, roll), we map this directly to yaw, pitch,
 # roll when using the three-element constructor or anything else dealing with
@@ -42,6 +42,83 @@ def globalYaw(q):
     while global_yaw < 0:
         global_yaw += 360
     return global_yaw
+'''
+
+def mkVec(x, y, z):
+    return np.array((x, y, z))
+
+def angleMean(angle_sequence):
+    sins = map(math.sin, angle_sequence)
+    coss = map(math.cos, angle_sequence)
+    n = len(angle_sequence)
+    r = math.atan2(sum(sins)/n,sum(coss)/n)
+    if r < 0:
+        r += 2*math.pi
+    return r
+
+def yawFromxy(x, y):
+    yaw_according_to_x = math.atan2(x[1],x[0])
+    yaw_according_to_y = math.atan2(-y[0],y[1])
+    return angleMean((yaw_according_to_x, yaw_according_to_y))
+
+def pitchFromxzZ(x, z, Z):
+    x_cross_Z = np.cross(x,Z)
+    len_x_cross_Z = sum(x_cross_Z**2)**0.5
+    if len_x_cross_Z < 1e-6:
+        warning('gimbal lock!')
+        return 0
+    return math.atan2(np.dot(z,x_cross_Z/len_x_cross_Z),np.dot(z,Z))
+
+def rollFromyzZ(y, z, Z):
+    y_cross_Z = np.cross(y,Z)
+    len_y_cross_Z = sum(y_cross_Z**2)**0.5
+    if len_y_cross_Z < 1e-6:
+        warning('gimbal lock!')
+        return 0
+    return math.atan2(np.dot(z,y_cross_Z/len_y_cross_Z),np.dot(z,Z))
+
+def calculateYPRRadians(q):
+    '''Return (Yaw, Pitch, Roll) in radians. This is substantially faster (but equivalent) to using the individual methods.'''
+    X = np.array((1,0,0))
+    Y = np.array((0,1,0))
+    Z = np.array((0,0,1))
+    x = q.rotate(X, mkVec)
+    y = q.rotate(Y, mkVec)
+    z = q.rotate(Z, mkVec)
+    yaw = yawFromxy(x, y)
+    pitch = pitchFromxzZ(x, z, Z)
+    roll = rollFromyzZ(y, z, Z)
+    return (yaw, pitch, roll)
+
+def calculateYaw(q):
+    '''Angle in radians about global Z axis (down->up)'''
+    X = np.array((1,0,0))
+    Y = np.array((0,1,0))
+    x = q.rotate(X, mkVec)
+    y = q.rotate(Y, mkVec)
+    return yawFromxy(x, y)
+
+def calculateRoll(q):
+    '''Angle from horizontal in radians about local y axis (back->front)'''
+    Y = np.array((0,1,0))
+    Z = np.array((0,0,1))
+    y = q.rotate(Y, mkVec)
+    z = q.rotate(Z, mkVec)
+    return rollFromyzZ(y,z,Z)
+
+def calculatePitch(q):
+    '''Angle from horizontal in radians about local x axis (left->right): positive is up!'''
+    X = np.array((1,0,0))
+    Z = np.array((0,0,1))
+    x = q.rotate(X, mkVec)
+    z = q.rotate(Z, mkVec)
+    return pitchFromxzZ(x,z,Z)
+
+def orientationToYPR(q):
+    '''Calculate the yaw, pitch and roll implied by a quaternion, and convert them to degrees'''
+    yaw, pitch, roll = calculateYPRRadians(q)
+    # NB: converting to our silly on-the-wire angle format here
+    return messaging.floatYPR(360-math.degrees(yaw), math.degrees(pitch), math.degrees(roll))
 
 class MotorStates(object):
     def __init__(self):
@@ -56,29 +133,39 @@ class MotorStates(object):
         return 'p=%4s hb=%4s hs=%4s vb=%4s vs=%4s' % (self.Prop, self.HBow, self.HStern, self.VBow, self.VStern)
 
 class Model(messaging.MessageObserver):
-    def __init__(self, node):
+    def __init__(self, node, profile=False):
         messaging.MessageObserver.__init__(self)
         self.node = node
+        self.profile = profile
         self.update_frequency = 10.0
         self.datum = coordinates.Simulation_Datum
-
+        
+        # displacement in x (East), y (North), z (Altitude)
         self.displacement = np.array((0.0,0.0,-5))
         self.velocity = np.array((0.0,0.0,0.0))
         
-        # Note that Quat uses degrees, NOT radians, (which is what we want)
-        # the yaw component is the LOCAL YAW (about the LOCAL z axis)
-        self.orientation = Quat((0.0,0.0,0.0)) # init from yaw,roll,pitch=0
-        self.angular_velocity = np.array((0.0,0.0,0.0)) # dYaw/dt, dRoll/dt, dPitch/dt
+        # Rotation applied from East,North,Altitude coordinate system to the vehicle
+        # euler angles = (pitch, roll, -yaw)
+        self.orientation = Quaternion.fromEuler(
+            (math.radians(0), math.radians(0), math.radians(0))
+        )
+        #print math.degrees(calculatePitch(self.orientation))
+        #assert(44 < math.degrees(calculatePitch(self.orientation)) < 46)
+        #print math.degrees(calculateYaw(self.orientation))
+        #assert(89 < math.degrees(calculateYaw(self.orientation)) < 91)
+
+        # In the vehicle-local coordinate system:
+        self.angular_velocity = np.array((0.0,0.0,0.0)) # about x, about y, about z
 
         self.motor_states = MotorStates()
 
         self.update_lock = threading.Lock()
 
-        self.thread = threading.Thread(target = self.runLoop)
+        self.thread = threading.Thread(target = self.runLoopWrapper)
         self.thread.daemon = False
         self.keep_going = True
 
-        node.join("gui")
+        node.subMessage(messaging.MotorStateMessage())
         node.addObserver(self)
 
     def start(self):
@@ -86,6 +173,12 @@ class Model(messaging.MessageObserver):
     def stop(self):
         self.keep_going = False
         self.thread.join()
+    def runLoopWrapper(self):
+        if self.profile:
+            import cProfile as profile
+            profile.runctx('self.runLoop()', globals(), locals(), 'sim.profile')
+        else:
+            self.runLoop()
     def runLoop(self):
         tprev = datetime.datetime.now()
         tdelta = datetime.timedelta(seconds=1.0/self.update_frequency)
@@ -100,7 +193,7 @@ class Model(messaging.MessageObserver):
                 time.sleep(tdToFloatSeconds(tprev + tdelta - tnow))
 
     def onMotorStateMessage(self, m):
-        debug(str(m))
+        debug(str(m), 5)
         if not self.keep_going:
             return
         self.update_lock.acquire()
@@ -121,11 +214,19 @@ class Model(messaging.MessageObserver):
         raise NotImplementedError('derived classes must implement this')
 
     def position(self):
-        r = self.datum + self.displacement
+        self.update_lock.acquire()        
+        ned = coordinates.NorthEastDepthCoord(
+            self.displacement[1], self.displacement[0], -self.displacement[2]
+        )
+        ori = self.orientation
+        vel = self.velocity
+        self.update_lock.release()
+        debug('%s' % ned, 3)
+        r = self.datum + ned
         return float(r.latitude),\
                float(r.longitude),\
                float(r.altitude),\
-               quatToYPR(self.orientation),\
-               messaging.floatXYZ(*(float(x) for x in self.velocity))
+               orientationToYPR(ori),\
+               messaging.floatXYZ(*(float(x) for x in vel))
 
 

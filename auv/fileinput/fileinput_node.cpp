@@ -23,10 +23,9 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <common/cauv_global.h>
-#include <common/cauv_utils.h>
 #include <common/mailbox.h>
-#include <generated/messages.h>
+#include <generated/types/ImageMessage.h>
+#include <generated/message_observers.h>
 #include <debug/cauv_debug.h>
 
 using namespace cauv;

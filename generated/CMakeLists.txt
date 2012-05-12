@@ -1,6 +1,22 @@
 # abbreviate a little:
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 
+if(NOT EXISTS ${GEND}/message_files.cmake)
+    file(WRITE ${GEND}/message_files.cmake "")
+endif()
+
+set(GEN_CMAKE_CMDLINE ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${MSGS} 
+    --cmake-out ${GEND}/message_files.cmake --cmake-prefix CAUV_MESSAGE -m ${GEND}/msggen_marker)
+
+execute_process(COMMAND ${GEN_CMAKE_CMDLINE})
+
+add_custom_target (messages-gen
+    ${GEN_CMAKE_CMDLINE}
+    COMMENT "Running msggen.py for C++ messages"
+)
+
+include(${GEND}/message_files.cmake)
+
 add_library (
     messages STATIC
     ${CAUV_MESSAGE_FILES}
@@ -9,52 +25,24 @@ add_library (
 target_link_libraries (
     messages
 
-    common
-)
-
-add_custom_command (
-    OUTPUT ${CAUV_MESSAGE_FILES}
-    COMMAND ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${PYMSGD}/messages.msg
-    DEPENDS ${PYMSGD}/msggen.py
-            ${PYMSGD}/cppmess-serialise.template.h
-            ${PYMSGD}/cppmess-serialise.template.cpp
-            ${PYMSGD}/cppmess-message.template.h
-            ${PYMSGD}/cppmess-message.template.cpp
-            ${PYMSGD}/cppmess-messagetype.template.h
-            ${PYMSGD}/cppmess-xgroup.template.h
-            ${PYMSGD}/cppmess-xmessage.template.h
-            ${PYMSGD}/cppmess-xmessage.template.cpp
-            ${PYMSGD}/cppmess-xstruct.template.h
-            ${PYMSGD}/cppmess-structs.template.cpp
-            ${PYMSGD}/cppmess-xenum.template.h
-            ${PYMSGD}/cppmess-xvariant.template.h
-            ${PYMSGD}/cppmess-message_observers.template.h
-            ${PYMSGD}/cppmess-message_observers.template.cpp
-            ${PYMSGD}/msggenyacc.py
-            ${PYMSGD}/msggenlex.py
-            ${PYMSGD}/messages.msg
-    COMMENT "Generating messages"
-)
-
-add_custom_target (
-    messages-gen
-    DEPENDS ${CAUV_MESSAGE_FILES}
-    COMMENT "Generating messages"
+    special_messages
+    utility
+    cauv_debug
 )
 
 depends_on_messages(messages)
 
 add_custom_command (
-    OUTPUT ${GEND}/cauv_logo_large.h
-    COMMAND xxd -i - ${GEND}/cauv_logo_large.h < ${SRCD}/cauv_logo_large.txt
-    DEPENDS ${SRCD}/cauv_logo_large.txt
-    COMMENT "Generating cauv_logo_large.h with xxd"
+    OUTPUT ${GEND}/cauv_logo_shape.h ${GEND}/cauv_logo_colours.h
+    COMMAND xxd -i - ${GEND}/cauv_logo_shape.h < ${SRCD}/cauv_logo_shape.txt && xxd -i - ${GEND}/cauv_logo_colours.h < ${SRCD}/cauv_logo_colours.txt  
+    DEPENDS ${SRCD}/cauv_logo_shape.txt ${SRCD}/cauv_logo_colours.txt
+    COMMENT "Generating CAUV Banner with xxd"
 )
 
 add_custom_target (
     logo-headers
-    DEPENDS ${GEND}/cauv_logo_large.h
-    COMMENT "Depending on generated logo header"
+    DEPENDS ${GEND}/cauv_logo_shape.h ${GEND}/cauv_logo_colours.h
+    COMMENT "Depending on CAUV Banner"
 )
 
 add_custom_command (

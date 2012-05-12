@@ -190,7 +190,7 @@ class aiOptions(object):
     __metaclass__ = aiOptionsBase
     def __init__(self, options={}):
         #set values to default
-        self.__dict__.update(self.__class__.get_default_options())
+        self.__dict__.update(self.__class__.get_default_options()) #pylint: disable=E1101
         for opt, val in options.iteritems():
             setattr(self, opt, val)
     def __getattr__(self, attr):
@@ -277,9 +277,9 @@ class fakeAUV(messaging.MessageObserver):
         self.pitchCV.release()
         
     def onLocationMessage(self, m):
-        self.latitude = m.latitude
-        self.longitude = m.longitude
-        self.altitude = m.altitude
+        self.latitude = m.location.latitude
+        self.longitude = m.location.longitude
+        self.altitude = m.location.altitude
         self.speed = m.speed
     
     def getBearing(self):

@@ -15,6 +15,29 @@
 #ifndef __CAUV_UTILITY_TIME_H__
 #define __CAUV_UTILITY_TIME_H__
 
+#include <stdint.h>
+#include <string>
+
+namespace cauv {
+
+// TimeStamps use posix time (i.e., no timezones!)
+struct TimeStamp
+{
+    int32_t secs;
+    int32_t musecs;
+        
+    TimeStamp(int32_t const& secs, int32_t const& musecs);
+    TimeStamp(void);
+};
+
+TimeStamp now();
+
+std::string now(std::string const& format);
+
+// can return negative values if you pass a time in the future!
+int64_t millisecondsSince(TimeStamp const& t);
+
+void msleep(uint32_t milliseconds);
 
 // TODO: somewhat complicated because timestamp is serialisable
 /*#include <string>
@@ -25,6 +48,8 @@ TimeStamp now();
 std::string now(std::string const& format);
 void msleep(unsigned msecs);
 */
+
+}
 
 #endif // ndef __CAUV_UTILITY_TIME_H__
 

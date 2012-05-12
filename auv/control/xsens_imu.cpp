@@ -10,7 +10,7 @@
 #include <xsens/cmtpacket.h>
 
 #include <generated/types/floatYPR.h>
-#include <common/cauv_utils.h>
+#include <utility/foreach.h>
 #include <debug/cauv_debug.h>
 
 #include "xsens_imu.h"
@@ -162,6 +162,11 @@ void XsensIMU::readThread()
 
                     if(packet.containsOriEuler())
                     {
+                        // This single bit of code is responsible for our
+                        // fucked up coordinate system.
+                        // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+                        // Pitch = degrees UP from plane (- euler right->left axis)
+                        // Roll  = degrees rolling to the right (euler back->front axis)
                         CmtEuler e = packet.getOriEuler();
                         floatYPR att(e.m_yaw, e.m_pitch, e.m_roll);
                         att.yaw = -att.yaw;

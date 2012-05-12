@@ -15,10 +15,8 @@
 #ifndef __TRANSFORM_KEY_POINTS_NODE_H__
 #define __TRANSFORM_KEY_POINTS_NODE_H__
 
-
-#include <common/cauv_utils.h>
-
 #include "../node.h"
+#include <utility/foreach.h>
 
 
 namespace cauv{

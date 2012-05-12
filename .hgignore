@@ -31,6 +31,7 @@ auv/python-module/cauvinterfaced.so
 auv/scripting/unknown.log
 auv/python-module/emit_*.cpp
 messages-python/parsetab.py
+messages-python/msggen/parsetab.py
 auv/common/messages.cpp
 generated/*.h
 generated/*.cpp

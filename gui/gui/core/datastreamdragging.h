@@ -17,8 +17,8 @@
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include <common/data_stream.h>
-#include <common/image.h>
+#include <utility/data_stream.h>
+#include <common/msg_classes/image.h>
 #include <generated/types/floatYPR.h>
 #include <generated/types/MotorDemand.h>
 

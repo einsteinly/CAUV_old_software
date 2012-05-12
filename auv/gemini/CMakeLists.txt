@@ -14,6 +14,21 @@ target_link_libraries (
     common
     GeminiSDK
     pthread
+    opencv_image
     ${OpenCV_LIBS}
 )
 depends_on_messages(gemini_node)
+
+
+add_executable (
+    fake_gemini EXCLUDE_FROM_ALL
+    fake_gemini.cpp
+)
+target_link_libraries (
+    fake_gemini
+    common
+    opencv_image
+    ${OpenCV_LIBS}
+)
+depends_on_messages(fake_gemini)
+

@@ -21,8 +21,6 @@ using namespace cauv::sim;
 
 #include <osgDB/WriteFile>
 
-#include <common/cauv_utils.h>
-
 #include <generated/types/ImageMessage.h>
 #include <opencv/cv.h>
 

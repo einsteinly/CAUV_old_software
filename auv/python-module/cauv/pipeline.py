@@ -1,3 +1,5 @@
+'''This module provides an interface for manipulating the image processing pipeline.'''
+
 import messaging
 from debug import debug, warning, error, info
 
@@ -144,7 +146,92 @@ NodeParam_Filters = {
     messaging.NodeType.GuiOutput  : filterGuiOutputNodeParameters
 }
 
+class ConvenientObject(object):
+    def __init__(self, model, node_id):
+        self.model = model
+        self.node_id = node_id
+
+class ConvenientInput(ConvenientObject):
+    def __init__(self, model, node_id, input_id):
+        super(ConvenientInput, self).__init__(model, node_id)
+        self.input_id = input_id
+    def connect(self, co):
+        self.model.addArcAsync(co.node_id, co.output_id, self.node_id, self.input_id)
+
+class ConvenientOutput(ConvenientObject):
+    def __init__(self, model, node_id, output_id):
+        super(ConvenientOutput, self).__init__(model, node_id)
+        self.output_id = output_id
+    def connect(self, ci):
+        self.model.addArcAsync(self.node_id, self.output_id, ci.node_id, ci.input_id)
+
+class ConvenientParam(ConvenientObject):
+    def __init__(self, model, node_id, param_id):
+        super(ConvenientParam, self).__init__(model, node_id)
+        self.param_id = param_id
+    def set(self, value):
+        self.model.setParameterAsync(self.node_id, self.param_id, value)
+
+class ConvenientNode(ConvenientObject):
+    def __init__(self, model, node_id, params, inputs, outputs):
+        super(ConvenientNode, self).__init__(model, node_id)
+        self.valid_params = set()
+        self.valid_inputs = set()
+        self.valid_outputs = set()
+        for kv in params:
+            self.valid_params.add(kv.key().input)
+        for kv in inputs:
+            self.valid_inputs.add(kv.key().input)
+        for kv in outputs:
+            self.valid_outputs.add(kv.key().output)
+    def setParam(self, param, value):
+        self.model.setParameterAsync(self.node_id, param, value)
+    def connectOutput(self, output, other_node, input):
+        if isinstance(other_node, ConvenientNode):
+            other_node_id = other_node.node_id
+        else:
+            other_node_id = other_node
+        self.checkOutput(output)
+        self.model.addArcAsync(self.node_id, output, other_node_id, input) 
+    def connectInput(self, input, other_node, output):
+        if isinstance(other_node, ConvenientNode):
+            other_node_id = other_node.node_id
+        else:
+            other_node_id = other_node
+        self.check_input(input)
+        self.model.addArcAsync(other_node_id, output, self.node_id, input) 
+    def checkInput(self, id):
+        if id not in self.valid_inputs:
+            warning('unknown node input: %s (node:%s)' % (id, self.node_id))
+    def checkOutput(self, id):
+        if id not in self.valid_outputs:
+            warning('unknown node output: %s (node:%s)' % (id, self.node_id))
+    def checkParam(self, id):
+        if id not in self.valid_params:
+            warning('unknown node parameter: %s (node:%s)' % (id, self.node_id))
+    def remove(self):
+        return self.x() 
+    def output(self, id):
+        return self.o(id)
+    def input(self, id):
+        return self.i(id)
+    def param(self, id):
+        return self.p(id)
+    def o(self, id):
+        self.checkOutput(id)
+        return ConvenientOutput(self.model, self.node_id, id) 
+    def i(self, id):
+        self.checkInput(id)
+        return ConvenientInput(self.model, self.node_id, id)
+    def p(self, id):
+        self.checkParam(id)
+        return ConvenientParam(self.model, self.node_id, id)
+    def x(self):
+        return self.model.removeSynchronous(self.node_id)
+
+
 class Model(messaging.MessageObserver):
+    '''The Model class represents an image pipeline, and provides methods to manipulate its state.'''
     def __init__(self, node, pipeline_name = "default"):
         messaging.MessageObserver.__init__(self)
         self.__node = node
@@ -170,18 +257,25 @@ class Model(messaging.MessageObserver):
         self.arc_added_wait_for = None
         self.arc_added = None
 
-        node.join("pl_gui")
         node.addObserver(self)
+        node.subMessage(messaging.NodeAddedMessage())
+        node.subMessage(messaging.NodeRemovedMessage())
+        node.subMessage(messaging.NodeParametersMessage())
+        node.subMessage(messaging.GraphDescriptionMessage())
+        node.subMessage(messaging.ArcAddedMessage())
 
     def clear(self):
+        '''Remove all nodes from the pipeline.'''
         self.send(messaging.ClearPipelineMessage(self.pipeline_name))
 
     def save(self, picklefname, timeout=3.0):
+        '''Save the pipeline to file 'picklefname'.'''
         with open(picklefname, 'wb') as outf:
             saved = self.get(timeout)
             pickle.dump(saved, outf)
     
     def load(self, picklefname, timeout=3.0):
+        '''Load the pipeline from 'picklefname', this will clear any existing pipeline.'''
         with open(picklefname, 'rb') as inf:
             #saved = pickle.load(inf)
             saved = FilterUnpickler(file).load()
@@ -189,14 +283,18 @@ class Model(messaging.MessageObserver):
     
     @staticmethod
     def loadFile(file):
+        '''Load a pipeline file from disk, and return its contents. This does not manipulate the image pipeline.'''
         #saved = pickle.load(inf)
         saved = FilterUnpickler(file).load()
         return saved
     
+    # !!! TODO: this should probably be a classmethod
     def dumpFile(self, file, state):
+        '''Save a passed pipeline state to a file. This does not manipulate the image pipeline.'''
         pickle.dump(file, state)
 
     def get(self, timeout=3.0):
+        '''Grab the state from the image pipeline, save it and return it.'''
         graph = self.__getSynchronousGraphDescription(timeout)
         if graph is None:
             raise RuntimeError(
@@ -239,6 +337,7 @@ class Model(messaging.MessageObserver):
         return s
     
     def set(self, state, timeout=3.0, clear=True):
+        '''Set the state of the image pipeline based on 'state'.'''
         #NOTE PLEASE MAKE SURE ANY CHANGES ARE REFLECTED IN AI_PIPELINE_MANAGER (since it overides this method)
         if clear: self.clear()
         id_map = {}
@@ -317,11 +416,26 @@ class Model(messaging.MessageObserver):
             #        print 'set outarc:', id_map[id], output, other, input
    
     def send(self, msg):
-        # send to pipeline via self.__node
+        '''Send a message to the pipeline group.'''
         self.__node.send(msg, "pipeline")
+    
 
+    def addNode(self, type, timeout=3.0):
+        '''Return a Node object (corresponding to a node in the image pipeline) that can be used to manipulate the corresponding image pipeline node.'''
+        return self.addSynchronous(type, timeout, return_class=True)
 
-    def addSynchronous(self, type, timeout=3.0):
+    def addSynchronous(self, type, timeout=3.0, return_class=False):
+        '''Add a node, wait for it to be added, return the ID of the added node.
+            
+            Raises a RuntimeError if a timeout occurs.
+            
+            If return_class is set to true, then instead of just the node id, a
+            class representing the image pipeline node is returned, with
+            attributes initialised from the inputs, outputs and parameters of
+            the node.
+
+            addNode() calls this function with return_class=True
+        '''
         debug('addSynchronous %d = %s' % (type, str(messaging.NodeType(type))))
         self.node_added_condition.acquire()
         self.node_added = None
@@ -336,12 +450,22 @@ class Model(messaging.MessageObserver):
         if self.node_added is None:
             self.node_added_condition.release()
             raise RuntimeError('No response from pipeline, is it running?')
-        r = self.node_added.nodeId
-        debug('Node id = %d' %(r,))
+        if return_class:
+            r = ConvenientNode(
+                self,
+                self.node_added.nodeId,
+                self.node_added.params,
+                self.node_added.inputs,
+                self.node_added.outputs
+            )
+        else:
+            r = self.node_added.nodeId
+            debug('Node id = %d' %(r,))
         self.node_added_condition.release()
         return r
         
     def removeSynchronous(self, node, timeout=3.0):
+        '''Remove a node, wait for it to be removed. Raises a RuntimeError if a timeout occurs.'''
         debug('removeSynchronous %d' % (node,))
         self.node_removed_condition.acquire()
         self.node_removed = None
@@ -359,14 +483,11 @@ class Model(messaging.MessageObserver):
         return None
     
     def setParameterSynchronous(self, node, param, value, timeout=3.0):
+        '''Set a node parameter, wait for it to be set. Raises a RuntimeError if a timeout occurs.'''
         self.parameter_set_condition.acquire()
         self.parameter_set = None
         self.parameter_set_wait_for = (node, param)
-        msg = messaging.SetNodeParameterMessage(
-            self.pipeline_name, node, param, value
-        )
-        debug('setParameterSynchronous: %s' % msg)
-        self.send(msg)
+        self.setParameterAsync(node, param, value)
         self.parameter_set_condition.wait(timeout)
         if self.parameter_set is None:
             self.parameter_set_condition.release()
@@ -374,9 +495,15 @@ class Model(messaging.MessageObserver):
         self.parameter_set_condition.release()
         return None
     
-    def addArcSynchronous(self, src, out, dst, inp, timeout=3.0):
-        self.arc_added_condition.acquire()
-        self.arc_added = None
+    def setParameterAsync(self, node, param, value):
+        msg = messaging.SetNodeParameterMessage(
+            self.pipeline_name, node, param, value
+        )
+        debug('set parameter: %s' % msg)        
+        self.send(msg)
+
+
+    def composeArc(self, src, out, dst, inp):
         fr = messaging.NodeOutput()
         fr.node = src
         fr.output = out
@@ -384,15 +511,25 @@ class Model(messaging.MessageObserver):
         to = messaging.NodeInput()
         to.node = dst
         to.input = inp
-        debug('add arc: %s --> %s' % (fr, to))
+        return fr, to
+    
+    def addArcSynchronous(self, src, out, dst, inp, timeout=3.0):
+        self.arc_added_condition.acquire()
+        self.arc_added = None
+        fr, to = self.composeArc(src, out, dst, inp)
         self.arc_added_wait_for = (fr, to)
-        self.send(messaging.AddArcMessage(self.pipeline_name, fr, to))
+        self.addArcAsync(src, out, dst, inp)
         self.arc_added_condition.wait(timeout)
         if self.arc_added is None:
             self.arc_added_condition.release()
             raise RuntimeError('No response from pipeline, is it running?')
         self.arc_added_condition.release()
         return None
+    
+    def addArcAsync(self, src, out, dst, inp):
+        fr, to = self.composeArc(src, out, dst, inp)
+        debug('add arc: %s --> %s' % (fr, to))        
+        self.send(messaging.AddArcMessage(self.pipeline_name, fr, to))
 
     # Overloads for observing pipeline-related messages:
 
@@ -450,17 +587,15 @@ class Model(messaging.MessageObserver):
         self.graph_description = copy.deepcopy(m)
         self.description_ready_condition.notify()
         self.description_ready_condition.release()
-
+    
     def onArcAddedMessage(self, m):
         if not self.checkName(m): return
         # oops, shouldn't have called a message field, 'from'
-        # !!! TODO: here LocalNodeInput and LocalNodeOutput strucutres are
-        # compared by string representation because apparently direct
-        # comparison is always false (even when they are the same...)
-        # This is not good.
         if self.arc_added_wait_for is not None and \
-           str(getattr(m, 'from')) == str(self.arc_added_wait_for[0]) and \
-           str(m.to) == str(self.arc_added_wait_for[1]):
+           getattr(m, 'from').node == self.arc_added_wait_for[0].node and \
+           getattr(m, 'from').output == self.arc_added_wait_for[0].output and \
+           m.to.node == self.arc_added_wait_for[1].node and \
+           m.to.input == self.arc_added_wait_for[1].input:
             self.arc_added_wait_for = None
             self.arc_added_condition.acquire()
             self.arc_added = copy.deepcopy(m)
@@ -499,9 +634,7 @@ class Model(messaging.MessageObserver):
         self.description_ready_condition.acquire()
         self.graph_description = None
         self.send(messaging.GraphRequestMessage(self.pipeline_name));
-        #print '!!\t\twaiting on condition...'
         self.description_ready_condition.wait(timeout)
-        #print '!!\t\tnotified'
         self.description_ready_condition.release()
         return self.graph_description
                 

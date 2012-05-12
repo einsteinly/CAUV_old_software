@@ -8,6 +8,7 @@ import cauv
 import cauv.control as control
 import cauv.node
 from cauv.debug import debug, error, warning, info
+from utils.coordinates import NorthEastDepthCoord, metresPerDegreeLongitude, metresPerDegreeLatitude
 
 import time
 import math
@@ -15,42 +16,11 @@ import argparse
 
 import displacement
 
-#coordinates of a bit of river Cam in Cambridge
-#Default_Datum_Latitude = 52.116692
-#Default_Datum_Longitude = 0.117792
-
-#coordinates of start position in NURC harbour
-Default_Datum_Latitude = 44.095788 
-Default_Datum_Longitude = 9.865017
-
-#principal component of Earth along polar and equatorial axis
-Earth_b = 6356752.3142 # polar
-Earth_a = 6378137.00 # equatorial 
-
-class NorthEastDepthCoord:
-    #coordinates in metres North, East and Down w.r.t. to the reference corner
-    def __init__(self, x, y, z):
-        self.north = x
-        self.east = y
-        self.depth = z
-    def __repr__(self):
-        return '(%s, %s, %s)' % (self.north, self.east, self.depth)
-
 class XYZSpeed:
     def __init__(self):
         self.x = 0
         self.y = 0
         self.z = 0
-
-def metresPerDegreeLongitude(lat):
-    # dimensions of earth:
-    tan_lat = math.tan(math.radians(lat))
-    beta = math.atan((Earth_b/Earth_a)*tan_lat)
-    return abs(Earth_a * math.cos(beta) * math.radians(1))
-
-def metresPerDegreeLatitude():
-    # TODO maybe improve approx; atm 1st degree
-    return Earth_b * math.radians(1)
 
 class Location(messaging.MessageObserver):
     def __init__(self, node, mode='simple'):
@@ -113,9 +83,9 @@ class Location(messaging.MessageObserver):
     def getLocation(self):
         info('getting Location')
         r = messaging.LocationMessage()
-        r.latitude = self.location.north
-        r.longitude = self.location.east
-        r.altitude = -self.location.depth
+        r.location = messaging.WGS84Coord(
+            self.location.north, self.location.east, -self.location.depth
+        )
         r.speed = messaging.floatXYZ(self.speed.x, self.speed.y, self.speed.z)
         return r
 
@@ -134,6 +104,6 @@ if __name__ == '__main__':
             time.sleep(3)
             ll = d.getLocation()
             info('%s : %s' % (d.location, ll))
-            node.send(messaging.LocationMessage(ll.latitude,ll.longitude,ll.altitude,messaging.floatXYZ(0, 0, 0)))
+            node.send(messaging.LocationMessage(ll.location,messaging.floatXYZ(0, 0, 0)))
     finally:
         node.stop()

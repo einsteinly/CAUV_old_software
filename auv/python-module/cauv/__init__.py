@@ -9,6 +9,8 @@ except KeyError:
 finally:
     extra_paths = []
     for path in sys.path:
-        extra_paths.append(os.path.join(path, extra_dir))
+        if not path.rstrip(' /').endswith('.egg') and not\
+               path.rstrip(' /').endswith('.egg-info'):
+            extra_paths.append(os.path.join(path, extra_dir))
     sys.path.extend(extra_paths)
 

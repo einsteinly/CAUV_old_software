@@ -24,13 +24,16 @@
     #define PICK_FTDI(A,B) B
 #endif
 
-#include <common/cauv_utils.h>
-#include <common/blocking_queue.h>
 #include <generated/message_observers.h>
 #include <generated/types/message.h>
 #include <debug/cauv_debug.h>
+#include <utility/blocking_queue.h>
+#include <utility/foreach.h>
+#include <utility/string.h>
 
 namespace cauv{
+
+uint16_t sumOnesComplement(std::vector<uint16_t> bytes);
 
 class FTDIException : public std::exception
 {
@@ -170,10 +173,13 @@ class Module : public MessageSource
                     uint32_t startWord = 0xdeadc01d;
                     uint32_t len = bytes->size();
 
-                    uint32_t buf[2];
-                    buf[0] = startWord;
-                    buf[1] = len;
-                    uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf); 
+                    char buf[8];
+                    uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf);
+                    uint32_t* buf32 = reinterpret_cast<uint32_t*>(buf);
+
+                    buf32[0] = startWord;
+                    buf32[1] = len;
+
                     std::vector<uint16_t> vheader(buf16, buf16+4);
                     uint16_t checksum = sumOnesComplement(vheader);
                     
@@ -224,11 +230,12 @@ class Module : public MessageSource
                     ar >> len;
                     ar >> checksum;
 
-                    uint32_t buf[2];
-                    buf[0] = startWord;
-                    buf[1] = len;
+                    char buf[8];
+                    uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf);
+                    uint32_t* buf32 = reinterpret_cast<uint32_t*>(buf);
+                    buf32[0] = startWord;
+                    buf32[1] = len;
 
-                    uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf); 
                     std::vector<uint16_t> vheader(buf16, buf16+4);
 
                     if (sumOnesComplement(vheader) != checksum)

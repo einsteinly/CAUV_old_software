@@ -18,7 +18,7 @@
 #include <string>
 
 #include <common/cauv_node.h>
-#include <common/image.h>
+#include <common/msg_classes/image.h>
 
 namespace cauv{
 

@@ -5,9 +5,9 @@
 #include <boost/make_shared.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <common/data_stream.h>
-#include <common/data_stream_tools.h>
-#include <common/image.h>
+#include <utility/data_stream.h>
+#include <utility/data_stream_tools.h>
+#include <common/msg_classes/image.h>
 
 #include <generated/types/CameraID.h>
 #include <generated/types/MotorID.h>
@@ -58,16 +58,16 @@ namespace cauv{
 
 
         /**
-     * Represents an autopilot in the AUV. The type of target (e.g. a heading or
-     * depth) that the autopilot aims for is passed in using generics. This is
-     * then sent on the AUV when the state is changed to enabled, or if it is
-     * already enabled when the target is set.
-     *
-     * @author Andy Pritchard
-     *
-     * @param <T>
-     *            The type of the target the autopilot uses
-     */
+         * Represents an autopilot in the AUV. The type of target (e.g. a heading or
+         * depth) that the autopilot aims for is passed in using generics. This is
+         * then sent on the AUV when the state is changed to enabled, or if it is
+         * already enabled when the target is set.
+         *
+         * @author Andy Pritchard
+         *
+         * @param <T>
+         *            The type of the target the autopilot uses
+         */
 
         template <class T>
 

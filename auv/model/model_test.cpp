@@ -16,7 +16,7 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
-#include <common/data_stream_tools.h>
+#include <utility/data_stream_tools.h>
 
 #include "auv_model.h"
 #include "auv_controller.h"

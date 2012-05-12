@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
+#include <utility/foreach.h>
 
 #include "seanet_packet.h"
 

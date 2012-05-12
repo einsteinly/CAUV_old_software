@@ -28,8 +28,6 @@
 
 #include "cauvgui.h"
 
-#include <common/cauv_utils.h>
-
 using namespace std;
 using namespace cauv;
 
@@ -49,7 +47,7 @@ int main(int argc, char** argv)
     if(ret != 0) return ret;
 
     try {
-        node->run();
+        node->run(false);
 
         info() << "Waiting for CauvNode to finish...";
         while(node->isRunning()) sleep(10);

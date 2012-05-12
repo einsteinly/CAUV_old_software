@@ -6,7 +6,9 @@
 #include <common/cauv_node.h>
 #include <common/mailbox.h>
 #include <common/mailbox.h>
-#include <common/bounded_float.h>
+#include <common/msg_classes/bounded_float.h>
+#include <common/msg_classes/wgs84_coord.h>
+#include <utility/time.h>
 #include <generated/message_observers.h>
 #include <generated/types/message.h>
 #include <generated/types/MembershipChangedMessage.h>
@@ -311,6 +313,8 @@ void emitCauvNode(){
          .def("onRun", wrap(&CauvNodeWrapper::onRun))
          .def("send", wrap(&CauvNode::send))
          .def("join", wrap(&CauvNode::joinGroup))
+         .def("subMessage", wrap(&CauvNode::subMessage))
+         .def("unSubMessage", wrap(&CauvNode::unSubMessage))
          .def("addObserver", wrap(&CauvNode::addMessageObserver))
          .def("removeObserver", wrap(&CauvNode::removeMessageObserver))
          .def("parseOptions", &CauvNodeWrapper::parseOptions)
@@ -331,11 +335,18 @@ void emitAIMessageObserver(){
 
 void emitPostGenerated(){
     bp::def("mkByteVec", mkByteVec);
+    bp::def("now", (TimeStamp(*)())&now);
     
     // lacking in doc comments...
     bp::class_<BoundedFloat,
                bp::bases<BoundedFloatBase>,
                boost::shared_ptr<BoundedFloat> 
               >("BoundedFloat",bp::init<float,float,float,BoundedFloatType::e>())
+        ;
+
+    bp::class_<WGS84Coord,
+               bp::bases<LatLongAlt>,
+               boost::shared_ptr<WGS84Coord>
+              >("WGS84Coord",bp::init<double,double,float>())
         ;
 }

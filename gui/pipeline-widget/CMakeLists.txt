@@ -1,7 +1,7 @@
 project (pipeline-widget)
 
 # FTGL (for text rendering)
-find_package (FTGL)
+find_package (FTGL REQUIRED)
 include_directories (${FTGL_INCLUDE_DIRS})
 
 find_package (GraphViz REQUIRED)
@@ -62,6 +62,7 @@ depends_on_messages(pipeline-widget)
 target_link_libraries (
     pipeline-widget
     common-shared
+    opencv_image
     ${FTGL_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${QT_LIBRARIES}

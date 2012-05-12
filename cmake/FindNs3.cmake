@@ -55,6 +55,7 @@ find_path(NS3_INCLUDE_DIR NAMES ns3/core-module.h
 foreach(ns3_lib ${ns3_modules})
     find_library(${ns3_lib}_loc NAMES "${ns3_lib}"
                 HINTS ${PC_NS3_LIBRARY_DIRS})
+    mark_as_advanced(${ns3_lib}_loc)
     set(NS3_LIBRARIES ${NS3_LIBRARIES} ${${ns3_lib}_loc})
 endforeach()
 
