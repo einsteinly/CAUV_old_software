@@ -171,7 +171,7 @@ def handle_input(input):
         message_stats_box.set_title(message_stats_box.title_fmt.format(stats_tracker.sort_keys[stats_tracker.sort_key][1]))
     elif input == 'a':
         stats_tracker.sort_key -= 1
-        if stats_strct.sort_key < 0:
+        if stats_tracker.sort_key < 0:
             stats_tracker.sort_key = len(stats_tracker.sort_keys) - 1
         message_stats_box.set_title(message_stats_box.title_fmt.format(stats_tracker.sort_keys[stats_tracker.sort_key][1]))
     elif input == 'r':

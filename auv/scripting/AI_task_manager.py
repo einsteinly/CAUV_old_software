@@ -97,7 +97,7 @@ class taskManager(aiProcess):
             task_id = self.create_task(task_type)
             self.set_task_options(task_id, task_options, task_script_options, [old2new_ids[condition_id] for condition_id in condition_ids])
             if include_persist:
-                self.set_task_persist_state(persist_state)
+                self.tasks[task_id].persist_state = persist_state
         return True
     def save_state(self):
         task_dict = {}
