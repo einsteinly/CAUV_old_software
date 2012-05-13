@@ -279,6 +279,9 @@ namespace cauv {
             }
         };
 
+        //!!! move these somewhere more sensible?
+        typedef NumericNode<int> MotorNode;
+        typedef NumericNode<bool> AutopilotNode;
 
     } //namespace gui
 } // namespace cauv

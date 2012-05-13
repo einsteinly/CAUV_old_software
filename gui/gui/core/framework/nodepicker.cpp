@@ -123,7 +123,7 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     ui->view->setAcceptDrops(false);
     ui->filter->installEventFilter(new EscapeFilter());
     ui->view->setModel(root.get());
-    ui->view->addNumericDelegateToColumn(1, 28);
+    ui->view->addNumericDelegateToColumn(1, 25);
 
     QHBoxLayout * layout = new QHBoxLayout(ui->filter);
     QPushButton * button = new QPushButton("X");

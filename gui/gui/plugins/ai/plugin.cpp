@@ -98,14 +98,19 @@ void AiPlugin::initialise(){
 
         boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
         boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
-        connect(tasks.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(setupTask(boost::shared_ptr<Node>)));
+        connect(tasks.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+                this, SLOT(setupTask(boost::shared_ptr<Node>)));
         boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
-        connect(conditions.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(setupCondition(boost::shared_ptr<Node>)));
+        connect(conditions.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+                this, SLOT(setupCondition(boost::shared_ptr<Node>)));
 }
 
 void AiPlugin::setupTask(boost::shared_ptr<Node> node){
     try {
-        m_auv->attachGenerator(node, boost::make_shared<AiTaskMessageGenerator>());
+        m_auv->attachGenerator(
+                    boost::make_shared<MessageGenerator<AiTaskNode,
+                    SetTaskStateMessage> >(node->to<AiTaskNode>())
+                    );
     } catch(std::runtime_error e) {
         error() << "AiPlugin::setupTask: Expecting AiTaskNode" << e.what();
 
@@ -114,7 +119,10 @@ void AiPlugin::setupTask(boost::shared_ptr<Node> node){
 
 void AiPlugin::setupCondition(boost::shared_ptr<Node> node){
     try {
-        m_auv->attachGenerator(node, boost::make_shared<AiConditionMessageGenerator>());
+        m_auv->attachGenerator(
+                    boost::make_shared<MessageGenerator<AiConditionNode,
+                    SetConditionStateMessage> >(node->to<AiConditionNode>())
+                    );
     } catch(std::runtime_error e) {
         error() << "AiPlugin::setupCondition: Expecting AiTaskNode" << e.what();
 

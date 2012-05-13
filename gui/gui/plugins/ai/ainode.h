@@ -20,12 +20,9 @@
 #include <boost/shared_ptr.hpp>
 
 #include <gui/core/model/nodes/numericnode.h>
-
-#include <liquid/node.h>
-
 #include <gui/core/nodedragging.h>
 
-#include <gui/plugins/ai/tasknode.h>
+#include <liquid/node.h>
 
 namespace cauv {
     namespace gui {
@@ -41,23 +38,8 @@ namespace cauv {
 
 
         class AiDropHandler : public DropHandlerInterface<QGraphicsItem * > {
-
-            virtual bool accepts(boost::shared_ptr<Node> const& node){
-                return (node->type == nodeType<AiMissionNode>() ||
-                        node->type == nodeType<AiTaskNode>() ||
-                        node->type == nodeType<AiConditionNode>());
-            }
-
-            virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node) {
-
-                if (node->type == nodeType<AiTaskNode>()) {
-                    LiquidTaskNode * n = new LiquidTaskNode(boost::static_pointer_cast<AiTaskNode>(node));
-                    n->setSize(QSizeF(300,300));
-                    return n;
-                }
-
-                return new AiNode();
-            }
+            virtual bool accepts(boost::shared_ptr<Node> const& node);
+            virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node);
         };
 
     } // namespace gui

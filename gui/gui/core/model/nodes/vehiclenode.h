@@ -39,20 +39,15 @@ namespace cauv {
             void messageGenerated(boost::shared_ptr<const Message>);
 
         public:
-            void attachGenerator(boost::shared_ptr<Node> node, boost::shared_ptr<MessageGenerator> generator)
+
+            void attachGenerator(boost::shared_ptr<BaseMessageGenerator> generator)
             {
-                try {
-                    info() << "Generator attached to " << node->nodePath();
-                    m_generators.push_back(generator);
-                    generator->attach(node);
-                    generator->connect(generator.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
-                                       this, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)));
-                } catch (std::exception ex){
-                    error() << "exception during message generation:"<< ex.what();
-                }
+                m_generators.insert(generator);
+                generator->connect(generator.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
+                                   this, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)));
             }
 
-            std::vector<boost::shared_ptr<MessageGenerator> > m_generators;
+            std::set<boost::shared_ptr<BaseMessageGenerator> > m_generators;
         };
 
     } //namespace gui

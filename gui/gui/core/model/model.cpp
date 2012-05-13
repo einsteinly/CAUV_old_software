@@ -42,47 +42,54 @@ void RedHerring::initialise() {
 
 void RedHerring::setupMotor(boost::shared_ptr<Node> node){
     try {
-        boost::shared_ptr<NumericNode<int> > motor = node->to<NumericNode<int> >();
+        boost::shared_ptr<MotorNode> motor = node->to<MotorNode>();
         motor->setMax(127);
         motor->setMin(-127);
         motor->setMutable(true);
-        attachGenerator(motor, boost::make_shared<MotorMessageGenerator>());
+        attachGenerator(boost::make_shared<MessageGenerator<MotorNode, MotorMessage> >(motor));
     } catch (std::runtime_error){
-        warning() << node->nodePath() << " should be a NumericNode";
+        warning() << node->nodePath() << " should be a MotorNode";
     }
 }
 
 void RedHerring::setupAutopilot(boost::shared_ptr<Node> node){
 
-    attachGenerator(node, boost::make_shared<AutopilotMessageGenerator>());
-    boost::shared_ptr<NumericNode<float> > target = node->findOrCreate<NumericNode<float> >("target");
-    target->setMutable(true);
-    node->setMutable(true);
+    try {
+        boost::shared_ptr<AutopilotNode> autopilot = node->to<AutopilotNode>();
+        boost::shared_ptr<NumericNode<float> > target = node->findOrCreate<NumericNode<float> >("target");
+        target->setMutable(true);
+        node->setMutable(true);
 
-    // target params
-    float min, max; bool wraps; std::string units;
+        // target params
+        float min, max; bool wraps; std::string units;
 
-    Controller::e id = boost::get<Controller::e>(node->nodeId());
+        Controller::e id = boost::get<Controller::e>(node->nodeId());
 
-    // params vary for each autopilot
-    switch(id){
-    case Controller::Bearing:
-        min=0; max=360; wraps=true; units="°";
-        break;
-    case Controller::Pitch:
-        min=-180; max=180; wraps=true; units="°";
-        break;
-    case Controller::Depth:
-        min=-1; max=5; wraps=false; units="m";
-        break;
-    default: return;
+        // params vary for each autopilot
+        switch(id){
+        case Controller::Bearing:
+            attachGenerator(boost::make_shared<MessageGenerator<AutopilotNode, BearingAutopilotEnabledMessage> >(autopilot));
+            min=0; max=360; wraps=true; units="°";
+            break;
+        case Controller::Pitch:
+            attachGenerator(boost::make_shared<MessageGenerator<AutopilotNode, PitchAutopilotEnabledMessage> >(autopilot));
+            min=-180; max=180; wraps=true; units="°";
+            break;
+        case Controller::Depth:
+            attachGenerator(boost::make_shared<MessageGenerator<AutopilotNode, DepthAutopilotEnabledMessage> >(autopilot));
+            min=-1; max=5; wraps=false; units="m";
+            break;
+        default: return;
+        }
+
+        target->setMin(min);
+        target->setMax(max);
+        target->setWraps(wraps);
+        target->setUnits(units);
+        target->setPrecision(3);
+    } catch (std::runtime_error){
+        warning() << node->nodePath() << " should be an AutopilotNode";
     }
-
-    target->setMin(min);
-    target->setMax(max);
-    target->setWraps(wraps);
-    target->setUnits(units);
-    target->setPrecision(3);
 }
 
 

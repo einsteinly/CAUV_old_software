@@ -25,12 +25,13 @@ namespace cauv {
 
         public:
             StringNode(nid_t const& id) : Node(id, nodeType<StringNode>()){
+                m_value = QVariant(QString());
             }
 
         public Q_SLOTS:
 
             virtual void update(QString const& value){
-                Node::update(QVariant(value));
+                update(QVariant(value));
             }
 
             virtual void update(std::string const& value){
@@ -38,15 +39,19 @@ namespace cauv {
             }
 
             virtual void update(QVariant const& value){
-                Node::update(value);
+                Node::update(QVariant(value.toString()));
             }
 
             virtual bool set(QString const& value){
-                return Node::set(value);
+                return set(QVariant(value));
             }
 
             virtual bool set(std::string const& value){
-                return Node::set(QString::fromStdString(value));
+                return set(QString::fromStdString(value));
+            }
+
+            virtual bool set(QVariant const& value){
+                return Node::set(QVariant(value.toString()));
             }
         };
 

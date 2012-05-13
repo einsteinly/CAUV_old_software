@@ -55,19 +55,19 @@ DefaultGuiMessageObserver::DefaultGuiMessageObserver(boost::shared_ptr<Vehicle> 
 }
 
 void DefaultGuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
-    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreate<NumericNode<int> >(message->motorId())->update(message->speed());
+    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreate<MotorNode>(message->motorId())->update(message->speed());
 }
 
 void DefaultGuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<NumericNode<bool> > autopilot = autopilots->findOrCreate<NumericNode<bool> >(Controller::Bearing);
+    boost::shared_ptr<AutopilotNode> autopilot = autopilots->findOrCreate<AutopilotNode>(Controller::Bearing);
     autopilot->update(message->enabled());
     autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
 }
 
 void DefaultGuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr< NumericNode<bool> > ap = autopilots->findOrCreate< NumericNode<bool> >(Controller::Bearing);
+    boost::shared_ptr<AutopilotNode> ap = autopilots->findOrCreate<AutopilotNode>(Controller::Bearing);
 
     ap->findOrCreate<NumericNode<float> >("Kp")->update(message->Kp());
     ap->findOrCreate<NumericNode<float> >("Ki")->update(message->Ki());
@@ -82,14 +82,14 @@ void DefaultGuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilot
 
 void DefaultGuiMessageObserver::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<NumericNode<bool> > autopilot = autopilots->findOrCreate<NumericNode<bool> >(Controller::Depth);
+    boost::shared_ptr<AutopilotNode> autopilot = autopilots->findOrCreate<AutopilotNode>(Controller::Depth);
     autopilot->update(message->enabled());
     autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
 }
 
 void DefaultGuiMessageObserver::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr< NumericNode<bool> > ap = autopilots->findOrCreate< NumericNode<bool> >(Controller::Depth);
+    boost::shared_ptr<AutopilotNode> ap = autopilots->findOrCreate<AutopilotNode>(Controller::Depth);
 
     ap->findOrCreate<NumericNode<float> >("Kp")->update(message->Kp());
     ap->findOrCreate<NumericNode<float> >("Ki")->update(message->Ki());
@@ -104,14 +104,14 @@ void DefaultGuiMessageObserver::onDepthAutopilotParamsMessage(DepthAutopilotPara
 
 void DefaultGuiMessageObserver::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<NumericNode<bool> > autopilot = autopilots->findOrCreate<NumericNode<bool> >(Controller::Pitch);
+    boost::shared_ptr<AutopilotNode> autopilot = autopilots->findOrCreate<AutopilotNode>(Controller::Pitch);
     autopilot->update(message->enabled());
     autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
 }
 
 void DefaultGuiMessageObserver::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr< NumericNode<bool> > ap = autopilots->findOrCreate< NumericNode<bool> >(Controller::Pitch);
+    boost::shared_ptr<AutopilotNode> ap = autopilots->findOrCreate<AutopilotNode>(Controller::Pitch);
 
     ap->findOrCreate<NumericNode<float> >("Kp")->update(message->Kp());
     ap->findOrCreate<NumericNode<float> >("Ki")->update(message->Ki());

@@ -18,6 +18,8 @@
 
 #include <gui/core/framework/elements/style.h>
 
+#include <gui/plugins/ai/tasknode.h>
+
 #include <generated/types/GuiaiGroup.h>
 
 using namespace cauv;
@@ -31,4 +33,23 @@ AiNode::AiNode(QGraphicsItem *parent) :
 
 AiNode::~AiNode(){
     debug(2) << "~AINode()";
+}
+
+
+
+bool AiDropHandler::accepts(boost::shared_ptr<Node> const& node){
+    return (node->type == nodeType<AiMissionNode>() ||
+            node->type == nodeType<AiTaskNode>() ||
+            node->type == nodeType<AiConditionNode>());
+}
+
+QGraphicsItem * AiDropHandler::handle(boost::shared_ptr<Node> const& node) {
+
+    if (node->type == nodeType<AiTaskNode>()) {
+        LiquidTaskNode * n = new LiquidTaskNode(boost::static_pointer_cast<AiTaskNode>(node));
+        n->setSize(QSizeF(300,300));
+        return n;
+    }
+
+    return new AiNode();
 }

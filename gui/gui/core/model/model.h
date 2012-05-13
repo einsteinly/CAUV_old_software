@@ -28,8 +28,6 @@
 namespace cauv {
 namespace gui {
 
-struct MessageGenerator;
-
 
 // !!! todo: this class shouldn't exist. Vehicle config should be
 // sent by the vehicle when the GUI connects and not hardcoded

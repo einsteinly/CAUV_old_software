@@ -157,6 +157,9 @@ QPushButton:hover {
      <property name="verticalScrollMode">
       <enum>QAbstractItemView::ScrollPerPixel</enum>
      </property>
+     <property name="indentation">
+      <number>12</number>
+     </property>
      <property name="animated">
       <bool>true</bool>
      </property>
