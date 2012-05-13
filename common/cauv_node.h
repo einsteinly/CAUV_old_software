@@ -44,6 +44,7 @@ class Message;
 class CauvNode
 {
     public:
+        CauvNode(const std::string& name);
         virtual ~CauvNode();
         virtual void stopNode();
 
@@ -73,8 +74,6 @@ class CauvNode
         std::string m_server;
         unsigned int m_port;
         boost::shared_ptr<Mailbox> mailbox() const;
-
-        CauvNode(const std::string& name);
 
         virtual void onRun();
         virtual void addOptions(boost::program_options::options_description& desc,

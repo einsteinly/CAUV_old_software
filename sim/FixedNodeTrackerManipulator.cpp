@@ -32,7 +32,8 @@ FixedNodeTrackerManipulator::FixedNodeTrackerManipulator()
 
 
 FixedNodeTrackerManipulator::FixedNodeTrackerManipulator( const FixedNodeTrackerManipulator& m, const CopyOp& copyOp )
-    : inherited( m, copyOp ),
+    : osg::Object(),
+        inherited( m, copyOp ),
       _trackNodePath( m._trackNodePath )
 {
 }
@@ -129,11 +130,18 @@ void FixedNodeTrackerManipulator::computeNodeLocalToWorld(osg::Matrixd& localToW
 
 }
 
-void FixedNodeTrackerManipulator::computeNodeCenterAndRotation(osg::Vec3d& nodeCenter) const
+void FixedNodeTrackerManipulator::computeNodeCenterAndRotation(osg::Vec3d& nodeCenter, osg::Quat& nodeRotation) const
 {
     osg::Matrixd localToWorld, worldToLocal;
     computeNodeLocalToWorld(localToWorld);
     computeNodeWorldToLocal(worldToLocal);
+
+    double sx = 1.0/sqrt(localToWorld(0,0)*localToWorld(0,0) + localToWorld(1,0)*localToWorld(1,0) + localToWorld(2,0)*localToWorld(2,0));
+    double sy = 1.0/sqrt(localToWorld(0,1)*localToWorld(0,1) + localToWorld(1,1)*localToWorld(1,1) + localToWorld(2,1)*localToWorld(2,1));
+    double sz = 1.0/sqrt(localToWorld(0,2)*localToWorld(0,2) + localToWorld(1,2)*localToWorld(1,2) + localToWorld(2,2)*localToWorld(2,2));
+    localToWorld = localToWorld*osg::Matrixd::scale(sx,sy,sz);
+
+    nodeRotation = localToWorld.getRotate();
 
     osg::NodePath nodePath;
     if (_trackNodePath.getNodePath(nodePath) && !nodePath.empty())
@@ -149,22 +157,20 @@ void FixedNodeTrackerManipulator::setRotation(osg::Vec3d axis1, float angle1, os
 }
 
 
-void FixedNodeTrackerManipulator::setTranslation(float dist_x,float dist_y,float dist_z)
+void FixedNodeTrackerManipulator::setTranslation(osg::Vec3d translate)
 {
-    osg::Vec3d localTranslate(dist_x, dist_y, dist_z);
-    
-    localCameraTranslation = osg::Matrixd::translate(localTranslate);
+    localCameraTranslation = osg::Matrixd::translate(translate);
 }
 
 osg::Matrixd FixedNodeTrackerManipulator::getMatrix() const
 {
     osg::Vec3d nodeCenter;
     osg::Quat nodeRotation;
-    computeNodeCenterAndRotation(nodeCenter);
+    computeNodeCenterAndRotation(nodeCenter, nodeRotation);
     osg::Matrixd rotationMatrix;
     localCameraRotation.get(rotationMatrix);
 
-    return rotationMatrix*osg::Matrixd::translate(nodeCenter)*localCameraTranslation;
+    return rotationMatrix*localCameraTranslation*osg::Matrixd::rotate(nodeRotation)*osg::Matrix::translate(nodeCenter);
 }   //translatelocal*translatenodecenter*rotation
 
 osg::Matrixd FixedNodeTrackerManipulator::getInverseMatrix() const
