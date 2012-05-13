@@ -161,13 +161,13 @@ struct floatYPR
 }
 // YPR is a stupid way of doing things, at some point, every YPR will be
 // replaced with this:
-//struct quat
-//{
-//    q0 : float; // imaginary x
-//    q1 : float; // imaginary y
-//    q2 : float; // imaginary z
-//    q3 : float; // real part
-//}
+struct quat
+{
+    q0 : float; // imaginary x
+    q1 : float; // imaginary y
+    q2 : float; // imaginary z
+    q3 : float; // real part
+}
 struct floatXYZ
 {
     eq x : float;
@@ -1020,6 +1020,8 @@ group simulation
         // Pitch = degrees UP from plane (- euler right->left axis)
         // Roll  = degrees rolling to the right (euler back->front axis)
         orientation : floatYPR;
+
+        quaternion : quat;
 
         speed : floatXYZ; // metres per second, some arbitrary local coordinate system: TODO: fix this!
     }

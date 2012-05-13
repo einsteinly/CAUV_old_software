@@ -44,14 +44,15 @@ def runLoop(auv_model, node):
         # this is just a print-loop, the work is done in a separate thread,
         # running at a configurable tick-rate
         time.sleep(0.2)
-        (lt, ln, al, ori, speed) = auv_model.position()
+        (lt, ln, al, oriYPR, ori, speed) = auv_model.position()
         debug('lat:%.12g lon:%.12g alt:%.12g' % (lt, ln, al), 3)
-        node.send(messaging.SimPositionMessage(messaging.WGS84Coord(lt, ln, al), ori, speed))
+        node.send(messaging.SimPositionMessage(messaging.WGS84Coord(lt, ln, al), oriYPR, 
+                        messaging.quat(ori.q0, ori.q1, ori.q2, ori.q3), speed))
 
         info('displ=%s\tvel=%s\tori=%s\tomega=%s\t' %
             (fmtArr(auv_model.displacement),
              fmtArr(auv_model.velocity),
-             ori,
+             oriYPR,
              fmtArr(auv_model.angular_velocity))
         )
 
