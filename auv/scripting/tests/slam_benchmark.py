@@ -101,13 +101,12 @@ class Benchmarker(object):
         sslam.p('euclidean fitness').set(1e-7)
         sslam.p('feature merge distance').set(0.1)
         sslam.p('graph iters').set(10)
-        sslam.p('keyframe spacing').set(1)
+        sslam.p('keyframe spacing').set(1.5)
         sslam.p('match algorithm').set('ICP')
         # !!! TODO: sensitivity to this:
-        sslam.p('max correspond dist').set(4)
+        sslam.p('max correspond dist').set(0.5)
         sslam.p('max iters').set(80)
         sslam.p('overlap threshold').set(0.5)
-        #sslam.p('reject threshold').set(0.20)
         sslam.p('reject threshold').set(0.2)
         sslam.p('score threshold').set(0.04)
         sslam.p('transform eps').set(1e-9)
@@ -153,27 +152,30 @@ class Benchmarker(object):
         self.auv.bearingAndWait(6)
         self.auv.bearingAndWait(0)
         self.auv.prop(110)
-        time.sleep(66)
+        time.sleep(60)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(90)
         self.auv.prop(110)
-        time.sleep(66)
+        time.sleep(60)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(180)
         self.auv.prop(110)
-        time.sleep(66)
+        time.sleep(60)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(270)
         self.auv.prop(110)
-        time.sleep(66)
+        time.sleep(60)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(0)
 
         self.auv.stop()
+
+        time.sleep(10)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -236,9 +236,9 @@ class SlamCloudGraph{
                     float score = m.transformcloudToMatch(
                         map_cloud, p, guess, relative_transformation, transformed
                     );
-                    float age_penalty = std::log(1.0 + (p->time() - map_cloud->time()));
+                    float age_penalty = 1.0 + std::log(1.0 + (p->time() - map_cloud->time()));
                     transformations.insert(std::make_pair(
-                        score / age_penalty,
+                        score * age_penalty,
                         mat_cloud_transformed_t(
                             relative_transformation, map_cloud, transformed
                         )
@@ -288,10 +288,10 @@ class SlamCloudGraph{
             
             // Choose the best *score* (not overlap) out of these matches, and use as the
             // parent for this scan:
-            const cloud_ptr       parent_map_cloud   = transformations.rbegin()->second.cloud;
-            const Eigen::Matrix4f rel_transformation = transformations.rbegin()->second.mat;
-            const base_cloud_ptr  transformed        = transformations.rbegin()->second.transformed;
-            r = transformations.rbegin()->first;
+            const cloud_ptr       parent_map_cloud   = transformations.begin()->second.cloud;
+            const Eigen::Matrix4f rel_transformation = transformations.begin()->second.mat;
+            const base_cloud_ptr  transformed        = transformations.begin()->second.transformed;
+            r = transformations.begin()->first;
 
             p->setRelativeTransform(rel_transformation);
             p->setRelativeTo(parent_map_cloud);
