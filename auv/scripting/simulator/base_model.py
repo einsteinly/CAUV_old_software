@@ -223,10 +223,11 @@ class Model(messaging.MessageObserver):
         self.update_lock.release()
         debug('%s' % ned, 3)
         r = self.datum + ned
-        return float(r.latitude),\
-               float(r.longitude),\
-               float(r.altitude),\
-               orientationToYPR(ori),\
-               messaging.floatXYZ(*(float(x) for x in vel))
+        return (float(r.latitude),
+               float(r.longitude),
+               float(r.altitude),
+               orientationToYPR(ori),
+               ori,
+               messaging.floatXYZ(*(float(x) for x in vel)))
 
 

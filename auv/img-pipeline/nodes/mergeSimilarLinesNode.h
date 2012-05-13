@@ -82,7 +82,7 @@ class MergeSimilarLinesNode: public Node{
             Eigen::Vector2f v(std::cos(l.angle), std::sin(l.angle)); 
             return std::abs((p - c).dot(v.unitOrthogonal()));
         }
-        float pointLineDistance(floatXYZ const& p, Line const& l) {
+        float pointLineDistance(floatXY const& p, Line const& l) {
             return pointLineDistance(Eigen::Vector2f(p.x,p.y), l);
         }
 
@@ -128,7 +128,7 @@ class MergeSimilarLinesNode: public Node{
                     }
                 }
 
-            Line l(floatXYZ(newCentre[0],newCentre[1],0), newAngle, newLength);
+            Line l(floatXY(newCentre[0],newCentre[1]), newAngle, newLength);
 
             //Eigen::Vector2f c = lineIntersection(line1, line2);
 

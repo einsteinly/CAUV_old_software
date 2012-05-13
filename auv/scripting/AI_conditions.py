@@ -136,6 +136,7 @@ class detectorConditions(aiCondition):
         self.state = False
         self.detector = None
     def set_options(self, options):
+        aiCondition.set_options(self, options)
         self.task_manager.set_detector_options(self.detector_id, self.options.get_options())
     def on_state_set(self, state):
         if state != self.state:
