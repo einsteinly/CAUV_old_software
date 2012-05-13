@@ -101,12 +101,12 @@ class HoughLinesNode: public Node{
             const float height = img.rows;
             debug(2) << "HoughLines: detected" << hough_lines.size() << "lines";
             for(unsigned i = 0; i < hough_lines.size(); i++){
-                floatXYZ centre(0, 0, 0);
+                floatXY centre(0, 0);
                 //float angle; // straight up is 0
                 centre.x = (hough_lines[i][0] + hough_lines[i][2]) / (2 * width);
                 centre.y = (hough_lines[i][1] + hough_lines[i][3]) / (2 * height);
-                floatXYZ top(0, 0, 0);
-                floatXYZ btm(0, 0, 0);
+                floatXY top(0, 0);
+                floatXY btm(0, 0);
                 if(hough_lines[i][1] > hough_lines[i][3]){
                     btm.x = hough_lines[i][0];
                     btm.y = hough_lines[i][1];

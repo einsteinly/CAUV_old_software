@@ -59,7 +59,7 @@ class MixValueNode: public Node{
             
             float img_f = param<float>("image fac");
             float mix_f = param<float>("mix fac");
-            float mix[3] = {
+            int mix[3] = {
                 param<int>("ch1"),
                 param<int>("ch2"),
                 param<int>("ch3")

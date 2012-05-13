@@ -102,6 +102,8 @@ enum NodeType : int8 {
     DrawEllipses,
     Sobel,
     Blob,
+    BearingRangeCrop,
+    DrawCircles,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -283,13 +285,13 @@ struct MotorDemand
 }
 struct Line
 {
-    eq centre : floatXYZ;
+    eq centre : floatXY;
     eq angle : float;
     eq length : float;
 }
 struct Circle
 {
-    eq centre : floatXYZ;
+    eq centre : floatXY;
     eq radius : float;
 }
 struct Ellipse
@@ -301,7 +303,7 @@ struct Ellipse
 }
 struct Corner
 {
-    eq centre : floatXYZ;
+    eq centre : floatXY;
     eq size : float;
     eq angle : float;
     eq response : float;
