@@ -138,7 +138,7 @@ class AUV(messaging.MessageObserver):
         '''Set the bearing control loop parameters.
 
             This is a sensible example:
-                bearingParams(3.5, 0, 35, 1, 1.3, 1.3, 1, 1, 150)
+                bearingParams(3.5, 0, 35, -1, 1.3, 1.3, 1, 1, 150)
             
             Basic parameters:
 
