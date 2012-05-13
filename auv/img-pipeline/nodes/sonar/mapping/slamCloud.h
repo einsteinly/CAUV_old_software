@@ -83,7 +83,7 @@ class SlamCloudGraph{
               m_good_keypoint_distance(0.2),
               m_max_speed(2.0),
               m_max_considered_overlaps(3),
-              m_rotation_scale(2),
+              m_rotation_scale(4),
               m_graph_optimisation_count(0),
               m_key_scan_locations(new KDTreeCachingCloud<PointT>()){
         }

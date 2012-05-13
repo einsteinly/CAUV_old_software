@@ -96,7 +96,7 @@ class Benchmarker(object):
         sslam.p('-vis origin x').set(-4.0)
         sslam.p('-vis origin y').set(-8.0)
         sslam.p('-vis resolution').set(800)
-        sslam.p('-vis size').set(32.0)
+        sslam.p('-vis size').set(36.0)
         sslam.p('clear').set(False)
         sslam.p('euclidean fitness').set(1e-7)
         sslam.p('feature merge distance').set(0.1)
@@ -104,12 +104,12 @@ class Benchmarker(object):
         sslam.p('keyframe spacing').set(1)
         sslam.p('match algorithm').set('ICP')
         # !!! TODO: sensitivity to this:
-        sslam.p('max correspond dist').set(1) 
-        # !!! TODO: sensitivity to this:
+        sslam.p('max correspond dist').set(4)
         sslam.p('max iters').set(80)
         sslam.p('overlap threshold').set(0.5)
-        sslam.p('reject threshold').set(0.05)
-        sslam.p('score threshold').set(0.05)
+        #sslam.p('reject threshold').set(0.20)
+        sslam.p('reject threshold').set(0.2)
+        sslam.p('score threshold').set(0.04)
         sslam.p('transform eps').set(1e-9)
         sslam.p('weight test').set(-1.0)
         sslam.p('xy metres/px').set(0.01) # unused, anyway
@@ -125,8 +125,8 @@ class Benchmarker(object):
         br_to_xy.o('keypoints').connect(sslam.i('keypoints'))
         delay.o('image out (not copied)').connect(correl.i('Image B'))
         clamp = pl.addNode(nt.ClampFloat)
-        clamp.p('Max').set(0.2)
-        clamp.p('Min').set(-0.2)
+        clamp.p('Max').set(0.1)
+        clamp.p('Min').set(-0.1)
         correl.o('max correl location').connect(clamp.i('Value'))
         clamp.o('Value').connect(sslam.i('delta theta'))
         resize = pl.addNode(nt.Resize)
@@ -152,24 +152,26 @@ class Benchmarker(object):
     def runTest(self):
         self.auv.bearingAndWait(6)
         self.auv.bearingAndWait(0)
-        self.auv.prop(80)
-        time.sleep(77)
+        self.auv.prop(110)
+        time.sleep(66)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(90)
-        self.auv.prop(80)
-        time.sleep(77)
+        self.auv.prop(110)
+        time.sleep(66)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(180)
-        self.auv.prop(80)
-        time.sleep(77)
+        self.auv.prop(110)
+        time.sleep(66)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(270)
-        self.auv.prop(80)
-        time.sleep(77)
+        self.auv.prop(110)
+        time.sleep(66)
         self.auv.prop(0)
+
+        self.auv.bearingAndWait(0)
 
         self.auv.stop()
 
