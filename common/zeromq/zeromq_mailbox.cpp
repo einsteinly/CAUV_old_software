@@ -55,6 +55,9 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     sub_bind = sub_bind_ss.str();
     sub.bind(sub_bind.c_str());
 
+    int reconnect_ival = 500;
+    sub.setsockopt(XS_RECONNECT_IVL, &reconnect_ival, sizeof(reconnect_ival));
+
     uint32_t marker_sub[2];
     marker_sub[0] = NODE_MARKER_MSGID;
     marker_sub[1] = getpid();
@@ -277,6 +280,13 @@ void ZeroMQMailbox::handle_pub_message (void) {
         uint32_t daemon_id = *(reinterpret_cast<uint32_t*>(data + 1) + 1);
         debug() << "connected to daemon" << daemon_id;
         daemon_connected = true;
+
+        //since the only expected reconnection is with the daemon, increase
+        //reconnect interval greatly to reduce CPU usage with lots of dead
+        //connections
+        int reconnect_ival = 10000;
+        sub.setsockopt(XS_RECONNECT_IVL, &reconnect_ival, sizeof(reconnect_ival));
+
         boost::shared_ptr<DaemonConnectedMessage> connect_msg =
             boost::make_shared<DaemonConnectedMessage>(daemon_id);
         BOOST_FOREACH(observer_ptr_t o, m_observers) {
