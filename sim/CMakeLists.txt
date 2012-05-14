@@ -16,11 +16,13 @@ if (${CAUV_BUILD_SIM})
         FixedNodeTrackerManipulator.cpp
     )
     depends_on_messages(sim)
+    cauv_install(sim)
 
     target_link_libraries (
         sim
         common
         cauv_debug
+        opencv_image
         ${OSG_LIBRARY}
         ${OSGVIEWER_LIBRARY}
         ${OSGGA_LIBRARY}
