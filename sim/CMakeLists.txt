@@ -12,7 +12,11 @@ if (${CAUV_BUILD_SIM})
 
     add_executable(
         sim
-        sim2.cpp
+        sim.cpp
+        sim_camera.cpp
+        objects/red_herring.cpp
+        objects/buoy.cpp
+        objects/water.cpp
         FixedNodeTrackerManipulator.cpp
     )
     depends_on_messages(sim)
