@@ -14,6 +14,7 @@ if (${CAUV_BUILD_SIM})
         sim
         sim.cpp
         sim_camera.cpp
+        sim_sonar.cpp
         objects/red_herring.cpp
         objects/buoy.cpp
         objects/water.cpp
