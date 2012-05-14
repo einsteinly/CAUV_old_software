@@ -34,6 +34,7 @@ SimCamera::SimCamera (osg::Node *track_node,
     fixed_manip->setRotation(axis1, angle1, axis2, angle2, axis3, angle3);
     fixed_manip->setTranslation(translation);
     viewer->setCameraManipulator(fixed_manip.get());
+    viewer->setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
 }
 
 void SimCamera::setup(osg::Node *root) {

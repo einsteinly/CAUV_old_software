@@ -87,12 +87,15 @@ void SimNode::onRun(void) {
     osg::ref_ptr<osg::Group> root_group = new osg::Group();
     osg::ref_ptr<osgViewer::Viewer> viewer = new osgViewer::Viewer();
     viewer->setUpViewInWindow(0,0,640,320);
+    viewer->setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
 
-    osg::ref_ptr<osg::Node> buoy = new BuoyNode(0.2);
-    osg::ref_ptr<osg::PositionAttitudeTransform> buoy_pos = new osg::PositionAttitudeTransform();
-    buoy_pos->addChild(buoy);
-    root_group->addChild(buoy_pos);
-    buoy_pos->setPosition(osg::Vec3f(10,0,0));
+    for (int i = 0; i != 3; i++) {
+        osg::ref_ptr<osg::Node> buoy = new BuoyNode(0.2);
+        osg::ref_ptr<osg::PositionAttitudeTransform> buoy_pos = new osg::PositionAttitudeTransform();
+        buoy_pos->addChild(buoy);
+        root_group->addChild(buoy_pos);
+        buoy_pos->setPosition(osg::Vec3f(i*10,0,0));
+    }
   
     osg::ref_ptr<osg::Node> vehicle = new RedHerringNode();
     osg::ref_ptr<osg::PositionAttitudeTransform> vehicle_pos = new osg::PositionAttitudeTransform();
@@ -110,15 +113,35 @@ void SimNode::onRun(void) {
     SimCamera forward(vehicle.get(),
               osg::Vec3d(0,0.6,0),
               osg::Vec3d(1,0,0), M_PI/2,
-              osg::Vec3d(0,0,0), M_PI/2,
+              osg::Vec3d(0,0,0), 0,
               osg::Vec3d(0,0,0), 0,
               512, 512,
               this, CameraID::Forward,
               max_rate);
 
+    SimCamera down(vehicle.get(),
+              osg::Vec3d(0,0.5,-0.3),
+              osg::Vec3d(0,0,0), M_PI/2,
+              osg::Vec3d(0,0,0), M_PI/2,
+              osg::Vec3d(0,0,0), 0,
+              512, 512,
+              this, CameraID::Down,
+              max_rate);
+
+    SimCamera up(vehicle.get(),
+              osg::Vec3d(0,0.5,0.3),
+              osg::Vec3d(1,0,0), -M_PI,
+              osg::Vec3d(0,0,0), 0,
+              osg::Vec3d(0,0,0), 0,
+              512, 512,
+              this, CameraID::Up,
+              max_rate);
+
     viewer->setSceneData(root_group);
     viewer->realize();
     forward.setup(root_group);
+    down.setup(root_group);
+    up.setup(root_group);
 
     subMessage(SimPositionMessage());
     boost::shared_ptr<SimObserver> obs = boost::make_shared<SimObserver>();
@@ -132,6 +155,8 @@ void SimNode::onRun(void) {
         viewer->frame(simTime);
         viewer->advance();
         forward.tick(simTime);
+        down.tick(simTime);
+        up.tick(simTime);
         framerate_limit.click(true);
     }
 }
