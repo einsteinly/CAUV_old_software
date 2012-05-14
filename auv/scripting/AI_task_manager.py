@@ -37,7 +37,8 @@ from utils.conv import BoostMapToDict
 task manager auto generates a list of what it should be running from these 'tasks', basically looking for these tasks and then running appropriate scripts
 """          
 
-TASK_CHECK_PERIOD = 1
+TASK_CHECK_INTERVAL = 1
+STATE_SAVE_INTERVAL = 30
 
 class taskManager(aiProcess):
     _store_values = ['task_nid', 'tasks', 'condition_nid', 'conditions', 'detector_nid', 'detectors_required', ]
@@ -52,7 +53,8 @@ class taskManager(aiProcess):
         self.conditions = {}
         #queues to add/remove
         self.processing_queue = deque()
-        self.periodic_timer = RepeatTimer(1, self.add_periodic_to_queue)
+        self.periodic_timer = RepeatTimer(TASK_CHECK_INTERVAL, self.add_periodic_to_queue)
+        self.state_save_timer = RepeatTimer(STATE_SAVE_INTERVAL, self.add_save_state_to_queue)
         #Detectors - definative list of what SHOULD be running
         self.detector_nid = 0
         self.detectors_last_known = deque()
@@ -66,18 +68,16 @@ class taskManager(aiProcess):
         #state data file
         self.state_shelf = shelve.open(mission)
         #Setup intial values
-        restored = False
         info('Looking for previous states...')
         if self.load_state():
-            restored = True
             self.log('Task manager restored.')
+            info('Found and loaded previous state.')
         else:
             info('No previous valid state file')
     def load_state(self, include_persist=False):
         #check whether there is a state
         if (not 'tasks' in self.state_shelf) or (not 'conditions' in self.state_shelf):
             return False
-        print self.state_shelf['tasks'], self.state_shelf['conditions']
         old2new_ids = {}
         #load and set conditions first, so that they can be linked to tasks
         for condition_id, (condition_type_name, condition_options) in self.state_shelf['conditions'].iteritems():
@@ -100,6 +100,7 @@ class taskManager(aiProcess):
                 self.tasks[task_id].persist_state = persist_state
         return True
     def save_state(self):
+        debug('Saving mission state.')
         task_dict = {}
         cond_dict = {}
         for condition_id, condition in self.conditions.iteritems():
@@ -109,7 +110,6 @@ class taskManager(aiProcess):
         self.state_shelf['tasks'] = task_dict
         self.state_shelf['conditions'] = cond_dict
         self.state_shelf.sync()
-        print self.state_shelf['tasks'], self.state_shelf['conditions']
     
     #ONMESSAGE FUNCTIONS
     def onAddTaskMessage(self, msg):
@@ -430,14 +430,15 @@ class taskManager(aiProcess):
                     highest_priority = task.options.priority
         if to_start:
             self.start_script(to_start)
-        #this should really happen less often !!!
-        self.save_state()
     def add_periodic_to_queue(self):
         self.processing_queue.append(('process_periodic', [], {}))
+    def add_save_state_to_queue(self):
+        self.processing_queue.append(('save_state', [], {}))
         
     #MAIN LOOP
     def run(self):
         self.periodic_timer.start()
+        self.state_save_timer.start()
         self.gui_send_all() #need to make sure gui gets initial data
         while True:
             try:
