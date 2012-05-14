@@ -41,41 +41,84 @@
 #include <common/msg_classes/wgs84_coord.h>
 #include <generated/types/SimPositionMessage.h>
 #include <generated/message_observers.h>
+#include <utility/ratelimit.h>
 
 #include "FixedNodeTrackerManipulator.h"
 
 #include <sstream>
 
+#include <opencv/cv.h>
+#include <generated/types/ImageMessage.h>
+#include <common/msg_classes/image.h>
+
+using namespace cauv;
+
 class SimCamera {
     public:
-    SimCamera (osg::Node *node,
+    SimCamera (osg::Node *track_node,
                osg::Vec3d translation,
                osg::Vec3d axis1, float angle1,
                osg::Vec3d axis2, float angle2,
                osg::Vec3d axis3, float angle3,
-               unsigned int width, unsigned int height) :
-       viewer(new osgViewer::Viewer()),
-       image(new osg::Image()),
-       camera(viewer->getCamera()),
-       fixed_manip(new cauv::FixedNodeTrackerManipulator)
-    {
-        viewer->setUpViewInWindow(0,0,width,height);
-        image->allocateImage(width, height, 24, GL_RGB, GL_UNSIGNED_BYTE);
-        //camera->attach(osg::Camera::COLOR_BUFFER0, image);
-        fixed_manip->setTrackNode(node);
-        fixed_manip->setRotation(axis1, angle1, axis2, angle2, axis3, angle3);
-        fixed_manip->setTranslation(translation);
-        viewer->setCameraManipulator(fixed_manip.get());
-    }
-
+               unsigned int width, unsigned int height,
+               CauvNode *sim_node, CameraID::e id,
+               unsigned int max_rate);
+    void tick(double timestamp);
+    void set_up(osg::Node *root);
+    private:
+    CauvNode *sim_node;
+    CameraID::e cam_id;
+    unsigned int width, height;
+    RateLimiter output_limit;
     osg::ref_ptr<osgViewer::Viewer> viewer;
     osg::ref_ptr<osg::Image> image;
-    private:
     osg::ref_ptr<osg::Camera> camera;
     osg::ref_ptr<cauv::FixedNodeTrackerManipulator> fixed_manip;
 };
 
-using namespace cauv;
+SimCamera::SimCamera (osg::Node *track_node,
+                      osg::Vec3d translation,
+                      osg::Vec3d axis1, float angle1,
+                      osg::Vec3d axis2, float angle2,
+                      osg::Vec3d axis3, float angle3,
+                      unsigned int width_, unsigned int height_,
+                      CauvNode *sim_node_,
+                      CameraID::e id,
+                      unsigned int max_rate) :
+           sim_node(sim_node_),
+           cam_id(id),
+           width(width_), height(height_),
+           output_limit(1, max_rate),
+           viewer(new osgViewer::Viewer()),
+           image(new osg::Image()),
+           camera(viewer->getCamera()),
+           fixed_manip(new cauv::FixedNodeTrackerManipulator)
+{
+    viewer->setUpViewInWindow(0,0,width,height);
+    image->allocateImage(width, height, 1, GL_BGR, GL_UNSIGNED_BYTE);
+    image->setOrigin(osg::Image::BOTTOM_LEFT);
+    camera->attach(osg::Camera::COLOR_BUFFER0, image);
+    fixed_manip->setTrackNode(track_node);
+    fixed_manip->setRotation(axis1, angle1, axis2, angle2, axis3, angle3);
+    fixed_manip->setTranslation(translation);
+    viewer->setCameraManipulator(fixed_manip.get());
+}
+
+void SimCamera::set_up(osg::Node *root) {
+    viewer->setSceneData(root);
+    viewer->realize();
+}
+
+void SimCamera::tick(double timestamp) {
+    viewer->frame(timestamp);
+    viewer->advance();
+    if(image->valid() && output_limit.click()) {
+        image->flipVertical();
+        cv::Mat data = cv::Mat(width, height, CV_8UC3, image->data(), 0);
+        boost::shared_ptr<ImageMessage> msg = boost::make_shared<ImageMessage>(cam_id, cauv::Image(data), cauv::now());
+        sim_node->send(msg, UNRELIABLE_MSG);
+    }
+}
 
 class SimObserver : public MessageObserver {
     public:
@@ -83,8 +126,6 @@ class SimObserver : public MessageObserver {
     virtual void onSimPositionMessage(SimPositionMessage_ptr m) {
         WGS84Coord loc = m->location();
         NorthEastDepth pos = loc - datum;
-        debug() << *m;
-        debug() << pos.north() << pos.east() << pos.depth();
         position.x() = pos.east();
         position.y() = pos.north();
         position.z() = -pos.depth();
@@ -100,11 +141,29 @@ class SimObserver : public MessageObserver {
     osg::Quat attitude;
 };
 
+
+namespace po = boost::program_options;
+
 class SimNode : public CauvNode {
     public:
     SimNode() : CauvNode("sim") {};
     virtual void onRun (void);
+    virtual void addOptions(po::options_description& desc,
+                            po::positional_options_description& pos);
+    private:
+    unsigned int max_rate;
+    std::string resource_dir;
 };
+
+void SimNode::addOptions(po::options_description& desc,
+                          po::positional_options_description& pos)
+{
+    CauvNode::addOptions(desc, pos);
+    desc.add_options()
+        ("max_rate,r", po::value<unsigned int>(&max_rate)->default_value(20), "Maximum rate to send camera image messages")
+        ("resource_dir,d", po::value<std::string>(&resource_dir)->default_value(""), "OSG resource directory to use")
+    ;
+}
 
 class BuoyNode : public osg::Geode {
     public:
@@ -183,51 +242,42 @@ void SimNode::onRun(void) {
     trackballmanip->setTrackNode(vehicle);
     viewer->setCameraManipulator(trackballmanip.get()); 
 
-    //forward
-    SimCamera c1(vehicle.get(),
+    SimCamera forward(vehicle.get(),
               osg::Vec3d(0,0.6,0),
               osg::Vec3d(1,0,0), M_PI/2,
               osg::Vec3d(0,0,0), M_PI/2,
               osg::Vec3d(0,0,0), 0,
-              512, 512);
+              512, 512,
+              this, CameraID::Forward,
+              max_rate);
 
     viewer->setSceneData(root_group);
     viewer->realize();
-    c1.viewer->setSceneData(root_group);
-    c1.viewer->realize();
+    forward.set_up(root_group);
 
     subMessage(SimPositionMessage());
     boost::shared_ptr<SimObserver> obs = boost::make_shared<SimObserver>();
     addMessageObserver(obs);
 
+    RateLimiter framerate_limit(1,40);
     while(!viewer->done()){
         double simTime = viewer->getFrameStamp()->getSimulationTime();
         vehicle_pos->setPosition(obs->position);
         vehicle_pos->setAttitude(obs->attitude);
         viewer->frame(simTime);
         viewer->advance();
-        c1.viewer->frame(simTime);
-        c1.viewer->advance();
-        info() << "scene redrawn at " << simTime;
-
-        //std::stringstream str;
-        //str << "frames/u" << simTime << ".png";
-        //osgDB::writeImageFile(*imag,str.str());//renders images looking up
-         
-        //std::stringstream str2;
-        //str2 << "frames/d" << simTime << ".png";
-        //osgDB::writeImageFile(*imag2,str2.str());//renders images lookig down
-        
-        //std::stringstream str3;
-        //str3 << "frames/f" <<simTime << ".png";
-        //osgDB::writeImageFile(*imag3,str3.str());//renders images looking forward
-        
+        forward.tick(simTime);
+        framerate_limit.click(true);
     }
 }
 
-int main(void)
-{
+int main(int argc, char** argv) {
+    //work around fun NVIDIA bug with fork() in threads using OpenGL...
+    mkUID();
     SimNode node;
+    if (node.parseOptions(argc,argv)) {
+        return 1;
+    }
     node.run(false);
     return 0;
 }
