@@ -32,6 +32,7 @@
 #include <utility/uid.h>
 
 #include "sim_camera.h"
+#include "sim_sonar.h"
 #include "objects/red_herring.h"
 #include "objects/buoy.h"
 #include "objects/water.h"
@@ -71,6 +72,7 @@ class SimNode : public CauvNode {
     private:
     unsigned int max_rate;
     std::string resource_dir;
+    bool sim_sonar;
 };
 
 void SimNode::addOptions(po::options_description& desc,
@@ -80,6 +82,7 @@ void SimNode::addOptions(po::options_description& desc,
     desc.add_options()
         ("max_rate,r", po::value<unsigned int>(&max_rate)->default_value(20), "Maximum rate to send camera image messages")
         ("resource_dir,d", po::value<std::string>(&resource_dir)->default_value(""), "OSG resource directory to use")
+        ("sim_sonar,g", po::value<bool>(&sim_sonar)->default_value(false)->zero_tokens(), "Simulate sonar data")
     ;
 }
 
@@ -102,8 +105,8 @@ void SimNode::onRun(void) {
     vehicle_pos->addChild(vehicle);
     root_group->addChild(vehicle_pos);
 
-    osg::ref_ptr<osg::Node> surface = new WaterNode();
-    root_group->addChild(surface);
+    //osg::ref_ptr<osg::Node> surface = new WaterNode();
+    //root_group->addChild(surface);
 
     osg::ref_ptr<osgGA::NodeTrackerManipulator> trackballmanip = new osgGA::NodeTrackerManipulator();
     trackballmanip->setTrackerMode(osgGA::NodeTrackerManipulator::NODE_CENTER);
@@ -137,11 +140,27 @@ void SimNode::onRun(void) {
               this, CameraID::Up,
               max_rate);
 
+    SimSonar *sonar = NULL;
+    if(sim_sonar) {
+        sonar = new SimSonar (
+                  vehicle.get(),
+                  osg::Vec3d(0,0.5,0.3),
+                  osg::Vec3d(1,0,0), M_PI/2,
+                  osg::Vec3d(0,0,0), 0,
+                  osg::Vec3d(0,0,0), 0,
+                  512, 512,
+                  this,
+                  max_rate);
+    }
+
     viewer->setSceneData(root_group);
     viewer->realize();
     forward.setup(root_group);
     down.setup(root_group);
     up.setup(root_group);
+    if (sonar) {
+        sonar->setup(root_group);
+    }
 
     subMessage(SimPositionMessage());
     boost::shared_ptr<SimObserver> obs = boost::make_shared<SimObserver>();
@@ -157,7 +176,13 @@ void SimNode::onRun(void) {
         forward.tick(simTime);
         down.tick(simTime);
         up.tick(simTime);
+        if (sonar) {
+            sonar->tick(simTime);
+        }
         framerate_limit.click(true);
+    }
+    if (sonar) {
+        delete sonar;
     }
 }
 
