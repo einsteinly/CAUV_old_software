@@ -20,6 +20,7 @@
 #include <cassert>
 #include <cmath>
 #include <limits>
+#include <numeric>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
@@ -387,8 +388,6 @@ class Forest{
             return float(good) / m_trees.size();
         }
         
-        // keypoints are filtered by setting the weight value to <= 0 for
-        // rejected keypoints
         inline kp_vec filter(kp_vec const& in_kps, cv::Mat const& image) const{
             info() << "filter: " << in_kps.size() << "keypoints...";
             if(!m_trees.size()){
@@ -410,10 +409,13 @@ class Forest{
                 debug() << "re-score: no forest! everything will be scored at 1.0";
                 foreach(KeyPoint& k, kps)
                     k.response = 1;
-                return;
             }else{
-                foreach(KeyPoint& k, kps)
+                double total_prob = 0;
+                foreach(KeyPoint& k, kps){
                     k.response = probabilityGood(cv::Point(int(k.pt.x), int(k.pt.y)), image);
+                    total_prob += k.response;
+                }
+                debug() << "re-score: mean p=" << total_prob / kps.size();
             }
         }
 
@@ -633,7 +635,8 @@ class LearnedKeyPointsNode: public Node{
 
         void _train(kp_vec const& keypoints, int_vec const& goodness, image_ptr_t img){
             info() << keypoints.size() <<  "kps, "
-                   << goodness.size() << "values for training";
+                   << goodness.size() << "values for training, "
+                   << std::accumulate(goodness.begin(), goodness.end(), 0) << "good training values";
             
             pt_vec kps_as_points;
             kps_as_points.reserve(keypoints.size());
