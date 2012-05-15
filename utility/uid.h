@@ -21,13 +21,13 @@ namespace cauv {
 
 struct UID
 {
-    int32_t host;
+    uint32_t host;
     int32_t sensor;
     int32_t seq1;
     int32_t seq2;
         
     UID();
-    UID(int32_t const& host, int32_t const& sensor, int32_t const& seq1, int32_t const& seq2);
+    UID(uint32_t const& host, int32_t const& sensor, int32_t const& seq1, int32_t const& seq2);
 
     bool operator==(UID const& other) const;
     bool operator<(UID const& other) const;

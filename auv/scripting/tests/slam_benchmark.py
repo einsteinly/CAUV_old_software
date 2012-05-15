@@ -31,7 +31,9 @@ class Benchmarker(object):
 
     def setup(self):
         self.auv.stop()
-        self.auv.bearingParams(1, 0, 10, -1, 1, 1, 1, 1, 100) # slower than normal!
+        self.auv.hbowMap(0,0)
+        self.auv.hsternMap(0,0)
+        self.auv.bearingParams(1, 0, 0, -1, 1, 1, 1, 1, 10) # much slower than normal!
         self.gemini.interPingDelay(6)
         self.gemini.range(20)
         self.gemini.gain(60)
@@ -94,20 +96,19 @@ class Benchmarker(object):
         sslam.p('-vis origin x').set(-4.0)
         sslam.p('-vis origin y').set(-8.0)
         sslam.p('-vis resolution').set(800)
-        sslam.p('-vis size').set(32.0)
+        sslam.p('-vis size').set(36.0)
         sslam.p('clear').set(False)
         sslam.p('euclidean fitness').set(1e-7)
         sslam.p('feature merge distance').set(0.1)
         sslam.p('graph iters').set(10)
-        sslam.p('keyframe spacing').set(2)
+        sslam.p('keyframe spacing').set(1.5)
         sslam.p('match algorithm').set('ICP')
         # !!! TODO: sensitivity to this:
-        sslam.p('max correspond dist').set(2.0) 
-        # !!! TODO: sensitivity to this:
-        sslam.p('max iters').set(10)
+        sslam.p('max correspond dist').set(0.5)
+        sslam.p('max iters').set(80)
         sslam.p('overlap threshold').set(0.5)
-        sslam.p('reject threshold').set(0.5)
-        sslam.p('score threshold').set(1.0)
+        sslam.p('reject threshold').set(0.2)
+        sslam.p('score threshold').set(0.04)
         sslam.p('transform eps').set(1e-9)
         sslam.p('weight test').set(-1.0)
         sslam.p('xy metres/px').set(0.01) # unused, anyway
@@ -150,26 +151,31 @@ class Benchmarker(object):
     def runTest(self):
         self.auv.bearingAndWait(6)
         self.auv.bearingAndWait(0)
-        self.auv.prop(80)
-        time.sleep(77)
+        self.auv.prop(110)
+        time.sleep(60)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(90)
-        self.auv.prop(80)
-        time.sleep(77)
+        self.auv.prop(110)
+        time.sleep(60)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(180)
-        self.auv.prop(80)
-        time.sleep(77)
+        self.auv.prop(110)
+        time.sleep(60)
         self.auv.prop(0)
 
         self.auv.bearingAndWait(270)
-        self.auv.prop(80)
-        time.sleep(77)
+        self.auv.prop(110)
+        time.sleep(60)
         self.auv.prop(0)
 
+        self.auv.bearingAndWait(0)
+
         self.auv.stop()
+
+        time.sleep(10)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

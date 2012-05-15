@@ -14,6 +14,7 @@ target_link_libraries(vehicle_daemon
     ${CROSSROADS_LIBRARY}
     xs
 )
+cauv_install(vehicle_daemon)
 
 add_library(
     zeromq_msg STATIC

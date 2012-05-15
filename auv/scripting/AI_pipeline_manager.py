@@ -16,7 +16,7 @@ class NewModel(cauv.pipeline.Model):
      - Runs it's own image pipeline, complete with dealing with crashes
      - Keeps nodes labeled the same as they were handed to it, and supports relabeling nodes
     """
-    def __init__(self, node, pipeline_name, *args, **kwargs):
+    def __init__(self, node, pipeline_name, on_change_callback, *args, **kwargs):
         self.img_pipeline_name = pipeline_name
         try:
             cauv.pipeline.Model.__init__(self, node, pipeline_name, *args, **kwargs)
@@ -29,6 +29,7 @@ class NewModel(cauv.pipeline.Model):
         self.nodes = {}#record of what we think is in the pipeline
         self.temp_number = 0#labeling for any new user created nodes
         self.bad_ids = []#list of node ids that don't work
+        self.callback = on_change_callback#function that gets evaluated on a change in the model
     def get(self, timeout=3.0): #needs nnid to know where new nodes are out of the way
         try:
             state = cauv.pipeline.Model.get(self, timeout)
@@ -135,6 +136,40 @@ class NewModel(cauv.pipeline.Model):
             self.pl2manager.pop(self.manager2pl[node_id])
             self.manager2pl.pop(node_id)
             self.nodes.pop(node_id)
+            
+    #override message handlers to make sure that we update the model if something gets changed
+    #this should really do something clever to avoid ending up calling get and having to rebroadcast the entire state
+    #probably this should update automatically, and only call callback if something has definetly changed
+    def onNodeAddedMessage(self, m):
+        if not self.checkName(m): return
+        self.callback()
+        super(NewModel, self).onNodeAddedMessage(m)
+
+    def onNodeRemovedMessage(self, m):
+        if not self.checkName(m): return
+        self.callback()
+        super(NewModel, self).onNodeRemovedMessage(m)
+
+    #needs to ignore dynamic parameter changes
+    #def onNodeParametersMessage(self, m):
+    #if not self.checkName(m): return
+    #self.callback()
+    #super(NewModel, self).onNodeParametersMessage(m)
+
+    #this would cause infinite loops atm
+    #def onGraphDescriptionMessage(self, m):
+    #if not self.checkName(m): return
+    #self.callback()
+    #super(NewModel, self).onGraphDescriptionMessage(m)
+
+    def onArcAddedMessage(self, m):
+        if not self.checkName(m): return
+        self.callback()
+        super(NewModel, self).onArcAddedMessage(m)
+
+    def onArcRemovedMessage(self, m):
+        if not self.checkName(m): return
+        self.callback()
 
 class Pipeline():
     def __init__(self, nodes):
@@ -207,6 +242,10 @@ class PipelinesSet():
                     st.nodes = node_group
                     pickle.dump(st, outf)
             self.pipelines[os.path.join('temp','__')+pipeline+'__all'] = Pipeline(all_nodes)
+            #update node_id to pipeline map
+            for node_id in self.node_id2pipeline:
+                if node_id in all_nodes:
+                    self.node_id2pipeline = os.path.join('temp','__')+pipeline+'__all'
             with open(os.path.join('pipelines','temp','__')+pipeline+'__all'+'.pipe', 'wb') as outf:
                 st = cauv.pipeline.State()
                 st.nodes = all_nodes
@@ -241,6 +280,7 @@ class pipelineManager(aiProcess):
         self.pl_data = PipelinesSet()
         self.load_pl_data()
         self.reeval = False
+        self.last_change = None
     def load_pl_data(self):
         """
         try and load pipelines
@@ -334,6 +374,8 @@ class pipelineManager(aiProcess):
         if set(req_list) != set(self.detector_requests):
             self.detector_requests = req_list
             self.reeval = True
+    def update_last_change(self):
+        self.last_change = time.time()
     def eval_state(self):
         """
         TODO allow gui disabling
@@ -454,7 +496,7 @@ class pipelineManager(aiProcess):
         self._pl.remove(remove_nodes)
     def run(self):
         #this should probably be replaced with multiple pipelines
-        self._pl = NewModel(self.node,'ai')
+        self._pl = NewModel(self.node,'ai', self.update_last_change)
         while True:
             for x in range(5):
                 try:
@@ -469,9 +511,10 @@ class pipelineManager(aiProcess):
             else:
                 if self.request_queue.qsize()>5:
                     warning('Pipeline manager request queue is large, there may be delays')
-            if self.reeval:
-                self.eval_state()
+            if self.reeval or (self.last_change and self.last_change+5.0<time.time()):
+                self.last_change = None
                 self.reeval = False
+                self.eval_state()
                 #self.state['requests'] = self.requests
                 #self.state.sync()
     

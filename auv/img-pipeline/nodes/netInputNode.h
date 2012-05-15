@@ -62,8 +62,12 @@ class NetInputNode: public InputNode{
          *   if m_output_demanded, queue this node for execution
          */
         void onImageMessage(boost::shared_ptr<const ImageMessage> m){
-            lock_t l(m_counters_lock);
             debug(4) << "Input node received an image";
+            if(m->source() != param<int>("camera id")) {
+                return;
+            }
+
+            lock_t l(m_counters_lock);
             
             { lock_t l(m_latest_msg_lock);
                 if(!m_processed_latest)

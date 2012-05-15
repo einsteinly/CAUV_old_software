@@ -227,7 +227,9 @@ std::string cauv::chil($className const& v){
 }
 #else
 void cauv::serialise(svec_ptr p, $className const&){
+    p->reserve(8);
     cauv::serialise(p, uint32_t($m.id)); 
+    cauv::serialise(p, uint32_t($hex($m.check_hash)));
 }
 std::string cauv::chil($className const&){
     return "${m.id}()";

@@ -103,6 +103,7 @@ enum NodeType : int8 {
     Sobel,
     Blob,
     BearingRangeCrop,
+    DrawCircles,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -162,13 +163,13 @@ struct floatYPR
 }
 // YPR is a stupid way of doing things, at some point, every YPR will be
 // replaced with this:
-//struct quat
-//{
-//    q0 : float; // imaginary x
-//    q1 : float; // imaginary y
-//    q2 : float; // imaginary z
-//    q3 : float; // real part
-//}
+struct quat
+{
+    q0 : float; // imaginary x
+    q1 : float; // imaginary y
+    q2 : float; // imaginary z
+    q3 : float; // real part
+}
 struct floatXYZ
 {
     eq x : float;
@@ -284,13 +285,13 @@ struct MotorDemand
 }
 struct Line
 {
-    eq centre : floatXYZ;
+    eq centre : floatXY;
     eq angle : float;
     eq length : float;
 }
 struct Circle
 {
-    eq centre : floatXYZ;
+    eq centre : floatXY;
     eq radius : float;
 }
 struct Ellipse
@@ -302,7 +303,7 @@ struct Ellipse
 }
 struct Corner
 {
-    eq centre : floatXYZ;
+    eq centre : floatXY;
     eq size : float;
     eq angle : float;
     eq response : float;
@@ -339,7 +340,7 @@ struct ScriptExecRequest
 }
 struct UID <utility/uid.h>
 {
-    eq cmp host : int32;   // unique (constant) per-host, eg IP address / end of MAC
+    eq cmp host : uint32;   // unique (constant) per-host, eg IP address / end of MAC
     eq cmp sensor : int32; // unique (constant) per-sensor
     eq cmp seq1 : int32;   // 
     eq cmp seq2 : int32;   // sequence per-sensor
@@ -1021,6 +1022,8 @@ group simulation
         // Pitch = degrees UP from plane (- euler right->left axis)
         // Roll  = degrees rolling to the right (euler back->front axis)
         orientation : floatYPR;
+
+        quaternion : quat;
 
         speed : floatXYZ; // metres per second, some arbitrary local coordinate system: TODO: fix this!
     }
