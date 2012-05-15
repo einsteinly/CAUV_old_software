@@ -373,6 +373,7 @@ void SonarSLAMNode::init(){
     // ICP only:
     registerParamID("reject threshold", float(0.5), "RANSAC outlier rejection distance");
     registerParamID("max correspond dist", float(1), "");
+    registerParamID("ransac iterations", int(10), "RANSAC iterations");
     // ICP / NDT / NDT non-linear
     registerParamID("match algorithm", std::string("ICP"), "ICP, Non-Linear ICP, or NDT");
     
@@ -429,6 +430,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     const float reject_threshold    = param<float>("reject threshold");
     const float max_correspond_dist = param<float>("max correspond dist");
     const std::string match_algorithm = param<std::string>("match algorithm");    
+    const int ransac_iters          = param<int>("ransac iterations");
 
     const int graph_iters = param<int>("graph iters");
 
@@ -475,12 +477,12 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     }else if(boost::iequals(match_algorithm, "ICP")){
         scan_matcher = makeICPPairwiseMatcherShared(
             max_iters, euclidean_fitness, transform_eps,
-            reject_threshold, max_correspond_dist, score_thr
+            reject_threshold, max_correspond_dist, score_thr, ransac_iters
         );
     }else if(boost::iequals(match_algorithm, "non-linear ICP")){
         scan_matcher = makeICPNonLinearPairwiseMatcherShared(
             max_iters, euclidean_fitness, transform_eps,
-            reject_threshold, max_correspond_dist, score_thr
+            reject_threshold, max_correspond_dist, score_thr, ransac_iters
         );
     }else{
         throw parameter_error(

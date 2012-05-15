@@ -96,10 +96,8 @@ class BearingRangeToXYNode: public Node{
                     // the bearings are in radians (see SonarInputNode)
                     floatXY xy(range*cos(bearing), -range*sin(bearing));
                     // TODO: convert angle
-                    // response value is scaled by range: features further away
-                    // are logarithmically more important
                     r.push_back(KeyPoint(
-                        xy, k.size*range_scale, 0, k.response*std::log(1+range_scale), k.octave, k.class_id
+                        xy, k.size*range_scale, 0, k.response, k.octave, k.class_id
                     ));
                 }
                 return r;

@@ -88,20 +88,7 @@ output_dir = os.path.abspath(options.output)
 with open(messages_file, "r") as msg_file:
     data = msg_file.read()
 
-#bump when serialisation format changes
-serialise_format_ver = 1
-
 tree = parser.parse(data)
-
-#print(tree)
-tree.build_lookup()
-for group in tree['groups']:
-    for message in group.messages:
-        h = hashlib.md5()
-        h.update(str(serialise_format_ver))
-        message.add_to_hash(h)
-        message.check_hash = int(h.hexdigest()[0:8],16)
-        #print("{:>30} : 0x{:0>8x}".format(message.name, message.check_hash))
 
 msgdir = options.template_dir
 
