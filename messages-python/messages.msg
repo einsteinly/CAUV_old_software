@@ -340,7 +340,7 @@ struct ScriptExecRequest
 }
 struct UID <utility/uid.h>
 {
-    eq cmp host : int32;   // unique (constant) per-host, eg IP address / end of MAC
+    eq cmp host : uint32;   // unique (constant) per-host, eg IP address / end of MAC
     eq cmp sensor : int32; // unique (constant) per-sensor
     eq cmp seq1 : int32;   // 
     eq cmp seq2 : int32;   // sequence per-sensor

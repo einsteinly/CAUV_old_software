@@ -12,15 +12,22 @@ if (${CAUV_BUILD_SIM})
 
     add_executable(
         sim
-        sim2.cpp
+        sim.cpp
+        sim_camera.cpp
+        sim_sonar.cpp
+        objects/red_herring.cpp
+        objects/buoy.cpp
+        objects/water.cpp
         FixedNodeTrackerManipulator.cpp
     )
     depends_on_messages(sim)
+    cauv_install(sim)
 
     target_link_libraries (
         sim
         common
         cauv_debug
+        opencv_image
         ${OSG_LIBRARY}
         ${OSGVIEWER_LIBRARY}
         ${OSGGA_LIBRARY}
