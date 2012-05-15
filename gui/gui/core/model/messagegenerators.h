@@ -56,7 +56,7 @@ Q_SIGNALS:
 };
 
 template<class NodeType>
-struct TypedMessageGenerator : BaseMessageGenerator {
+class TypedMessageGenerator : BaseMessageGenerator {
 public:
     TypedMessageGenerator(boost::shared_ptr<NodeType> node) :
         BaseMessageGenerator(node), m_node(node) {}
@@ -65,7 +65,7 @@ protected:
 };
 
 template<class NodeType, class MessageType>
-struct MessageGenerator : TypedMessageGenerator<NodeType> {
+class MessageGenerator : TypedMessageGenerator<NodeType> {
 public:
     MessageGenerator(boost::shared_ptr<NodeType> node) : TypedMessageGenerator<NodeType>(node)  {}
 };
