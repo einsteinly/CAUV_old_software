@@ -17,6 +17,32 @@ class NorthEastDepthCoord:
         self.north = north
         self.east = east
         self.depth = depth
+    def __mul__(self, number):
+        return NorthEastDepthCoord(self.north * number,
+                                   self.east * number,
+                                   self.depth * number)
+    def __div__(self, number):
+        return NorthEastDepthCoord(self.north / number,
+                                   self.east / number,
+                                   self.depth / number)
+    def __imul__(self, number):
+        self.north *= number
+        self.east *= number
+        self.depth *= number
+        return self
+    def __idiv__(self, number):
+        self.north /= number
+        self.east /= number
+        self.depth /= number
+        return self
+    def __iadd__(self, ned):
+        if isinstance(ned, NorthEastDepthCoord):
+            self.north += ned.north
+            self.east += ned.east
+            self.depth += ned.depth
+        else:
+            raise TypeError('Adding %s to a NorthEastDepthCoord is unsupported' %str(type(ned)))
+        return self
     def __repr__(self):
         return '(North=%s, East=%s, Depth=%s)' % (self.north, self.east, self.depth)
 
