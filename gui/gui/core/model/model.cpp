@@ -38,6 +38,9 @@ void RedHerring::initialise() {
     boost::shared_ptr<GroupingNode> autopilots = findOrCreate<GroupingNode>("autopilots");
     connect(autopilots.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(setupAutopilot(boost::shared_ptr<Node>)));
 
+    boost::shared_ptr<GroupingNode> calibration = findOrCreate<GroupingNode>("sensors")->findOrCreate<GroupingNode>("calibration");
+    attachGenerator(boost::make_shared<MessageGenerator<GroupingNode, DepthCalibrationMessage> >(calibration));
+
 }
 
 void RedHerring::setupMotor(boost::shared_ptr<Node> node){
@@ -68,15 +71,24 @@ void RedHerring::setupAutopilot(boost::shared_ptr<Node> node){
         // params vary for each autopilot
         switch(id){
         case Controller::Bearing:
-            attachGenerator(boost::make_shared<MessageGenerator<AutopilotNode, BearingAutopilotEnabledMessage> >(autopilot));
+            attachGenerator(boost::make_shared<MessageGenerator<AutopilotNode,
+                            BearingAutopilotEnabledMessage> >(autopilot));
+            attachGenerator(boost::make_shared<MessageGenerator<AutopilotParamsNode,
+                            BearingAutopilotParamsMessage> > (autopilot->getParams()));
             min=0; max=360; wraps=true; units="°";
             break;
         case Controller::Pitch:
-            attachGenerator(boost::make_shared<MessageGenerator<AutopilotNode, PitchAutopilotEnabledMessage> >(autopilot));
+            attachGenerator(boost::make_shared<MessageGenerator<AutopilotNode,
+                            PitchAutopilotEnabledMessage> >(autopilot));
+            attachGenerator(boost::make_shared<MessageGenerator<AutopilotParamsNode,
+                            PitchAutopilotParamsMessage> > (autopilot->getParams()));
             min=-180; max=180; wraps=true; units="°";
             break;
         case Controller::Depth:
-            attachGenerator(boost::make_shared<MessageGenerator<AutopilotNode, DepthAutopilotEnabledMessage> >(autopilot));
+            attachGenerator(boost::make_shared<MessageGenerator<AutopilotNode,
+                            DepthAutopilotEnabledMessage> >(autopilot));
+            attachGenerator(boost::make_shared<MessageGenerator<AutopilotParamsNode,
+                            DepthAutopilotParamsMessage> > (autopilot->getParams()));
             min=-1; max=5; wraps=false; units="m";
             break;
         default: return;

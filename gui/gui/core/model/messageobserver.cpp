@@ -34,6 +34,7 @@
 #include "model/nodes/groupingnode.h"
 #include "model/nodes/stringnode.h"
 #include "model/nodes/imagenode.h"
+#include "model/nodes/autopilotnode.h"
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -49,17 +50,16 @@ GuiMessageObserver::~GuiMessageObserver() {
 }
 
 template <class T>
-void updateAutopilotParams(boost::shared_ptr<AutopilotNode> ap, boost::shared_ptr<const T> message) {
-    boost::shared_ptr<GroupingNode> params = ap->findOrCreate<GroupingNode>("params");
-    params->findOrCreate<NumericNode<float> >("Kp")->update(message->Kp());
-    params->findOrCreate<NumericNode<float> >("Ki")->update(message->Ki());
-    params->findOrCreate<NumericNode<float> >("Kd")->update(message->Kd());
-    params->findOrCreate<NumericNode<float> >("scale")->update(message->scale());
-    params->findOrCreate<NumericNode<float> >("aP")->update(message->Ad());
-    params->findOrCreate<NumericNode<float> >("aI")->update(message->Ai());
-    params->findOrCreate<NumericNode<float> >("aD")->update(message->Ad());
-    params->findOrCreate<NumericNode<float> >("thr")->update(message->thr());
-    params->findOrCreate<NumericNode<float> >("maxError")->update(message->maxError());
+void updateAutopilotParams(boost::shared_ptr<AutopilotParamsNode> params, boost::shared_ptr<const T> message) {
+    params->kP()->update(message->Kp());
+    params->kI()->update(message->Ki());
+    params->kD()->update(message->Kd());
+    params->scale()->update(message->scale());
+    params->aP()->update(message->Ad());
+    params->aI()->update(message->Ai());
+    params->aD()->update(message->Ad());
+    params->thr()->update(message->thr());
+    params->maxError()->update(message->maxError());
 }
 
 DefaultGuiMessageObserver::DefaultGuiMessageObserver(boost::shared_ptr<Vehicle> auv):
@@ -80,7 +80,7 @@ void DefaultGuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilo
 void DefaultGuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<AutopilotNode> ap = autopilots->findOrCreate<AutopilotNode>(Controller::Bearing);
-    updateAutopilotParams<BearingAutopilotParamsMessage>(ap, message);
+    updateAutopilotParams<BearingAutopilotParamsMessage>(ap->getParams(), message);
 }
 
 void DefaultGuiMessageObserver::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr message) {
@@ -93,7 +93,7 @@ void DefaultGuiMessageObserver::onDepthAutopilotEnabledMessage(DepthAutopilotEna
 void DefaultGuiMessageObserver::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<AutopilotNode> ap = autopilots->findOrCreate<AutopilotNode>(Controller::Depth);
-    updateAutopilotParams<DepthAutopilotParamsMessage>(ap, message);
+    updateAutopilotParams<DepthAutopilotParamsMessage>(ap->getParams(), message);
 }
 
 void DefaultGuiMessageObserver::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr message) {
@@ -106,7 +106,7 @@ void DefaultGuiMessageObserver::onPitchAutopilotEnabledMessage(PitchAutopilotEna
 void DefaultGuiMessageObserver::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<AutopilotNode> ap = autopilots->findOrCreate<AutopilotNode>(Controller::Pitch);
-    updateAutopilotParams<PitchAutopilotParamsMessage>(ap, message);
+    updateAutopilotParams<PitchAutopilotParamsMessage>(ap->getParams(), message);
 }
 
 

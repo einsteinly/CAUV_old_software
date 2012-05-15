@@ -17,18 +17,25 @@
 
 #include <QObject>
 
+#include <generated/message_observers.h>
 #include <generated/types/message.h>
 #include <generated/types/MotorID.h>
 #include <generated/types/Controller.h>
 #include <generated/types/MotorMessage.h>
-#include <generated/types/DepthAutopilotEnabledMessage.h>
 #include <generated/types/BearingAutopilotEnabledMessage.h>
+#include <generated/types/DepthAutopilotEnabledMessage.h>
 #include <generated/types/PitchAutopilotEnabledMessage.h>
+#include <generated/types/BearingAutopilotParamsMessage.h>
+#include <generated/types/DepthAutopilotParamsMessage.h>
+#include <generated/types/PitchAutopilotParamsMessage.h>
+#include <generated/types/DepthCalibrationMessage.h>
 
 #include <boost/shared_ptr.hpp>
 
 #include <gui/core/model/node.h>
 #include <gui/core/model/nodes/numericnode.h>
+#include <gui/core/model/nodes/groupingnode.h>
+#include <gui/core/model/nodes/autopilotnode.h>
 
 #include <common/cauv_node.h>
 
@@ -72,16 +79,30 @@ public:
 
 #define MESSAGE_GENERATOR(X, Y) \
     template<> \
-    class MessageGenerator<X, Y> : public TypedMessageGenerator<X> { \
+    class MessageGenerator<X, Y> : public TypedMessageGenerator<X>, public MessageObserver { \
         public: \
             MessageGenerator<X, Y>(boost::shared_ptr<X> node) : TypedMessageGenerator<X>(node){} \
             virtual boost::shared_ptr<const Message> generate(); \
+            virtual void on ## Y (Y ## _ptr); \
     };
-
-MESSAGE_GENERATOR(MotorNode, MotorMessage)
+/*
+#define UNBOUND_MESSAGE_GENERATOR(X) \
+    template<class T> \
+    class MessageGenerator<X, T> : public TypedMessageGenerator<X> { \
+        public: \
+            MessageGenerator<X, T>(boost::shared_ptr<X> node) : TypedMessageGenerator<X>(node){} \
+            virtual boost::shared_ptr<const Message> generate(); \
+    };
+*/
+MESSAGE_GENERATOR(MotorNode, MotorStateMessage)
 MESSAGE_GENERATOR(AutopilotNode, BearingAutopilotEnabledMessage)
 MESSAGE_GENERATOR(AutopilotNode, PitchAutopilotEnabledMessage)
 MESSAGE_GENERATOR(AutopilotNode, DepthAutopilotEnabledMessage)
+MESSAGE_GENERATOR(AutopilotParamsNode, DepthAutopilotParamsMessage)
+MESSAGE_GENERATOR(AutopilotParamsNode, PitchAutopilotParamsMessage)
+MESSAGE_GENERATOR(AutopilotParamsNode, BearingAutopilotParamsMessage)
+MESSAGE_GENERATOR(GroupingNode, DepthCalibrationMessage)
+
 
 } // namespace gui
 } // namesapce cauv

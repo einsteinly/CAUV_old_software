@@ -14,61 +14,61 @@
 
 #include "messagegenerators.h"
 
-#include "../model/nodes/numericnode.h"
-
-#include <generated/types/MotorMessage.h>
-#include <generated/types/BearingAutopilotEnabledMessage.h>
-#include <generated/types/DepthAutopilotEnabledMessage.h>
-#include <generated/types/PitchAutopilotEnabledMessage.h>
-
 using namespace cauv;
 using namespace cauv::gui;
 
-boost::shared_ptr<const Message> MessageGenerator<MotorNode, MotorMessage>::generate() {
+/* Motor message handling */
+
+boost::shared_ptr<const Message> MessageGenerator<MotorNode, MotorStateMessage>::generate() {
     return boost::make_shared<MotorMessage>(boost::get<MotorID::e>(m_node->nodeId()), (int8_t) m_node->get());
 }
 
-boost::shared_ptr<const Message> MessageGenerator<AutopilotNode, BearingAutopilotEnabledMessage>::generate() {
-    return boost::make_shared<BearingAutopilotEnabledMessage>(
-                m_node->get(),
-                m_node->findOrCreate<NumericNode<float> >("target")->get()
-                );
-}
+/* Autopilot message handling */
 
-boost::shared_ptr<const Message> MessageGenerator<AutopilotNode, PitchAutopilotEnabledMessage>::generate() {
-    return boost::make_shared<PitchAutopilotEnabledMessage>(
-                m_node->get(),
-                m_node->findOrCreate<NumericNode<float> >("target")->get()
-                );
+template<class T> boost::shared_ptr<const Message> generateAutopilotEnabledMessage(boost::shared_ptr<AutopilotNode> node){
+    return boost::make_shared<T>(node->get(), node->findOrCreate<NumericNode<float> >("target")->get());
 }
 
 boost::shared_ptr<const Message> MessageGenerator<AutopilotNode, DepthAutopilotEnabledMessage>::generate() {
-    return boost::make_shared<DepthAutopilotEnabledMessage>(
-                m_node->get(),
-                m_node->findOrCreate<NumericNode<float> >("target")->get()
-                );
+    return generateAutopilotEnabledMessage<DepthAutopilotEnabledMessage>(m_node);
 }
 
-/*
-boost::shared_ptr<const Message> AutopilotParamsMessageGenerator::generate(boost::shared_ptr<Node> attachedTo){
-    float Kp = attachedTo->findOrCreate<NumericNode<float> >("Kp")->get();
-    float Ki = attachedTo->findOrCreate<NumericNode<float> >("Ki")->update(message->Ki());
-    float Kd = attachedTo->findOrCreate<NumericNode<float> >("Kd")->update(message->Kd());
-    float scale = attachedTo->findOrCreate<NumericNode<float> >("scale")->update(message->scale());
-    float Ap = attachedTo->findOrCreate<NumericNode<float> >("aP")->update(message->Ap());
-    float Ai = attachedTo->findOrCreate<NumericNode<float> >("aI")->update(message->Ai());
-    float Ad = attachedTo->findOrCreate<NumericNode<float> >("aD")->update(message->Ad());
-    float thr = attachedTo->findOrCreate<NumericNode<float> >("thr")->update(message->thr());
-    float maxError = attachedTo->findOrCreate<NumericNode<float> >("maxError")->update(message->maxError());
-
-    switch(boost::get<Controller::e>(attachedTo->nodeId())) {
-    case Controller::Bearing:
-        return boost::make_shared<BearingAutopilotParamsMessage>(Kp, Ki, Kd, scale, Ap, Ai, Ad, thr, maxError);
-    case Controller::Pitch:
-        return boost::make_shared<PitchAutopilotParamsMessage>(Kp, Ki, Kd, scale, Ap, Ai, Ad, thr, maxError);
-    case Controller::Depth:
-        return boost::make_shared<DepthAutopilotParamsMessage>(Kp, Ki, Kd, scale, Ap, Ai, Ad, thr, maxError);
-    default: throw std::runtime_error("Unknown ControllerID passed to AutopilotMessageGenerator");
-    }
+boost::shared_ptr<const Message> MessageGenerator<AutopilotNode, PitchAutopilotEnabledMessage>::generate() {
+    return generateAutopilotEnabledMessage<PitchAutopilotEnabledMessage>(m_node);
 }
-*/
+
+boost::shared_ptr<const Message> MessageGenerator<AutopilotNode, BearingAutopilotEnabledMessage>::generate() {
+    return generateAutopilotEnabledMessage<BearingAutopilotEnabledMessage>(m_node);
+}
+
+
+template<class T> boost::shared_ptr<const Message> generateAutopilotParamsMessage(boost::shared_ptr<AutopilotParamsNode> node){
+    return boost::make_shared<T>(node->kP()->get(), node->kI()->get(), node->kD()->get(),
+                                 node->scale()->get(),
+                                 node->aP()->get(), node->aI()->get(), node->aD()->get(),
+                                 node->thr()->get(), node->maxError()->get());
+}
+
+boost::shared_ptr<const Message> MessageGenerator<AutopilotParamsNode, DepthAutopilotParamsMessage>::generate() {
+    return generateAutopilotParamsMessage<DepthAutopilotParamsMessage>(m_node);
+}
+
+boost::shared_ptr<const Message> MessageGenerator<AutopilotParamsNode, PitchAutopilotParamsMessage>::generate() {
+    return generateAutopilotParamsMessage<PitchAutopilotParamsMessage>(m_node);
+}
+
+boost::shared_ptr<const Message> MessageGenerator<AutopilotParamsNode, BearingAutopilotParamsMessage>::generate() {
+    return generateAutopilotParamsMessage<BearingAutopilotParamsMessage>(m_node);
+}
+
+
+/* Calibration messages handling */
+
+boost::shared_ptr<const Message> MessageGenerator<GroupingNode, DepthCalibrationMessage>::generate() {
+    float aftMultiplier = m_node->findOrCreate<NumericNode<float> >("aftMultiplier")->get();
+    float aftOffset =  m_node->findOrCreate<NumericNode<float> >("aftOffset")->get();
+    float foreMultiplier = m_node->findOrCreate<NumericNode<float> >("foreMultiplier")->get();
+    float foreOffset = m_node->findOrCreate<NumericNode<float> >("foreOffset")->get();
+    return boost::make_shared<DepthCalibrationMessage>(foreOffset, foreMultiplier, aftOffset, aftMultiplier);
+}
+
