@@ -85,7 +85,23 @@ class SlamCloudGraph{
               m_max_considered_overlaps(3),
               m_rotation_scale(4),
               m_graph_optimisation_count(0),
-              m_key_scan_locations(new KDTreeCachingCloud<PointT>()){
+              m_key_scan_locations(new KDTreeCachingCloud<PointT>()),
+              m_n_passed_good(0),
+              m_n_passed_bad(0),
+              m_n_failed_good(0),
+              m_n_failed_bad(0){
+        }
+
+        virtual ~SlamCloudGraph(){
+            info() << "SlamCloudGraph lifetime statistics:\n"
+                   << "\tpassed weight test, were good:" << m_n_passed_good << "\n"
+                   << "\tpassed weight test, were bad :" << m_n_passed_bad  << "\n"
+                   << "\tfailed weight test, were good:" << m_n_failed_good << "\n"
+                   << "\tfailed weight test, were bad :" << m_n_failed_bad;
+            unsigned total = m_n_passed_good + m_n_passed_bad + m_n_failed_good + m_n_failed_bad;
+            info() << "Total keypoints processed:" << total;
+            info() << "Classifier Wrong Reject:" << 100*float(m_n_failed_good) / total << "%";
+            info() << "Classifier Wrong Accept:" << 100*float(m_n_passed_bad) / total << "%";
         }
 
         void reset(){
@@ -94,6 +110,10 @@ class SlamCloudGraph{
             m_key_constraints.clear();
             m_graph_optimisation_count = 0;
             m_key_scan_locations->clear();
+            m_n_passed_good = 0;
+            m_n_passed_bad = 0;
+            m_n_failed_good = 0;
+            m_n_failed_bad = 0;
         }
 
         int graphOptimisationsCount() const{
@@ -350,20 +370,51 @@ class SlamCloudGraph{
             std::vector<int>   pt_indices(1);
             std::vector<float> pt_squared_dists(1);
 
-            int ngood = 0;
-            int nbad = 0;
+            int n_passed_good = 0; // passed the weight test, and turned out to be good
+            int n_passed_bad = 0;  // passed the weight test, but turned out to be bad
+            int n_failed_good = 0; // failed the weight test, but would have been good
+            int n_failed_bad = 0;  // failed the weight test, and would have been bad
+
+            // first, the points that passed the weight test:
             for(size_t i=0; i < transformed->size(); i++){
                 if(parent_map_cloud->nearestKSearch((*transformed)[i], 1, pt_indices, pt_squared_dists) > 0 &&
                    pt_squared_dists[0] < m_good_keypoint_distance){
                     p->keyPointGoodness()[p->ptIndices()[i]] = 1;
-                    ngood++;
+                    n_passed_good++;
                 }else{
                     p->keyPointGoodness()[p->ptIndices()[i]] = 0;
-                    nbad++;
+                    n_passed_bad++;
                 }
             }
-            debug() << ngood << "/" << (nbad+ngood) << "="
-                    << float(ngood)/(nbad+ngood) << "keypoints proved good";
+
+            // now transform the ones that failed into the parent coordinate
+            // system:
+            base_cloud_t transformed_rejected;
+            pcl::transformPointCloud(p->rejectedPoints(), transformed_rejected, p->relativeTransform());
+
+            for(size_t i = 0; i < transformed_rejected.size(); i++){
+                if(parent_map_cloud->nearestKSearch(transformed_rejected[i], 1, pt_indices, pt_squared_dists) > 0 &&
+                   pt_squared_dists[0] < m_good_keypoint_distance){
+                    p->keyPointGoodness()[p->rejectedPtIndices()[i]] = 1;
+                    n_failed_good++;
+                }else{
+                    p->keyPointGoodness()[p->rejectedPtIndices()[i]] = 0;
+                    n_failed_bad++;
+                }
+            }
+
+            const int total = n_passed_good + n_passed_bad + n_failed_good + n_failed_bad;
+
+            m_n_passed_good += n_passed_good;
+            m_n_passed_bad  += n_passed_bad;
+            m_n_failed_good += n_failed_good;
+            m_n_failed_bad  += n_failed_bad;
+            
+            info() << "classifier statistics:\n"
+                   << "\tpass,good =" << n_passed_good << "\t= " << 100*float(n_passed_good)/total << "%\n"
+                   << "\tpass,bad  =" << n_passed_bad  << "\t= " << 100*float(n_passed_bad)/total << "%\n"
+                   << "\tfail,good =" << n_failed_good << "\t= " << 100*float(n_failed_good)/total << "%\n"
+                   << "\tfail,bad  =" << n_failed_bad  << "\t= " << 100*float(n_failed_bad)/total << "%\n";
 
             return r;
         }
@@ -549,6 +600,12 @@ class SlamCloudGraph{
         // for these scans, all data apart from the time and relative location
         // is discarded
         location_vec m_all_scans;
+        
+        // statistics about how well the classifier performed:
+        unsigned m_n_passed_good;
+        unsigned m_n_passed_bad;
+        unsigned m_n_failed_good;
+        unsigned m_n_failed_bad;
 };
 
 
