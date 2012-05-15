@@ -283,18 +283,23 @@ class SlamCloudPart: public SlamCloudLocation,
               KDTreeCachingCloud<PointT>(),
               m_point_descriptors(),
               m_keypoint_indices(),
+              m_rejected_keypoint_indices(),
               m_keypoint_goodness(kps.size(), 0),
               m_local_convexhull_verts(),
               m_local_convexhull_cloud(),
-              m_local_convexhull_invalid(true){
+              m_local_convexhull_invalid(true),
+              m_rejected_points_cloud(){
 
             this->height = 1;
             this->is_dense = true;
             reserve(kps.size());
 
             for(size_t i = 0; i < kps.size(); i++){
-                if(!filter(kps[i]))
+                if(!filter(kps[i])){
+                    m_rejected_points_cloud.push_back(PointT(kps[i].pt.x, -kps[i].pt.y, 0.0f));
+                    m_rejected_keypoint_indices.push_back(i);
                     continue;
+                }
                 // flip the y-axis: opencv y axis is downwards
                 push_back(PointT(kps[i].pt.x, -kps[i].pt.y, 0.0f), kps[i].response, i);
                 // start out assuming all keypoints that have passed the weight
@@ -328,6 +333,9 @@ class SlamCloudPart: public SlamCloudLocation,
         std::vector<std::size_t>& ptIndices(){ return m_keypoint_indices; }
         std::vector<std::size_t> const& ptIndices() const{ return m_keypoint_indices; }
 
+        std::vector<std::size_t>& rejectedPtIndices(){ return m_rejected_keypoint_indices; }
+        std::vector<std::size_t> const& rejectedPtIndices() const{ return m_rejected_keypoint_indices; }
+
         std::vector<int>& keyPointGoodness(){ return m_keypoint_goodness; }
         std::vector<int> const& keyPointGoodness() const{ return m_keypoint_goodness; }
 
@@ -346,6 +354,9 @@ class SlamCloudPart: public SlamCloudLocation,
             m_local_convexhull_invalid = true;
         }
         
+        base_cloud_t const& rejectedPoints() const{
+            return m_rejected_points_cloud;
+        }
 
         // this type derives from something with an Eigen::Matrix4f as a
         // member:
@@ -382,6 +393,11 @@ class SlamCloudPart: public SlamCloudLocation,
         // point cloud
         std::vector<std::size_t> m_keypoint_indices;
 
+        // original indices of the set of rejected keypoints (corresponding to
+        // m_rejected_keypoints_cloud)
+        std::vector<std::size_t> m_rejected_keypoint_indices;
+        
+
         // 1 = keypoint turned out to be good, 0 = keypoint turned out to be
         // bad
         std::vector<int> m_keypoint_goodness;
@@ -389,6 +405,8 @@ class SlamCloudPart: public SlamCloudLocation,
         std::vector<pcl::Vertices> m_local_convexhull_verts;
         base_cloud_ptr m_local_convexhull_cloud;
         bool m_local_convexhull_invalid;
+
+        base_cloud_t m_rejected_points_cloud;
 };
 
 } // namespace imgproc

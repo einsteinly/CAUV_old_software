@@ -535,6 +535,7 @@ class aiDetector(messaging.MessageObserver):
         pass
     
 #------GENERAL STUFF------
+#this should probably be in utils
 
 def subclassDict(cls_with_subs):
     classes = {}
