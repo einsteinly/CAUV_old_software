@@ -272,11 +272,10 @@ cauv::MessageSource::MessageSource()
 }
 void cauv::MessageSource::notifyObservers(const_svec_ptr bytes)
 {
-    if (bytes->size() < 8)
-        throw std::out_of_range("Buffer too small to contain message id + hash");
+    if (bytes->size() < 4)
+        throw std::out_of_range("Buffer too small to contain message id");
 
-    uint32_t id = *reinterpret_cast<const uint32_t*>(&bytes->front());
-    uint32_t hash = *(reinterpret_cast<const uint32_t*>(&bytes->front()) + 1);
+    int id = *reinterpret_cast<const uint32_t*>(&bytes->front());
     switch (id)
     {
         #for $g in $groups
@@ -284,11 +283,6 @@ void cauv::MessageSource::notifyObservers(const_svec_ptr bytes)
         #set $className = $m.name + "Message"
         case $m.id:
         {
-            if (hash != $hex($m.check_hash)) {
-                warning() << "Ignoring ${m.name}Message because of hash mismatch!";
-                warning() << "Something is using outdated message definitions!";
-                return;
-            }
             boost::shared_ptr<$className> m = $className::fromBytes(bytes);
             \#ifdef CAUV_DEBUG_MESSAGES
             debug(12) << "MessageSource::notifyObservers: " << m;
@@ -300,7 +294,7 @@ void cauv::MessageSource::notifyObservers(const_svec_ptr bytes)
         #end for
         #end for
         default:
-            warning() << "Ignoring unknown message id" << id;
+            throw UnknownMessageIdException(id);
     }
 }
 
