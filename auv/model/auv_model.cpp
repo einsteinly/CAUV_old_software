@@ -38,6 +38,7 @@ AUV::AUV()
 
     cameras[CameraID::Forward] = boost::make_shared< Camera > ("Forward Camera");
     cameras[CameraID::Down] = boost::make_shared< Camera > ("Downward Camera");
+    cameras[CameraID::Up] = boost::make_shared< Camera > ("Upward Camera");
     cameras[CameraID::Sonar] = boost::make_shared< Sonar > ("Sonar");
 }
 

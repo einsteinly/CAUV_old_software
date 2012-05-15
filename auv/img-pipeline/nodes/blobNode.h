@@ -70,13 +70,15 @@ class BlobNode: public Node{
             blobDetectorParams.maxArea = param<Range>("area").max;
             blobDetectorParams.filterByCircularity = param<Range>("circularity").min > 0 || param<Range>("circularity").max < std::numeric_limits<float>::infinity();
             blobDetectorParams.minCircularity = param<Range>("circularity").min;
-            blobDetectorParams.maxCircularity = param<Range>("circularity").max;
             blobDetectorParams.filterByInertia = param<Range>("inertiaRatio").min > 0 || param<Range>("inertiaRatio").max < std::numeric_limits<float>::infinity();
             blobDetectorParams.minInertiaRatio = param<Range>("inertiaRatio").min;
-            blobDetectorParams.maxInertiaRatio = param<Range>("inertiaRatio").max;
             blobDetectorParams.filterByConvexity = param<Range>("convexity").min > 0 || param<Range>("convexity").max < std::numeric_limits<float>::infinity();
             blobDetectorParams.minConvexity = param<Range>("convexity").min;
+            #if CV_MAJOR_VERSION >= 2 && CV_MINOR_VERSION > 2
+            blobDetectorParams.maxCircularity = param<Range>("circularity").max;
+            blobDetectorParams.maxInertiaRatio = param<Range>("inertiaRatio").max;
             blobDetectorParams.maxConvexity = param<Range>("convexity").max;
+            #endif
             if (find_dark && find_light)
                 blobDetectorParams.filterByColor = false;
             else {

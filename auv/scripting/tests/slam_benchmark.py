@@ -24,6 +24,7 @@ class Benchmarker(object):
         self.auv = control.AUV(node)
         self.gemini = sonar.Gemini(node)
         self.test_name = test_name
+        self.learn_keypoints = True
        
         self.video_output_nodes = []
 
@@ -110,17 +111,32 @@ class Benchmarker(object):
         sslam.p('reject threshold').set(0.2)
         sslam.p('score threshold').set(0.04)
         sslam.p('transform eps').set(1e-9)
-        sslam.p('weight test').set(-1.0)
+        sslam.p('weight test').set(0.5)
         sslam.p('xy metres/px').set(0.01) # unused, anyway
         nop.o('image out (not copied)').connect(corners.i('image in'))
         nop.o('image out (not copied)').connect(delay.i('image in'))
-        nop.o('image out (not copied)').connect(br_to_xy.i('polar image'))
         nop.o('image out (not copied)').connect(draw_kps.i('image in'))
         nop.o('image out (not copied)').connect(correl.i('Image A'))
         nop.o('image out (not copied)').connect(sslam.i('keypoints image'))
-        corners.o('keypoints').connect(draw_kps.i('KeyPoints'))
-        corners.o('keypoints').connect(br_to_xy.i('keypoints'))
-        corners.o('keypoints').connect(sslam.i('training: polar keypoints'))
+        if self.learn_keypoints:
+            learn_kps = pl.addNode(nt.LearnedKeyPoints)
+            learn_kps.p("questions").set(400)
+            learn_kps.p("trees").set(100)
+            nop.o('image out (not copied)').connect(learn_kps.i('image'))
+            corners.o('keypoints').connect(learn_kps.i('bootstrap keypoints'))
+            learn_kps.o('good keypoints').connect(sslam.i('training: polar keypoints'))
+            learn_kps.o('good keypoints').connect(draw_kps.i('KeyPoints'))
+            learn_kps.o('good keypoints').connect(br_to_xy.i('keypoints'))
+            learn_kps.o('image').connect(br_to_xy.i('polar image'))
+            learn_kps.o('image').connect(sslam.i('keypoints image'))
+            sslam.o('training: goodness').connect(learn_kps.i('training: goodness'))
+            sslam.o('training: keypoints').connect(learn_kps.i('training: keypoints'))
+            sslam.o('training: keypoints image').connect(learn_kps.i('training: keypoints image'))
+        else:
+            nop.o('image out (not copied)').connect(br_to_xy.i('polar image'))
+            corners.o('keypoints').connect(br_to_xy.i('keypoints'))
+            corners.o('keypoints').connect(sslam.i('training: polar keypoints'))
+            corners.o('keypoints').connect(draw_kps.i('KeyPoints'))
         br_to_xy.o('keypoints').connect(sslam.i('keypoints'))
         delay.o('image out (not copied)').connect(correl.i('Image B'))
         clamp = pl.addNode(nt.ClampFloat)

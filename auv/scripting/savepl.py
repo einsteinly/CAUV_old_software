@@ -66,6 +66,9 @@ if __name__ == '__main__':
         elif opts.verb == 'add':
             loadpl(node, fname, timeout, name, False)
         info('Done.')
+    except:
+        import traceback
+        error(traceback.format_exc())
     finally:
         node.stop()
 
