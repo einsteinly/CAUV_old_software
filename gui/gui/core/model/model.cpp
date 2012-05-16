@@ -49,7 +49,7 @@ void RedHerring::setupMotor(boost::shared_ptr<Node> node){
         motor->setMax(127);
         motor->setMin(-127);
         motor->setMutable(true);
-        attachGenerator(boost::make_shared<MessageGenerator<MotorNode, MotorMessage> >(motor));
+        attachGenerator(boost::make_shared<MessageGenerator<MotorNode, MotorStateMessage> >(motor));
     } catch (std::runtime_error){
         warning() << node->nodePath() << " should be a MotorNode";
     }

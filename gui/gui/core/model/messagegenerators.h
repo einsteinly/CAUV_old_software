@@ -22,6 +22,7 @@
 #include <generated/types/MotorID.h>
 #include <generated/types/Controller.h>
 #include <generated/types/MotorMessage.h>
+#include <generated/types/MotorStateMessage.h>
 #include <generated/types/BearingAutopilotEnabledMessage.h>
 #include <generated/types/DepthAutopilotEnabledMessage.h>
 #include <generated/types/PitchAutopilotEnabledMessage.h>
@@ -81,6 +82,8 @@ public:
     template<> \
     class MessageGenerator<X, Y> : public TypedMessageGenerator<X>, public MessageObserver { \
         public: \
+            typedef Y message_type; \
+            typedef X node_type; \
             MessageGenerator<X, Y>(boost::shared_ptr<X> node) : TypedMessageGenerator<X>(node){} \
             virtual boost::shared_ptr<const Message> generate(); \
             virtual void on ## Y (Y ## _ptr); \
