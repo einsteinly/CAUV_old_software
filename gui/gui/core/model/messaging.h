@@ -73,6 +73,22 @@ protected:
 };
 
 template<class NodeType, class MessageType>
+struct MessageGenerator : TypedMessageHandler<NodeType> {
+public:
+    MessageGenerator(boost::shared_ptr<NodeType> node) : TypedMessageHandler<NodeType>(node)  {}
+};
+
+#define MESSAGE_GENERATOR(X, Y) \
+    template<> \
+    class MessageGenerator<X, Y> : public TypedMessageHandler<X> { \
+        public: \
+            typedef Y message_type; \
+            typedef X node_type; \
+            MessageGenerator<X, Y>(boost::shared_ptr<X> node) : TypedMessageHandler<X>(node){} \
+            virtual boost::shared_ptr<const Message> generate(); \
+    };
+
+template<class NodeType, class MessageType>
 struct MessageHandler : TypedMessageHandler<NodeType> {
 public:
     MessageHandler(boost::shared_ptr<NodeType> node) : TypedMessageHandler<NodeType>(node)  {}

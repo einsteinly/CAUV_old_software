@@ -29,8 +29,7 @@
 
 #include <generated/types/GuiaiGroup.h>
 
-#include "messageobserver.h"
-#include "messagegenerators.h"
+#include "aimessaging.h"
 #include "ainode.h"
 
 #include <stdexcept>
@@ -46,8 +45,9 @@ void AiPlugin::initialise(){
     boost::shared_ptr<CauvNode> node = m_actions->node.lock();
     if(node) {
         node->joinGroup("guiai");
-        node->addMessageObserver(boost::make_shared<AiMessageObserver>(m_auv));
-
+        foreach(boost::shared_ptr<Vehicle> vehicle, VehicleRegistry::instance()->getVehicles()){
+            node->addMessageObserver(boost::make_shared<AiMessageObserver>(vehicle));
+        }
         //!!! todo: this should be sent more often than just at startup
         //!!! maybe on membership change?
 
@@ -108,7 +108,7 @@ void AiPlugin::initialise(){
 void AiPlugin::setupTask(boost::shared_ptr<Node> node){
     try {
         m_auv->attachGenerator(
-                    boost::make_shared<MessageHandler<AiTaskNode,
+                    boost::make_shared<MessageGenerator<AiTaskNode,
                     SetTaskStateMessage> >(node->to<AiTaskNode>())
                     );
     } catch(std::runtime_error e) {
@@ -120,7 +120,7 @@ void AiPlugin::setupTask(boost::shared_ptr<Node> node){
 void AiPlugin::setupCondition(boost::shared_ptr<Node> node){
     try {
         m_auv->attachGenerator(
-                    boost::make_shared<MessageHandler<AiConditionNode,
+                    boost::make_shared<MessageGenerator<AiConditionNode,
                     SetConditionStateMessage> >(node->to<AiConditionNode>())
                     );
     } catch(std::runtime_error e) {
