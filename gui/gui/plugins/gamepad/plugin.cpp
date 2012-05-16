@@ -22,6 +22,8 @@
 
 #include <debug/cauv_debug.h>
 
+#include <gui/core/model/registry.h>
+
 #include "gamepad/playstationinput.h"
 #include "gamepad/xboxinput.h"
 #include "cauvgamepad.h"
@@ -34,6 +36,9 @@ const QString GamepadPlugin::name() const{
 }
 
 void GamepadPlugin::initialise(){
+
+    boost::shared_ptr<Vehicle> m_auv = VehicleRegistry::instance()->getVehicles().front();
+    if(!m_auv) return;
 
     try {
         info() << "found" << GamepadInput::getNumDevices() << "gamepads";
