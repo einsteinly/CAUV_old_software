@@ -43,10 +43,10 @@ class SonarLogger(object):
         if self.__gemini_params_message is not None:
             self.logMessage(self.__gemini_params_message)
 
-    def onSonarControlMessage(self, m):
-        self.logMessage(m)
-        debug('sonar control message: %s' % m)
-        self.__sonar_params_message = m
+    #def onSonarControlMessage(self, m):
+    #    self.logMessage(m)
+    #    debug('sonar control message: %s' % m)
+    #    self.__sonar_params_message = m
 
     def onGeminiControlMessage(self, m):
         self.logMessage(m)

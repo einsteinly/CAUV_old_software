@@ -2,7 +2,7 @@
 
 #from __future__ import with_satement
 
-import cauv.node as node
+import cauv.node
 import cauv.messaging as messaging
 import cauv.pipeline as pipeline
 from cauv.debug import debug, warning, error, info
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     name = opts.name
     
     info('Connecting...')
-    node = node.Node("py-plsave", unknown_args)
+    node = cauv.node.Node("py-plsave", unknown_args)
     try:
         if opts.verb == 'clear':
             clearpl(node, name) 
@@ -66,6 +66,9 @@ if __name__ == '__main__':
         elif opts.verb == 'add':
             loadpl(node, fname, timeout, name, False)
         info('Done.')
+    except:
+        import traceback
+        error(traceback.format_exc())
     finally:
         node.stop()
 

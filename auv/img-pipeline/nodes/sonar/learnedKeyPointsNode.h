@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -20,6 +20,7 @@
 #include <cassert>
 #include <cmath>
 #include <limits>
+#include <numeric>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
@@ -87,8 +88,8 @@ class RFQuestion{
                 answers[i] = apply(points[i], image);
         }
 
-        // test_true and test_false must be clear, the value of terminal
-        // doesn't matter
+        // test_true and test_false must be clear, the initial value value of
+        // terminal_flags doesn't matter
         virtual entropy_t entropyOverTarget(pt_vec const& points,
                                             idx_vec const& pt_indices,
                                             int_vec const& target,
@@ -312,7 +313,7 @@ class ListOfRandomRFQuestions{
                                  << "test_false:" << test_false_temp->size();
                 }
             }
-            debug() << 100*float(num_useless_questions) / m_questions.size() << "% useless questions";
+            debug(4) << 100*float(num_useless_questions) / m_questions.size() << "% useless questions";
             if(best == m_questions.end()){
                 debug() << BashColour::Brown
                         << "Tree cannot not distinguish between"
@@ -356,8 +357,8 @@ class Forest{
 
         void setMaxSize(int max_num_trees){
             m_max_num_trees = max_num_trees;
-            // !!! TODO: remove a random set of items if we need to reduce the
-            // number of trees
+            while(m_trees.size() >= std::size_t(m_max_num_trees))
+                _removeRandomTree();
         }
 
         std::size_t size() const{
@@ -365,22 +366,28 @@ class Forest{
         }
         
         void addTree(TreeNode_ptr p){
-            if(m_trees.size() >= std::size_t(m_max_num_trees)){
-                boost::random::uniform_int_distribution<int> remove_idx_dist(0,m_trees.size()-2);
-                std::swap(m_trees.back(), m_trees[remove_idx_dist(m_rng)]);
-                m_trees.pop_back();
-            }
+            while(m_trees.size() >= std::size_t(m_max_num_trees))
+                _removeRandomTree();
             m_trees.push_back(p);
             info() << "addTree:" << size() << "trees";
         }
         
-        bool test(cv::Point const& pt, cv::Mat const& image) const{
+        // threshold can be varied to adjust the ROC:
+        //  smaller threshold: more points test positive 
+        inline bool test(cv::Point const& pt, cv::Mat const& image, float threshold=0.5) const{
             unsigned good = 0;
             foreach(TreeNode_ptr t, m_trees)
                 good += t->test(pt, image);
-            return good > m_trees.size()/2;
+            return good > threshold*m_trees.size();
         }
 
+        inline float probabilityGood(cv::Point const& pt, cv::Mat const& image) const{
+            unsigned good = 0;
+            foreach(TreeNode_ptr t, m_trees)
+                good += t->test(pt, image);
+            return float(good) / m_trees.size();
+        }
+        
         inline kp_vec filter(kp_vec const& in_kps, cv::Mat const& image) const{
             info() << "filter: " << in_kps.size() << "keypoints...";
             if(!m_trees.size()){
@@ -396,11 +403,33 @@ class Forest{
             return r;
         }
 
+        inline void rescore(kp_vec& kps, cv::Mat const& image) const{
+            info() << "re-score: " << kps.size() << "keypoints...";
+            if(!m_trees.size()){
+                debug() << "re-score: no forest! everything will be scored at 1.0";
+                foreach(KeyPoint& k, kps)
+                    k.response = 1;
+            }else{
+                double total_prob = 0;
+                foreach(KeyPoint& k, kps){
+                    k.response = probabilityGood(cv::Point(int(k.pt.x), int(k.pt.y)), image);
+                    total_prob += k.response;
+                }
+                debug() << "re-score: mean p=" << total_prob / kps.size();
+            }
+        }
+
         //inline std::vector<cauv::KeyPoint> extract(cv::Mat const& image) const{
         //    
         //}
 
     private:
+        void _removeRandomTree(){
+            boost::random::uniform_int_distribution<int> remove_idx_dist(0,m_trees.size()-1);
+            std::swap(m_trees.back(), m_trees[remove_idx_dist(m_rng)]);
+            m_trees.pop_back();
+        }
+
         std::vector<TreeNode_ptr> m_trees;
         int m_max_num_trees;
         boost::random::mt19937 m_rng;        
@@ -438,7 +467,9 @@ class LearnedKeyPointsNode: public Node{
             // outputs
             registerOutputID("keypoints", kp_vec()); // all of them
             registerOutputID("image");
-            registerOutputID("good keypoints", kp_vec()); // ones that passed the classifier in its current state
+
+            // !!! TODO: change this name: now all keypoints are passed out, with a score (since still only running in bootstrap mode)
+            registerOutputID("good keypoints", kp_vec()); // re-scored keypoints (score is set in the response field)
             
             // parameters:
             registerParamID("questions", int(200), "number of questions to use for each tree in the classifier forest");
@@ -465,8 +496,8 @@ class LearnedKeyPointsNode: public Node{
             private:
         };
 
-        struct FilterKeyPoints: boost::static_visitor< kp_vec >{
-            FilterKeyPoints(Forest const& forest, kp_vec const& kps)
+        /*struct FilterKeyPoints: boost::static_visitor< kp_vec >{
+            FilterKeyPoints(Forest const& forest, kp_vec& kps)
                 : m_forest(forest), m_kps(kps){
             }
             kp_vec operator()(cv::Mat a) const{ return m_forest.filter(m_kps, a); }
@@ -477,7 +508,20 @@ class LearnedKeyPointsNode: public Node{
             }
             private:
                 Forest const& m_forest;
-                kp_vec const& m_kps;
+                kp_vec& m_kps;
+        };*/
+        struct RescoreKeyPoints: boost::static_visitor<void>{
+            RescoreKeyPoints(Forest const& forest, kp_vec& kps)
+                : m_forest(forest), m_kps(kps){
+            }
+            void operator()(cv::Mat a) const{ m_forest.rescore(m_kps, a); }
+            void operator()(NonUniformPolarMat a) const{ m_forest.rescore(m_kps, a.mat); }
+            void operator()(PyramidMat) const{
+                error () << __FILE__ << ":" << __LINE__ << "not implemented yet";
+            }
+            private:
+                Forest const& m_forest;
+                kp_vec& m_kps;
         };
 
         void doWork(in_image_map_t& inputs, out_map_t& r){
@@ -518,10 +562,13 @@ class LearnedKeyPointsNode: public Node{
                 }
                 r["keypoints"] = kps;
             }else{
-                const kp_vec bootstrap_keypoints = param< kp_vec >("bootstrap keypoints");
+                kp_vec bootstrap_keypoints = param< kp_vec >("bootstrap keypoints");
                 r["keypoints"] = ParamValue(bootstrap_keypoints);
                 augmented_mat_t m = img->augmentedMat();
-                r["good keypoints"] = ParamValue(boost::apply_visitor(FilterKeyPoints(m_forest, bootstrap_keypoints), m));
+
+                // 'good keypoints' is badly named...
+                boost::apply_visitor(RescoreKeyPoints(m_forest, bootstrap_keypoints), m);
+                r["good keypoints"] = bootstrap_keypoints;
             }
 
             r["image"] = img;
@@ -588,7 +635,8 @@ class LearnedKeyPointsNode: public Node{
 
         void _train(kp_vec const& keypoints, int_vec const& goodness, image_ptr_t img){
             info() << keypoints.size() <<  "kps, "
-                   << goodness.size() << "values for training";
+                   << goodness.size() << "values for training, "
+                   << std::accumulate(goodness.begin(), goodness.end(), 0) << "good training values";
             
             pt_vec kps_as_points;
             kps_as_points.reserve(keypoints.size());

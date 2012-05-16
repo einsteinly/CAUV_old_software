@@ -144,9 +144,10 @@ class Model(base_model.Model):
         hstern_force = HStern_Vec * s.HStern * Force_Per_Unit_Thrust
         vstern_force = VStern_Vec * s.VStern * Force_Per_Unit_Thrust
         prop_force   = Prop_Vec * s.Prop * Force_Per_Unit_Thrust
+        drag_force   = -Drag_F * self.orientation.inverse().rotate(self.velocity);
 
         local_force = sum(
-            (hbow_force, vbow_force, hstern_force, vstern_force, prop_force)
+            (hbow_force, vbow_force, hstern_force, vstern_force, prop_force, drag_force)
         )
 
         #debug('local force (R,F,U) = %s' % local_force)
@@ -154,7 +155,6 @@ class Model(base_model.Model):
         # now in global coordinates:
         global_force = self.orientation.rotate(local_force, mkVec)
         #debug('global force (E,N,U) = %s' % global_force)
-        drag_force   = -Drag_F * self.velocity
 
         weight_force = weight_vec * Mass * 9.81
         buoyancy_force = buoyancy_vec * Displacement * 9.81
@@ -163,7 +163,7 @@ class Model(base_model.Model):
             debug('auv appears to be above the surface', 3)
             buoyancy_force -= buoyancy_force * (p/0.4)
 
-        force = sum((global_force, drag_force, weight_force, buoyancy_force))
+        force = sum((global_force, weight_force, buoyancy_force))
 
         self.velocity += force * dt / Mass
 

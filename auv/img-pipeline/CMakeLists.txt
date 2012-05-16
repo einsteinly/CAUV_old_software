@@ -15,8 +15,6 @@ option (CAUV_POINTCLOUDS "Use PCL (enables sonar SLAM)" OFF)
 #option (CAUV_CLOUD_DUMP "Dump point-clouds to file" OFF)
 option (CAUV_CLOUD_VISUALISATION "Include last cloud in map visualisation (potentially expensive)" OFF)
 
-find_package(CVBlob)
-
 if (CAUV_POINTCLOUDS)
     set (REQ_PCL_COMPONENTS common registration kdtree surface filters)
     
@@ -91,11 +89,6 @@ if (CAUV_POINTCLOUDS)
             ${CONDITIONAL_LIBS}
         )
     endif()
-endif()
-
-if (CVBLOB_FOUND)
-    add_definitions(-DCAUV_USE_CVBLOB)
-    set(CONDITIONAL_LIBS ${CONDITIONAL_LIBS} ${CVBLOB_LIBRARY})
 endif()
 
 # sources:

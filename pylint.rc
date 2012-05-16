@@ -5,7 +5,7 @@
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
-#init-hook=
+init-hook=sys.path.append("../python-module")
 
 # Profiled execution.
 profile=no
@@ -27,7 +27,7 @@ persistent=no
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time.
-enable=E1102,E1103,E1124,E1122,E1123,E9906,E9904,E9905,E9902,E9903,E9900,E9901,E0202,E0203,E0221,E0222,E1121,E1120,E0001,E0710,E0711,E1003,E0103,E1001,E1111,E0601,E0101,E0100,E0102,E0105,E0104,E0107,E0106,E0211,E0213,E0611,E1002,E0602,E0012,E0011,E0702,E0701
+enable=E1102,E1103,E1124,E1122,E1123,E0202,E0203,E0221,E0222,E1121,E1120,E0001,E0710,E0711,E1003,E0103,E1001,E1111,E0601,E0101,E0100,E0102,E0105,E0104,E0107,E0106,E0211,E0213,E0611,E1002,E0602,E0012,E0011,E0702,E0701
 
 # Disable the message, report, category or checker with the given id(s). You
 # can either give multiple identifier separated by comma (,) or put this option

@@ -1,5 +1,6 @@
-import detector_library
+import sys
 import threading
+import detector_library
 
 from cauv.debug import debug, warning, error, info
 
@@ -61,8 +62,6 @@ class stateCondition(aiCondition):
         try:
             if options['state'] != self.options.state:
                 self.options.state = options['state']
-                if hasattr(self, 'change_event'):
-                    self.change_event.set()
         except KeyError:
             pass
     def get_state(self):
@@ -85,13 +84,11 @@ class timeCondition(stateCondition):
         if start:
             if self.timer:
                 self.timer.cancel()
-            self.timer = threading.Timer(self.options.timeout, self.timeout)
+            self.timer = threading.Timer(self.options.timeout, self.timeout) # pylint: disable=E1101
             self.state = True
             self.timer.start()
-            self.change_event.set()
     def timeout(self):
         self.state = False
-        self.change_event.set()
         self.timer = None
     def get_state(self):
         return self.state
@@ -102,23 +99,7 @@ class timeoutCondition(timeCondition):
     def get_state(self):
         return not timeCondition.get_state(self)
 
-class detectorConditionBase(type):
-    """
-    anything with this metaclass will become a None (but the subclasses will be created)!!!
-    """
-    def __init__(cls, name, bases, attrs):
-        #basically we want to create a whole load of new classes based on this one and some data from the detector library
-        list_of_subclasses = []
-        if attrs.pop('_abstract', False):
-            for detector_name in detector_library.__all__:
-                attrs['_abstract'] = False
-                attrs['detector_name'] = detector_name
-                list_of_subclasses.append(type(detector_name+'Condition', (cls, ), attrs))
-        attrs['_subclass_list_do_not_edit_please_this_is_here_just_to_keep_references'] = list_of_subclasses
-        return super(detectorConditionBase, cls).__init__(name, bases, attrs)
-
-class detectorConditions(aiCondition):
-    __metaclass__=detectorConditionBase
+class detectorCondition(aiCondition):
     _abstract = True
     """
     This condition represents a detector
@@ -130,12 +111,13 @@ class detectorConditions(aiCondition):
         opts = module.detectorOptions.get_default_options()
         cls.pipelines = ["ai"]
         cls.options = type('options', (conditionOptions, ), opts)
-        return super(detectorConditions, cls).__new__(cls, *args, **kwargs)
+        return super(detectorCondition, cls).__new__(cls, *args, **kwargs)
     def __init__(self, options={}):
         aiCondition.__init__(self, options)
         self.state = False
         self.detector = None
     def set_options(self, options):
+        aiCondition.set_options(self, options)
         self.task_manager.set_detector_options(self.detector_id, self.options.get_options())
     def on_state_set(self, state):
         if state != self.state:
@@ -152,5 +134,17 @@ class detectorConditions(aiCondition):
     def get_state(self):
         return self.state
 
+def __generateDetectorConditions():
+    module_obj = sys.modules[__name__]
+    #basically we want to create a whole load of new classes based on this one and some data from the detector library
+    for detector_name in detector_library.__all__:
+        attrs = {
+            '_abstract': False,
+            'detector_name': detector_name
+        }
+        name = detector_name+'Condition'
+        setattr(module_obj, name, type(name, (detectorCondition, ), attrs))
+
+__generateDetectorConditions()
 
 conditions = subclassDict(aiCondition)

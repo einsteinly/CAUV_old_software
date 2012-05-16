@@ -4,7 +4,7 @@ from AI_classes import subclassDict, aiOptions
 from cauv.debug import debug, warning, error, info
 
 class taskOptions(aiOptions):
-    script_name = None
+    script_name = ''
     priority = 1
     detectors_enabled_while_running = False
     crash_count = 0
@@ -75,6 +75,8 @@ class aiTask(object):
         return self.script_options.get_dynamic_options_as_params()
     def get_static_options_as_params(self):
         return self.script_options.get_static_options_as_params()
+    def get_condition_ids(self):
+        return self.conditions.keys()
     def is_available(self):
         for condition in self.conditions.values():
             if not condition.get_state():

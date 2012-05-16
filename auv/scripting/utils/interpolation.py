@@ -61,6 +61,8 @@ class LinearpiecewiseApprox(blist.sorteddict):
         blist.sorteddict.__init__(self)
         self.interpolate = interp
         self.rfunc = rfunc
+        if interp is zeroOrderInterp:
+            self.__getitem__ = self.__getitem_zeroOrder__
 
     def __getitem__(self, k):
         # interpolates if a value is not present for the specified key
@@ -73,33 +75,41 @@ class LinearpiecewiseApprox(blist.sorteddict):
             raise OutOfRange_Low('out of range: lt')
         klow = sorted_keys[ilow]
 
-        if self.interpolate is zeroOrderInterp:
-            return self.rfunc(blist.sorteddict.__getitem__(self, klow))
-        else:
-            ihi = ilow + 1 
-            # optimisation: try the most common thing first
-            try:
-                khi = sorted_keys[ihi]
-            except IndexError:
-                if sorted_keys[ilow] != k and self.interpolate is not zeroOrderInterp:
-                    raise OutOfRange_High('out of range: gt')
-                else:
-                    return blist.sorteddict.__getitem__(self,sorted_keys[ilow])
+        ihi = ilow + 1 
+        try:
+            khi = sorted_keys[ihi]
+        except IndexError:
+            if sorted_keys[ilow] != k and self.interpolate is not zeroOrderInterp:
+                raise OutOfRange_High('out of range: gt')
+            else:
+                return self.rfunc(self._map[klow])
 
-            '''#dbg
-            for i, y in enumerate(sorted_keys):
-                if i == ilow:
-                    print i, y, '<-- low'
-                    print '=', k
-                elif i == ihi:
-                    print i, y, '<-- hi'
-                else:
-                    print i, y#'''
-            r = self.interpolate(
-                klow, blist.sorteddict.__getitem__(self, klow),
-                khi, blist.sorteddict.__getitem__(self, khi),
-                k
-            )
-            return self.rfunc(r)
+        '''#dbg
+        for i, y in enumerate(sorted_keys):
+            if i == ilow:
+                print i, y, '<-- low'
+                print '=', k
+            elif i == ihi:
+                print i, y, '<-- hi'
+            else:
+                print i, y#'''
+        r = self.interpolate(
+            klow, self._map[klow],
+            khi, self._map[khi],
+            k
+        )
+        return self.rfunc(r)
+    
+    def __getitem_zeroOrder_(self, k):
+        # interpolates if a value is not present for the specified key
+        # NB: self._sortedkeys not copied! (faster than using self.keys())
+        sorted_keys = self._sortedkeys #pylint: disable=E1101
+        
+        # print '__getitem__:\n', '\n'.join(map(str,sorted_keys)), 'k=', k
+        ilow = bisect.bisect(sorted_keys, k) - 1
+        if ilow < 0:
+            raise OutOfRange_Low('out of range: lt')
+        klow = sorted_keys[ilow]
 
+        return self.rfunc(self._map[klow])
 

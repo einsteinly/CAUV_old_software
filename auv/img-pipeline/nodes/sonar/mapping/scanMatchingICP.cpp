@@ -87,14 +87,16 @@ class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
                            float transform_eps,
                            float reject_threshold,
                            float max_correspond_dist,
-                           float score_thr)
+                           float score_thr,
+                           int ransac_iters)
             : PairwiseMatcher<PointT>(),
               m_max_iters(max_iters),
               m_euclidean_fitness(euclidean_fitness),
               m_transform_eps(transform_eps),
               m_reject_threshold(reject_threshold),
               m_max_correspond_dist(max_correspond_dist),
-              m_score_thr(score_thr){
+              m_score_thr(score_thr),
+              m_ransac_iters(ransac_iters){
         }
 
         // - public methods
@@ -128,6 +130,8 @@ class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
             icp.setTransformationEpsilon(m_transform_eps);
             icp.setEuclideanFitnessEpsilon(m_euclidean_fitness);
             icp.setRANSACOutlierRejectionThreshold(m_reject_threshold);
+            //debug() << "default ransac iters: " << icp.getRANSACIterations() << "will set to:" << m_ransac_iters;
+            icp.setRANSACIterations(m_ransac_iters);
 
             const Eigen::Matrix4f relative_guess = map->relativeTransform().inverse() * guess * new_cloud->globalTransform();
 
@@ -182,6 +186,7 @@ class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
         const float m_reject_threshold;
         const float m_max_correspond_dist;
         const float m_score_thr;
+        const int m_ransac_iters;
 };
 
 
@@ -209,10 +214,11 @@ boost::shared_ptr<PairwiseMatcher<pcl::PointXYZ> > makeICPPairwiseMatcherShared(
     float transform_eps,
     float reject_threshold,
     float max_correspond_dist,
-    float score_thr
+    float score_thr,
+    int ransac_iters
 ){
     return boost::make_shared<ICPPairwiseMatcher>(
-        max_iters, euclidean_fitness, transform_eps, reject_threshold, max_correspond_dist, score_thr
+        max_iters, euclidean_fitness, transform_eps, reject_threshold, max_correspond_dist, score_thr, ransac_iters
     );
 }
 
@@ -222,10 +228,11 @@ boost::shared_ptr<PairwiseMatcher<pcl::PointXYZ> > makeICPNonLinearPairwiseMatch
     float transform_eps,
     float reject_threshold,
     float max_correspond_dist,
-    float score_thr
+    float score_thr,
+    int ransac_iters
 ){
     return boost::make_shared<ICPNonLinearPairwiseMatcher>(
-        max_iters, euclidean_fitness, transform_eps, reject_threshold, max_correspond_dist, score_thr
+        max_iters, euclidean_fitness, transform_eps, reject_threshold, max_correspond_dist, score_thr, ransac_iters
     );
 }
 

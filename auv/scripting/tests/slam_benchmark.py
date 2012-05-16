@@ -24,14 +24,18 @@ class Benchmarker(object):
         self.auv = control.AUV(node)
         self.gemini = sonar.Gemini(node)
         self.test_name = test_name
-       
+        self.learn_keypoints = False
+        self.write_videos = True
+        self.inter_ping_delay = 0.2
         self.video_output_nodes = []
 
         self.setup()
 
     def setup(self):
         self.auv.stop()
-        self.auv.bearingParams(1, 0, 10, -1, 1, 1, 1, 1, 100) # slower than normal!
+        self.auv.hbowMap(0,0)
+        self.auv.hsternMap(0,0)
+        self.auv.bearingParams(1, 0, 0, -1, 1, 1, 1, 1, 10) # much slower than normal!
         self.gemini.interPingDelay(6)
         self.gemini.range(20)
         self.gemini.gain(60)
@@ -39,9 +43,9 @@ class Benchmarker(object):
         self.gemini.continuous(True)
         self.loadPipeline()
         # give the GUI time to get sorted out
-        time.sleep(3)
+        time.sleep(4)
         # now set the data flowing:
-        self.gemini.interPingDelay(0.2)        
+        self.gemini.interPingDelay(self.inter_ping_delay)        
 
     def teardown(self):
         # make sure videos get written:
@@ -57,9 +61,9 @@ class Benchmarker(object):
         sonar_in.p('Sonar ID').set(2)
         sonar_in.p('Resolution').set(800)
         copy1 = pl.addNode(nt.Copy)
-        guio = pl.addNode(nt.GuiOutput)
+        #guio = pl.addNode(nt.GuiOutput)
         sonar_in.o('polar image').connect(copy1.i('image'))
-        sonar_in.o('image (synced)').connect(guio.i('image_in'))
+        #sonar_in.o('image (synced)').connect(guio.i('image_in'))
         medf = pl.addNode(nt.MedianFilter)
         medf.p('kernel').set(1)
         copy1.o('image copy').connect(medf.i('image'))
@@ -91,40 +95,55 @@ class Benchmarker(object):
         draw_kps = pl.addNode(nt.DrawKeyPoints)
         correl = pl.addNode(nt.Correlation1D)
         sslam = pl.addNode(nt.SonarSLAM)
-        sslam.p('-vis origin x').set(-4.0)
-        sslam.p('-vis origin y').set(-8.0)
-        sslam.p('-vis resolution').set(800)
-        sslam.p('-vis size').set(32.0)
+        sslam.p('-vis origin x').set(-7.0)
+        sslam.p('-vis origin y').set(-7.0)
+        sslam.p('-vis resolution').set(400)
+        sslam.p('-vis size').set(36.0)
         sslam.p('clear').set(False)
         sslam.p('euclidean fitness').set(1e-7)
-        sslam.p('feature merge distance').set(0.1)
+        sslam.p('feature merge distance').set(0.2)
         sslam.p('graph iters').set(10)
-        sslam.p('keyframe spacing').set(2)
+        sslam.p('keyframe spacing').set(1.5)
         sslam.p('match algorithm').set('ICP')
+        sslam.p('ransac iterations').set(50)
         # !!! TODO: sensitivity to this:
-        sslam.p('max correspond dist').set(2.0) 
-        # !!! TODO: sensitivity to this:
+        sslam.p('max correspond dist').set(0.5)
         sslam.p('max iters').set(10)
-        sslam.p('overlap threshold').set(0.5)
-        sslam.p('reject threshold').set(0.5)
-        sslam.p('score threshold').set(1.0)
+        sslam.p('overlap threshold').set(0.3)
+        sslam.p('reject threshold').set(0.2)
+        sslam.p('score threshold').set(0.04)
         sslam.p('transform eps').set(1e-9)
-        sslam.p('weight test').set(-1.0)
+        sslam.p('weight test').set(0.5)
         sslam.p('xy metres/px').set(0.01) # unused, anyway
         nop.o('image out (not copied)').connect(corners.i('image in'))
         nop.o('image out (not copied)').connect(delay.i('image in'))
-        nop.o('image out (not copied)').connect(br_to_xy.i('polar image'))
         nop.o('image out (not copied)').connect(draw_kps.i('image in'))
         nop.o('image out (not copied)').connect(correl.i('Image A'))
         nop.o('image out (not copied)').connect(sslam.i('keypoints image'))
-        corners.o('keypoints').connect(draw_kps.i('KeyPoints'))
-        corners.o('keypoints').connect(br_to_xy.i('keypoints'))
-        corners.o('keypoints').connect(sslam.i('training: polar keypoints'))
+        if self.learn_keypoints:
+            learn_kps = pl.addNode(nt.LearnedKeyPoints)
+            learn_kps.p("questions").set(400)
+            learn_kps.p("trees").set(50)
+            nop.o('image out (not copied)').connect(learn_kps.i('image'))
+            corners.o('keypoints').connect(learn_kps.i('bootstrap keypoints'))
+            learn_kps.o('good keypoints').connect(sslam.i('training: polar keypoints'))
+            learn_kps.o('good keypoints').connect(draw_kps.i('KeyPoints'))
+            learn_kps.o('good keypoints').connect(br_to_xy.i('keypoints'))
+            learn_kps.o('image').connect(br_to_xy.i('polar image'))
+            learn_kps.o('image').connect(sslam.i('keypoints image'))
+            sslam.o('training: goodness').connect(learn_kps.i('training: goodness'))
+            sslam.o('training: keypoints').connect(learn_kps.i('training: keypoints'))
+            sslam.o('training: keypoints image').connect(learn_kps.i('training: keypoints image'))
+        else:
+            nop.o('image out (not copied)').connect(br_to_xy.i('polar image'))
+            corners.o('keypoints').connect(br_to_xy.i('keypoints'))
+            corners.o('keypoints').connect(sslam.i('training: polar keypoints'))
+            corners.o('keypoints').connect(draw_kps.i('KeyPoints'))
         br_to_xy.o('keypoints').connect(sslam.i('keypoints'))
         delay.o('image out (not copied)').connect(correl.i('Image B'))
         clamp = pl.addNode(nt.ClampFloat)
-        clamp.p('Max').set(0.1)
-        clamp.p('Min').set(-0.1)
+        clamp.p('Max').set(0.2)
+        clamp.p('Min').set(-0.2)
         correl.o('max correl location').connect(clamp.i('Value'))
         clamp.o('Value').connect(sslam.i('delta theta'))
         resize = pl.addNode(nt.Resize)
@@ -133,43 +152,67 @@ class Benchmarker(object):
         rotate.p('extend').set(True)
         rotate.p('radians').set(math.pi/2)
         resize.o('image_out').connect(rotate.i('image_in'))
-        kps_video_out = pl.addNode(nt.VideoFileOutput)
-        kps_video_out.param('filename').set('%s-keypoints.avi' % self.test_name)
-        rotate.o('image_out').connect(kps_video_out.i('image'))
+        #if self.write_videos:
+        #    kps_video_out = pl.addNode(nt.VideoFileOutput)
+        #    kps_video_out.param('filename').set('%s-keypoints.avi' % self.test_name)
+        #    rotate.o('image_out').connect(kps_video_out.i('image'))
         copyviz = pl.addNode(nt.Copy)
         sslam.o('cloud visualisation').connect(copyviz.i('image'))
-        viz_video_out = pl.addNode(nt.VideoFileOutput)
-        viz_video_out.param('filename').set('%s-map.avi' % self.test_name)
+        if self.write_videos:
+            viz_video_out = pl.addNode(nt.VideoFileOutput)
+            viz_video_out.param('filename').set('%s-map.avi' % self.test_name)
+            copyviz.o('image copy').connect(viz_video_out.i('image'))
         guio = pl.addNode(nt.GuiOutput)
-        copyviz.o('image copy').connect(viz_video_out.i('image'))
         copyviz.o('image copy').connect(guio.i('image_in'))
-
-        self.video_output_nodes.append(kps_video_out)
-        self.video_output_nodes.append(viz_video_out)
+    
+        if self.write_videos:
+            #self.video_output_nodes.append(kps_video_out)
+            self.video_output_nodes.append(viz_video_out)
 
     def runTest(self):
         self.auv.bearingAndWait(6)
         self.auv.bearingAndWait(0)
-        self.auv.prop(80)
-        time.sleep(77)
+        self.auv.prop(110)
+        time.sleep(55)
         self.auv.prop(0)
+        self.auv.bearingAndWait(45)
+        self.auv.prop(110)
+        time.sleep(10)
+        self.auv.prop(0) 
 
         self.auv.bearingAndWait(90)
-        self.auv.prop(80)
-        time.sleep(77)
+        self.auv.prop(110)
+        time.sleep(50)
         self.auv.prop(0)
+        self.auv.bearingAndWait(135)
+        self.auv.prop(110)
+        time.sleep(10)
+        self.auv.prop(0) 
 
         self.auv.bearingAndWait(180)
-        self.auv.prop(80)
-        time.sleep(77)
+        self.auv.prop(110)
+        time.sleep(50)
         self.auv.prop(0)
+        self.auv.bearingAndWait(225)
+        self.auv.prop(110)
+        time.sleep(10)
+        self.auv.prop(0) 
 
         self.auv.bearingAndWait(270)
-        self.auv.prop(80)
-        time.sleep(77)
+        self.auv.prop(110)
+        time.sleep(50)
         self.auv.prop(0)
+        self.auv.bearingAndWait(315)
+        self.auv.prop(110)
+        time.sleep(10)
+        self.auv.prop(0) 
+
+        self.auv.bearingAndWait(0)
 
         self.auv.stop()
+
+        time.sleep(10)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

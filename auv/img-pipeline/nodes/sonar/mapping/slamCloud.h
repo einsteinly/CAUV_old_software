@@ -81,11 +81,27 @@ class SlamCloudGraph{
               m_min_initial_points(10),
               m_min_initial_area(5), // m^2
               m_good_keypoint_distance(0.2),
-              m_max_speed(2.0),
+              m_max_speed(1.0),
               m_max_considered_overlaps(3),
-              m_rotation_scale(2),
+              m_rotation_scale(4),
               m_graph_optimisation_count(0),
-              m_key_scan_locations(new KDTreeCachingCloud<PointT>()){
+              m_key_scan_locations(new KDTreeCachingCloud<PointT>()),
+              m_n_passed_good(0),
+              m_n_passed_bad(0),
+              m_n_failed_good(0),
+              m_n_failed_bad(0){
+        }
+
+        virtual ~SlamCloudGraph(){
+            info() << "SlamCloudGraph lifetime statistics:\n"
+                   << "\tpassed weight test, were good:" << m_n_passed_good << "\n"
+                   << "\tpassed weight test, were bad :" << m_n_passed_bad  << "\n"
+                   << "\tfailed weight test, were good:" << m_n_failed_good << "\n"
+                   << "\tfailed weight test, were bad :" << m_n_failed_bad;
+            unsigned total = m_n_passed_good + m_n_passed_bad + m_n_failed_good + m_n_failed_bad;
+            info() << "Total keypoints processed:" << total;
+            info() << "Classifier Wrong Reject:" << 100*float(m_n_failed_good) / total << "%";
+            info() << "Classifier Wrong Accept:" << 100*float(m_n_passed_bad) / total << "%";
         }
 
         void reset(){
@@ -94,6 +110,10 @@ class SlamCloudGraph{
             m_key_constraints.clear();
             m_graph_optimisation_count = 0;
             m_key_scan_locations->clear();
+            m_n_passed_good = 0;
+            m_n_passed_bad = 0;
+            m_n_failed_good = 0;
+            m_n_failed_bad = 0;
         }
 
         int graphOptimisationsCount() const{
@@ -125,9 +145,12 @@ class SlamCloudGraph{
 
         /* Guess a transformation for a time based on simple extrapolation of
          * the previous transformations.
-         * Returned transformation is in the global coordinate system
+         * Returned transformation is in the global coordinate system.
          */
-        Eigen::Matrix4f guessTransformationAtTime(TimeStamp const& t) const{
+        Eigen::Matrix4f guessTransformationAtTime(
+            TimeStamp const& t,
+            Eigen::Matrix4f const& rotation_guess_relative_to_last_scan
+        ) const{
             switch(m_all_scans.size()){
                 case 0:
                     return Eigen::Matrix4f::Identity();
@@ -137,6 +160,8 @@ class SlamCloudGraph{
                 default:{
                     // !!! TODO: use more than one previous point for smooth
                     // estimate?
+                    Eigen::Matrix4f r = m_all_scans.back()->globalTransform() * rotation_guess_relative_to_last_scan;
+                    
                     location_vec::const_reverse_iterator i = m_all_scans.rbegin();
                     const Eigen::Vector3f p1 = (*i)->globalTransform().block<3,1>(0,3);
                     const TimeStamp t1 = (*i)->time();
@@ -148,17 +173,16 @@ class SlamCloudGraph{
                     }
                     if(t2.secs == t1.secs && t1.musecs == t2.musecs){
                         debug() << "all scans have the same timestamp!";
-                        return m_all_scans.back()->globalTransform();
+                        return r;
                     }
                     const Eigen::Vector3f p = p1 + (p1-p2)*(t-t1)/(t1-t2);
-                    debug() << "p1:" << p1.transpose() << "t1:" << t1
-                            << "p2:" << p2.transpose() << "t2:" << t2;
+                    debug(3) << "p1:" << p1.transpose() << "t1:" << t1
+                             << "p2:" << p2.transpose() << "t2:" << t2;
                     if(t-t1 < 1e-4){
                         debug() << "guess transformation in < 0.1 ms!";
-                        return m_all_scans.back()->globalTransform();
+                        return r;
                     }
                     const float frac_speed = std::fabs((p-p1).norm() / (t-t1)) / m_max_speed;
-                    Eigen::Matrix4f r = Eigen::Matrix4f::Identity();
                     r.block<3,1>(0,3) = p;
                     if(frac_speed >= 1.0){
                         warning() << "predicted motion > max speed (x"
@@ -232,9 +256,9 @@ class SlamCloudGraph{
                     float score = m.transformcloudToMatch(
                         map_cloud, p, guess, relative_transformation, transformed
                     );
-                    float age_penalty = std::log(1.0 + (p->time() - map_cloud->time()));
+                    float age_penalty = 1.0 + std::log(1.0 + (p->time() - map_cloud->time()));
                     transformations.insert(std::make_pair(
-                        score / age_penalty,
+                        score * age_penalty,
                         mat_cloud_transformed_t(
                             relative_transformation, map_cloud, transformed
                         )
@@ -284,10 +308,10 @@ class SlamCloudGraph{
             
             // Choose the best *score* (not overlap) out of these matches, and use as the
             // parent for this scan:
-            const cloud_ptr       parent_map_cloud   = transformations.rbegin()->second.cloud;
-            const Eigen::Matrix4f rel_transformation = transformations.rbegin()->second.mat;
-            const base_cloud_ptr  transformed        = transformations.rbegin()->second.transformed;
-            r = transformations.rbegin()->first;
+            const cloud_ptr       parent_map_cloud   = transformations.begin()->second.cloud;
+            const Eigen::Matrix4f rel_transformation = transformations.begin()->second.mat;
+            const base_cloud_ptr  transformed        = transformations.begin()->second.transformed;
+            r = transformations.begin()->first;
 
             p->setRelativeTransform(rel_transformation);
             p->setRelativeTo(parent_map_cloud);
@@ -346,20 +370,51 @@ class SlamCloudGraph{
             std::vector<int>   pt_indices(1);
             std::vector<float> pt_squared_dists(1);
 
-            int ngood = 0;
-            int nbad = 0;
+            int n_passed_good = 0; // passed the weight test, and turned out to be good
+            int n_passed_bad = 0;  // passed the weight test, but turned out to be bad
+            int n_failed_good = 0; // failed the weight test, but would have been good
+            int n_failed_bad = 0;  // failed the weight test, and would have been bad
+
+            // first, the points that passed the weight test:
             for(size_t i=0; i < transformed->size(); i++){
                 if(parent_map_cloud->nearestKSearch((*transformed)[i], 1, pt_indices, pt_squared_dists) > 0 &&
                    pt_squared_dists[0] < m_good_keypoint_distance){
                     p->keyPointGoodness()[p->ptIndices()[i]] = 1;
-                    ngood++;
+                    n_passed_good++;
                 }else{
                     p->keyPointGoodness()[p->ptIndices()[i]] = 0;
-                    nbad++;
+                    n_passed_bad++;
                 }
             }
-            debug() << ngood << "/" << (nbad+ngood) << "="
-                    << float(ngood)/(nbad+ngood) << "keypoints proved good";
+
+            // now transform the ones that failed into the parent coordinate
+            // system:
+            base_cloud_t transformed_rejected;
+            pcl::transformPointCloud(p->rejectedPoints(), transformed_rejected, p->relativeTransform());
+
+            for(size_t i = 0; i < transformed_rejected.size(); i++){
+                if(parent_map_cloud->nearestKSearch(transformed_rejected[i], 1, pt_indices, pt_squared_dists) > 0 &&
+                   pt_squared_dists[0] < m_good_keypoint_distance){
+                    p->keyPointGoodness()[p->rejectedPtIndices()[i]] = 1;
+                    n_failed_good++;
+                }else{
+                    p->keyPointGoodness()[p->rejectedPtIndices()[i]] = 0;
+                    n_failed_bad++;
+                }
+            }
+
+            const int total = n_passed_good + n_passed_bad + n_failed_good + n_failed_bad;
+
+            m_n_passed_good += n_passed_good;
+            m_n_passed_bad  += n_passed_bad;
+            m_n_failed_good += n_failed_good;
+            m_n_failed_bad  += n_failed_bad;
+            
+            info() << "classifier statistics:\n"
+                   << "\tpass,good =" << n_passed_good << "\t= " << 100*float(n_passed_good)/total << "%\n"
+                   << "\tpass,bad  =" << n_passed_bad  << "\t= " << 100*float(n_passed_bad)/total << "%\n"
+                   << "\tfail,good =" << n_failed_good << "\t= " << 100*float(n_failed_good)/total << "%\n"
+                   << "\tfail,bad  =" << n_failed_bad  << "\t= " << 100*float(n_failed_bad)/total << "%\n";
 
             return r;
         }
@@ -545,6 +600,12 @@ class SlamCloudGraph{
         // for these scans, all data apart from the time and relative location
         // is discarded
         location_vec m_all_scans;
+        
+        // statistics about how well the classifier performed:
+        unsigned m_n_passed_good;
+        unsigned m_n_passed_bad;
+        unsigned m_n_failed_good;
+        unsigned m_n_failed_bad;
 };
 
 

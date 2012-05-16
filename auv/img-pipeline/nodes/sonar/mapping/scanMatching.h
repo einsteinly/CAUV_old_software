@@ -87,7 +87,8 @@ boost::shared_ptr<PairwiseMatcher<pcl::PointXYZ> > makeICPPairwiseMatcherShared(
     float transform_eps,
     float reject_threshold,
     float max_correspond_dist,
-    float score_thr
+    float score_thr,
+    int ransac_iters
 );
 
 boost::shared_ptr<PairwiseMatcher<pcl::PointXYZ> > makeICPNonLinearPairwiseMatcherShared(
@@ -96,7 +97,8 @@ boost::shared_ptr<PairwiseMatcher<pcl::PointXYZ> > makeICPNonLinearPairwiseMatch
     float transform_eps,
     float reject_threshold,
     float max_correspond_dist,
-    float score_thr
+    float score_thr,
+    int ransac_iters
 );
 
 boost::shared_ptr<PairwiseMatcher<pcl::PointXYZ> > makeNDTPairwiseMatcherShared(

@@ -49,7 +49,7 @@ class FixedNodeTrackerManipulator : public osgGA::CameraManipulator
         virtual osg::Matrixd getInverseMatrix() const;
 
         void setRotation(osg::Vec3d axis1, float angle1, osg::Vec3d axis2, float angle2, osg::Vec3d axis3, float angle3);
-        void setTranslation(float dist_x, float dist_y, float dist_z);
+        void setTranslation(osg::Vec3d translation);
 
         virtual void computeHomePosition();
 
@@ -57,7 +57,7 @@ class FixedNodeTrackerManipulator : public osgGA::CameraManipulator
         void computeNodeWorldToLocal(osg::Matrixd& worldToLocal) const;
         void computeNodeLocalToWorld(osg::Matrixd& localToWorld) const;
 
-        void computeNodeCenterAndRotation(osg::Vec3d& center) const;
+        void computeNodeCenterAndRotation(osg::Vec3d& center, osg::Quat& rotation) const;
 
         void computePosition(const osg::Vec3d& eye,const osg::Vec3d& lv,const osg::Vec3d& up);
 

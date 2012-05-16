@@ -137,16 +137,12 @@ class SonarSLAMImpl{
         float registerScan(cloud_ptr scan,
                            PairwiseMatcher<pt_t> const& scan_matcher,
                            GraphOptimiser const& graph_optimiser,
-                           Eigen::Matrix4f const& external_guess,
+                           Eigen::Matrix4f const& rotation_guess_relative_to_last_scan, 
                            Eigen::Matrix4f& global_transformation){
-            Eigen::Matrix4f guess = m_graph.guessTransformationAtTime(scan->time());
+            Eigen::Matrix4f guess = m_graph.guessTransformationAtTime(
+                scan->time(), rotation_guess_relative_to_last_scan
+            );
 
-            // use rotation from external guess, and translation from internal
-            // guess:
-            if(external_guess.block<3,1>(0,3).norm() > 1e-3)
-                warning() << "external translation prediction is ignored";
-            guess.block<3,3>(0,0) = external_guess.block<3,3>(0,0);
-            
             // return guess if no match
             global_transformation = guess;
             return m_graph.registerScan(
@@ -377,6 +373,7 @@ void SonarSLAMNode::init(){
     // ICP only:
     registerParamID("reject threshold", float(0.5), "RANSAC outlier rejection distance");
     registerParamID("max correspond dist", float(1), "");
+    registerParamID("ransac iterations", int(10), "RANSAC iterations");
     // ICP / NDT / NDT non-linear
     registerParamID("match algorithm", std::string("ICP"), "ICP, Non-Linear ICP, or NDT");
     
@@ -433,6 +430,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     const float reject_threshold    = param<float>("reject threshold");
     const float max_correspond_dist = param<float>("max correspond dist");
     const std::string match_algorithm = param<std::string>("match algorithm");    
+    const int ransac_iters          = param<int>("ransac iterations");
 
     const int graph_iters = param<int>("graph iters");
 
@@ -479,12 +477,12 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     }else if(boost::iequals(match_algorithm, "ICP")){
         scan_matcher = makeICPPairwiseMatcherShared(
             max_iters, euclidean_fitness, transform_eps,
-            reject_threshold, max_correspond_dist, score_thr
+            reject_threshold, max_correspond_dist, score_thr, ransac_iters
         );
     }else if(boost::iequals(match_algorithm, "non-linear ICP")){
         scan_matcher = makeICPNonLinearPairwiseMatcherShared(
             max_iters, euclidean_fitness, transform_eps,
-            reject_threshold, max_correspond_dist, score_thr
+            reject_threshold, max_correspond_dist, score_thr, ransac_iters
         );
     }else{
         throw parameter_error(
@@ -494,9 +492,10 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     }
 
     GraphOptimiserV1 graph_optimiser(graph_iters);
-
-    Eigen::Matrix4f relative_transformation_guess = Eigen::Matrix4f::Identity();
-    relative_transformation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
+    
+    debug () << "external delta theta =" << delta_theta * 180 / 3.14159 << "degrees";
+    Eigen::Matrix4f relative_rotation_guess = Eigen::Matrix4f::Identity();
+    relative_rotation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
         Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ())
     );
 
@@ -506,7 +505,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
         scan,
         *scan_matcher,
         graph_optimiser,
-        relative_transformation_guess,
+        relative_rotation_guess,
         global_transformation
     );
 

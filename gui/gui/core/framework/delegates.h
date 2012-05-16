@@ -70,7 +70,7 @@ protected:
 
 
 
-struct NumericDelegate : public QStyledItemDelegate {
+class NumericDelegate : public QStyledItemDelegate {
     Q_OBJECT
 public:
     NumericDelegate(NodeTreeView * tree, QObject * parent = 0);
