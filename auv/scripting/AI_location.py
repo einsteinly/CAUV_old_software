@@ -52,14 +52,16 @@ class motorEstimator(redherring_model.Model, aiRelativeEstimator):
     def __init__(self, node):
         redherring_model.Model.__init__(self, node)
         aiRelativeEstimator.__init__(self, node)
+        self.last_position = NorthEastDepthCoord(self.displacement[1],self.displacement[0],-self.displacement[2])
         self.start()
     def get_relative_position(self):
         #according to simulator (base_model.py) displacement is east, north, altitude
         position = NorthEastDepthCoord(self.displacement[1],self.displacement[0],-self.displacement[2])
-        self.displacement = np_array([0,0,0])
-        return position, 0.5
+        rel_pos = position - self.last_position
+        self.last_position = position
+        return rel_pos, 0.5
     def reset(self):
-        self.displacement = np_array([0,0,self.displacement[2]])
+        self.displacement = np_array([0,0,0])
     #Overridden commands
     #this stops the model from communicating (and causing untold problems)
     def sendStateMessages(self):
@@ -113,7 +115,6 @@ class aiLocation(aiProcess):
         while True:
             time.sleep(self.options['update_period'])
             last_known_location = self.location_filter.get_estimate()
-            print last_known_location
             self.ai.task_manager.broadcast_position(last_known_location)
     def die(self):
         for rel_est in self.location_filter.relative_estimators:

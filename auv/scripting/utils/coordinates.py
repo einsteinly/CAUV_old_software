@@ -25,6 +25,14 @@ class NorthEastDepthCoord:
         return NorthEastDepthCoord(self.north / number,
                                    self.east / number,
                                    self.depth / number)
+    def __sub__(self, ned):
+        if isinstance(ned, NorthEastDepthCoord):
+            return NorthEastDepthCoord(self.north - ned.north,
+                                       self.east - ned.east,
+                                       self.depth - ned.depth)
+        else:
+            raise TypeError('Subtracting %s from a NorthEastDepthCoord is unsupported' %str(type(ned)))
+        return self
     def __imul__(self, number):
         self.north *= number
         self.east *= number
