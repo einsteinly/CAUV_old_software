@@ -81,7 +81,7 @@ class SlamCloudGraph{
               m_min_initial_points(10),
               m_min_initial_area(5), // m^2
               m_good_keypoint_distance(0.2),
-              m_max_speed(2.0),
+              m_max_speed(1.0),
               m_max_considered_overlaps(3),
               m_rotation_scale(4),
               m_graph_optimisation_count(0),

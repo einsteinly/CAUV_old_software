@@ -12,8 +12,7 @@ reserved = {
     "enum" : "ENUM",
     "lazy" : "LAZY",
     "eq" : "EQUALITY",
-    "cmp" : "COMPARE",
-    "fmt_ver" : "VERSION"
+    "cmp" : "COMPARE"
 }
 tokens = [
     "STRING",
