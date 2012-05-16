@@ -15,7 +15,7 @@ class scriptOptions(aiScriptOptions):
         dynamic = ['error',]
     
 class script(aiScript):
-    debug_values = ['last_set.latitude', 'last_set.longitude', 'heading_to.latidude', 'heading_to.longitude', 'auv.lla.latitude', 'auv.lla.longitude']
+    debug_values = ['last_set.latitude', 'last_set.longitude', 'heading_to.latitude', 'heading_to.longitude', 'auv.lla.latitude', 'auv.lla.longitude']
     def __init__(self, *args, **kwargs):
         aiScript.__init__(self, *args, **kwargs)
         self.waypoints = []

@@ -8,14 +8,14 @@ import math
 import argparse
 import traceback
 import threading
+from math import radians
 
 from AI_classes import aiProcess, external_function
 from utils.coordinates import LLACoord, NorthEastDepthCoord, River_Cam_Datum
 from simulator import redherring_model
 
 #need these to modify simulator
-from numpy import array as np_array
-from Quaternion import Quat
+from utils.quaternion import Quaternion
 
 SANITY_CUTOFF = 10.0
 
@@ -51,26 +51,27 @@ class motorEstimator(redherring_model.Model, aiRelativeEstimator):
     """
     def __init__(self, node):
         redherring_model.Model.__init__(self, node)
+        self.node.join('telemetry')
         aiRelativeEstimator.__init__(self, node)
         self.last_position = NorthEastDepthCoord(self.displacement[1],self.displacement[0],-self.displacement[2])
         self.start()
     def get_relative_position(self):
         #according to simulator (base_model.py) displacement is east, north, altitude
-        position = NorthEastDepthCoord(self.displacement[1],self.displacement[0],-self.displacement[2])
+        with self.update_lock:
+            position = NorthEastDepthCoord(self.displacement[1],self.displacement[0],-self.displacement[2])
         rel_pos = position - self.last_position
         self.last_position = position
         return rel_pos, 0.5
-    def reset(self):
-        self.displacement = np_array([0,0,0])
     #Overridden commands
     #this stops the model from communicating (and causing untold problems)
     def sendStateMessages(self):
         pass
     #update our estimated orientation and depth with actual values
     def onTelemetryMessage(self, m):
-        self.orientation = Quat((m.orientation.yaw,m.orientation.roll,m.orientation.pitch))
-        #according to simulator, displacement uses altitude
-        self.displacement[3]=-m.depth
+        with self.update_lock:
+            self.orientation = Quaternion.fromEuler((radians(m.orientation.pitch),radians(m.orientation.roll),radians(-m.orientation.yaw)))
+            #according to simulator, displacement uses altitude
+            self.displacement[2]=-m.depth
         
     
 relative_estimators = [motorEstimator]

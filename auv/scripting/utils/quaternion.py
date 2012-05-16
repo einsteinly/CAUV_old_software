@@ -226,7 +226,7 @@ class Quaternion(object):
         else:
             return Quaternion(self.q0/other, self.q1/other, self.q2/other, self.q3/other)
     def __repr__(self):
-        return '(%g,%g,%g)' % (self.x, self.y, self.z)
+        return '(%g,%g,%g,%g)' % (self.q0, self.q1, self.q2, self.q3)
 
 
 def test():
