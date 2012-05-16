@@ -12,38 +12,52 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#include "messageobserver.h"
+#include "aimessaging.h"
 
-#include <vector>
-
-#include <debug/cauv_debug.h>
-
-#include <generated/types/GuiaiGroup.h>
-
-#include <gui/core/model/paramvalues.h>
-#include <gui/core/model/model.h>
 #include <gui/core/model/nodes/groupingnode.h>
-#include <gui/core/model/nodes/stringnode.h>
-#include <gui/core/model/nodes/numericnode.h>
-
-#include <gui/plugins/ai/conditionnode.h>
-#include <gui/plugins/ai/tasknode.h>
+#include <gui/core/model/paramvalues.h>
 
 using namespace cauv;
 using namespace cauv::gui;
 
 
-AiMessageObserver::AiMessageObserver(boost::shared_ptr<Vehicle> auv):
-        GuiMessageObserver(auv){
+boost::shared_ptr<const Message> MessageGenerator<AiTaskNode, SetTaskStateMessage>::generate() {
+    std::vector< std::string > conditionIds;
+    std::map< std::string, ParamValue > taskOptions;
+    std::map< std::string, ParamValue > staticOptions;
+    std::map< std::string, ParamValue > dynamicOptions;
+
+    foreach(boost::shared_ptr<AiConditionNode> cond, m_node->getConditions()){
+        conditionIds.push_back(boost::get<std::string>(cond->nodeId()));
+    }
+
+    taskOptions = nodeMapToParamValueMap(m_node->getTaskOptions());
+    staticOptions = nodeMapToParamValueMap(m_node->getStaticOptions());
+    dynamicOptions = nodeMapToParamValueMap(m_node->getDynamicOptions());
+
+    std::map< std::string, ParamValue > scriptOptions = staticOptions;
+    scriptOptions.insert(dynamicOptions.begin(), dynamicOptions.end());
+
+    return boost::make_shared<SetTaskStateMessage>(boost::get<std::string>(
+                m_node->nodeId()), conditionIds, taskOptions, scriptOptions);
+}
+
+boost::shared_ptr<const Message> MessageGenerator<AiConditionNode, SetConditionStateMessage>::generate() {
+    std::map< std::string, ParamValue > conditionOptions;
+    conditionOptions = nodeMapToParamValueMap(m_node->getOptions());
+    return boost::make_shared<SetConditionStateMessage>(boost::get<std::string>(m_node->nodeId()), conditionOptions);
+}
+
+
+AiMessageObserver::AiMessageObserver(boost::shared_ptr<Node> parent) : m_parent(parent){
 }
 
 AiMessageObserver::~AiMessageObserver() {
     debug(2) << "~AiMessageObserver()";
 }
 
-
 void AiMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
-    boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
+    boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
     boost::shared_ptr<AiTaskNode> task = tasks->findOrCreate<AiTaskNode>(m->taskId());
 
@@ -59,14 +73,14 @@ void AiMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
 
 
 void AiMessageObserver::onTaskRemovedMessage(TaskRemovedMessage_ptr m){
-    boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
+    boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
     tasks->removeChild(m->taskId());
 }
 
 void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
 
-    boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
+    boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
     boost::shared_ptr<AiTaskNode> task = tasks->findOrCreate<AiTaskNode>(m->taskId());
 
@@ -109,7 +123,7 @@ void AiMessageObserver::onConditionTypesMessage(ConditionTypesMessage_ptr m){
 
 void AiMessageObserver::onConditionStateMessage(ConditionStateMessage_ptr m){
 
-    boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
+    boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
     boost::shared_ptr<AiConditionNode> condition = conditions->findOrCreate<AiConditionNode>(m->conditionId());
 
@@ -123,7 +137,7 @@ void AiMessageObserver::onConditionStateMessage(ConditionStateMessage_ptr m){
 }
 
 void AiMessageObserver::onConditionRemovedMessage(ConditionRemovedMessage_ptr m){
-    boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
+    boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
     conditions->removeChild(m->conditionId());
 }

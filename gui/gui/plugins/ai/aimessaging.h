@@ -12,33 +12,25 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef AIMESSAGEOBSERVER_H
-#define AIMESSAGEOBSERVER_H
+#ifndef __CAUV_AIMESSAGEGENERATORS_H__
+#define __CAUV_AIMESSAGEGENERATORS_H__
 
-#include <boost/shared_ptr.hpp>
+#include <gui/core/model/messaging.h>
 
-#include <generated/message_observers.h>
+#include <generated/types/GuiaiGroup.h>
 
-#include <gui/core/model/messageobserver.h>
+#include <gui/plugins/ai/conditionnode.h>
+#include <gui/plugins/ai/tasknode.h>
 
-#include <generated/types/ParamValue.h>
-
-namespace cauv{
-
+namespace cauv {
     namespace gui {
 
-        class Vehicle;
-
-        class AiMessageObserver : public GuiMessageObserver {
+        class AiMessageObserver : public MessageObserver {
 
         public:
             typedef std::map<std::string, ParamValue> param_map_t;
-
-            AiMessageObserver(boost::shared_ptr< Vehicle > auv);
-
+            AiMessageObserver(boost::shared_ptr< Node > parent);
             virtual ~AiMessageObserver();
-
-
             virtual void onConditionStateMessage(ConditionStateMessage_ptr m);
             virtual void onConditionRemovedMessage(ConditionRemovedMessage_ptr m);
             virtual void onTaskTypesMessage(TaskTypesMessage_ptr m);
@@ -46,9 +38,14 @@ namespace cauv{
             virtual void onTaskRemovedMessage(TaskRemovedMessage_ptr m);
             virtual void onTaskStateMessage(TaskStateMessage_ptr m);
             virtual void onScriptStateMessage(ScriptStateMessage_ptr m);
+        protected:
+            boost::shared_ptr<Node> m_parent;
         };
 
-    } // namespace gui
-} // namespace cauv
+        MESSAGE_GENERATOR(AiTaskNode, SetTaskStateMessage)
+        MESSAGE_GENERATOR(AiConditionNode, SetConditionStateMessage)
 
-#endif // GUIMESSAGEOBSERVER_H
+    } // namespace gui
+} // namesapce cauv
+
+#endif // __CAUV_AIMESSAGEGENERATORS_H__
