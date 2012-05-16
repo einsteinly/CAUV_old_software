@@ -31,7 +31,7 @@ const QString RedHerringPlugin::name() const{
 }
 
 void RedHerringPlugin::initialise(){
-    m_actions->auv = VehicleRegistry::instance()->registerVehicle<RedHerring>("redherring");
+    VehicleRegistry::instance()->registerVehicle<RedHerring>("redherring");
 }
 Q_EXPORT_PLUGIN2(cauv_redherringplugin, RedHerringPlugin)
 

@@ -45,6 +45,7 @@ namespace cauv {
         MESSAGE_GENERATOR(AiTaskNode, SetTaskStateMessage)
         MESSAGE_GENERATOR(AiConditionNode, SetConditionStateMessage)
 
+
     } // namespace gui
 } // namesapce cauv
 

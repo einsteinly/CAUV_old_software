@@ -42,24 +42,26 @@ const QString AiPlugin::name() const{
 }
 
 void AiPlugin::initialise(){
+
+    foreach(boost::shared_ptr<Vehicle> vehicle, VehicleRegistry::instance()->getVehicles()){
+        setupVehicle(vehicle);
+    }
+    connect(VehicleRegistry::instance().get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+           this, SLOT(setupVehicle(boost::shared_ptr<Node>)));
+
     boost::shared_ptr<CauvNode> node = m_actions->node.lock();
     if(node) {
         node->joinGroup("guiai");
-        foreach(boost::shared_ptr<Vehicle> vehicle, VehicleRegistry::instance()->getVehicles()){
-            node->addMessageObserver(boost::make_shared<AiMessageObserver>(vehicle));
-        }
         //!!! todo: this should be sent more often than just at startup
         //!!! maybe on membership change?
-
         node->send(boost::make_shared<RequestAIStateMessage>());
-    }
-    else error() << "AiPlugin failed to lock cauv node";
+    } else error() << "AiPlugin failed to lock cauv node";
 
     m_actions->scene->registerDropHandler(boost::make_shared<AiDropHandler>());
 
+        /*
 
 
-    /*
         AiNode *node = new AiNode();
         node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
         node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
@@ -69,7 +71,7 @@ void AiPlugin::initialise(){
         node->addItem(proxy);
         node->setResizable(true);
         m_actions->scene->addItem(node);
-*/
+
 
         AiNode *node1 = new AiNode();
         QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
@@ -96,18 +98,13 @@ void AiPlugin::initialise(){
         m_actions->scene->addItem(node3);
 
 
-        boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
-        boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
-        connect(tasks.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
-                this, SLOT(setupTask(boost::shared_ptr<Node>)));
-        boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
-        connect(conditions.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
-                this, SLOT(setupCondition(boost::shared_ptr<Node>)));
+*/
+
 }
 
 void AiPlugin::setupTask(boost::shared_ptr<Node> node){
     try {
-        m_auv->attachGenerator(
+        node->getClosestParentOfType<Vehicle>()->attachGenerator(
                     boost::make_shared<MessageGenerator<AiTaskNode,
                     SetTaskStateMessage> >(node->to<AiTaskNode>())
                     );
@@ -119,13 +116,37 @@ void AiPlugin::setupTask(boost::shared_ptr<Node> node){
 
 void AiPlugin::setupCondition(boost::shared_ptr<Node> node){
     try {
-        m_auv->attachGenerator(
+        node->getClosestParentOfType<Vehicle>()->attachGenerator(
                     boost::make_shared<MessageGenerator<AiConditionNode,
                     SetConditionStateMessage> >(node->to<AiConditionNode>())
                     );
     } catch(std::runtime_error e) {
         error() << "AiPlugin::setupCondition: Expecting AiTaskNode" << e.what();
 
+    }
+}
+
+void AiPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
+    try {
+        boost::shared_ptr<Vehicle> vehicle = vnode->to<Vehicle>();
+        boost::shared_ptr<GroupingNode> ai = vehicle->findOrCreate<GroupingNode>("ai");
+        boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
+        boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
+
+        connect(tasks.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+                this, SLOT(setupTask(boost::shared_ptr<Node>)));
+        connect(conditions.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+                this, SLOT(setupCondition(boost::shared_ptr<Node>)));
+
+
+        boost::shared_ptr<CauvNode> node = m_actions->node.lock();
+        if(node) {
+            node->addMessageObserver(boost::make_shared<AiMessageObserver>(vehicle));
+        } else error() << "Failed to lock CauvNode whilse setting up vehicle ai";
+
+
+    } catch(std::runtime_error e) {
+        error() << "AiPlugin::setupVehicle: Expecting Vehicle Node" << e.what();
     }
 }
 

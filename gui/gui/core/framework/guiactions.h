@@ -45,7 +45,6 @@ namespace cauv {
             boost::weak_ptr<CauvNode> node;
 
             // models
-            boost::shared_ptr<Vehicle> auv;
             boost::shared_ptr<NodeItemModel> root;
             boost::shared_ptr<NodeScene> scene;
 

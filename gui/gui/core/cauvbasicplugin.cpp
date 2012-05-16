@@ -24,7 +24,6 @@ CauvBasicPlugin::~CauvBasicPlugin(){
 }
 
 void CauvBasicPlugin::initialise(boost::shared_ptr<GuiActions> const& actions) {
-    m_auv = actions->auv;
     m_actions = actions;
 
     initialise();

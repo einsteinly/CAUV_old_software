@@ -33,7 +33,6 @@ namespace cauv {
             virtual void shutdown();
 
         protected:
-            boost::shared_ptr<Vehicle> m_auv;
             boost::shared_ptr<GuiActions> m_actions;
         };
     } //namespace gui
