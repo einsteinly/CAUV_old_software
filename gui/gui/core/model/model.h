@@ -28,25 +28,6 @@
 namespace cauv {
 namespace gui {
 
-
-// !!! todo: this class shouldn't exist. Vehicle config should be
-// sent by the vehicle when the GUI connects and not hardcoded
-// into the gui.
-class RedHerring : public Vehicle
-{
-    Q_OBJECT
-    public:
-        friend class VehicleRegistry;
-
-    protected:
-        RedHerring(std::string name);
-        virtual void initialise();
-
-    protected Q_SLOTS:
-        void setupMotor(boost::shared_ptr<Node>);
-        void setupAutopilot(boost::shared_ptr<Node> node);
-};
-
 class NodeItemModel;
 
 class NodeUpdateModelNotfication : public QObject {

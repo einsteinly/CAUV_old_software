@@ -20,6 +20,7 @@ endfunction()
 #add_subdirectory (processes)
 #add_subdirectory (motorcontrol)
 add_subdirectory (ai)
+add_subdirectory (redherring)
 #add_subdirectory (qwtgraphs)
 #add_subdirectory (logs)
 

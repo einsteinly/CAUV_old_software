@@ -42,7 +42,7 @@ set ( GUI_CORE_SRCS
     model/model.cpp
     model/registry.cpp
     model/messageobserver.cpp
-    model/messagegenerators.cpp
+    model/messaging.cpp
     model/paramvalues.cpp
     model/utils/datarecorder.cpp
     model/utils/sampler.cpp
@@ -77,13 +77,14 @@ set ( GUI_CORE_H
 
     model/node.h
     model/model.h
+    model/registry.h
     model/singleItemModel.h
     model/nodes/numericnode.h
     model/nodes/stringnode.h
     model/nodes/imagenode.h
     model/nodes/vehiclenode.h
     model/nodes/autopilotnode.h
-    model/messagegenerators.h
+    model/messaging.h
     model/utils/sampler.h
 
     framework/nodepicker.h

@@ -108,7 +108,7 @@ void AiPlugin::initialise(){
 void AiPlugin::setupTask(boost::shared_ptr<Node> node){
     try {
         m_auv->attachGenerator(
-                    boost::make_shared<MessageGenerator<AiTaskNode,
+                    boost::make_shared<MessageHandler<AiTaskNode,
                     SetTaskStateMessage> >(node->to<AiTaskNode>())
                     );
     } catch(std::runtime_error e) {
@@ -120,7 +120,7 @@ void AiPlugin::setupTask(boost::shared_ptr<Node> node){
 void AiPlugin::setupCondition(boost::shared_ptr<Node> node){
     try {
         m_auv->attachGenerator(
-                    boost::make_shared<MessageGenerator<AiConditionNode,
+                    boost::make_shared<MessageHandler<AiConditionNode,
                     SetConditionStateMessage> >(node->to<AiConditionNode>())
                     );
     } catch(std::runtime_error e) {

@@ -15,12 +15,14 @@
 #ifndef GUI_VEHICLENODE_H
 #define GUI_VEHICLENODE_H
 
-#include <gui/core/model/messagegenerators.h>
+#include <gui/core/model/messaging.h>
 
 #include <generated/types/message.h>
 
 namespace cauv {
     namespace gui {
+
+        class BaseMessageHandler;
 
         class Vehicle : public Node
         {
@@ -37,17 +39,19 @@ namespace cauv {
 
         Q_SIGNALS:
             void messageGenerated(boost::shared_ptr<const Message>);
+            void observerGenerated(boost::shared_ptr<MessageObserver>);
 
         public:
 
-            void attachGenerator(boost::shared_ptr<BaseMessageGenerator> generator)
+            void attachGenerator(boost::shared_ptr<BaseMessageHandler> generator)
             {
                 m_generators.insert(generator);
                 generator->connect(generator.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
                                    this, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)));
+                Q_EMIT observerGenerated(generator);
             }
 
-            std::set<boost::shared_ptr<BaseMessageGenerator> > m_generators;
+            std::set<boost::shared_ptr<BaseMessageHandler> > m_generators;
         };
 
     } //namespace gui

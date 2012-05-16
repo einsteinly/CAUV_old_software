@@ -30,6 +30,7 @@ namespace cauv {
 
         class VehicleRegistry : public GroupingNode
         {
+            Q_OBJECT
             public:
                 static boost::shared_ptr<VehicleRegistry> instance()
                 {
@@ -39,6 +40,10 @@ namespace cauv {
 
                 template <class T> boost::shared_ptr<T> registerVehicle(std::string name){
                     boost::shared_ptr<Vehicle> vehicle(new T(name));
+                    connect(vehicle.get(), SIGNAL(observerGenerated(boost::shared_ptr<MessageObserver>)),
+                            this, SIGNAL(observerGenerated(boost::shared_ptr<MessageObserver>)));
+                    connect(vehicle.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
+                            this, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)));
                     vehicle->initialise();
                     addChild(vehicle);
                     return boost::static_pointer_cast<T>(vehicle);
@@ -46,6 +51,10 @@ namespace cauv {
 
                 const std::vector<boost::shared_ptr<Vehicle> > getVehicles() const;
                 const boost::shared_ptr<Node> getNode(QUrl url);
+
+            Q_SIGNALS:
+                void messageGenerated(boost::shared_ptr<const Message>);
+                void observerGenerated(boost::shared_ptr<MessageObserver>);
 
             private:
                 VehicleRegistry();

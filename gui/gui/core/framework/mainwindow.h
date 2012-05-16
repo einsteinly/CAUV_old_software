@@ -26,6 +26,9 @@ class MainWindow;
 }
 
 namespace cauv {
+
+class MessageObserver;
+
 namespace gui {
 
 
@@ -42,6 +45,7 @@ public:
 
 public Q_SLOTS:
     int send(boost::shared_ptr<const Message>message);
+    void registerObserver(boost::shared_ptr<MessageObserver>observer);
 
 protected:
     virtual void onRun();

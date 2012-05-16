@@ -49,73 +49,8 @@ GuiMessageObserver::~GuiMessageObserver() {
     debug(2) << "~GuiMessageObserver()";
 }
 
-template <class T>
-void updateAutopilotParams(boost::shared_ptr<AutopilotParamsNode> params, boost::shared_ptr<const T> message) {
-    params->kP()->update(message->Kp());
-    params->kI()->update(message->Ki());
-    params->kD()->update(message->Kd());
-    params->scale()->update(message->scale());
-    params->aP()->update(message->Ad());
-    params->aI()->update(message->Ai());
-    params->aD()->update(message->Ad());
-    params->thr()->update(message->thr());
-    params->maxError()->update(message->maxError());
-}
-
 DefaultGuiMessageObserver::DefaultGuiMessageObserver(boost::shared_ptr<Vehicle> auv):
         GuiMessageObserver(auv){
-}
-
-void DefaultGuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
-    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreate<MotorNode>(message->motorId())->update(message->speed());
-}
-
-void DefaultGuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {
-    boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<AutopilotNode> autopilot = autopilots->findOrCreate<AutopilotNode>(Controller::Bearing);
-    autopilot->update(message->enabled());
-    autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
-}
-
-void DefaultGuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr message) {
-    boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<AutopilotNode> ap = autopilots->findOrCreate<AutopilotNode>(Controller::Bearing);
-    updateAutopilotParams<BearingAutopilotParamsMessage>(ap->getParams(), message);
-}
-
-void DefaultGuiMessageObserver::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr message) {
-    boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<AutopilotNode> autopilot = autopilots->findOrCreate<AutopilotNode>(Controller::Depth);
-    autopilot->update(message->enabled());
-    autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
-}
-
-void DefaultGuiMessageObserver::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr message) {
-    boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<AutopilotNode> ap = autopilots->findOrCreate<AutopilotNode>(Controller::Depth);
-    updateAutopilotParams<DepthAutopilotParamsMessage>(ap->getParams(), message);
-}
-
-void DefaultGuiMessageObserver::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr message) {
-    boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<AutopilotNode> autopilot = autopilots->findOrCreate<AutopilotNode>(Controller::Pitch);
-    autopilot->update(message->enabled());
-    autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
-}
-
-void DefaultGuiMessageObserver::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr message) {
-    boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<AutopilotNode> ap = autopilots->findOrCreate<AutopilotNode>(Controller::Pitch);
-    updateAutopilotParams<PitchAutopilotParamsMessage>(ap->getParams(), message);
-}
-
-
-void DefaultGuiMessageObserver::onDepthCalibrationMessage(DepthCalibrationMessage_ptr message) {
-    boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("sensors")->findOrCreate<GroupingNode>("calibration");
-    group->findOrCreate<NumericNode<float> >("aftMultiplier")->update(message->aftMultiplier());
-    group->findOrCreate<NumericNode<float> >("aftOffset")->update(message->aftOffset());
-    group->findOrCreate<NumericNode<float> >("foreMultiplier")->update(message->foreMultiplier());
-    group->findOrCreate<NumericNode<float> >("foreOffset")->update(message->foreOffset());
 }
 
 void DefaultGuiMessageObserver::onDebugLevelMessage(DebugLevelMessage_ptr message) {

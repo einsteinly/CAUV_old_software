@@ -20,6 +20,7 @@
 #include <QPluginLoader>
 #include <QSettings>
 #include <QGLWidget>
+#include <QMetaMethod>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
@@ -128,12 +129,11 @@ void CauvMainWindow::onRun()
     CauvNode::onRun();
 
     // data model and network access
-    // !!! todo: there shouldn't be a RedHerring class
-    // vehicle data should be sent from the AUV to a
-    // more generic version of the Vehicle class. Things
-    // like motor setup, autopilots, etc.. should be
-    // defined there not hardcoded into the GUI.
-    m_actions->auv = VehicleRegistry::instance()->registerVehicle<RedHerring>("redherring");
+    boost::shared_ptr<VehicleRegistry> registry = VehicleRegistry::instance();
+    connect(registry.get(), SIGNAL(observerGenerated(boost::shared_ptr<MessageObserver>)),
+            this, SLOT(registerObserver(boost::shared_ptr<MessageObserver>)));
+    connect(registry.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
+            this, SLOT(send(boost::shared_ptr<const Message>)));
     m_actions->root = boost::make_shared<NodeItemModel>(VehicleRegistry::instance());
 
     // cauv node
@@ -160,17 +160,13 @@ void CauvMainWindow::onRun()
 
     m_actions->scene->registerDropHandler(boost::make_shared<GroupDropHandler>(m_actions->root));
 
-    // message input
-    this->addMessageObserver(boost::make_shared<DefaultGuiMessageObserver>(m_actions->auv));
     this->addMessageObserver(boost::make_shared<DebugMessageObserver>(5));
 
     // always need at least the gui and control group
+    // TODO: messages based subscription
     this->joinGroup("gui");
     this->joinGroup("control");
 
-    // forward messages from "set" events
-    connect(m_actions->auv.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
-            this, SLOT(send(boost::shared_ptr<const Message>)));
 
     // Load external plugins (this includes things like gamepad support)
     // static plugins first
@@ -188,7 +184,7 @@ void CauvMainWindow::onRun()
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
 
-
+/*
     //!!! just for testing
     boost::shared_ptr<NumericNode<bool> > n2 = m_actions->auv->findOrCreate<GroupingNode>("test")->findOrCreate<NumericNode<bool> >(MotorID::HBow);
     n2->setMutable(true);
@@ -197,6 +193,7 @@ void CauvMainWindow::onRun()
     n->setMutable(true);
     n->update(QVariant::fromValue(BoundedFloat(3.0, 0, 100, BoundedFloatType::Clamps)));
     n->setNeutral(0);
+    */
 
     show();
     m_application->exec();
@@ -209,6 +206,11 @@ void CauvMainWindow::onRun()
     info() << "Qt Thread exiting";
     info() << "Stopping CauvNode";
     CauvNode::stopNode();
+}
+
+void CauvMainWindow::registerObserver(boost::shared_ptr<MessageObserver> observer){
+    info() << "MessageObserver registered";
+    CauvNode::addMessageObserver(observer);
 }
 
 int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)

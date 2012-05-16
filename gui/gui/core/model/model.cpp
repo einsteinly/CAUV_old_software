@@ -16,93 +16,10 @@
 
 #include <QUrl>
 
-#include "messagegenerators.h"
-#include "nodes/numericnode.h"
-#include "nodes/groupingnode.h"
+#include "node.h"
 
 using namespace cauv;
 using namespace cauv::gui;
-
-
-RedHerring::RedHerring(std::string name) : Vehicle(name) {
-    // don't populate anything in here as there isn't a shared pointer to
-    // this object yet. We need to wait until after it's been fully constructed
-}
-
-void RedHerring::initialise() {
-    // when a child is added to the motors group we want to add a message generator for it
-    boost::shared_ptr<GroupingNode> motors = findOrCreate<GroupingNode>("motors");
-    connect(motors.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(setupMotor(boost::shared_ptr<Node>)));
-
-    // same for autopilots
-    boost::shared_ptr<GroupingNode> autopilots = findOrCreate<GroupingNode>("autopilots");
-    connect(autopilots.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(setupAutopilot(boost::shared_ptr<Node>)));
-
-    boost::shared_ptr<GroupingNode> calibration = findOrCreate<GroupingNode>("sensors")->findOrCreate<GroupingNode>("calibration");
-    attachGenerator(boost::make_shared<MessageGenerator<GroupingNode, DepthCalibrationMessage> >(calibration));
-
-}
-
-void RedHerring::setupMotor(boost::shared_ptr<Node> node){
-    try {
-        boost::shared_ptr<MotorNode> motor = node->to<MotorNode>();
-        motor->setMax(127);
-        motor->setMin(-127);
-        motor->setMutable(true);
-        attachGenerator(boost::make_shared<MessageGenerator<MotorNode, MotorStateMessage> >(motor));
-    } catch (std::runtime_error){
-        warning() << node->nodePath() << " should be a MotorNode";
-    }
-}
-
-void RedHerring::setupAutopilot(boost::shared_ptr<Node> node){
-
-    try {
-        boost::shared_ptr<AutopilotNode> autopilot = node->to<AutopilotNode>();
-        boost::shared_ptr<NumericNode<float> > target = node->findOrCreate<NumericNode<float> >("target");
-        target->setMutable(true);
-        node->setMutable(true);
-
-        // target params
-        float min, max; bool wraps; std::string units;
-
-        Controller::e id = boost::get<Controller::e>(node->nodeId());
-
-        // params vary for each autopilot
-        switch(id){
-        case Controller::Bearing:
-            attachGenerator(boost::make_shared<MessageGenerator<AutopilotNode,
-                            BearingAutopilotEnabledMessage> >(autopilot));
-            attachGenerator(boost::make_shared<MessageGenerator<AutopilotParamsNode,
-                            BearingAutopilotParamsMessage> > (autopilot->getParams()));
-            min=0; max=360; wraps=true; units="°";
-            break;
-        case Controller::Pitch:
-            attachGenerator(boost::make_shared<MessageGenerator<AutopilotNode,
-                            PitchAutopilotEnabledMessage> >(autopilot));
-            attachGenerator(boost::make_shared<MessageGenerator<AutopilotParamsNode,
-                            PitchAutopilotParamsMessage> > (autopilot->getParams()));
-            min=-180; max=180; wraps=true; units="°";
-            break;
-        case Controller::Depth:
-            attachGenerator(boost::make_shared<MessageGenerator<AutopilotNode,
-                            DepthAutopilotEnabledMessage> >(autopilot));
-            attachGenerator(boost::make_shared<MessageGenerator<AutopilotParamsNode,
-                            DepthAutopilotParamsMessage> > (autopilot->getParams()));
-            min=-1; max=5; wraps=false; units="m";
-            break;
-        default: return;
-        }
-
-        target->setMin(min);
-        target->setMax(max);
-        target->setWraps(wraps);
-        target->setUnits(units);
-        target->setPrecision(3);
-    } catch (std::runtime_error){
-        warning() << node->nodePath() << " should be an AutopilotNode";
-    }
-}
 
 
 NodeUpdateModelNotfication::NodeUpdateModelNotfication(NodeItemModel * model) : m_model(model) {
