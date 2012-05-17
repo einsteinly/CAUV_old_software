@@ -8,12 +8,14 @@ import math
 import argparse
 import traceback
 import threading
+from math import radians
 
 from AI_classes import aiProcess, external_function
-from utils.vectormath import vec
+from utils.coordinates import LLACoord, NorthEastDepthCoord, River_Cam_Datum
 from simulator import redherring_model
 
-from Quaternion import Quat
+#need these to modify simulator
+from utils.quaternion import Quaternion
 
 SANITY_CUTOFF = 10.0
 
@@ -21,97 +23,103 @@ class aiEstimator(msg.MessageObserver):
     def __init__(self, node):
         self.node = node #dont clear up this node, as its the same node as in aiLocation
 
-class aiVelocityEstimator(aiEstimator):
+class aiRelativeEstimator(aiEstimator):
+    """
+    template for what a relative estimator should look like,
+    relative estimators give a relative position, i.e. have accumulating error with time
+    """
     def __init__(self, node):
         aiEstimator.__init__(self, node)
     def get_relative_position(self):
-        pass
+        """
+        return the change in position since the last reading
+        this needs to be a fast function, as it has to be called on all estimators at nearly the same time
+        """
+        raise NotImplementedError
 
-class aiLocationEstimator(aiEstimator):
-    def __init__(self, node, id, location_filter):
-        aiEstimator.__init__(self, node)
-        self.id = id
-        self.location_filter = location_filter
-    def update(self, location, probability):
-        #first sanity check
-        estimated_location, estimate_probability = self.location_filter.get_estimate()
-        if estimate_probability*(estimate_location-location)/probability > SANITY_CUTOFF:
-            #might want to ignore in future
-            return
-        #then update
-        self.location_filter.update(self.id, estimate, probability)
+class aiAbsoluteEstimator(aiEstimator):
+    """
+    template for a absolute estimator
+    absolute estimators give absolute position, i.e. error is not related to running time, e.g. GPS
+    """
+    #this hasn't been defined properly yet since it hasnt been needed
+    pass
         
-class motorEstimator(redherring_model.Model, aiVelocityEstimator):
+class motorEstimator(redherring_model.Model, aiRelativeEstimator):
+    """
+    Estimation based on motor commands, by running the simulator and updating with real bearing/detph info
+    """
     def __init__(self, node):
         redherring_model.Model.__init__(self, node)
-        aiVelocityEstimator.__init__(self, node)
+        self.node.join('telemetry')
+        aiRelativeEstimator.__init__(self, node)
+        self.last_position = NorthEastDepthCoord(self.displacement[1],self.displacement[0],-self.displacement[2])
         self.start()
     def get_relative_position(self):
-        return vec(self.displacement[0], self.displacement[1]), 0.9
-    def reset(self):
-        self.displacement[0]=0
-        self.displacement[1]=0
+        #according to simulator (base_model.py) displacement is east, north, altitude
+        with self.update_lock:
+            position = NorthEastDepthCoord(self.displacement[1],self.displacement[0],-self.displacement[2])
+        rel_pos = position - self.last_position
+        self.last_position = position
+        return rel_pos, 0.5
     #Overridden commands
+    #this stops the model from communicating (and causing untold problems)
     def sendStateMessages(self):
         pass
+    #update our estimated orientation and depth with actual values
     def onTelemetryMessage(self, m):
-        self.oreintation = Quat((m.orientation.yaw,m.orientation.roll,m.orientation.pitch))
-        self.displacement[3]=m.depth
+        with self.update_lock:
+            self.orientation = Quaternion.fromEuler((radians(m.orientation.pitch),radians(m.orientation.roll),radians(-m.orientation.yaw)))
+            #according to simulator, displacement uses altitude
+            self.displacement[2]=-m.depth
         
     
-velocity_estimators = [motorEstimator]
-location_estimators = []
+relative_estimators = [motorEstimator]
 
 class locationFilter(object):
-    def __init__(self):
-        self.last_known_location = vec(0,0)
+    """
+    Combines data from various estimators to give an overall estimate of location.
+    """
+    def __init__(self, relative_estimators=[]):
+        self.last_known_location = River_Cam_Datum #use this as a default, should really be set by gps
         self.last_known_time = time.time()
-        self.coord_displacements = {}
-        self.velocity_estimators = []
-    def update(self, id, estimate, probability):
-        if not id in self.coord_displacements:
-            #use first estimate as 'initial' value
-            self.coord_displacements[id] = estimate-self.get_estimate() #ie 0 position
-            return
-        #this needs to be much better
-        self.last_known_location = (1-probability)*self.get_estimate()+probability*estimate
-        self.last_known_time = time.time()
-        for vel_est in self.velocity_estimators:
-            vel_est.reset()
-    def add_velocity_estimator(self, vel_est):
-        self.velocity_estimators.append(vel_est)
-        vel_est.reset()
+        self.relative_estimators = relative_estimators
+    def update(self):
+        """
+        update location based on data from estimators
+        note doesn't use absolute estimators yet
+        """
+        estimates = [rel_est.get_relative_position() for rel_est in self.relative_estimators]
+        total_estimate = NorthEastDepthCoord(0,0,0)
+        total_weight = 0
+        for estimate, weight in estimates:
+            total_estimate += estimate*weight
+            total_weight += weight
+        try:
+            estimated_movement = total_estimate/total_weight
+        except ZeroDivisionError:
+            warning('No location data available, assuming not moving')
+            estimated_movement = 0
+        self.last_known_location += estimated_movement
+        self.last_known_time=time.time()
     def get_estimate(self):
-        total_diff = vec(0,0)
-        total_prob = 0
-        for vel_est in self.velocity_estimators:
-            posn, probability = vel_est.get_relative_position()
-            total_diff += posn*probability
-            total_prob += probability
-        #normalise
-        total_diff /= total_prob
-        return self.last_known_location+total_diff, total_prob/len(velocity_estimators)
+        self.update()
+        return self.last_known_location
 
 class aiLocation(aiProcess):
     def __init__(self, opts, args):
         aiProcess.__init__(self, 'location')
         self.options = opts.__dict__
         self.args = args
-        self.location_filter = locationFilter()
-        self.location_estimators = []
-        #initialise estimators
-        for estimator_class in velocity_estimators:
-            self.location_filter.add_velocity_estimator(estimator_class(self.node))
-        for id, estimator_class in enumerate(location_estimators):
-            self.location_estimators.append(estimator_class(self.node, id, self.location_filter))
+        self.location_filter = locationFilter([rel_est(self.node) for rel_est in relative_estimators])
     def run(self):
         while True:
             time.sleep(self.options['update_period'])
-            estimate, probability = self.location_filter.get_estimate()
-            self.ai.task_manager.broadcast_position(estimate)
+            last_known_location = self.location_filter.get_estimate()
+            self.ai.task_manager.broadcast_position(last_known_location)
     def die(self):
-        for vel_est in self.location_filter.velocity_estimators:
-            vel_est.stop()
+        for rel_est in self.location_filter.relative_estimators:
+            rel_est.stop()
         aiProcess.die(self)
     
 if __name__ == '__main__':

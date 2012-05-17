@@ -2,7 +2,7 @@ from AI_classes import aiScript, aiScriptOptions
 
 from cauv.debug import info, warning, debug, error
 
-from utils.vectormath import vec
+from utils.coordinates import LLACoord
 
 from math import atan, degrees
 import time
@@ -15,61 +15,60 @@ class scriptOptions(aiScriptOptions):
         dynamic = ['error',]
     
 class script(aiScript):
-    debug_values = ['last_set.x', 'last_set.y', 'heading_to.x', 'heading_to.y', 'auv.position.x', 'auv.position.y']
+    debug_values = ['last_set.latitude', 'last_set.longitude', 'heading_to.latitude', 'heading_to.longitude', 'auv.lla.latitude', 'auv.lla.longitude']
     def __init__(self, *args, **kwargs):
         aiScript.__init__(self, *args, **kwargs)
         self.waypoints = []
         self.last_set = None
         self.heading_to = None
     def run(self):
-        #self.waypoints = (vec(0,0), vec(4.5,4.5), vec(-4.5,-6))
+        #self.waypoints = [LLACoord(52.116692, 0.11779199999999999, -5), LLACoord(52.11655659246135, 0.11757541474764843, -5), LLACoord(52.116454731281465, 0.11774114908661013, -5)]
         while True:
             ans = raw_input('Mark waypoint (y/n)')
             if ans == 'y':
-                self.waypoints.append(self.auv.position)
-                self.last_set = self.auv.position
+                self.waypoints.append(self.auv.lla)
+                self.last_set = self.auv.lla
             elif ans == 'n':
                 break
             else:
                 debug("Didn't enter valid answer")
         debug("Waypoints were set at "+str(self.waypoints))
-        if self.auv.position == None:
+        if self.auv.lla == None:
             #no position data, wait for broadcast
             time.sleep(5.0)
-            if self.auv.position == None:
+            if self.auv.lla == None:
                 #if still none, then give up (since clearly not getting location
                 return 'FAILURE'
         for waypoint in self.waypoints:
             self.heading_to = waypoint
-            vector_to = waypoint-self.auv.position
-            #             |N/y  /
-            #             |    /
-            #             |___/
-            #             |b /
-            #             | /
-            #_____________|/_____________x
-            #             |
-            #             |
-            #             |
-            #             |
-            #             |
-            #             |
-            while abs(vector_to)>self.options.error:
+            #return northeastdepthcoord, 
+            vector_to = self.auv.lla.differenceInMetresTo(waypoint)
+            while max(abs(vector_to.north),abs(vector_to.east))>self.options.error:
                 #rotate to vector
+                #       ^N   /
+                #       |   /
+                #       |__/
+                #       |b/
+                #_______|/_________________>E
+                #       |
+                #       |
+                #       |
                 try:
-                    bearing = degrees(atan(vector_to.x/vector_to.y))%180
-                    #atan might give a result in -pi to pi
-                    if vector_to.x<0:
-                        bearing+180
+                    #mod 180 to make sure in range 0, 180
+                    bearing = degrees(atan(vector_to.east/vector_to.north))%180
+                    #if we want to head west, need to add 180 degrees to bearing
+                    if vector_to.east<0:
+                        bearing+=180
                 except ZeroDivisionError:
                     bearing = 90 if x>0 else 270
-                bearing = bearing%360
-                debug('Heading on a %f degree bearing, direction vector '+str(vector_to))
-                self.auv.bearing(bearing)
+                debug('Heading on a %f degree bearing, direction vector %s' %(bearing,str(vector_to)))
+                self.auv.prop(0)
+                self.auv.bearingAndWait(bearing)
                 #go forward
                 self.auv.prop(self.options.speed)
                 time.sleep(self.options.checking_interval)
-                vector_to = waypoint-self.auv.position
+                vector_to = self.auv.lla.differenceInMetresTo(waypoint)
+                print waypoint, self.auv.lla
             self.auv.prop(0)
             debug("Arrived at waypoint")
         return "SUCCESS"

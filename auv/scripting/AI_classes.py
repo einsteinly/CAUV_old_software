@@ -252,11 +252,9 @@ class fakeAUV(messaging.MessageObserver):
         self.current_bearing = None
         self.current_depth = None
         self.current_pitch = None
-        self.position = None
-        self.latitude = None
-        self.longitude = None
-        self.altitude = None
-        self.speed = None
+        self.lla = None
+        #self.altitude = None
+        #self.speed = None
         self.bearingCV = threading.Condition()
         self.depthCV = threading.Condition()
         self.pitchCV = threading.Condition()
@@ -276,11 +274,11 @@ class fakeAUV(messaging.MessageObserver):
         self.depthCV.release()
         self.pitchCV.release()
         
-    def onLocationMessage(self, m):
-        self.latitude = m.location.latitude
-        self.longitude = m.location.longitude
-        self.altitude = m.location.altitude
-        self.speed = m.speed
+    #def onLocationMessage(self, m):
+    #self.latitude = m.location.latitude
+    #self.longitude = m.location.longitude
+    #self.altitude = m.location.altitude
+    #self.speed = m.speed
     
     def getBearing(self):
         return self.current_bearing
@@ -425,8 +423,8 @@ class aiScript(aiProcess):
         pass
     #control stuff
     @external_function
-    def _set_position(self, pos):
-        self.auv.position = pos
+    def _set_position(self, llacoord):
+        self.auv.lla = llacoord
     def request_control(self, timeout=None):
         self.ai.auv_control.request_control(timeout)
     def request_control_and_wait(self, wait_timeout=5, control_timeout=None):
