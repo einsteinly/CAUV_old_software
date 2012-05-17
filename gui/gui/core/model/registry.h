@@ -46,6 +46,7 @@ namespace cauv {
                             this, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)));
                     vehicle->initialise();
                     addChild(vehicle);
+                    Q_EMIT vehicleAdded(vehicle);
                     return boost::static_pointer_cast<T>(vehicle);
                 }
 
@@ -55,6 +56,7 @@ namespace cauv {
             Q_SIGNALS:
                 void messageGenerated(boost::shared_ptr<const Message>);
                 void observerGenerated(boost::shared_ptr<MessageObserver>);
+                void vehicleAdded(boost::shared_ptr<Vehicle>);
 
             private:
                 VehicleRegistry();

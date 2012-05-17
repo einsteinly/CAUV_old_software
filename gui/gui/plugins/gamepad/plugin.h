@@ -16,6 +16,7 @@
 #define GAMEPADPLUGIN_H
 
 #include <gui/core/cauvbasicplugin.h>
+#include <gui/core/model/node.h>
 
 #include <QObject>
 
@@ -30,6 +31,9 @@ namespace cauv {
         public:
             virtual const QString name() const;
             virtual void initialise();
+
+        public Q_SLOTS:
+            virtual void setVehicle(boost::shared_ptr<Vehicle>);
 
         };
     } // namespace gui

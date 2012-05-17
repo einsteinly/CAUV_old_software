@@ -36,9 +36,16 @@ const QString GamepadPlugin::name() const{
 }
 
 void GamepadPlugin::initialise(){
+    foreach(boost::shared_ptr<Vehicle> vehicle, VehicleRegistry::instance()->getVehicles()){
+        setVehicle(vehicle);
+    }
 
-    boost::shared_ptr<Vehicle> m_auv = VehicleRegistry::instance()->getVehicles().front();
-    if(!m_auv) return;
+    connect(VehicleRegistry::instance().get(), SIGNAL(vehicleAdded(boost::shared_ptr<Vehicle>)),
+            this, SLOT(setVehicle(boost::shared_ptr<Vehicle>)));
+}
+
+
+void GamepadPlugin::setVehicle(boost::shared_ptr<Vehicle> vehicle){
 
     try {
         info() << "found" << GamepadInput::getNumDevices() << "gamepads";
@@ -55,12 +62,12 @@ void GamepadPlugin::initialise(){
                 if(vendor.find("xbox") != vendor.npos){
                     info() << "detected as an xbox controller";
                     boost::shared_ptr<XBoxInput> controller(new XBoxInput(i->second));
-                    gi = new CauvGamepad(controller, m_auv);
+                    gi = new CauvGamepad(controller, vehicle);
                 } else {
                     // assume its a playstation controller
                     info() << "assuming playstation controller";
                     boost::shared_ptr<PlaystationInput> controller(new PlaystationInput(i->second));
-                    gi = new CauvGamepad(controller, m_auv);
+                    gi = new CauvGamepad(controller, vehicle);
                 }
 
                 gi->setParent(this);
@@ -69,7 +76,10 @@ void GamepadPlugin::initialise(){
 
     } catch (char const* ex){
         error() << ex;
+    } catch (std::runtime_error ex){
+        error() << ex.what();
     }
 }
+
 
 Q_EXPORT_PLUGIN2(cauv_gamepadplugin, GamepadPlugin)
