@@ -96,7 +96,7 @@ public:
 
 #define MESSAGE_HANDLER(X, Y) \
     template<> \
-    class MessageHandler<X, Y> : public TypedMessageHandler<X> { \
+    struct MessageHandler<X, Y> : public TypedMessageHandler<X> { \
         public: \
             typedef Y message_type; \
             typedef X node_type; \
