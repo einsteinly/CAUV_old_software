@@ -228,6 +228,14 @@ struct NodeFilterInterface {
     virtual void filterChanged() = 0;
 };
 
+
+template<class X>
+struct TypedNodeStore {
+    TypedNodeStore<X>(boost::shared_ptr<X> node) : m_node(node){}
+protected:
+    boost::shared_ptr<X> m_node;
+};
+
 } // namespace gui
 } // namespace cauv
 #endif // GUI_NODES_H

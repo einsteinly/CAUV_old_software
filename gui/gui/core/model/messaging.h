@@ -30,6 +30,8 @@
 #include <generated/types/DepthAutopilotParamsMessage.h>
 #include <generated/types/PitchAutopilotParamsMessage.h>
 #include <generated/types/DepthCalibrationMessage.h>
+#include <generated/types/DebugLevelMessage.h>
+#include <generated/types/TelemetryMessage.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -46,64 +48,70 @@ namespace gui {
 class Node;
 
 
-class BaseMessageHandler : public QObject, public MessageObserver {
+struct BaseMessageGenerator : public QObject {
     Q_OBJECT
 public:
-    BaseMessageHandler(boost::shared_ptr<Node> node){
-        info() << "BaseMessageGenerator()";
+    BaseMessageGenerator(boost::shared_ptr<Node> node){
+        debug(5) << "BaseMessageGenerator()";
         node->connect(node.get(), SIGNAL(onBranchChanged()), this, SLOT(generateMessage()));
     }
     virtual boost::shared_ptr<const Message> generate() = 0;
 public Q_SLOTS:
     void generateMessage(){
-        info() << "Generating message to send";
         Q_EMIT messageGenerated(generate());
     }
 Q_SIGNALS:
     void messageGenerated(boost::shared_ptr<const Message>);
 };
 
-template<class NodeType>
-struct TypedMessageHandler : BaseMessageHandler {
-public:
-    TypedMessageHandler(boost::shared_ptr<NodeType> node) :
-        BaseMessageHandler(node), m_node(node) {}
-protected:
-    boost::shared_ptr<NodeType> m_node;
-};
-
 template<class NodeType, class MessageType>
-struct MessageGenerator : TypedMessageHandler<NodeType> {
+struct MessageGenerator : public BaseMessageGenerator, public TypedNodeStore<NodeType> {
 public:
-    MessageGenerator(boost::shared_ptr<NodeType> node) : TypedMessageHandler<NodeType>(node)  {}
+    MessageGenerator(boost::shared_ptr<NodeType> node) : BaseMessageGenerator(node), TypedNodeStore<NodeType>(node)  {}
 };
 
 #define MESSAGE_GENERATOR(X, Y) \
     template<> \
-    class MessageGenerator<X, Y> : public TypedMessageHandler<X> { \
+    struct MessageGenerator<X, Y> : public BaseMessageGenerator, public TypedNodeStore<X> { \
         public: \
             typedef Y message_type; \
             typedef X node_type; \
-            MessageGenerator<X, Y>(boost::shared_ptr<X> node) : TypedMessageHandler<X>(node){} \
+            MessageGenerator<X, Y>(boost::shared_ptr<X> node) : BaseMessageGenerator(node), TypedNodeStore<X>(node){} \
             virtual boost::shared_ptr<const Message> generate(); \
     };
 
+
+
+
 template<class NodeType, class MessageType>
-struct MessageHandler : TypedMessageHandler<NodeType> {
+struct MessageHandler : public TypedNodeStore<NodeType>, public MessageObserver {
 public:
-    MessageHandler(boost::shared_ptr<NodeType> node) : TypedMessageHandler<NodeType>(node)  {}
+    MessageHandler(boost::shared_ptr<NodeType> node) : TypedNodeStore<NodeType>(node) {}
 };
 
-#define MESSAGE_HANDLER(X, Y) \
+#define MESSAGE_OBSERVER(X, Y) \
     template<> \
-    struct MessageHandler<X, Y> : public TypedMessageHandler<X> { \
+    struct MessageHandler<X, Y > : public TypedNodeStore<X >, public MessageObserver { \
         public: \
             typedef Y message_type; \
             typedef X node_type; \
-            MessageHandler<X, Y>(boost::shared_ptr<X> node) : TypedMessageHandler<X>(node){} \
+            MessageHandler<X, Y >(boost::shared_ptr<X > node) : TypedNodeStore<X >(node){} \
+            virtual void on ## Y (Y ## _ptr); \
+    };
+
+#define MESSAGE_OBSERVER_GENERATOR(X, Y) \
+    template<> \
+    struct MessageHandler<X, Y > : public MessageGenerator<X, Y>, public MessageObserver { \
+        public: \
+            typedef Y message_type; \
+            typedef X node_type; \
+            MessageHandler<X, Y >(boost::shared_ptr<X > node) : MessageGenerator<X, Y>(node){} \
             virtual boost::shared_ptr<const Message> generate(); \
             virtual void on ## Y (Y ## _ptr); \
     };
+
+
+
 
 
 struct BaseNodeGenerator : public MessageObserver {
@@ -120,22 +128,25 @@ public:
 
 #define NODE_GENERATOR(X, Y) \
     template<> \
-    class NodeGenerator<X, Y> : public BaseNodeGenerator { \
+    struct NodeGenerator<X, Y > : public BaseNodeGenerator { \
         public: \
             typedef Y message_type; \
             typedef X node_type; \
-            NodeGenerator<X, Y>(boost::shared_ptr<Node> parent) : BaseNodeGenerator(parent) {} \
+            NodeGenerator<X, Y >(boost::shared_ptr<Node> parent) : BaseNodeGenerator(parent) {} \
             virtual void on ## Y (Y ## _ptr); \
     };
 
-MESSAGE_HANDLER(MotorNode, MotorStateMessage)
-MESSAGE_HANDLER(AutopilotNode, BearingAutopilotEnabledMessage)
-MESSAGE_HANDLER(AutopilotNode, PitchAutopilotEnabledMessage)
-MESSAGE_HANDLER(AutopilotNode, DepthAutopilotEnabledMessage)
-MESSAGE_HANDLER(AutopilotParamsNode, DepthAutopilotParamsMessage)
-MESSAGE_HANDLER(AutopilotParamsNode, PitchAutopilotParamsMessage)
-MESSAGE_HANDLER(AutopilotParamsNode, BearingAutopilotParamsMessage)
-MESSAGE_HANDLER(GroupingNode, DepthCalibrationMessage)
+
+MESSAGE_OBSERVER_GENERATOR(MotorNode, MotorStateMessage)
+MESSAGE_OBSERVER_GENERATOR(AutopilotNode, BearingAutopilotEnabledMessage)
+MESSAGE_OBSERVER_GENERATOR(AutopilotNode, PitchAutopilotEnabledMessage)
+MESSAGE_OBSERVER_GENERATOR(AutopilotNode, DepthAutopilotEnabledMessage)
+MESSAGE_OBSERVER_GENERATOR(AutopilotParamsNode, DepthAutopilotParamsMessage)
+MESSAGE_OBSERVER_GENERATOR(AutopilotParamsNode, PitchAutopilotParamsMessage)
+MESSAGE_OBSERVER_GENERATOR(AutopilotParamsNode, BearingAutopilotParamsMessage)
+MESSAGE_OBSERVER_GENERATOR(GroupingNode, DepthCalibrationMessage)
+MESSAGE_OBSERVER_GENERATOR(NumericNode<int>, DebugLevelMessage)
+MESSAGE_OBSERVER(GroupingNode, TelemetryMessage)
 
 
 } // namespace gui

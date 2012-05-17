@@ -134,3 +134,26 @@ void MessageHandler<GroupingNode, DepthCalibrationMessage>::onDepthCalibrationMe
     m_node->findOrCreate<NumericNode<float> >("foreMultiplier")->update(message->foreMultiplier());
     m_node->findOrCreate<NumericNode<float> >("foreOffset")->update(message->foreOffset());
 }
+
+
+/* Debug messages handling */
+
+boost::shared_ptr<const Message> MessageHandler<NumericNode<int>, DebugLevelMessage>::generate() {
+    return boost::make_shared<DebugLevelMessage>(m_node->get());
+}
+
+void MessageHandler<NumericNode<int>, DebugLevelMessage>::onDebugLevelMessage (
+        DebugLevelMessage_ptr message){
+    m_node->update(message->level());
+}
+
+
+/* Telemetry messages handling */
+
+void MessageHandler<GroupingNode, TelemetryMessage>::onTelemetryMessage (
+        TelemetryMessage_ptr message){
+    m_node->findOrCreate<NumericNode<float> >("yaw")->update(message->orientation().yaw);
+    m_node->findOrCreate<NumericNode<float> >("pitch")->update(message->orientation().pitch);
+    m_node->findOrCreate<NumericNode<float> >("roll")->update(message->orientation().roll);
+    m_node->findOrCreate<NumericNode<float> >("depth")->update(message->depth());
+}

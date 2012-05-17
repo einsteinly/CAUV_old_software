@@ -148,7 +148,7 @@ int Node::row() const{
     if(!parent) return 0; // root node
     int row = 0;
     foreach (boost::shared_ptr<Node> const& c, parent->getChildren()){
-        if (c == parent) break;
+        if (c.get() == this) return row;
         row++;
     }
     return row;

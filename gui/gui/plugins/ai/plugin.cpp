@@ -142,7 +142,7 @@ void AiPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
         boost::shared_ptr<CauvNode> node = m_actions->node.lock();
         if(node) {
             node->addMessageObserver(boost::make_shared<AiMessageObserver>(vehicle));
-        } else error() << "Failed to lock CauvNode whilse setting up vehicle ai";
+        } else error() << "Failed to lock CauvNode while setting up vehicle ai";
 
 
     } catch(std::runtime_error e) {

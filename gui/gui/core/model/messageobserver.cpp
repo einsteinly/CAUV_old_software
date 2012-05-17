@@ -53,11 +53,6 @@ DefaultGuiMessageObserver::DefaultGuiMessageObserver(boost::shared_ptr<Vehicle> 
         GuiMessageObserver(auv){
 }
 
-void DefaultGuiMessageObserver::onDebugLevelMessage(DebugLevelMessage_ptr message) {
-    boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("debug");
-    group->findOrCreate<NumericNode<int> >("level")->update(message->level());
-}
-
 void DefaultGuiMessageObserver::onImageMessage(ImageMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("image");
     boost::shared_ptr<Image> shared_image= boost::make_shared<Image>();

@@ -22,7 +22,7 @@
 namespace cauv {
     namespace gui {
 
-        class BaseMessageHandler;
+        class BaseMessageGenerator;
 
         class Vehicle : public Node
         {
@@ -43,15 +43,22 @@ namespace cauv {
 
         public:
 
-            void attachGenerator(boost::shared_ptr<BaseMessageHandler> generator)
+            void attachGenerator(boost::shared_ptr<BaseMessageGenerator> generator)
             {
-                m_generators.insert(generator);
                 generator->connect(generator.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
                                    this, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)));
-                Q_EMIT observerGenerated(generator);
+                if(dynamic_cast<MessageObserver*>(generator.get()))
+                    attachObserver(boost::dynamic_pointer_cast<MessageObserver>(generator));
+                else
+                    m_generators.insert(generator);
             }
 
-            std::set<boost::shared_ptr<BaseMessageHandler> > m_generators;
+            void attachObserver(boost::shared_ptr<MessageObserver> handler)
+            {
+                Q_EMIT observerGenerated(handler);
+            }
+
+            std::set<boost::shared_ptr<BaseMessageGenerator> > m_generators;
         };
 
     } //namespace gui

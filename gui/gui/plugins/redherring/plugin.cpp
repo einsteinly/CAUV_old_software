@@ -32,6 +32,11 @@ const QString RedHerringPlugin::name() const{
 
 void RedHerringPlugin::initialise(){
     VehicleRegistry::instance()->registerVehicle<RedHerring>("redherring");
+
+    boost::shared_ptr<CauvNode> node = m_actions->node.lock();
+    if(node){
+        node->joinGroup("telemetry");
+    }
 }
 Q_EXPORT_PLUGIN2(cauv_redherringplugin, RedHerringPlugin)
 
@@ -58,14 +63,33 @@ void RedHerring::initialise() {
     setupAutopilot(autopilots->findOrCreate<AutopilotNode>(Controller::Depth));
     setupAutopilot(autopilots->findOrCreate<AutopilotNode>(Controller::Pitch));
 
+    // telemetry
+    boost::shared_ptr<GroupingNode> telemetry = findOrCreate<GroupingNode>("telemetry");
+    attachObserver(boost::make_shared<MessageHandler<GroupingNode, TelemetryMessage> >(telemetry));
+    telemetry->findOrCreate<NumericNode<float> >("yaw")->setMin(0);
+    telemetry->findOrCreate<NumericNode<float> >("yaw")->setMax(360);
+    telemetry->findOrCreate<NumericNode<float> >("yaw")->setWraps(true);
+    telemetry->findOrCreate<NumericNode<float> >("pitch")->setMin(-180);
+    telemetry->findOrCreate<NumericNode<float> >("pitch")->setMax(180);
+    telemetry->findOrCreate<NumericNode<float> >("pitch")->setWraps(true);
+    telemetry->findOrCreate<NumericNode<float> >("roll")->setMin(-180);
+    telemetry->findOrCreate<NumericNode<float> >("roll")->setMax(180);
+    telemetry->findOrCreate<NumericNode<float> >("roll")->setWraps(true);
+    telemetry->findOrCreate<NumericNode<float> >("depth");
+
     // calibrations
-    boost::shared_ptr<GroupingNode> calibration = findOrCreate<GroupingNode>("sensors")->findOrCreate<GroupingNode>("calibration");
+    boost::shared_ptr<GroupingNode> calibration = telemetry->findOrCreate<GroupingNode>("calibration");
     attachGenerator(boost::make_shared<MessageHandler<GroupingNode, DepthCalibrationMessage> >(calibration));
 
+    // debug
+    boost::shared_ptr<NumericNode<int> > debug = findOrCreate<GroupingNode>("debug")->findOrCreate<NumericNode<int> >("level");
+    debug->setMutable(true);
+    attachGenerator(boost::make_shared<MessageHandler<NumericNode<int>, DebugLevelMessage> >(debug));
 }
 
 void RedHerring::setupMotor(boost::shared_ptr<MotorNode> node){
     boost::shared_ptr<MotorNode> motor = node->to<MotorNode>();
+    info() << motor->nodeName() << node->row();
     motor->setMax(127);
     motor->setMin(-127);
     motor->setMutable(true);

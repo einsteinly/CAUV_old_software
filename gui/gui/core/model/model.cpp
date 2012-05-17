@@ -31,10 +31,6 @@ void NodeUpdateModelNotfication::update(){
         boost::shared_ptr<Node> node = n->shared_from_this();
         QModelIndex index = m_model->indexFromNode(node);
         Q_EMIT m_model->dataChanged(index, index);
-        //!!! layoutChanged() shouldn't be required here but dataChanged isn't causing the
-        // views to be redrawn properly. This might be a problem with the way the indexes are
-        // worked out
-        Q_EMIT m_model->layoutChanged();
     }
 }
 
@@ -50,7 +46,10 @@ QModelIndex NodeItemModel::indexFromNode(boost::shared_ptr<Node> node) const{
 }
 
 boost::shared_ptr<Node> NodeItemModel::nodeFromIndex(QModelIndex const& index) const{
-    return static_cast<Node *>(index.internalPointer())->shared_from_this();
+    if(index.internalPointer()) {
+        Node* node = static_cast<Node *>(index.internalPointer());
+        return node->shared_from_this();
+    } else throw std::runtime_error("Invalid node pointer in model!");
 }
 
 Qt::ItemFlags NodeItemModel::flags(const QModelIndex &index) const{
@@ -61,6 +60,7 @@ Qt::ItemFlags NodeItemModel::flags(const QModelIndex &index) const{
 }
 
 QVariant NodeItemModel::data(const QModelIndex & index, int role) const {
+    if(!index.isValid()) return QVariant();
     boost::shared_ptr<Node> node = nodeFromIndex(index);
     
     // !!! no index validation? /jc
@@ -71,30 +71,8 @@ QVariant NodeItemModel::data(const QModelIndex & index, int role) const {
             return QVariant(QString::fromStdString(node->nodeName()));
         else return node->get();
         break;
-    case Qt::DecorationRole:
-        break;
     case Qt::ToolTipRole:
         return QVariant(QString::fromStdString(node->nodePath()));
-        break;
-    case Qt::StatusTipRole:
-        break;
-    case Qt::WhatsThisRole:
-        break;
-    case Qt::SizeHintRole:
-        break;
-    case Qt::FontRole:
-        break;
-    case Qt::TextAlignmentRole:
-        break;
-    case Qt::BackgroundRole:
-        break;
-    case Qt::ForegroundRole:
-        break;
-    case Qt::CheckStateRole:
-        break;
-    case Qt::AccessibleTextRole:
-        break;
-    case Qt::AccessibleDescriptionRole:
         break;
     default: break;
     }
@@ -102,62 +80,24 @@ QVariant NodeItemModel::data(const QModelIndex & index, int role) const {
 }
 
 QVariant NodeItemModel::headerData(int section, Qt::Orientation orientation, int role) const {
-
     Q_UNUSED(orientation);
-
-    switch (role){
-    case Qt::ToolTipRole:
-    case Qt::EditRole:
-    case Qt::DisplayRole:
-        if (orientation == Qt::Horizontal && section == 0) return "Name";
-        if (orientation == Qt::Horizontal && section == 1) return "Value";
-        else return QString("%1").arg(section);
-        break;
-    case Qt::DecorationRole:
-        break;
-    case Qt::StatusTipRole:
-        break;
-    case Qt::WhatsThisRole:
-        break;
-    case Qt::SizeHintRole:
-        break;
-    case Qt::FontRole:
-        break;
-    case Qt::TextAlignmentRole:
-        break;
-    case Qt::BackgroundRole:
-        break;
-    case Qt::ForegroundRole:
-        break;
-    case Qt::CheckStateRole:
-        break;
-    case Qt::AccessibleTextRole:
-        break;
-    case Qt::AccessibleDescriptionRole:
-        break;
-    default: break;
-    }
+    Q_UNUSED(section);
+    Q_UNUSED(role);
     return QVariant();
 }
 
 bool NodeItemModel::setData(const QModelIndex & index, const QVariant & value, int role) {
-
+    if(!index.isValid()) return false;
     boost::shared_ptr<Node> node = nodeFromIndex(index);
 
     switch (role){
-    case Qt::DisplayRole:
-        // can't be edited
-        break;
     case Qt::EditRole:
-        if (node->set(value))
-        {
+        if (node->set(value)) {
             Q_EMIT dataChanged(index, index);
             return true;
         }
-        break;
-    default: break;
+    default: return false;
     }
-    return false;
 }
 
 QMimeData * NodeItemModel::mimeData(const QModelIndexList &indexes) const {
@@ -187,8 +127,7 @@ int NodeItemModel::rowCount ( const QModelIndex & parent ) const {
     boost::shared_ptr<Node> parentItem;
     if (!parent.isValid())
         parentItem = m_root;
-    else
-        parentItem = nodeFromIndex(parent);
+    else parentItem = nodeFromIndex(parent);
 
     return parentItem->getChildren().size();
 }
@@ -217,7 +156,6 @@ QModelIndex NodeItemModel::index(int row, int column, const QModelIndex &parent)
         return QModelIndex();
 
     boost::shared_ptr<Node> parentNode;
-
     if(!parent.isValid())
         parentNode = m_root;
     else parentNode = nodeFromIndex(parent);
@@ -232,11 +170,9 @@ QModelIndex NodeItemModel::index(int row, int column, const QModelIndex &parent)
 
 void NodeItemModel::connectUpdater(boost::shared_ptr<Node> node){
     node->connect(node.get(), SIGNAL(onUpdate()), &m_updater, SLOT(update()));
-
     foreach (boost::shared_ptr<Node> const & child, node->getChildren()){
         connectUpdater(child);
     }
-
     connect(node.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(connectUpdater(boost::shared_ptr<Node>)));
 }
 

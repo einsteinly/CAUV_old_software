@@ -45,7 +45,6 @@ class DefaultGuiMessageObserver : public GuiMessageObserver {
     public:
         DefaultGuiMessageObserver(boost::shared_ptr< Vehicle > auv);
 
-        virtual void onDebugLevelMessage(DebugLevelMessage_ptr);
         virtual void onTelemetryMessage(TelemetryMessage_ptr) ;
         virtual void onImageMessage(ImageMessage_ptr);
         virtual void onSonarControlMessage(SonarControlMessage_ptr);
