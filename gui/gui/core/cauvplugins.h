@@ -50,6 +50,6 @@ namespace cauv {
     } // namespace gui
 } // namespace cauv
 
-Q_DECLARE_INTERFACE(cauv::gui::CauvInterfacePlugin, "CauvInterfacePlugin/1.1")
+Q_DECLARE_INTERFACE(cauv::gui::CauvInterfacePlugin, "CauvInterfacePlugin/1.2")
 
 #endif // CAUVINTERFACEPLUGIN_H
