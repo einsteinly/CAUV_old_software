@@ -46,6 +46,7 @@ float Transform_Eps = 1e-9;
 float Reject_Threshold = 0.5;
 float Max_Correspond_Dist = 1.1;
 float Score_Thr = 22;
+float Ransac_Iters = 0;
 std::string Match_Algorithm = "NL-ICP";
 
 namespace po = boost::program_options;
@@ -142,7 +143,8 @@ int main(int argc, char** argv){
     boost::shared_ptr< ci::PairwiseMatcher<pt_t> > scan_matcher;
     scan_matcher = ci::makeICPNonLinearPairwiseMatcherShared(
         Max_Iters, Euclidean_Fitness, Transform_Eps,
-        Reject_Threshold, Max_Correspond_Dist, Score_Thr
+        Reject_Threshold, Max_Correspond_Dist, Score_Thr,
+        Ransac_Iters
     );
     if(boost::iequals(Match_Algorithm, "NDT")){
         scan_matcher = ci::makeNDTPairwiseMatcherShared(
@@ -151,12 +153,14 @@ int main(int argc, char** argv){
     }else if(boost::iequals(Match_Algorithm, "ICP")){
         scan_matcher = ci::makeICPPairwiseMatcherShared(
             Max_Iters, Euclidean_Fitness, Transform_Eps,
-            Reject_Threshold, Max_Correspond_Dist, Score_Thr
+            Reject_Threshold, Max_Correspond_Dist, Score_Thr,
+            Ransac_Iters
         );
     }else if(boost::iequals(Match_Algorithm, "NL-ICP")){
         scan_matcher = ci::makeICPNonLinearPairwiseMatcherShared(
             Max_Iters, Euclidean_Fitness, Transform_Eps,
-            Reject_Threshold, Max_Correspond_Dist, Score_Thr
+            Reject_Threshold, Max_Correspond_Dist, Score_Thr,
+            Ransac_Iters
         );
     }else{
         error() << "invalid scan matching algorithm:" << Match_Algorithm

@@ -341,7 +341,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
               m_conn_state(),
               m_ioservice(),
               m_timer_ptr(boost::make_shared<boost::asio::deadline_timer>(boost::ref(m_ioservice))),
-              m_ioservice_thread(boost::bind(&GeminiSonar::runIOService, this)),
+              m_ioservice_thread(),
               m_need_callback(),
               m_need_callback_mux(),
               m_stop(false){
@@ -349,6 +349,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             the_sonar = this;
             m_conn_state.ok = true;
             m_conn_state.initialised = false;
+            m_ioservice_thread = boost::thread(boost::bind(&GeminiSonar::runIOService, this));
         }
 
         ~GeminiSonar(){
@@ -385,6 +386,11 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 char mode[] = "EvoC";
                 GEM_SetGeminiSoftwareMode(mode);
                 GEM_SetHandlerFunction(&CallBackFn);
+                // shouldn't be necessary
+                //GEM_UseAltSonarIPAddress(
+                //    10, 0, 0, 100,
+                //    255, 255, 255, 0
+                //);
             }
         }
 
@@ -397,6 +403,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         }
 
         void applyConfigAndPing(){
+            debug() << "applyConfigAndPing...";
             if(!initialised()){
                 error() << "will not ping: connection not initialised";
                 return;
@@ -427,6 +434,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             // request another ping when we've received the last one in full
             //GEM_SetPingMode(m_ping_continuous);
             //GEM_SetInterPingPeriod(m_inter_ping_musec);
+            GEM_SetPingMode(0);
             debug() << "SendPingConfig: range" << m_range << "gain" << m_gain_percent;
             GEM_SendGeminiPingConfig();
         }
@@ -442,9 +450,12 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             // loop, switching from continuous: make sure there is one last
             // ping
             if(m_ping_continuous != m->continuous()){
+                debug() << "changing continuous ping setting...";
                 lock_t l(m_gem_mux);
                 m_ping_continuous = m->continuous();
                 applyConfigAndPing();
+            }else{
+                debug() << "continuous ping setting is correct already";
             }
         }
 
@@ -705,6 +716,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         // precondition: m_gem_mux is locked from a previous ping: this unlocks
         // it unconditionally
         void prepareNextPing(){
+            debug() << "prepareNextPing";
             if(m_ping_continuous){
                 // set off another ping after m_inter_ping_musec:
                 lock_t l(m_need_callback_mux);
@@ -719,6 +731,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         }
 
         void onTimerExpiry(boost::system::error_code const& ec){
+            debug() << "timer expired!";
             if(ec == boost::asio::error::operation_aborted){
                 debug() << "timer cancelled";
             }else if(ec){
@@ -729,7 +742,9 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         }
 
         void runIOService(){
+            debug() << "runIOService...";
             while(true){
+                debug() << "runIOService tick";
                 boost::system::error_code ec;
                 lock_t l(m_need_callback_mux);
                 std::size_t executed = m_ioservice.run(ec);
@@ -738,8 +753,10 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 if(m_stop)
                     break;
                 if(!executed){
+                    debug() << "didn't execute anything, resetting the IO service, waiting for need_callback...";
                     m_ioservice.reset();
                     m_need_callback.wait(l);
+                    debug() << "need_callback notified!";
                 }
             }
         }

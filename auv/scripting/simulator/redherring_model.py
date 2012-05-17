@@ -133,7 +133,7 @@ class Model(base_model.Model):
             warning('Clock skew!')
             if dt < -10:
                 error('FATAL: Clock skewed by more than 10 seconds!')
-                stop()
+                self.stop()
                 return
 
         # Update velocity with forces:
@@ -208,7 +208,7 @@ class Model(base_model.Model):
         # last thing: renormalise orientation:
         if self.orientation.sxx() > 1.0001 or self.orientation.sxx() < 0.9999:
             debug('orientation quat denormalised: it will be renormalised')
-            self.orientation = normalised_orientation
+            self.orientation = self.orientation.normalised()
         
         # last last thing: send messages reflecting the new state: this has to
         # be rate-limited since it can cause more motor state message to be

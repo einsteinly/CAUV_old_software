@@ -110,7 +110,7 @@ class Quaternion(object):
         '''Return the axis part of the angle-axis rotation.'''
         if self.angle() > Very_Small_Value:
             scale = 1.0 / sin(self.angle()/2.0)
-            return Vec3(self.q0*scale, self.q1*scale, self.a2*scale)
+            return Vec3(self.q0*scale, self.q1*scale, self.q2*scale)
         else:
             return Vec3(1, 0, 0)
 
@@ -130,7 +130,7 @@ class Quaternion(object):
 
     def normalised(self):
         '''Return a normalised version of this quaternion.'''
-        m = 1.0 / sqrt(self.sxx())
+        m = 1.0 / math.sqrt(self.sxx())
         return Quaternion(m*self.q0, m*self.q1, m*self.q2, m*self.q3)
 
     def minimum(self):
@@ -141,9 +141,9 @@ class Quaternion(object):
         '''
         new_angle = self.angle()
         if new_angle > math.pi:
-            new_angle -= (floor(new_angle/(math.pi*2))+1) * math.pi * 2
+            new_angle -= (math.floor(new_angle/(math.pi*2))+1) * math.pi * 2
         elif new_angle < -math.pi:
-            new_angle += (floor(-new_angle/(math.pi*2))+1) * math.pi * 2
+            new_angle += (math.floor(-new_angle/(math.pi*2))+1) * math.pi * 2
         return Quaternion.fromAngleAxis(new_angle, self.axis())
 
     def sxx(self):
