@@ -451,7 +451,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             // switching to continuous: the applyConfigAndPing/setupNextPing
             // loop, switching from continuous: make sure there is one last
             // ping
-            if(!m_conn_state.initialised()){
+            if(!initialised()){
                 debug() << "config received before init: will not ping yet!";
                 return;
             }
