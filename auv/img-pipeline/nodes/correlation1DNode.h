@@ -64,25 +64,38 @@ class Correlation1DNode: public Node{
             double operator()(NonUniformPolarMat a) const{
                 cv::Mat a_mat = a.mat;
                 cv::Mat b_mat = boost::get<NonUniformPolarMat>(m_b).mat;
-
-                int max_correl_bin = correlAB(a_mat, b_mat);
-                return a.bearings->at(max_correl_bin);
+                
+                float m = correlAB(a_mat, b_mat);
+                if(m >= a.bearings->size())
+                    return a.bearings->back();
+                else if(m <= 0)
+                    return a.bearings->front();
+                const int h = std::ceil(m);
+                const int l = std::floor(m);
+                const float lp = (m - l);
+                const float hp = (h - m);
+                return a.bearings->at(l) * lp +  a.bearings->at(h) * hp;
             }
             double operator()(PyramidMat) const{
                 error() << "Correlation1D does not support pyramids";
                 return 0;
             }
-            int correlAB(cv::Mat a, cv::Mat b) const{
+            // returns the sub-pixel maximum
+            float correlAB(cv::Mat a, cv::Mat b) const{
                 if(a.type() != CV_8UC1 || b.type() != CV_8UC1)
                     throw std::runtime_error("correlAB: unsupported type (must be single-channel 8 bit)");                
                 // collapse to 1D 
                 int extend_cols_lo = b.cols / 2;
                 int extend_cols_hi = b.cols - (extend_cols_lo+1);
-                cv::Mat collapsed_a = cv::Mat::zeros(1, a.cols + extend_cols_lo + extend_cols_hi, CV_8UC1);
+                cv::Mat a_float;
+                cv::Mat b_float;
+                a.convertTo(a_float, CV_32FC1, 1.0, 0);
+                b.convertTo(b_float, CV_32FC1, 1.0, 0);
+                cv::Mat collapsed_a = cv::Mat::zeros(1, a.cols + extend_cols_lo + extend_cols_hi, CV_32FC1);
                 cv::Mat collapsed_b;
                 cv::Mat collapsed_a_roi(collapsed_a, cv::Rect(extend_cols_lo, 0, a.cols, 1));
-                cv::resize(a, collapsed_a_roi, cv::Size(a.cols, 1), 0, 0, cv::INTER_LINEAR);
-                cv::resize(b, collapsed_b, cv::Size(b.cols, 1), 0, 0, cv::INTER_LINEAR);
+                cv::resize(a_float, collapsed_a_roi, cv::Size(a.cols, 1), 0, 0, cv::INTER_AREA);
+                cv::resize(b_float, collapsed_b, cv::Size(b.cols, 1), 0, 0, cv::INTER_AREA);
                 // borders on collapsed a image, extend edge pixels
                 for(int i = 0; i < extend_cols_lo; i++){
                     collapsed_a.at<uint8_t>(i) = collapsed_a.at<uint8_t>(extend_cols_lo);
@@ -100,8 +113,20 @@ class Correlation1DNode: public Node{
                         max_i = i;
                         max = correl.at<float>(i);
                     }
-                correl.convertTo(m_correl_image, CV_8UC1, 256/max);
-                return max_i;
+                correl.convertTo(m_correl_image, CV_8UC1, 255.0/max);
+                
+                if(max_i > 0 && max_i < correl.cols-1){
+                    // interpolate subpixel maximum:
+                    const float a = correl.at<float>(max_i-1);
+                    const float b = max;
+                    const float c = correl.at<float>(max_i+1);
+                    if(a == c)
+                        return max_i;
+                    const float delta = 0.5 * (a-c) / (a + c - 2*b);
+                    return max_i + delta;
+                }else{
+                    return max_i;
+                }
             }
             augmented_mat_t m_b;
             cv::Mat& m_correl_image;

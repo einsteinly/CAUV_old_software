@@ -153,10 +153,10 @@ class SlamCloudGraph{
         ) const{
             switch(m_all_scans.size()){
                 case 0:
-                    return Eigen::Matrix4f::Identity();
+                    return rotation_guess_relative_to_last_scan;
                 case 1:
                     assert(!m_all_scans.back()->relativeTo());
-                    return m_all_scans.back()->globalTransform();
+                    return m_all_scans.back()->globalTransform() * rotation_guess_relative_to_last_scan;
                 default:{
                     // !!! TODO: use more than one previous point for smooth
                     // estimate?
@@ -221,12 +221,14 @@ class SlamCloudGraph{
                     return 1.0f;
                 }else{
                     debug() << "cloud not good enough for initialisation";
+                    transformation = Eigen::Matrix4f::Zero();
                     return 0.0f;
                 }
             }
 
             if(p->size() < 3){
                 warning() << "too few points in cloud (<3) to even consider it";
+                transformation = Eigen::Matrix4f::Zero();
                 return 0.0f;
             }
 
@@ -238,16 +240,20 @@ class SlamCloudGraph{
 
             if(overlaps.size() == 0){
                 error() << "new scan falls outside map! guess was:" << guess;
+                transformation = guess;
                 return 0;
             }
             // for each overlap (up to m_max_considered_overlaps), in order of
             // goodness, align this new scan to the overlapping one, and save
             // the resulting transformation:
+
+            // !!! scores from matching are are  0 (worst) -- 1 (best)
+
             int limit = m_max_considered_overlaps;
             int succeeded_match = 0;
+            int failed_match = 0;
             typename cloud_overlap_map::const_iterator i;
             debug() << "matching to overlapping scans...";
-            int failed_match = 0;
             for(i = overlaps.begin(); i != overlaps.end() && limit; i++, limit--){
                 try{
                     cloud_ptr map_cloud = i->second;
@@ -258,7 +264,7 @@ class SlamCloudGraph{
                     );
                     float age_penalty = 1.0 + std::log(1.0 + (p->time() - map_cloud->time()));
                     transformations.insert(std::make_pair(
-                        score * age_penalty,
+                        score / age_penalty,
                         mat_cloud_transformed_t(
                             relative_transformation, map_cloud, transformed
                         )
@@ -272,26 +278,34 @@ class SlamCloudGraph{
             debug() << succeeded_match << "matches succeeded"
                     << failed_match << "failed";
             
-            # if 0
-            // remove scans that imply moving too fast?
-                ... code previously used to do this: (transformation is
-                relative_transformation * map_cloud->relativeTransform() for
-                each map_cloud in transformations)
-
-                Eigen::Matrix4f last_transform = m_all_scans.back()->globalTransform();
-                const float speed = (transformation - last_transform).block<3,1>(0,3).norm() /
+            // remove scans that imply moving too fast:
+            cloud_constraint_map transformations_speed_checked;            
+            
+            Eigen::Matrix4f last_transform = m_all_scans.back()->globalTransform();
+            typename cloud_constraint_map::const_iterator ti;
+            for(ti = transformations.begin(); ti != transformations.end(); ti++){
+                const Eigen::Matrix4f tr = ti->second.mat * ti->second.cloud->globalTransform();
+                const float speed = (tr - last_transform).block<3,1>(0,3).norm() /
                                     (p->time() - m_all_scans.back()->time());
                 if(speed > m_max_speed){
                     warning() << "match implies moving too fast: ignoring ("
                               << speed << "/" << m_max_speed << ")";
-                    return 0;
+                }else{
+                    transformations_speed_checked.insert(*ti);
                 }
-            #endif // 0
+            }
 
-            if(transformations.size() == 0){
+            if(transformations_speed_checked.size() == 0){
                 error() << "no overlapping scans matched!";
+                if(transformations.size()){
+                    // choose the best to return anyway:
+                    transformation = transformations.rbegin()->second.mat * transformations.rbegin()->second.cloud->globalTransform();
+                }else{
+                    transformation = guess;
+                }
                 return 0;
             }
+            transformations = transformations_speed_checked;            
 
             debug() << transformations.size() << "overlapping scans matched"
                     << "scores"
@@ -299,7 +313,6 @@ class SlamCloudGraph{
                     << transformations.begin()->first;
             
             debug(5) << "transformations to map scans:";
-            typename cloud_constraint_map::const_iterator ti;
             for(ti = transformations.begin(); ti != transformations.end(); ti++){
                 debug(5) << "score=" << ti->first << ", relative transformation=\n" << ti->second.mat;
                 const Eigen::Vector3f xyr = xyThetaFrom4DAffine(ti->second.mat);
@@ -308,10 +321,10 @@ class SlamCloudGraph{
             
             // Choose the best *score* (not overlap) out of these matches, and use as the
             // parent for this scan:
-            const cloud_ptr       parent_map_cloud   = transformations.begin()->second.cloud;
-            const Eigen::Matrix4f rel_transformation = transformations.begin()->second.mat;
-            const base_cloud_ptr  transformed        = transformations.begin()->second.transformed;
-            r = transformations.begin()->first;
+            const cloud_ptr       parent_map_cloud   = transformations.rbegin()->second.cloud;
+            const Eigen::Matrix4f rel_transformation = transformations.rbegin()->second.mat;
+            const base_cloud_ptr  transformed        = transformations.rbegin()->second.transformed;
+            r = transformations.rbegin()->first;
 
             p->setRelativeTransform(rel_transformation);
             p->setRelativeTo(parent_map_cloud);

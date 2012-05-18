@@ -107,6 +107,7 @@ class SonarSLAMImpl{
     public:
         SonarSLAMImpl()
             : m_graph(),
+              m_cumulative_rotation_guess(0),
               m_vis_metres_per_px(0),
               m_vis_origin(0,0),
               m_vis_res(0,0),
@@ -120,6 +121,7 @@ class SonarSLAMImpl{
 
         void reset(){
             m_graph.reset();
+            m_cumulative_rotation_guess = 0;
             initVis();
         }
 
@@ -137,17 +139,35 @@ class SonarSLAMImpl{
         float registerScan(cloud_ptr scan,
                            PairwiseMatcher<pt_t> const& scan_matcher,
                            GraphOptimiser const& graph_optimiser,
-                           Eigen::Matrix4f const& rotation_guess_relative_to_last_scan, 
+                           float rotation_guess_relative_to_last_scan,
+                           Eigen::Matrix4f& guessed_transformation,
                            Eigen::Matrix4f& global_transformation){
-            Eigen::Matrix4f guess = m_graph.guessTransformationAtTime(
-                scan->time(), rotation_guess_relative_to_last_scan
+
+            m_cumulative_rotation_guess += rotation_guess_relative_to_last_scan;
+
+            Eigen::Matrix4f rotation_guess = Eigen::Matrix4f::Identity();
+            rotation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
+                Eigen::AngleAxisf(m_cumulative_rotation_guess, Eigen::Vector3f::UnitZ())
             );
 
-            // return guess if no match
-            global_transformation = guess;
-            return m_graph.registerScan(
+            Eigen::Matrix4f guess = m_graph.guessTransformationAtTime(
+                scan->time(), rotation_guess
+            ); 
+            
+            guessed_transformation = guess;
+
+            const float r = m_graph.registerScan(
                 scan, guess, scan_matcher, graph_optimiser, global_transformation
             );
+
+            if(r != 0){
+                // reset cumulative rotation since last scan matched
+                m_cumulative_rotation_guess = 0;
+            }else{
+                debug() << "cumulative rotation guess grows to:" << m_cumulative_rotation_guess;
+            }
+
+            return r;
         }
 
         void setVisProperties(Eigen::Vector2i const& res,
@@ -285,8 +305,9 @@ class SonarSLAMImpl{
             m_vis_allframes_included = all_scans.size();
         }
 
-        void updateLastScanVis(cloud_ptr p, cv::Scalar const& colour){
-            m_vis_last_cloud = cv::Mat(cv::Size(m_vis_res[0], m_vis_res[1]), CV_8UC3, cv::Scalar(0));
+        void updateLastScanVis(cloud_ptr p, cv::Scalar const& colour, bool clear=false){
+            if(clear)
+                m_vis_last_cloud = cv::Mat(cv::Size(m_vis_res[0], m_vis_res[1]), CV_8UC3, cv::Scalar(0));
 
             Eigen::Matrix4f const& global_transform = p->globalTransform();
             const Eigen::Vector2f image_pt = toVisCoords(
@@ -315,6 +336,8 @@ class SonarSLAMImpl{
 
     private:
         SlamCloudGraph<pt_t> m_graph;
+        
+        float m_cumulative_rotation_guess;
 
         float m_vis_metres_per_px;
         Eigen::Vector2f m_vis_origin;
@@ -494,18 +517,22 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     GraphOptimiserV1 graph_optimiser(graph_iters);
     
     debug () << "external delta theta =" << delta_theta * 180 / 3.14159 << "degrees";
-    Eigen::Matrix4f relative_rotation_guess = Eigen::Matrix4f::Identity();
+    /*Eigen::Matrix4f relative_rotation_guess = Eigen::Matrix4f::Identity();
     relative_rotation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
         Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ())
-    );
+    );*/
 
     Eigen::Matrix4f global_transformation = Eigen::Matrix4f::Zero();
+    Eigen::Matrix4f guessed_transformation = Eigen::Matrix4f::Zero();
 
     const float confidence = m_impl->registerScan(
         scan,
         *scan_matcher,
         graph_optimiser,
-        relative_rotation_guess,
+        //relative_rotation_guess,
+        // TODO: !!! the sign should be sorted out before this point
+        -delta_theta,
+        guessed_transformation,
         global_transformation
     );
 
@@ -519,8 +546,10 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
         // visualise at final position
         m_impl->updateLastScanVis(scan, cv::Scalar(80, 80, 80));
     }else{
-        // visualise at guessed position
+        // visualise at guess and final position:
         scan->setRelativeToNone();
+        scan->setRelativeTransform(guessed_transformation);
+        m_impl->updateLastScanVis(scan, cv::Scalar(130, 10, 20), true);
         scan->setRelativeTransform(global_transformation);
         m_impl->updateLastScanVis(scan, cv::Scalar(10, 10, 120));
     }

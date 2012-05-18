@@ -446,13 +446,18 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             m_gain_percent = m->gain();
             m_range_lines = m->rangeLines();
             m_inter_ping_musec = m->interPingPeriod() * 1e6 + 0.5;
+            const bool was_continuous = m->continuous();
+            m_ping_continuous = m->continuous();
             // switching to continuous: the applyConfigAndPing/setupNextPing
             // loop, switching from continuous: make sure there is one last
             // ping
-            if(m_ping_continuous != m->continuous()){
+            if(!m_conn_state.initialised()){
+                debug() << "config received before init: will not ping yet!";
+                return;
+            }
+            if(was_continuous != m->continuous()){
                 debug() << "changing continuous ping setting...";
                 lock_t l(m_gem_mux);
-                m_ping_continuous = m->continuous();
                 applyConfigAndPing();
             }else{
                 debug() << "continuous ping setting is correct already";
