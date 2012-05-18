@@ -26,6 +26,7 @@
 \#include <utility/serialisation.h>
 \#include <utility/foreach.h>
 \#include <debug/cauv_debug.h>
+\#include <cstdlib>
 
 \#include "types/message.h"
 #for $g in $groups
@@ -269,13 +270,19 @@ const char * cauv::UnknownMessageIdException::what() const throw()
 
 cauv::MessageSource::MessageSource()
 {
+    if (getenv("CAUV_ACCEPT_INVALID_MSGS") == NULL) {
+       reject_invalid = false;
+    } else {
+       reject_invalid = true;
+    } 
 }
 void cauv::MessageSource::notifyObservers(const_svec_ptr bytes)
 {
-    if (bytes->size() < 4)
-        throw std::out_of_range("Buffer too small to contain message id");
+    if (bytes->size() < 8)
+        throw std::out_of_range("Buffer too small to contain message id + hash");
 
-    int id = *reinterpret_cast<const uint32_t*>(&bytes->front());
+    uint32_t id = *reinterpret_cast<const uint32_t*>(&bytes->front());
+    uint32_t hash = *(reinterpret_cast<const uint32_t*>(&bytes->front()) + 1);
     switch (id)
     {
         #for $g in $groups
@@ -283,6 +290,18 @@ void cauv::MessageSource::notifyObservers(const_svec_ptr bytes)
         #set $className = $m.name + "Message"
         case $m.id:
         {
+            //FIXME: The fact that 0 is always a valid hash is a hack since the
+            //MCB doesn't generate message hashes (see auv/module/module.h for
+            //the other half)
+            if (hash != $hex($m.check_hash) && hash != 0) {
+                if (reject_invalid) {
+                    warning() << "Ignoring ${m.name}Message because of hash mismatch!";
+                    warning() << "Something is using outdated message definitions!";
+                    return;
+                } else {
+                    debug() << "Accepting ${m.name}Message despite invalid hash";
+                }
+            }
             boost::shared_ptr<$className> m = $className::fromBytes(bytes);
             \#ifdef CAUV_DEBUG_MESSAGES
             debug(12) << "MessageSource::notifyObservers: " << m;
@@ -294,7 +313,7 @@ void cauv::MessageSource::notifyObservers(const_svec_ptr bytes)
         #end for
         #end for
         default:
-            throw UnknownMessageIdException(id);
+            warning() << "Ignoring unknown message id" << id;
     }
 }
 

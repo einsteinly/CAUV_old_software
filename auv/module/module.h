@@ -186,8 +186,14 @@ class Module : public MessageSource
                     ar << startWord;
                     ar << len;
                     ar << checksum;
-                    foreach (char c, *bytes)
-                        ar << c;
+                    //FIXME: this is an awful hack since the MCB doesn't understand
+                    //message structure hashes, so remove them
+                    for (svec_t::const_iterator c = bytes->begin(); c != bytes->begin() + sizeof(uint32_t); c++) {
+                        ar << *c;
+                    }
+                    for (svec_t::const_iterator c = bytes->begin() + 2*sizeof(uint32_t); c != bytes->end(); c++) {
+                        ar << *c;
+                    }
                 }
             }
             catch (boost::thread_interrupted&)
@@ -247,7 +253,18 @@ class Module : public MessageSource
 
                     curMsg.clear();
                     char c;
-                    for (uint32_t i = 0; i < len; ++i)
+                    //FIXME: this is an awful hack since the MCB doesn't send
+                    //message structure hashes
+                    //Basically insert 4 zero bytes which messageobserver will
+                    //accept as a valid hash
+                    for (uint32_t i = 0; i < sizeof(uint32_t); ++i) {
+                        ar >> c;
+                        curMsg.push_back(c);
+                    }
+                    for (uint32_t i = 0; i < sizeof(uint32_t); ++i) {
+                        curMsg.push_back(0);
+                    }
+                    for (uint32_t i = sizeof(uint32_t); i < len; ++i)
                     {
                         ar >> c;
                         curMsg.push_back(c);

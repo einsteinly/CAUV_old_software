@@ -372,7 +372,7 @@ struct DynamicEnum
 }
 
 //fmt_ver should be bumped if image serialisation format changes
-class BaseImage : <common/msg_classes/base_image.h> //fmt_ver 1
+class BaseImage : <common/msg_classes/base_image.h> fmt_ver 1
 BoundedFloatBase subclass BoundedFloat : <common/msg_classes/bounded_float.h>
 LatLongAlt subclass WGS84Coord : <common/msg_classes/wgs84_coord.h>
 floatXYZ subclass NorthEastDepth : <common/msg_classes/north_east_depth.h>

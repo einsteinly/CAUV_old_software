@@ -6,20 +6,26 @@ Current implementation uses uint32_t for offsets into message during
 (de)serialisation.
 
 
-+------+------------+---------+---------------------+---------+-----+
-|      |            |         |+------+------------+|         |     |
-|  ID  |    Field   |  Field  || Size | Lazy Field ||  Field  | ... | 
-|      |            |         |+------+------------+|         |     |
-+------+------------+---------+---------------------+---------+-----+
-.      .            .         .                     .
-.      .            .         .                     .
-|= 4B =|= variable =|         |== 4B =|= variable ==|
++------+------+------------+---------+---------------------+---------+-----+
+|      |format|            |         |+------+------------+|         |     |
+|  ID  | hash |   Field    |  Field  || Size | Lazy Field ||  Field  | ... | 
+|      |      |            |         |+------+------------+|         |     |
++------+------+------------+---------+---------------------+---------+-----+
+.      .      .            .         .                     .
+.      .      .            .         .                     .
+|= 4B =|= 4B =|= variable =|         |== 4B =|= variable ==|
                                
                                  Size = sizeof Lazy Field + 4B
 
 
 Sizes of fields determined, per field, during deserialisation, as defined below
 for each field type.
+
+The format hash is a representation of the *format* of the message only, and not
+the contents. It is used to prevent trying to deserialise messages where the
+format is different from what is expected. It is a truncated md5 sum of a string
+representing the structure of the message (see msggenyacc.py for exact implementation).
+
 There is no whole-message size field, nor any crc or checksum fields.
 
 

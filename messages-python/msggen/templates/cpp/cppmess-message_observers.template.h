@@ -173,6 +173,8 @@ class MessageSource : public Observable<MessageObserver>
     // type
     // protected:
         MessageSource();
+    private:
+        bool reject_invalid;
 };
 
 }
