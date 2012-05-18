@@ -462,7 +462,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             m_range_lines = m->rangeLines();
             m_inter_ping_musec = m->interPingPeriod() * 1e6 + 0.5;
             m_ping_continuous = m->continuous();
-            if(!m_conn_state.initialised){
+            
+            if(!initialised()){
                 debug() << "config received before init: will not ping yet!";
                 return;
             }
