@@ -20,7 +20,7 @@ def load_session(filename):
     for suffix, mode, type in imp.get_suffixes():
         if filename.endswith(suffix):
             with open(filename, mode) as session_file:
-                return imp.load_module("session", session_file, "", (suffix, mode, type))
+                return imp.load_module("session", session_file, "session.py", (suffix, mode, type))
     raise SessionNotFound()
 
 class WatchProcess:
