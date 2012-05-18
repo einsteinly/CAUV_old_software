@@ -29,22 +29,18 @@
 #include <debug/cauv_debug.h>
 
 #include <liquid/node.h>
+#include <liquid/nodeHeader.h>
 
 #include "cauvplugins.h"
 
 #include "model/model.h"
 #include "model/registry.h"
-#include "model/messageobserver.h"
 
 #include "framework/nodescene.h"
 #include "framework/nodepicker.h"
 
 #include "fluidity/view.h"
 
-//!!! just for testing
-#include <gui/core/model/nodes/numericnode.h>
-#include <gui/core/model/nodes/groupingnode.h>
-#include <common/msg_classes/bounded_float.h>
 #include "framework/elements/style.h"
 
 using namespace cauv;
@@ -68,9 +64,12 @@ public:
 
         liquid::LiquidNode * ln = new liquid::LiquidNode(AI_Node_Style);
         ln->setResizable(true);
+        ln->header()->setTitle(QString::fromStdString(node->nodeName()));
+        ln->header()->setInfo(QString::fromStdString(node->nodePath()));
         NodeTreeView * view = new NodeTreeView();
         view->setModel(m_model.get());
         view->setRootIndex(m_model->indexFromNode(node));
+        view->addNumericDelegateToColumn(1);
         QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
         proxy->setWidget(view);
 
@@ -183,17 +182,6 @@ void CauvMainWindow::onRun()
     QSettings settings("CAUV", "Cambridge AUV");
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
-
-/*
-    //!!! just for testing
-    boost::shared_ptr<NumericNode<bool> > n2 = m_actions->auv->findOrCreate<GroupingNode>("test")->findOrCreate<NumericNode<bool> >(MotorID::HBow);
-    n2->setMutable(true);
-    n2->update(true);
-    boost::shared_ptr<NumericNode<BoundedFloat> > n = m_actions->auv->findOrCreate<GroupingNode>("test")->findOrCreate<NumericNode<BoundedFloat> >(MotorID::Prop);
-    n->setMutable(true);
-    n->update(QVariant::fromValue(BoundedFloat(3.0, 0, 100, BoundedFloatType::Clamps)));
-    n->setNeutral(0);
-    */
 
     show();
     m_application->exec();

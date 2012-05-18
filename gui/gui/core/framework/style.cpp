@@ -251,7 +251,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
             progress = (float) (progressOptions->progress - progressOptions->minimum) / (float) range;
 
         int hue = hueRange * progress;
-        if (progressOptions->invertedAppearance)
+        if (!progressOptions->invertedAppearance)
             hue = hueRange - hue;
         QColor progressColor(QColor::fromHsl(hue+1, 160, 162));
 

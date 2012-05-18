@@ -32,6 +32,12 @@
 #include <generated/types/DepthCalibrationMessage.h>
 #include <generated/types/DebugLevelMessage.h>
 #include <generated/types/TelemetryMessage.h>
+#include <generated/types/ImageMessage.h>
+#include <generated/types/ControllerStateMessage.h>
+#include <generated/types/PressureMessage.h>
+#include <generated/types/BatteryUseMessage.h>
+#include <generated/types/ProcessStatusMessage.h>
+#include <generated/types/SonarControlMessage.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -39,6 +45,9 @@
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/model/nodes/groupingnode.h>
 #include <gui/core/model/nodes/autopilotnode.h>
+#include <gui/core/model/nodes/imagenode.h>
+#include <gui/core/model/nodes/stringnode.h>
+#include <gui/core/model/nodes/sonarnode.h>
 
 #include <common/cauv_node.h>
 
@@ -144,9 +153,16 @@ MESSAGE_OBSERVER_GENERATOR(AutopilotNode, DepthAutopilotEnabledMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotParamsNode, DepthAutopilotParamsMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotParamsNode, PitchAutopilotParamsMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotParamsNode, BearingAutopilotParamsMessage)
+MESSAGE_OBSERVER(AutopilotNode, ControllerStateMessage)
 MESSAGE_OBSERVER_GENERATOR(GroupingNode, DepthCalibrationMessage)
 MESSAGE_OBSERVER_GENERATOR(NumericNode<int>, DebugLevelMessage)
 MESSAGE_OBSERVER(GroupingNode, TelemetryMessage)
+MESSAGE_OBSERVER(GroupingNode, PressureMessage)
+MESSAGE_OBSERVER(GroupingNode, BatteryUseMessage)
+MESSAGE_OBSERVER(GroupingNode, ProcessStatusMessage)
+MESSAGE_OBSERVER(ImageNode, ImageMessage)
+NODE_GENERATOR(ImageNode, ImageMessage)
+MESSAGE_OBSERVER_GENERATOR(SonarNode, SonarControlMessage)
 
 
 } // namespace gui

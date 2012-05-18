@@ -47,6 +47,7 @@ namespace cauv {
             protected Q_SLOTS:
                 void setupMotor(boost::shared_ptr<MotorNode>);
                 void setupAutopilot(boost::shared_ptr<AutopilotNode>);
+                void setupImager(boost::shared_ptr<Node>);
         };
 
     } // namespace gui

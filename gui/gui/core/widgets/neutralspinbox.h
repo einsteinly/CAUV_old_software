@@ -33,10 +33,14 @@ namespace cauv {
             int neutral() const;
             void setNeutral(int neutral);
 
+            bool inverted() const;
+            void setInverted(bool invert);
+
             void paintEvent(QPaintEvent *);
 
         protected:
             int m_neutral;
+            bool m_inverted;
         };
 
 
@@ -53,10 +57,14 @@ namespace cauv {
             double neutral() const;
             void setNeutral(double neutral);
 
+            bool inverted() const;
+            void setInverted(bool invert);
+
             void paintEvent(QPaintEvent *);
 
         protected:
             double m_neutral;
+            bool m_inverted;
         };
 
     } // namespace gui

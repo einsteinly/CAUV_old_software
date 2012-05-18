@@ -31,39 +31,66 @@ namespace cauv {
             {}
 
             boost::shared_ptr<NumericNode<float> > kP() {
-                if(!m_kP) m_kP = findOrCreate<NumericNode<float> >("kP");
+                if(!m_kP){
+                    m_kP = findOrCreate<NumericNode<float> >("kP");
+                    m_kP->setMutable(true);
+                }
                 return m_kP;
             }
             boost::shared_ptr<NumericNode<float> > kI() {
-                if(!m_kI) m_kI = findOrCreate<NumericNode<float> >("kI");
+                if(!m_kI) {
+                    m_kI = findOrCreate<NumericNode<float> >("kI");
+                    m_kI->setMutable(true);
+                }
                 return m_kI;
             }
             boost::shared_ptr<NumericNode<float> > kD() {
-                if(!m_kD) m_kD = findOrCreate<NumericNode<float> >("kD");
+                if(!m_kD) {
+                    m_kD = findOrCreate<NumericNode<float> >("kD");
+                    m_kD->setMutable(true);
+                }
                 return m_kD;
             }
             boost::shared_ptr<NumericNode<float> > scale() {
-                if(!m_scale) m_scale = findOrCreate<NumericNode<float> >("scale");
+                if(!m_scale) {
+                    m_scale = findOrCreate<NumericNode<float> >("scale");
+                    m_scale->setMutable(true);
+                }
                 return m_scale;
             }
             boost::shared_ptr<NumericNode<float> > aP() {
-                if(!m_aP) m_aP = findOrCreate<NumericNode<float> >("aP");
+                if(!m_aP) {
+                    m_aP = findOrCreate<NumericNode<float> >("aP");
+                    m_aP->setMutable(true);
+                }
                 return m_aP;
             }
             boost::shared_ptr<NumericNode<float> > aI() {
-                if(!m_aI) m_aI = findOrCreate<NumericNode<float> >("aI");
+                if(!m_aI) {
+                    m_aI = findOrCreate<NumericNode<float> >("aI");
+                    m_aI->setMutable(true);
+                }
                 return m_aI;
             }
             boost::shared_ptr<NumericNode<float> > aD() {
-                if(!m_aD) m_aD = findOrCreate<NumericNode<float> >("aD");
+                if(!m_aD) {
+                    m_aD = findOrCreate<NumericNode<float> >("aD");
+                    m_aD->setMutable(true);
+                }
                 return m_aD;
             }
             boost::shared_ptr<NumericNode<float> > thr() {
-                if(!m_thr) m_thr = findOrCreate<NumericNode<float> >("thr");
+                if(!m_thr) {
+                    m_thr = findOrCreate<NumericNode<float> >("thr");
+                    m_thr->setMutable(true);
+                }
                 return m_thr;
             }
             boost::shared_ptr<NumericNode<float> > maxError() {
-                if(!m_maxError) m_maxError = findOrCreate<NumericNode<float> >("maxError");
+                if(!m_maxError) {
+                    m_maxError = findOrCreate<NumericNode<float> >("maxError");
+                    m_maxError->setMutable(true);
+                }
                 return m_maxError;
             }
 

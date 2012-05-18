@@ -29,7 +29,7 @@ namespace cauv {
 
         protected:
             NumericNodeBase(nid_t const& id) : Node(id, nodeType<NumericNodeBase>()),
-                m_max(100), m_min(0), m_maxSet(false), m_minSet(false), m_wraps(false), m_precision(3)
+                m_max(100), m_min(0), m_maxSet(false), m_minSet(false), m_wraps(false), m_inverted(false), m_precision(3)
             {
             }
 
@@ -54,6 +54,16 @@ namespace cauv {
 
             virtual bool getWraps() const {
                 return m_wraps;
+            }
+
+            virtual bool isInverted() const{
+                return m_inverted;
+            }
+
+            virtual void setInverted(bool inverted){
+                m_inverted = inverted;
+
+                Q_EMIT paramsUpdated();
             }
 
             virtual void setWraps(bool wraps){
@@ -123,7 +133,7 @@ namespace cauv {
             std::string m_units;
             QVariant m_max;
             QVariant m_min;
-            bool m_maxSet, m_minSet, m_wraps;
+            bool m_maxSet, m_minSet, m_wraps, m_inverted;
             unsigned int m_precision;
             QVariant m_neutral;
         };

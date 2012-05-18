@@ -41,7 +41,6 @@ set ( GUI_CORE_SRCS
     model/variants.cpp
     model/model.cpp
     model/registry.cpp
-    model/messageobserver.cpp
     model/messaging.cpp
     model/paramvalues.cpp
     model/utils/datarecorder.cpp
@@ -84,6 +83,7 @@ set ( GUI_CORE_H
     model/nodes/imagenode.h
     model/nodes/vehiclenode.h
     model/nodes/autopilotnode.h
+    model/nodes/sonarnode.h
     model/messaging.h
     model/utils/sampler.h
 

@@ -36,6 +36,11 @@ void RedHerringPlugin::initialise(){
     boost::shared_ptr<CauvNode> node = m_actions->node.lock();
     if(node){
         node->joinGroup("telemetry");
+        node->joinGroup("control");
+        node->joinGroup("image");
+        node->joinGroup("sonarctl");
+        node->joinGroup("gui");
+        node->joinGroup("pressure");
     }
 }
 Q_EXPORT_PLUGIN2(cauv_redherringplugin, RedHerringPlugin)
@@ -76,10 +81,23 @@ void RedHerring::initialise() {
     telemetry->findOrCreate<NumericNode<float> >("roll")->setMax(180);
     telemetry->findOrCreate<NumericNode<float> >("roll")->setWraps(true);
     telemetry->findOrCreate<NumericNode<float> >("depth");
+    boost::shared_ptr<GroupingNode> pressure = telemetry->findOrCreate<GroupingNode>("pressure");
+    attachObserver(boost::make_shared<MessageHandler<GroupingNode, PressureMessage> >(pressure));
+    boost::shared_ptr<GroupingNode> power = telemetry->findOrCreate<GroupingNode>("power");
+    attachObserver(boost::make_shared<MessageHandler<GroupingNode, BatteryUseMessage> >(power));
+    boost::shared_ptr<GroupingNode> processes = telemetry->findOrCreate<GroupingNode>("processes");
+    attachObserver(boost::make_shared<MessageHandler<GroupingNode, ProcessStatusMessage> >(processes));
+
 
     // calibrations
     boost::shared_ptr<GroupingNode> calibration = telemetry->findOrCreate<GroupingNode>("calibration");
     attachGenerator(boost::make_shared<MessageHandler<GroupingNode, DepthCalibrationMessage> >(calibration));
+
+    // images
+    boost::shared_ptr<GroupingNode> imaging = findOrCreate<GroupingNode>("imaging");
+    connect(imaging.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+            this, SLOT(setupImager(boost::shared_ptr<Node>)));
+    attachObserver(boost::make_shared<NodeGenerator<ImageNode, ImageMessage> >(imaging));
 
     // debug
     boost::shared_ptr<NumericNode<int> > debug = findOrCreate<GroupingNode>("debug")->findOrCreate<NumericNode<int> >("level");
@@ -87,9 +105,7 @@ void RedHerring::initialise() {
     attachGenerator(boost::make_shared<MessageHandler<NumericNode<int>, DebugLevelMessage> >(debug));
 }
 
-void RedHerring::setupMotor(boost::shared_ptr<MotorNode> node){
-    boost::shared_ptr<MotorNode> motor = node->to<MotorNode>();
-    info() << motor->nodeName() << node->row();
+void RedHerring::setupMotor(boost::shared_ptr<MotorNode> motor){
     motor->setMax(127);
     motor->setMin(-127);
     motor->setMutable(true);
@@ -101,6 +117,9 @@ void RedHerring::setupAutopilot(boost::shared_ptr<AutopilotNode> node){
     boost::shared_ptr<NumericNode<float> > target = node->findOrCreate<NumericNode<float> >("target");
     target->setMutable(true);
     node->setMutable(true);
+
+    attachObserver(boost::make_shared<MessageHandler<AutopilotNode,
+                   ControllerStateMessage> > (autopilot));
 
     // target params
     float min, max; bool wraps; std::string units;
@@ -138,4 +157,19 @@ void RedHerring::setupAutopilot(boost::shared_ptr<AutopilotNode> node){
     target->setWraps(wraps);
     target->setUnits(units);
     target->setPrecision(3);
+}
+
+
+void RedHerring::setupImager(boost::shared_ptr<Node> node){
+    try {
+        try {
+            boost::shared_ptr<SonarNode> imager = node->to<SonarNode>();
+            attachGenerator(boost::make_shared<MessageHandler<SonarNode, SonarControlMessage> >(imager));
+        } catch (std::runtime_error) {}
+
+        boost::shared_ptr<ImageNode> imager = node->to<ImageNode>();
+        attachObserver(boost::make_shared<MessageHandler<ImageNode, ImageMessage> >(imager));
+    } catch (std::runtime_error ex){
+        error() << "Node should be an ImageNode" << ex.what();
+    }
 }

@@ -65,7 +65,7 @@ enum e{
 class StyleOptionNeutralSpinBox : public QStyleOptionSpinBox {
 public:
     enum StyleOptionType { Type = CauvStyleOptions::StyleOptionNeutralSpinBox };
-    StyleOptionNeutralSpinBox() : QStyleOptionSpinBox(), level(0), invertColours(true){
+    StyleOptionNeutralSpinBox() : QStyleOptionSpinBox(), level(0), invertColours(false){
         type = CauvStyleOptions::StyleOptionNeutralSpinBox;
     }
 

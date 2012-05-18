@@ -29,7 +29,7 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-NeutralSpinBox::NeutralSpinBox(QWidget * parent) : QSpinBox(parent), m_neutral(0){
+NeutralSpinBox::NeutralSpinBox(QWidget * parent) : QSpinBox(parent), m_neutral(0), m_inverted(false){
     this->setAlignment(Qt::AlignHCenter);
     this->setMaximum(std::numeric_limits<int>::max());
     this->setMinimum(std::numeric_limits<int>::min());
@@ -48,12 +48,21 @@ void NeutralSpinBox::setNeutral(int neutral){
     m_neutral = neutral;
 }
 
+bool NeutralSpinBox::inverted() const {
+    return m_inverted;
+}
+
+void NeutralSpinBox::setInverted(bool invert){
+    m_inverted = invert;
+}
+
 void NeutralSpinBox::paintEvent(QPaintEvent * )
  {
     StyleOptionNeutralSpinBox option;
     option.initFrom(this);
 
     option.level = pivot((double)minimum(), (double)neutral(), (double)maximum(), (double)value());
+    option.invertColours = inverted();
 
     QPainter painter(this);
     style()->drawComplexControl(QStyle::CC_SpinBox, &option, &painter, this);
@@ -61,7 +70,7 @@ void NeutralSpinBox::paintEvent(QPaintEvent * )
 
 
 
-NeutralDoubleSpinBox::NeutralDoubleSpinBox(QWidget * parent) : QDoubleSpinBox(parent), m_neutral(0){
+NeutralDoubleSpinBox::NeutralDoubleSpinBox(QWidget * parent) : QDoubleSpinBox(parent), m_neutral(0), m_inverted(false){
     this->setAlignment(Qt::AlignHCenter);
     this->setMaximum(std::numeric_limits<float>::max());
     this->setMinimum(-std::numeric_limits<float>::max());
@@ -80,12 +89,21 @@ void NeutralDoubleSpinBox::setNeutral(double neutral){
     m_neutral = neutral;
 }
 
+bool NeutralDoubleSpinBox::inverted() const {
+    return m_inverted;
+}
+
+void NeutralDoubleSpinBox::setInverted(bool invert){
+    m_inverted = invert;
+}
+
 void NeutralDoubleSpinBox::paintEvent(QPaintEvent * )
  {
     StyleOptionNeutralSpinBox option;
     option.initFrom(this);
 
     option.level = pivot(minimum(), neutral(), maximum(), value());
+    option.invertColours = inverted();
 
     QPainter painter(this);
     style()->drawComplexControl(QStyle::CC_SpinBox, &option, &painter, this);

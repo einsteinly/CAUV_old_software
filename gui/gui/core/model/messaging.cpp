@@ -116,6 +116,25 @@ boost::shared_ptr<const Message> MessageHandler<AutopilotParamsNode, BearingAuto
     return generateAutopilotParamsMessage<BearingAutopilotParamsMessage>(m_node);
 }
 
+void MessageHandler<AutopilotNode, ControllerStateMessage>::onControllerStateMessage(
+        ControllerStateMessage_ptr message){
+    if(boost::get<Controller::e>(m_node->nodeId()) == message->contoller()){
+        boost::shared_ptr<GroupingNode> state = m_node->findOrCreate<GroupingNode>("state");
+        boost::shared_ptr<GroupingNode> demands = state->findOrCreate<GroupingNode>("demands");
+        demands->findOrCreate<NumericNode<float> >(MotorID::Prop)->update(message->demand().prop);
+        demands->findOrCreate<NumericNode<float> >(MotorID::HBow)->update(message->demand().hbow);
+        demands->findOrCreate<NumericNode<float> >(MotorID::HStern)->update(message->demand().hstern);
+        demands->findOrCreate<NumericNode<float> >(MotorID::VBow)->update(message->demand().vbow);
+        demands->findOrCreate<NumericNode<float> >(MotorID::VStern)->update(message->demand().vstern);
+        state->findOrCreate<NumericNode<float> >("Kp")->update(message->kp());
+        state->findOrCreate<NumericNode<float> >("Ki")->update(message->ki());
+        state->findOrCreate<NumericNode<float> >("Kd")->update(message->kd());
+        state->findOrCreate<NumericNode<float> >("error")->update(message->error());
+        state->findOrCreate<NumericNode<float> >("derror")->update(message->derror());
+        state->findOrCreate<NumericNode<float> >("ierror")->update(message->ierror());
+        state->findOrCreate<NumericNode<float> >("mv")->update(message->mv());
+    }
+}
 
 /* Calibration messages handling */
 
@@ -157,3 +176,68 @@ void MessageHandler<GroupingNode, TelemetryMessage>::onTelemetryMessage (
     m_node->findOrCreate<NumericNode<float> >("roll")->update(message->orientation().roll);
     m_node->findOrCreate<NumericNode<float> >("depth")->update(message->depth());
 }
+
+void MessageHandler<GroupingNode, PressureMessage>::onPressureMessage (
+        PressureMessage_ptr message){
+    m_node->findOrCreate<NumericNode<unsigned int> >("fore")->update(message->fore());
+    m_node->findOrCreate<NumericNode<unsigned int> >("aft")->update(message->aft());
+}
+
+void MessageHandler<GroupingNode, BatteryUseMessage>::onBatteryUseMessage (
+        BatteryUseMessage_ptr message){
+    m_node->findOrCreate<NumericNode<float> >("current")->update(message->estimate_current());
+    m_node->findOrCreate<NumericNode<float> >("total")->update(message->estimate_total());
+    m_node->findOrCreate<NumericNode<float> >("remaining")->update(message->fraction_remaining() * 100.f);
+    m_node->findOrCreate<NumericNode<float> >("remaining")->setMin(0);
+    m_node->findOrCreate<NumericNode<float> >("remaining")->setMax(100);
+    m_node->findOrCreate<NumericNode<float> >("remaining")->setUnits("%");
+    m_node->findOrCreate<NumericNode<float> >("remaining")->setInverted(true);
+}
+
+void MessageHandler<GroupingNode, ProcessStatusMessage>::onProcessStatusMessage (
+        ProcessStatusMessage_ptr message){
+    boost::shared_ptr<GroupingNode> process = m_node->findOrCreate<GroupingNode>(message->process());
+    process->findOrCreate<NumericNode<float> >("cpu")->update(message->cpu());
+    process->findOrCreate<NumericNode<float> >("mem")->update(message->mem());
+    process->findOrCreate<NumericNode<unsigned int> >("threads")->update(message->threads());
+    process->findOrCreate<StringNode>("status")->update(message->status());
+}
+
+
+/* Image messages handling */
+
+void MessageHandler<ImageNode, ImageMessage>::onImageMessage (
+        ImageMessage_ptr message){
+    if(boost::get<CameraID::e>(m_node->nodeId()) == message->source()) {
+        boost::shared_ptr<Image> shared_image= boost::make_shared<Image>();
+        message->get_image_inplace(*shared_image);
+        m_node->update(shared_image);
+    }
+}
+
+void NodeGenerator<ImageNode, ImageMessage>::onImageMessage (
+        ImageMessage_ptr message){
+    if(message->source() == CameraID::Sonar || message->source() == CameraID::GemSonar){
+        m_node->findOrCreate<SonarNode>(message->source());
+    }
+    else m_node->findOrCreate<ImageNode>(message->source());
+}
+
+void MessageHandler<SonarNode, SonarControlMessage>::onSonarControlMessage(
+        SonarControlMessage_ptr message){
+    m_node->direction()->update(message->direction());
+    m_node->width()->update(message->width());
+    m_node->gain()->update(message->gain());
+    m_node->range()->update(message->range());
+    m_node->rangeRes()->update(message->rangeRes());
+    m_node->angularRes()->update((unsigned int)message->angularRes());
+}
+
+boost::shared_ptr<const Message> MessageHandler<SonarNode, SonarControlMessage>::generate() {
+    return boost::make_shared<SonarControlMessage>(
+                m_node->direction()->get(), m_node->width()->get(),
+                m_node->gain()->get(), m_node->range()->get(),
+                m_node->rangeRes()->get(), m_node->angularRes()->get());
+}
+
+

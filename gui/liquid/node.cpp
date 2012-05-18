@@ -292,6 +292,10 @@ NodeStyle LiquidNode::style() const{
     return m_style;
 }
 
+NodeHeader* LiquidNode::header() const{
+    return m_header;
+}
+
 
 LiquidNode::Status LiquidNode::status() const{
     return m_status;

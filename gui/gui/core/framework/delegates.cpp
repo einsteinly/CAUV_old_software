@@ -156,12 +156,14 @@ void NumericDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
                                            &onOffOption, painter);
     }
     else if (node) {
+        double value = node->asNumber().toDouble();
+        QString text = QString::number( value, 'g', node->getPrecision() );
+
         QStyleOptionProgressBarV2 progressBarOption;
         progressBarOption.rect = option.rect;
-        progressBarOption.text = QString::number(node->asNumber().toDouble()).append(
-                    QString::fromStdString(node->getUnits()));
+        progressBarOption.text = text.append(QString::fromStdString(node->getUnits()));
         progressBarOption.textVisible = true;
-        progressBarOption.invertedAppearance = true;
+        progressBarOption.invertedAppearance = node->isInverted();
         progressBarOption.palette.setColor(QPalette::Text, Qt::black);
         if(!node->isMutable())
             progressBarOption.palette.setColor(QPalette::Text, QColor(100,100,100));
@@ -201,6 +203,7 @@ void NumericDelegate::setEditorData(QWidget *editor, const QModelIndex &index) c
             neutral->setWrapping(node->getWraps());
             neutral->setNeutral(node->getNeutral().toInt());
             neutral->setValue(node->asNumber().toInt());
+            neutral->setInverted(node->isInverted());
         }
 
         if(NeutralDoubleSpinBox * neutral = qobject_cast<NeutralDoubleSpinBox*>(editor)){
@@ -210,6 +213,7 @@ void NumericDelegate::setEditorData(QWidget *editor, const QModelIndex &index) c
             neutral->setNeutral(node->getNeutral().toDouble());
             neutral->setDecimals(node->getPrecision());
             neutral->setValue(node->asNumber().toDouble());
+            neutral->setInverted(node->isInverted());
         }
     }
 }

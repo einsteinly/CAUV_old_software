@@ -63,6 +63,7 @@ public:
     virtual void setResizable(bool);
 
     virtual NodeStyle style() const;
+    virtual NodeHeader* header() const;
 
     enum Status{ NotOK, OK };
     Status status() const;
