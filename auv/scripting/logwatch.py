@@ -51,6 +51,9 @@ seen_logs = set()
 
 current_nodes = {}
 
+print("Less will be opened automatically in windows." + 
+      "Press ctrl+C to scroll back/search and shift+F to follow the output again")
+
 while True:
     #this is too clever for it's own good
     new_logs = [(os.path.join(d,f), seen_logs.add(f))[0]
@@ -65,6 +68,6 @@ while True:
     for node_name in new_nodes:
         if node_name in current_nodes:
             run_screen_cmd(['at', node_name, 'kill'])
-        run_screen_cmd(['screen', '-t', node_name, 'tail', '-100f', new_nodes[node_name]])
+        run_screen_cmd(['screen', '-t', node_name, 'less', '+F', new_nodes[node_name]])
 
     time.sleep(1)
