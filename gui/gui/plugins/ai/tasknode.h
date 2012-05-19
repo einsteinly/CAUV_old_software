@@ -22,7 +22,9 @@
 
 #include <generated/types/ParamValue.h>
 
-#include <gui/core/model/node.h>
+#include <gui/core/model/nodes/numericnode.h>
+#include <gui/core/model/model.h>
+#include <gui/core/framework/manager.h>
 
 #include <gui/plugins/ai/conditionnode.h>
 
@@ -33,7 +35,7 @@ namespace gui {
 GENERATE_SIMPLE_NODE(AiMissionNode)
 GENERATE_SIMPLE_NODE(PipelineNode) //!!! todo: this shouldn't be deifned here, should be a separate pipeline plugin (probably called FluidityNode)
 
-class AiTaskNode : public Node {
+class AiTaskNode : public NumericNode<bool> {
     public:
 
         AiTaskNode(const nid_t id);
@@ -77,14 +79,16 @@ class AiTaskNode : public Node {
 
 };
 
-class LiquidTaskNode : public liquid::LiquidNode, public liquid::ArcSourceDelegate
+class LiquidTaskNode : public liquid::LiquidNode, public liquid::ArcSourceDelegate, public ManagedNode
 {
 public:
     LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem *parent = 0);
+    virtual ~LiquidTaskNode();
     void buildContents();
 
 protected:
     boost::shared_ptr<AiTaskNode> m_node;
+    boost::shared_ptr<NodeItemModel> m_model;
 };
 
 

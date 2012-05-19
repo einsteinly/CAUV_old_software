@@ -69,6 +69,8 @@ class NodeItemModel : public QAbstractItemModel {
         QModelIndex parent(const QModelIndex &child) const ;
         QModelIndex index(int row, int column, const QModelIndex &parent) const ;
 
+        boost::shared_ptr<Node> rootNode();
+
     protected Q_SLOTS:
         void connectUpdater(boost::shared_ptr<Node> node);
 

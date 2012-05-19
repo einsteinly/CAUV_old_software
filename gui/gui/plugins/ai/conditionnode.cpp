@@ -16,7 +16,22 @@
 
 #include <debug/cauv_debug.h>
 
+#include <QGraphicsLinearLayout>
+
 #include <gui/core/model/paramvalues.h>
+
+#include <liquid/arcSink.h>
+#include <liquid/arc.h>
+#include <liquid/requiresCutout.h>
+#include <liquid/style.h>
+#include <liquid/arcSinkLabel.h>
+#include <liquid/nodeHeader.h>
+
+#include <gui/core/framework/elements/style.h>
+#include <gui/core/model/model.h>
+#include <gui/core/framework/nodepicker.h>
+
+#include <gui/plugins/ai/conditionnode.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -71,4 +86,55 @@ void AiConditionNode::addType(std::string type){
 
 std::set<std::string> AiConditionNode::getTypes(){
     return m_types;
+}
+
+
+
+
+
+LiquidConditionNode::LiquidConditionNode(boost::shared_ptr<AiConditionNode> node, QGraphicsItem * parent) :
+    liquid::LiquidNode(AI_Node_Style, parent), ManagedNode(this, node), m_node(node),
+    m_source(new liquid::ArcSource(this, new liquid::Arc(Image_Arc_Style)))
+{
+    buildContents();
+    this->setResizable(true);
+}
+
+LiquidConditionNode::~LiquidConditionNode() {
+    unRegisterNode(this);
+}
+
+void LiquidConditionNode::buildContents(){
+
+
+    // the item view
+    header()->setTitle(QString::fromStdString(m_node->nodeName()));
+    header()->setInfo(QString::fromStdString(m_node->nodePath()));
+    NodeTreeView * view = new NodeTreeView();
+    NodeItemModel *model = new NodeItemModel(m_node);
+    view->setModel(model);
+    view->setRootIndex(model->indexFromNode(m_node));
+    view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(), 1);
+    QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
+    proxy->setWidget(view);
+    addItem(proxy);
+
+    m_source->setParentItem(this);
+    m_source->setZValue(10);
+
+    QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(Qt::Horizontal);
+    hlayout->setSpacing(0);
+    hlayout->setContentsMargins(0,0,0,0);
+    hlayout->addStretch(1);
+    hlayout->addItem(m_source);
+    hlayout->setAlignment(m_source, Qt::AlignBottom | Qt::AlignRight);
+
+    connect(this, SIGNAL(xChanged()), m_source, SIGNAL(xChanged()));
+    connect(this, SIGNAL(yChanged()), m_source, SIGNAL(yChanged()));
+    this->addItem(hlayout);
+}
+
+
+liquid::AbstractArcSource *LiquidConditionNode::source(){
+    return m_source;
 }

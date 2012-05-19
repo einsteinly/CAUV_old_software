@@ -176,3 +176,6 @@ void NodeItemModel::connectUpdater(boost::shared_ptr<Node> node){
     connect(node.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(connectUpdater(boost::shared_ptr<Node>)));
 }
 
+boost::shared_ptr<Node> NodeItemModel::rootNode(){
+    return m_root;
+}

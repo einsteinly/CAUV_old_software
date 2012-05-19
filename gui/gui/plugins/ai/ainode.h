@@ -20,6 +20,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <gui/core/model/nodes/numericnode.h>
+#include <gui/core/model/model.h>
 #include <gui/core/nodedragging.h>
 
 #include <liquid/node.h>
@@ -38,8 +39,13 @@ namespace cauv {
 
 
         class AiDropHandler : public DropHandlerInterface<QGraphicsItem * > {
+        public:
+            AiDropHandler(boost::shared_ptr<NodeItemModel> model);
             virtual bool accepts(boost::shared_ptr<Node> const& node);
             virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node);
+
+        protected:
+            boost::shared_ptr<NodeItemModel> m_model;
         };
 
     } // namespace gui

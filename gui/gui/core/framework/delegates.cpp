@@ -31,10 +31,14 @@ using namespace cauv::gui;
 
 
 NodeDelegateMapper::NodeDelegateMapper(QObject *):
-    m_hasSizeHint(false){}
+    m_hasSizeHint(false){
+}
 
 void NodeDelegateMapper::registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate){
     m_default_delegates[nodeType] = delegate;
+    connect(delegate.get(), SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
+    connect(delegate.get(), SIGNAL(closeEditor(QWidget*)), this, SIGNAL(closeEditor(QWidget*)));
+    connect(delegate.get(), SIGNAL(sizeHintChanged(QModelIndex)), this, SIGNAL(sizeHintChanged(QModelIndex)));
 }
 
 void NodeDelegateMapper::registerDelegate(boost::shared_ptr<Node> node, boost::shared_ptr<QAbstractItemDelegate> delegate){
@@ -127,7 +131,7 @@ void NodeDelegateMapper::setSizeHint(const QSize sizeHint) {
 }
 
 
-NumericDelegate::NumericDelegate(NodeTreeView * tree, QObject * parent) : QStyledItemDelegate(parent), m_view(tree) {
+NumericDelegate::NumericDelegate(QObject * parent) : QStyledItemDelegate(parent) {
     QItemEditorFactory * factory = new QItemEditorFactory();
     setItemEditorFactory(factory);
     factory->registerEditor(QVariant::Bool, new QItemEditorCreator<OnOffSlider>("checked"));
@@ -182,21 +186,33 @@ void NumericDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
     }
 }
 
+
+QWidget * NumericDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const{
+    QWidget *retval = QStyledItemDelegate::createEditor(parent, option, index);
+    if (OnOffSlider * slider = dynamic_cast<OnOffSlider*>(retval)) {
+        info() << "create editor";
+        slider->setAnimation(true);
+        connect(retval, SIGNAL(switched()), this, SLOT(commit()));
+        NumericNode<bool> * node = dynamic_cast<NumericNode<bool>*>((Node*)index.internalPointer());
+        node->set(!node->get());
+    }
+    return retval;
+
+}
+
+void NumericDelegate::commit() {
+    info() << "commit()";
+    QWidget *editor = static_cast<QWidget *>(sender());
+    emit commitData(editor);
+}
+
 void NumericDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const{
 
     QStyledItemDelegate::setEditorData(editor, index);
 
     NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
 
-    //if(m_hasEditor.find(index) == m_hasEditor.end()) {
-    //    m_hasEditor.insert(index);
-    //    m_view->openPersistentEditor(index);
-    //}
-
-    if(OnOffSlider * slider = dynamic_cast<OnOffSlider *>(editor)){
-        slider->setAnimation(true);
-        slider->toggle();
-    } else if(node && node->isMaxSet() && node->isMinSet()) {
+    if(node && node->isMaxSet() && node->isMinSet()) {
         if(NeutralSpinBox * neutral = qobject_cast<NeutralSpinBox*>(editor)){
             neutral->setMinimum(node->getMin().toInt());
             neutral->setMaximum(node->getMax().toInt());

@@ -73,12 +73,17 @@ protected:
 class NumericDelegate : public QStyledItemDelegate {
     Q_OBJECT
 public:
-    NumericDelegate(NodeTreeView * tree, QObject * parent = 0);
+    NumericDelegate(QObject *parent=0);
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option,
                const QModelIndex &index) const;
 
     void setEditorData(QWidget *editor, const QModelIndex &index) const;
+
+    QWidget * createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+
+protected Q_SLOTS:
+    void commit();
 
 protected:
     NodeTreeView * m_view;

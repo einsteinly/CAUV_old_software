@@ -17,13 +17,18 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <liquid/node.h>
+#include <liquid/arcSource.h>
+
 #include <generated/types/ParamValue.h>
 
 #include <gui/core/model/node.h>
+#include <gui/core/model/model.h>
+#include <gui/core/framework/nodepicker.h>
+#include <gui/core/framework/manager.h>
 
 namespace cauv {
 namespace gui {
-
 
 class AiConditionNode : public Node {
     public:
@@ -46,6 +51,20 @@ class AiConditionNode : public Node {
 
         static std::set<std::string> m_types;
 };
+
+class LiquidConditionNode : public liquid::LiquidNode, public liquid::ArcSourceDelegate, public ManagedNode
+{
+public:
+    LiquidConditionNode(boost::shared_ptr<AiConditionNode> node, QGraphicsItem *parent = 0);
+    virtual ~LiquidConditionNode();
+    void buildContents();
+    liquid::AbstractArcSource * source();
+
+protected:
+    boost::shared_ptr<AiConditionNode> m_node;
+    liquid::ArcSource * m_source;
+};
+
 
 } // namespace gui
 } // namespace cauv

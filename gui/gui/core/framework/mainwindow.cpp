@@ -69,7 +69,7 @@ public:
         NodeTreeView * view = new NodeTreeView();
         view->setModel(m_model.get());
         view->setRootIndex(m_model->indexFromNode(node));
-        view->addNumericDelegateToColumn(1);
+        view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(), 1);
         QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
         proxy->setWidget(view);
 
@@ -143,6 +143,8 @@ void CauvMainWindow::onRun()
     // these bits in.
     // NodePicker is exposed
     m_actions->nodes = new NodePicker(m_actions->root);
+    m_actions->nodes->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(), 1);
+    m_actions->nodes->setDelegateSizeHint(1, QSize(60, 25));
     ui->streamsDock->setWidget(m_actions->nodes);
     // And the main window
     m_actions->window = shared_from_this();

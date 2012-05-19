@@ -23,13 +23,13 @@
 #include <liquid/requiresCutout.h>
 #include <liquid/style.h>
 #include <liquid/arcSinkLabel.h>
-
-#include <QGraphicsLinearLayout>
-#include <QGraphicsProxyWidget>
-#include <QLabel>
-#include <QPalette>
+#include <liquid/nodeHeader.h>
 
 #include <gui/core/framework/elements/style.h>
+#include <gui/core/model/model.h>
+#include <gui/core/framework/nodepicker.h>
+
+#include <gui/plugins/ai/conditionnode.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -38,7 +38,8 @@ using namespace cauv::gui;
 std::set<std::string> AiTaskNode::m_types;
 
 
-AiTaskNode::AiTaskNode(const nid_t id) : Node(id, nodeType<AiTaskNode>()){
+AiTaskNode::AiTaskNode(const nid_t id) : NumericNode<bool>(id){
+    type = nodeType<AiTaskNode>();
 }
 
 void AiTaskNode::addCondition(boost::shared_ptr<AiConditionNode> condition){
@@ -148,21 +149,50 @@ std::set<std::string> AiTaskNode::getTypes(){
 
 
 LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem * parent) :
-    liquid::LiquidNode(AI_Node_Style, parent), m_node(node)
+    liquid::LiquidNode(AI_Node_Style, parent), ManagedNode(this, node), m_node(node)
 {
     buildContents();
+    this->setResizable(true);
+}
+
+LiquidTaskNode::~LiquidTaskNode() {
+    unRegisterNode(this);
 }
 
 void LiquidTaskNode::buildContents(){
-    std::set<boost::shared_ptr<AiConditionNode> > conditions = m_node->getConditions();
-    foreach(boost::shared_ptr<AiConditionNode> const& condition, conditions){
-        //this->addItem(new liquid::ArcSource(this, new liquid::Arc(Param_Arc_Style)));
+
+    // incoming dependancies
+    foreach(boost::shared_ptr<AiConditionNode> const& condition, m_node->getConditions()){
+        LiquidConditionNode * conditionNode = ManagedNode::getLiquidNodeFor<LiquidConditionNode>(condition);
         liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style, Required_Param_Input,
                                                       new liquid::RejectingConnectionSink());
-        liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink,
-                                                        this,
-                                                        QString("test"));
-        sink->setParentItem(this);
+        liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,
+                               QString::fromStdString(boost::get<std::string>(condition->nodeId())));
+        new liquid::Arc(Param_Arc_Style, conditionNode->source(), sink);
+        sink->setParent(label);
         this->addItem(label);
     }
+
+    foreach(boost::shared_ptr<PipelineNode> const& pipeline, m_node->getPipelines()){
+        //LiquidConditionNode * conditionNode = ManagedNode::getLiquidNodeFor<LiquidConditionNode>(m_node);
+        liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style, Required_Param_Input,
+                                                      new liquid::RejectingConnectionSink());
+        liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,
+                               QString::fromStdString(boost::get<std::string>(pipeline->nodeId())));
+        //new liquid::Arc(Param_Arc_Style, conditionNode->source(), sink);
+        sink->setParent(label);
+        this->addItem(label);
+    }
+
+    // the item view
+    header()->setTitle(QString::fromStdString(m_node->nodeName()));
+    header()->setInfo(QString::fromStdString(m_node->nodePath()));
+    NodeTreeView * view = new NodeTreeView();
+    NodeItemModel *model = new NodeItemModel(m_node);
+    view->setModel(model);
+    view->setRootIndex(model->indexFromNode(m_node));
+    view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(), 1);
+    QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
+    proxy->setWidget(view);
+    addItem(proxy);
 }

@@ -23,7 +23,7 @@
 namespace cauv {
     namespace gui {
 
-        class OnOffSlider : public QCheckBox {
+        class OnOffSlider : public QWidget {
             Q_OBJECT
 
         public:
@@ -32,6 +32,7 @@ namespace cauv {
             Q_PROPERTY(float position READ position WRITE setPosition USER false)
 
             OnOffSlider(QWidget * parent = 0);
+            virtual ~OnOffSlider();
 
             void paintEvent(QPaintEvent *);
 
@@ -43,14 +44,17 @@ namespace cauv {
             void mouseMoveEvent(QMouseEvent *e);
             void mousePressEvent(QMouseEvent *e);
 
-        protected Q_SLOTS:
-            void onStateChange(int);
+            bool isChecked();
+            void setChecked(bool checked);
 
-            Q_SIGNALS:
+            void toggle();
+
+        Q_SIGNALS:
             void switched();
 
         protected:
             float m_position;
+            bool checked;
             QPropertyAnimation m_animation;
 
             float position();

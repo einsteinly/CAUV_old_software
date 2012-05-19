@@ -32,10 +32,14 @@
 #include "aimessaging.h"
 #include "ainode.h"
 
+#include <gui/core/framework/nodepicker.h>
 #include <stdexcept>
 
 using namespace cauv;
 using namespace cauv::gui;
+
+AiPlugin::AiPlugin() : m_filter(boost::make_shared<NodeChildrenExclusionFilter>()){
+}
 
 const QString AiPlugin::name() const{
     return QString("AI");
@@ -57,7 +61,11 @@ void AiPlugin::initialise(){
         node->send(boost::make_shared<RequestAIStateMessage>());
     } else error() << "AiPlugin failed to lock cauv node";
 
-    m_actions->scene->registerDropHandler(boost::make_shared<AiDropHandler>());
+    m_actions->scene->registerDropHandler(boost::make_shared<AiDropHandler>(m_actions->root));
+
+    m_actions->nodes->registerDelegate(nodeType<AiTaskNode>(), boost::make_shared<NumericDelegate>(), 1);
+
+    m_actions->nodes->registerListFilter(m_filter);
 
         /*
 
@@ -108,6 +116,7 @@ void AiPlugin::setupTask(boost::shared_ptr<Node> node){
                     boost::make_shared<MessageGenerator<AiTaskNode,
                     SetTaskStateMessage> >(node->to<AiTaskNode>())
                     );
+        m_filter->addNode(node);
     } catch(std::runtime_error e) {
         error() << "AiPlugin::setupTask: Expecting AiTaskNode" << e.what();
 
@@ -120,6 +129,7 @@ void AiPlugin::setupCondition(boost::shared_ptr<Node> node){
                     boost::make_shared<MessageGenerator<AiConditionNode,
                     SetConditionStateMessage> >(node->to<AiConditionNode>())
                     );
+        m_filter->addNode(node);
     } catch(std::runtime_error e) {
         error() << "AiPlugin::setupCondition: Expecting AiTaskNode" << e.what();
 

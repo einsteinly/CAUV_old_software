@@ -17,6 +17,8 @@
 #include <QPaintEvent>
 #include <QPainter>
 
+#include <QDebug>
+
 #include "style.h"
 
 using namespace cauv;
@@ -24,14 +26,15 @@ using namespace cauv::gui;
 
 
 OnOffSlider::OnOffSlider(QWidget * parent) :
-    QCheckBox(parent), m_position(0), m_animation(this, "position") {
+    QWidget(parent), m_position(0), m_animation(this, "position") {
     m_animation.setDuration(0);
-    this->connect(this, SIGNAL(stateChanged(int)), this, SLOT(onStateChange(int)));
+    setFocusPolicy(Qt::StrongFocus);
+    connect(&m_animation, SIGNAL(finished()), this, SIGNAL(switched()));
 }
 
-void OnOffSlider::onStateChange(int){
-    animateSwitch();
+OnOffSlider::~OnOffSlider() {
 }
+
 
 void OnOffSlider::animateSwitch() {
     m_animation.stop();
@@ -49,16 +52,27 @@ float OnOffSlider::position(){
     return m_position;
 }
 
+void OnOffSlider::setChecked(bool c){
+    checked = c;
+    setPosition(c?1:0);
+}
+
+bool OnOffSlider::isChecked(){
+    return checked;
+}
+
 void OnOffSlider::setAnimation(bool animates){
     if(animates){
         m_animation.setDuration(100);
     } else m_animation.setDuration(0);
 }
 
-
+void OnOffSlider::toggle(){
+    checked = !checked;
+    animateSwitch();
+}
 
 void OnOffSlider::mouseReleaseEvent(QMouseEvent *e) {
-    toggle();
     e->accept();
 }
 
@@ -67,6 +81,7 @@ void OnOffSlider::mouseMoveEvent(QMouseEvent *e){
 }
 
 void OnOffSlider::mousePressEvent(QMouseEvent *e){
+    toggle();
     e->accept();
 }
 

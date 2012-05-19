@@ -19,6 +19,7 @@
 #include <QKeyEvent>
 
 #include <gui/core/model/node.h>
+#include <gui/core/framework/delegates.h>
 
 namespace Ui {
 class NodePicker;
@@ -60,7 +61,7 @@ public:
     NodeExclusionFilter(QObject * parent = NULL);
 
 public Q_SLOTS:
-    bool filter(boost::shared_ptr<Node> const& node);
+    virtual bool filter(boost::shared_ptr<Node> const& node);
     void addNode(boost::shared_ptr<Node> node);
 
 Q_SIGNALS:
@@ -69,6 +70,17 @@ Q_SIGNALS:
 protected:
     std::vector<boost::shared_ptr<Node> > m_nodes;
 };
+
+
+class NodeChildrenExclusionFilter : public NodeExclusionFilter {
+    Q_OBJECT
+public:
+    NodeChildrenExclusionFilter(QObject * parent = NULL);
+
+public Q_SLOTS:
+    virtual bool filter(boost::shared_ptr<Node> const& node);
+};
+
 
 /**
 * Filterable tree view onto the node model
@@ -80,10 +92,10 @@ public:
     virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
 
 public Q_SLOTS:
-    boost::shared_ptr<NumericDelegate> addNumericDelegateToColumn(int col, int height=23);
+    void setDelegateSizeHint(int column, QSize size);
+    void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate, unsigned int column = 0);
 
 private Q_SLOTS:
-    void forceEdit(QModelIndex const& index);
     void applyFilters();
     void applyFilters(QModelIndex const&);
     bool applyFilters(boost::shared_ptr<Node> const&);
@@ -95,6 +107,7 @@ Q_SIGNALS:
 protected:
     std::vector<boost::shared_ptr<NodeFilterInterface> > m_filters;
     void keyPressEvent(QKeyEvent *event);
+    std::map<int, boost::shared_ptr<NodeDelegateMapper> > m_delegates;
 };
 
 
@@ -108,8 +121,9 @@ public:
     NodePicker(boost::shared_ptr<NodeItemModel> const& root);
     virtual ~NodePicker();
 
-    void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate);
+    void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate, unsigned int column = 0);
     void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
+    void setDelegateSizeHint(int column, QSize size);
 
 protected Q_SLOTS:
     void redirectKeyboardFocus(QKeyEvent* key);

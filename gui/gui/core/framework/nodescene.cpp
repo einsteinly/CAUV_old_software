@@ -26,8 +26,10 @@
 #include "nodepicker.h"
 
 #include <liquid/node.h>
+#include <liquid/layout.h>
 
 #include <gui/core/framework/elements/style.h>
+#include <gui/core/framework/manager.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -112,6 +114,8 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
             }
         }
     }
+
+    ManagedNode::setScene(this);
 }
 
 NodeScene::~NodeScene(){
@@ -144,6 +148,7 @@ void NodeScene::onNodeDroppedAt(boost::shared_ptr<Node> const& node, QPointF pos
         } else {
             item->setPos(pos - (item->boundingRect().center().toPoint()));
             addItem(item);
+            liquid::LayoutItems::updateLayout(this);
         }
     } catch (drop_not_handled){
         error() << node->nodeName() << "not supported in this drop area (" << this << ")";

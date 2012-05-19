@@ -51,6 +51,7 @@ set ( GUI_CORE_SRCS
     framework/nodescene.cpp
     framework/style.cpp
     framework/delegates.cpp
+    framework/manager.cpp
 
     framework/fluidity/fNode.cpp
     framework/fluidity/view.cpp 
