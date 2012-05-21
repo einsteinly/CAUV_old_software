@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 from cauv.debug import debug, warning, error, info
 from cauv import control
 
