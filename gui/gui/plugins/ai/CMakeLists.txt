@@ -14,6 +14,7 @@ set ( AI_PLUGIN_UIS
 set ( AI_PLUGIN_H
     plugin.h
     ainode.h
+    tasknode.h
 )
 
      

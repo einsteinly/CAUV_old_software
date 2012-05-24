@@ -81,10 +81,14 @@ class AiTaskNode : public NumericNode<bool> {
 
 class LiquidTaskNode : public liquid::LiquidNode, public liquid::ArcSourceDelegate, public ManagedNode
 {
+    Q_OBJECT
 public:
     LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem *parent = 0);
     virtual ~LiquidTaskNode();
     void buildContents();
+
+public Q_SLOTS:
+    void highlightRunningStatus(QVariant status);
 
 protected:
     boost::shared_ptr<AiTaskNode> m_node;

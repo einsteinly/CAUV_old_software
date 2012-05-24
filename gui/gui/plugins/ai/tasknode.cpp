@@ -14,6 +14,8 @@
 
 #include "tasknode.h"
 
+#include <QBrush>
+
 #include <debug/cauv_debug.h>
 
 #include <gui/core/model/paramvalues.h>
@@ -24,6 +26,7 @@
 #include <liquid/style.h>
 #include <liquid/arcSinkLabel.h>
 #include <liquid/nodeHeader.h>
+#include <liquid/shadow.h>
 
 #include <gui/core/framework/elements/style.h>
 #include <gui/core/model/model.h>
@@ -153,10 +156,18 @@ LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem
 {
     buildContents();
     this->setResizable(true);
+    node->connect(node.get(), SIGNAL(onUpdate(QVariant)), this, SLOT(highlightRunningStatus(QVariant)));
 }
 
 LiquidTaskNode::~LiquidTaskNode() {
     unRegisterNode(this);
+}
+
+void LiquidTaskNode::highlightRunningStatus(QVariant status){
+    if(status.toBool())
+        m_status_highlight->setBrush(QBrush(QColor(92,205,92)));
+    else
+        m_status_highlight->setBrush(QBrush());
 }
 
 void LiquidTaskNode::buildContents(){
