@@ -29,20 +29,23 @@ namespace gui {
 class ManagedNode {
 public:
     template<class T, class S>
-    static T * getLiquidNodeFor(boost::shared_ptr<S> node){
+    static T * getLiquidNodeFor(boost::shared_ptr<S> node, bool relayout = true){
+        T * liquidNode;
         liquid::LiquidNode * ln = m_liquidNodes[node];
         if(!ln){
             if(!m_scene){
                 error() << "ManagedNode must have a scene set before calling getLiquidNodeFor(...)";
             }
-            info() << "Creating new liquidNode for "<< node->nodeId();
-            T * liquidNode = new T(node);
+            liquidNode = new T(node);
             m_scene->addItem(liquidNode);
-            liquid::LayoutItems::updateLayout(m_scene);
-            return liquidNode;
         } else {
-            return static_cast<T*>(ln);
+            liquidNode = static_cast<T*>(ln);
         }
+
+        if(relayout)
+            liquid::LayoutItems::updateLayout(m_scene);
+
+        return liquidNode;
     }
 
     static void setScene(QGraphicsScene * scene);

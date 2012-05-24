@@ -155,8 +155,10 @@ LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem
     liquid::LiquidNode(AI_Node_Style, parent), ManagedNode(this, node), m_node(node)
 {
     buildContents();
+    setSize(QSize(300,300));
     this->setResizable(true);
     node->connect(node.get(), SIGNAL(onUpdate(QVariant)), this, SLOT(highlightRunningStatus(QVariant)));
+    highlightRunningStatus(node->get());
 }
 
 LiquidTaskNode::~LiquidTaskNode() {
@@ -174,7 +176,8 @@ void LiquidTaskNode::buildContents(){
 
     // incoming dependancies
     foreach(boost::shared_ptr<AiConditionNode> const& condition, m_node->getConditions()){
-        LiquidConditionNode * conditionNode = ManagedNode::getLiquidNodeFor<LiquidConditionNode>(condition);
+        LiquidConditionNode * conditionNode = ManagedNode::getLiquidNodeFor<LiquidConditionNode>(condition, false);
+        //conditionNode->setPos(pos().x()-(conditionNode->size().width() + 30), pos().y());
         liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style, Required_Param_Input,
                                                       new liquid::RejectingConnectionSink());
         liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,
