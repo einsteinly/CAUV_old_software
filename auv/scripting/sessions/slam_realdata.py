@@ -5,7 +5,7 @@ processes = [
         ['{BDIR}/auv/bin/img-pipeline']
     ),
     Process('playlog', '{SDIR}', node_pid('py-play'),         panic,     None,
-        ["sh -c 'sleep 4 && {SDIR}/run.sh ./playLog.py {SDIR}/camnav.chil -r 2.0'"]
+        ["sh -c 'sleep 6 && {SDIR}/run.sh ./playLog.py {SDIR}/camnav.chil -r 2.0'"]
     ),
     Process('slam-realdata', '{SDIR}', node_pid('py-slamr'), panic,     None,
         ['{SDIR}/tests/slam_realdata.py']

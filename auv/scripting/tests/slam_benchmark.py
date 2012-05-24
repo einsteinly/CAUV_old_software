@@ -23,13 +23,16 @@ class Benchmarker(object):
         self.pl = pipeline.Model(node) 
         self.auv = control.AUV(node)
         self.gemini = sonar.Gemini(node)
+        # configuration:        
         self.test_name = test_name
+        self.assoc_method = 'NDT' # 'ICP', 'NDT', 'non-linear ICP'        
         self.learn_keypoints = False
         self.visualisation_video = True
         self.keypoints_video = False
         self.inter_ping_delay = 0.8
+        self.resolution = 800        
+        # internal stuff:
         self.video_output_nodes = []
-
         self.setup()
 
     def setup(self):
@@ -60,14 +63,18 @@ class Benchmarker(object):
         pl.clear()
         sonar_in = pl.addNode(nt.SonarInput)
         sonar_in.p('Sonar ID').set(2)
-        sonar_in.p('Resolution').set(800)
+        sonar_in.p('Resolution').set(self.resolution)
+        resize = pl.addNode(nt.Resize)
+        resize.p('fixed width').set(256)
+        resize.p('fixed height').set(self.resolution)
+        sonar_in.o('polar image').connect(resize.i('image_in'))
         copy1 = pl.addNode(nt.Copy)
         #guio = pl.addNode(nt.GuiOutput)
         sonar_in.o('polar image').connect(copy1.i('image'))
         #sonar_in.o('image (synced)').connect(guio.i('image_in'))
         medf = pl.addNode(nt.MedianFilter)
         medf.p('kernel').set(1)
-        copy1.o('image copy').connect(medf.i('image'))
+        resize.o('image_out').connect(medf.i('image'))        
         copy2 = pl.addNode(nt.Copy)
         medf.o('image (not copied)').connect(copy2.i('image'))
         blur1 = pl.addNode(nt.GaussianBlur)
@@ -110,7 +117,9 @@ class Benchmarker(object):
         sslam.p('feature merge distance').set(0.2)
         sslam.p('graph iters').set(10)
         sslam.p('keyframe spacing').set(1.5)
-        sslam.p('match algorithm').set('ICP')
+        assert(self.assoc_method in ('ICP', 'NDT', 'non-linear ICP'))
+        sslam.p('match algorithm').set(self.assoc_method)
+        sslam.p('grid step').set(4.0)
         sslam.p('ransac iterations').set(0)
         # !!! TODO: sensitivity to this:
         sslam.p('max correspond dist').set(0.35)

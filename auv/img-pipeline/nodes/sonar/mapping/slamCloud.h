@@ -16,6 +16,10 @@
 #define __CAUV_SONAR_SLAM_CLOUD_H__
 
 #include <vector>
+#include <fstream>
+
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <boost/enable_shared_from_this.hpp>
 
@@ -85,6 +89,7 @@ class SlamCloudGraph{
               m_max_considered_overlaps(3),
               m_rotation_scale(4),
               m_graph_optimisation_count(0),
+              m_dump_pose_history(true),
               m_key_scan_locations(new KDTreeCachingCloud<PointT>()),
               m_n_passed_good(0),
               m_n_passed_bad(0),
@@ -429,6 +434,9 @@ class SlamCloudGraph{
                    << "\tfail,good =" << n_failed_good << "\t= " << 100*float(n_failed_good)/total << "%\n"
                    << "\tfail,bad  =" << n_failed_bad  << "\t= " << 100*float(n_failed_bad)/total << "%\n";
 
+            if(m_dump_pose_history)
+                dumpPoseHistory();
+
             return r;
         }
 
@@ -578,6 +586,38 @@ class SlamCloudGraph{
         }
 
 
+        /* dump the pose history to file */
+        void dumpPoseHistory(){
+            const static int pid = getpid();
+            const static std::string dir = mkStr() << "/tmp/cauv/slamdump/" << pid << "/";
+            static int32_t dump_num = 0;
+            dump_num++;
+            
+            debug() << "dump pose locations to" << dir;
+            std::system(std::string(mkStr() << "mkdir -p " << dir).c_str());
+
+            std::ofstream keyfile(std::string(mkStr() << dir << "keyframes-" << dump_num << ".txt").c_str());
+            int id = 0;
+            foreach(cloud_ptr k, m_key_scans){
+                const Eigen::Matrix4f m = k->globalTransform();
+                keyfile << "keyframe " << id++ << " " << k << " "
+                        << xyThetaFrom4DAffine(m).transpose() << " "
+                        << k->time() << " (\n" << m << ")\n";
+            }
+            keyfile.close();
+
+            std::ofstream locfile(std::string(mkStr() << dir << "poses-" << dump_num << ".txt").c_str());
+            foreach(location_ptr p, m_all_scans){
+                const Eigen::Matrix4f m = p->globalTransform();
+                keyfile << "pose " << id++ << " " << p->relativeTo() << " "
+                        << xyThetaFrom4DAffine(m).transpose() << " "
+                        << p->time() << " (\n" << m << ")\n";
+            }
+            locfile.close();
+            debug() << "pose dump complete";
+        }
+
+
         // - private data
         float m_overlap_threshold; // a fraction (0--1.0)
         float m_keyframe_spacing;  // in metres
@@ -596,12 +636,19 @@ class SlamCloudGraph{
         // +1 each time graph optimiser is run - i.e. this number changes
         // whenever everything might have moved
         int m_graph_optimisation_count;
+        
+        // if true, write pose history to files each time the pose graph is
+        // optimised
+        bool m_dump_pose_history;
 
         // TODO: to remain efficient there MUST be a way of searching for
         // SlamCloudParts near a location without iterating through all nodes
         // (kdtree probably)
         cloud_vec m_key_scans;
         
+        // !!! FIXME: currently key scan locations are not updated in this
+        // cloud when the graph optimiser changes them!
+
         // each point in this cloud is a key scan (same order as m_key_scans):
         // x,y,z map to x,y,m_rotation_scale*rotation 
         boost::shared_ptr< KDTreeCachingCloud<PointT> > m_key_scan_locations;
@@ -621,201 +668,7 @@ class SlamCloudGraph{
         unsigned m_n_failed_bad;
 };
 
-
-
-
-
-
-
-
-
-
-
-
 } // namespace cauv
 } // namespace imgproc
-
-
-#if 0
-// - deprecated
-
-#include <pcl/surface/concave_hull.h>
-#include <pcl/filters/crop_hull.h>
-
-namespace cauv{
-namespace imgproc{
-
-template<typename PointT>
-class SlamCloud: public pcl::PointCloud<PointT>,
-                 public boost::enable_shared_from_this< SlamCloud<PointT> >{
-    public:
-        // - public types
-        typedef boost::shared_ptr<SlamCloud<PointT> > Ptr;
-        typedef boost::shared_ptr<const SlamCloud<PointT> > ConstPtr;
-        typedef pcl::PointCloud<PointT> BaseT;
-
-        using pcl::PointCloud<PointT>::points;
-        using pcl::PointCloud<PointT>::width;
-        using pcl::PointCloud<PointT>::size;
-        using pcl::PointCloud<PointT>::push_back;
-
-        using boost::enable_shared_from_this< SlamCloud<PointT> >::shared_from_this;
-
-    public:
-        // - public methods
-        SlamCloud()
-            : BaseT(),
-              m_point_descriptors(),
-              m_keypoint_indices(),
-              m_transformation(Eigen::Matrix4f::Identity()){
-        }
-
-        Eigen::Matrix4f& transformation(){ return m_transformation; }
-        Eigen::Matrix4f const& transformation() const{ return m_transformation; }
-
-        std::vector<descriptor_t>& descriptors(){ return m_point_descriptors; }
-        std::vector<descriptor_t> const& descriptors() const{ return m_point_descriptors; }
-
-        std::vector<std::size_t>& ptIndices(){ return m_keypoint_indices; }
-        std::vector<std::size_t> const& ptIndices() const{ return m_keypoint_indices; }
-
-
-        /* Merge two clouds, merging each point from the source cloud with it's
-         * nearest neighbour in the target cloud if that neighbour is closer
-         * than merge_distance.
-         */
-        void mergeCollapseNearest(Ptr source, float const& merge_distance, std::vector<int>& keypoint_goodness){
-            assert(keypoint_goodness.size() >= source->m_keypoint_indices.size());
-
-            pcl::KdTreeFLANN<PointT> kdtree;
-            kdtree.setInputCloud(shared_from_this());
-            typedef std::pair<int,int> idx_pair;
-            std::vector<idx_pair> correspondences;
-            std::vector<int> no_correspondence;
-            std::vector<int>   pt_indices(1);
-            std::vector<float> pt_squared_dists(1);
-
-            for(size_t i=0; i < source->size(); i++){
-                if(kdtree.nearestKSearch((*source)[i], 1, pt_indices, pt_squared_dists) > 0 &&
-                   pt_squared_dists[0] < merge_distance){
-                    correspondences.push_back(std::pair<int,int>(i, pt_indices[0]));
-                }else{
-                    no_correspondence.push_back(i);
-                }
-            }
-            debug() << "merge:" << correspondences.size() << "correspondences /" << source->size() << "points";
-
-            foreach(idx_pair const& c, correspondences){
-                // equal weighting of old a new points... might want to give
-                // stronger weight to old points
-                points[c.second].getVector3fMap() = (points[c.second].getVector3fMap() + (*source)[c.first].getVector3fMap()) / 2;
-
-                // current descriptors are scalar, and just sum!
-                m_point_descriptors[c.second] += source->descriptors()[c.first];
-
-                // this was a good keypoint in the input cloud
-                keypoint_goodness[source->m_keypoint_indices[c.first]] |= 1;
-            }
-
-            if(no_correspondence.size()){
-                reserve(size()+no_correspondence.size());
-                m_point_descriptors.reserve(size()+no_correspondence.size());
-                foreach(int i, no_correspondence){
-                    push_back((*source)[i]);
-                    m_point_descriptors.push_back(source->descriptors()[i]);
-                }
-                width = size();
-            }
-        }
-
-        // keypoint_goodness should start out set to 1, elements which weren't
-        // good will be set to 0
-        void mergeOutsideConcaveHull(Ptr source, float const& alpha/*= 5.0f*/,
-                                     float const& merge_distance/*=0.0f*/,
-                                     std::vector<int>& keypoint_goodness){
-            pcl::ConcaveHull<PointT> hull_calculator;
-            typename BaseT::Ptr hull(new BaseT);
-            std::vector<pcl::Vertices> polygons;
-
-            assert(keypoint_goodness.size() >= source->m_keypoint_indices.size());
-
-            hull_calculator.setInputCloud(shared_from_this());
-            hull_calculator.setAlpha(alpha);
-            hull_calculator.reconstruct(*hull, polygons);
-
-            int dim = hull_calculator.getDim();
-            if(dim != 2)
-                throw std::runtime_error("3D hull!");
-
-            debug() << "hull has" << hull->size() << "points:";
-
-            pcl::CropHull<PointT> crop_filter;
-            crop_filter.setInputCloud(source);
-            crop_filter.setHullCloud(hull);
-            crop_filter.setHullIndices(polygons);
-            crop_filter.setDim(dim);
-            crop_filter.setCropOutside(false);
-
-            std::vector<int> output_indices;
-            crop_filter.filter(output_indices);
-            debug() << output_indices.size() << "/" << source->size() << "passed filter";
-
-            Ptr output(new SlamCloud<PointT>);
-            output->m_transformation = source->m_transformation;
-            output->reserve(output_indices.size());
-            foreach(int i, output_indices){
-                // for the points that passed the crop test, default to being
-                // bad, unless they are merged with an existing point:
-                if(merge_distance != 0.0f)
-                    keypoint_goodness[source->m_keypoint_indices[i]] = 0;
-                output->push_back(source->points[i], source->m_point_descriptors[i], source->m_keypoint_indices[i]);
-            }
-
-            if(merge_distance == 0.0f){
-                BaseT::operator+=(*output);
-                m_point_descriptors.insert(
-                    m_point_descriptors.end(),
-                    output->m_point_descriptors.begin(),
-                    output->m_point_descriptors.end()
-                );
-            }else{
-                mergeCollapseNearest(output, merge_distance, keypoint_goodness);
-            }
-        }
-
-        // "overridden" methods: note that none of the base class methods are
-        // virtual, so these are only called if the call is made through a
-        // pointer to this derived type
-        void reserve(std::size_t s){
-            BaseT::reserve(s);
-            m_point_descriptors.reserve(s);
-        }
-
-        inline void push_back(PointT const& p, descriptor_t const& d, std::size_t const& idx){
-            BaseT::push_back(p);
-            m_point_descriptors.push_back(d);
-            m_keypoint_indices.push_back(idx);
-        }
-
-    private:
-        // - private data
-
-        // point descriptors
-        std::vector<descriptor_t> m_point_descriptors;
-
-        // original indices of the keypoints from which the points in this
-        // cloud were derived - used to generate training data for those
-        // keypoints: these are not generally preserved by operations on the
-        // point cloud
-        std::vector<std::size_t> m_keypoint_indices;
-
-        // transformation that has been applied to this cloud
-        Eigen::Matrix4f m_transformation;
-};
-
-} // namespace cauv
-} // namespace imgproc
-
-#endif // 0
 
 #endif //ndef __CAUV_SONAR_SLAM_CLOUD_H__

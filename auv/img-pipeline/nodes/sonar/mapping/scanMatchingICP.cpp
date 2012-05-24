@@ -145,6 +145,12 @@ class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
             // in map's coordinate system:
             const Eigen::Matrix4f final_transform = icp.getFinalTransformation();
 
+            // if the alignment really diverged, getFitnessScore doesn't even
+            // work:
+            if(!(final_transform == final_transform)){
+                throw PairwiseMatchException("NaN transform!");
+            }
+
             // high is bad (score is sum of squared euclidean distances)
             const float score = icp.getFitnessScore(m_max_correspond_dist);
             info() << BashColour::Green

@@ -23,13 +23,17 @@ class Benchmarker(object):
         self.pl = pipeline.Model(node) 
         self.auv = control.AUV(node)
         self.gemini = sonar.Gemini(node)
+        # configuration:
         self.test_name = test_name
-        self.learn_keypoints = True
-        self.visualisation_video = True
-        self.keypoints_video = True
-        self.video_output_nodes = []
+        self.assoc_method = 'NDT' # 'ICP', 'NDT', 'non-linear ICP'
+        self.learn_keypoints = False
+        self.visualisation_video = False
+        self.visualisation_files = False
+        self.keypoints_video = False
+        self.viz_superzoom = False
         self.resolution = 800
-
+        # internal stuff:
+        self.video_output_nodes = []
         self.setup()
 
     def setup(self):
@@ -56,9 +60,14 @@ class Benchmarker(object):
         sonar_in.o('polar image').connect(resize.i('image_in'))
         #guio = pl.addNode(nt.GuiOutput)
         #sonar_in.o('image (synced)').connect(guio.i('image_in'))
+        # This levels node improves the conditioning when we high-pass filter
+        levels0 = pl.addNode(nt.Levels)
+        levels0.p('black level').set(msg.BoundedFloat(  0, 0, 255, msg.BoundedFloatType.Clamps))
+        levels0.p('white level').set(msg.BoundedFloat( 64, 0, 255, msg.BoundedFloatType.Clamps))
+        resize.o('image_out').connect(levels0.i('image'))
         medf = pl.addNode(nt.MedianFilter)
-        medf.p('kernel').set(1)
-        resize.o('image_out').connect(medf.i('image'))        
+        medf.p('kernel').set(1) # TODO: test performance as this varies
+        levels0.o('image (not copied)').connect(medf.i('image'))
         copy2 = pl.addNode(nt.Copy)
         medf.o('image (not copied)').connect(copy2.i('image'))
         blur1 = pl.addNode(nt.GaussianBlur)
@@ -72,12 +81,19 @@ class Benchmarker(object):
         blur1.o('image (not copied)').connect(mix1.i('image'))
         copy3 = pl.addNode(nt.Copy)
         mix1.o('image (not copied)').connect(copy3.i('image'))
-        levels = pl.addNode(nt.Levels)
-        levels.p('black level').set(msg.BoundedFloat(  0, 0, 255, msg.BoundedFloatType.Clamps))
-        levels.p('white level').set(msg.BoundedFloat(255, 0, 255, msg.BoundedFloatType.Clamps))
-        copy3.o('image copy').connect(levels.i('image'))
+        #levels = pl.addNode(nt.Levels)
+        #levels.p('black level').set(msg.BoundedFloat(  0, 0, 255, msg.BoundedFloatType.Clamps))
+        #levels.p('white level').set(msg.BoundedFloat(255, 0, 255, msg.BoundedFloatType.Clamps))
+        #copy3.o('image copy').connect(levels.i('image'))
+        ssf = pl.addNode(nt.SonarShadowFilter)
+        ssf.p('object importance').set(1.0)
+        ssf.p('object size').set(0.2)
+        ssf.p('shadow importance').set(1.0)
+        ssf.p('shadow size').set(5.0)
+        copy3.o('image copy').connect(ssf.i('polar image'))
         nop = pl.addNode(nt.Nop)
-        levels.o('image (not copied)').connect(nop.i('image in'))
+        #levels.o('image (not copied)').connect(nop.i('image in'))
+        ssf.o('polar image').connect(nop.i('image in'))
         corners = pl.addNode(nt.FASTCorners)
         corners.p('non-maximum suppression').set(True)
         corners.p('threshold').set(30)
@@ -92,16 +108,25 @@ class Benchmarker(object):
         draw_kps = pl.addNode(nt.DrawKeyPoints)
         correl = pl.addNode(nt.Correlation1D)
         sslam = pl.addNode(nt.SonarSLAM)
-        sslam.p('-vis origin x').set(-2.0)
-        sslam.p('-vis origin y').set(-50.0)
-        sslam.p('-vis resolution').set(1200)
-        sslam.p('-vis size').set(100.0)
+        if self.viz_superzoom:
+            sslam.p('-vis origin x').set(-1.0)
+            sslam.p('-vis origin y').set(-23.0)
+            sslam.p('-vis resolution').set(1200)
+            sslam.p('-vis size').set(40.0)
+        else:
+            sslam.p('-vis origin x').set(-2.0)
+            sslam.p('-vis origin y').set(-50.0)
+            sslam.p('-vis resolution').set(1200)
+            sslam.p('-vis size').set(100.0)
         sslam.p('clear').set(False)
         sslam.p('euclidean fitness').set(1e-7)
         sslam.p('feature merge distance').set(0.2)
         sslam.p('graph iters').set(10)
-        sslam.p('keyframe spacing').set(1.0)
-        sslam.p('match algorithm').set('ICP')
+        #sslam.p('keyframe spacing').set(1.0)
+        sslam.p('keyframe spacing').set(4.0) # changed for viz demo
+        assert(self.assoc_method in ('ICP', 'NDT', 'non-linear ICP'))
+        sslam.p('match algorithm').set(self.assoc_method)
+        sslam.p('grid step').set(2.5)
         sslam.p('ransac iterations').set(10)
         # !!! TODO: sensitivity to this:
         sslam.p('max correspond dist').set(0.35)
@@ -168,11 +193,26 @@ class Benchmarker(object):
             viz_video_out.param('filename').set('%s-map.avi' % self.test_name)
             crop.o('image out (not copied)').connect(viz_video_out.i('image'))
             self.video_output_nodes.append(viz_video_out)
+        if self.visualisation_files:
+            split = pl.addNode(nt.SplitHSV)
+            crop.o('image out (not copied)').connect(split.i('image'))
+            invert = pl.addNode(nt.Invert)
+            mixv = pl.addNode(nt.MixValue)
+            mixv.p('ch1').set(100)
+            combine = pl.addNode(nt.CombineHSV)
+            split.o('H').connect(combine.i('H'))
+            split.o('S').connect(combine.i('S'))
+            split.o('V').connect(invert.i('image'))
+            invert.o('image (not copied)').connect(mixv.i('image'))
+            mixv.o('image (not copied)').connect(combine.i('V'))
+            viz_files_out = pl.addNode(nt.FileOutput)
+            viz_files_out.param('filename').set('/tmp/viz/%s-map-%%c.jpg' % self.test_name)
+            combine.o('image').connect(viz_files_out.i('image_in'))
         guio = pl.addNode(nt.GuiOutput)
         crop.o('image out (not copied)').connect(guio.i('image_in'))
-
     def runTest(self):
-        time.sleep(60.0*60.0*2.0)
+        #time.sleep(60.0*60.0*2.0)
+        time.sleep(30)
 
 
 if __name__ == '__main__':

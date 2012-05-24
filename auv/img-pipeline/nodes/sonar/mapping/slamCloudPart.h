@@ -288,7 +288,9 @@ class SlamCloudPart: public SlamCloudLocation,
               m_local_convexhull_verts(),
               m_local_convexhull_cloud(),
               m_local_convexhull_invalid(true),
-              m_rejected_points_cloud(){
+              m_rejected_points_cloud(),
+              m_mean(Eigen::Vector3f::Zero()),
+              m_covar(Eigen::Matrix3f::Zero()){
 
             this->height = 1;
             this->is_dense = true;
@@ -325,6 +327,16 @@ class SlamCloudPart: public SlamCloudLocation,
             polygons = m_local_convexhull_verts;
             hull_points = boost::make_shared<base_cloud_t>();
             pcl::transformPointCloud(*m_local_convexhull_cloud, *hull_points, globalTransform());
+        }
+
+        Eigen::Vector3f mean() const{
+            ensureMeanVar();
+            return m_mean;
+        }
+
+        Eigen::Matrix3f covar() const{
+            ensureMeanVar();
+            return m_covar;
         }
 
         std::vector<descriptor_t>& descriptors(){ return m_point_descriptors; }
@@ -368,6 +380,11 @@ class SlamCloudPart: public SlamCloudLocation,
             m_local_convexhull_invalid = true;
         }
 
+        
+        void invalidateMeanVarCache(){
+            m_meanvar_invalid = true;
+        }
+
     private:
         void ensureLocalConvexHull(){
             if(m_local_convexhull_invalid){
@@ -382,6 +399,35 @@ class SlamCloudPart: public SlamCloudLocation,
 
                 hull_calculator.setInputCloud(shared_from_this());
                 hull_calculator.reconstruct(*m_local_convexhull_cloud, m_local_convexhull_verts);
+            }
+        }
+
+        void ensureMeanVar() const{
+            if(m_meanvar_invalid){
+                m_meanvar_invalid = false;
+
+                Eigen::Vector3f sx  = Eigen::Vector3f::Zero();
+                Eigen::Matrix3f sxx = Eigen::Matrix3f::Zero();
+                std::size_t n = size();
+
+                typename base_cloud_t::const_iterator i;
+                for(i = this->begin(); i != this->end(); i++){
+                    sx  += i->getVector3fMap();
+                    sxx += i->getVector3fMap() * i->getVector3fMap().transpose();
+                }
+                
+                if(n >= 1)
+                    m_mean = sx / double(n);
+                else
+                    m_mean = Eigen::Vector3f::Zero();
+                
+                if(n >= 3)
+                    m_covar = (sxx - 2 * (sx * m_mean.transpose())) / double(n) + m_mean * m_mean.transpose();
+                else
+                    m_covar = Eigen::Matrix3f::Zero();
+                
+                // ensure there is a little variance in each direction
+                m_covar += 0.1 * Eigen::Matrix3f::Identity();
             }
         }
 
@@ -407,6 +453,13 @@ class SlamCloudPart: public SlamCloudLocation,
         bool m_local_convexhull_invalid;
 
         base_cloud_t m_rejected_points_cloud;
+
+        // cache mean and covariance of the points in this cloud (in
+        // POINT coordinates)
+        mutable Eigen::Vector3f m_mean;
+        mutable Eigen::Matrix3f m_covar;
+
+        mutable bool m_meanvar_invalid;
 };
 
 } // namespace imgproc
