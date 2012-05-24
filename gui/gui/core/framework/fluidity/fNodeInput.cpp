@@ -267,14 +267,17 @@ liquid::CutoutStyle const& FNodeParamInput::cutoutStyleForSchedType(InputSchedTy
 
 void FNodeParamInput::initView(){
     assert(m_model);
+    
+    const int height_hint = 21;
 
     m_view = new NodeTreeView();
     m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_view->setMinimumSize(QSize(60,21));
-    m_view->setMaximumSize(QSize(1000,21));
+    m_view->setMinimumSize(QSize(60, height_hint));
+    m_view->setMaximumSize(QSize(1200, height_hint));
     m_view->setModel(m_model);
     m_view->setColumnWidth(0,80);
+    // !!! TODO: height hint?
     m_view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(), 0);
     //m_view->resizeRowsToContents();
     m_view->setAutoFillBackground(false);

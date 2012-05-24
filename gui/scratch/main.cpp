@@ -13,46 +13,51 @@
  */
 
 #include <QtGui>
-#include <QThread>
 
 #include <boost/make_shared.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <common/cauv_node.h>
 
 #include "style.h"
 #include "fluidity/view.h"
 
-class ScratchNode: public cauv::CauvNode, public QThread{
+
+class ScratchNode: public cauv::CauvNode, public boost::enable_shared_from_this<ScratchNode>{
     public:
-        ScratchNode(std::string const& n)
-            : cauv::CauvNode(n){
+        ScratchNode(std::string const& n, int argc, char* argv[])
+            : cauv::CauvNode(n), m_argc(argc), m_argv(argv), m_exit_status(0){
         }
-        void run(){
-            cauv::CauvNode::run();
+
+        void onRun(){
+            QApplication app(m_argc, m_argv);
+
+            QIcon icon;
+            icon.addFile(QString::fromUtf8(":/resources/icon.png"), QSize(), QIcon::Normal, QIcon::Off);
+            app.setWindowIcon(icon);
+
+            QApplication::setStyle(new cauv::gui::CauvStyle());
+
+            cauv::gui::f::FView view(shared_from_this());
+            view.show();
+
+            m_exit_status = app.exec();
+
+            stopNode();
         }
+
+        int m_argc;
+        char** m_argv;
+        int m_exit_status;
 };
 
+
 int main(int argc, char *argv[]){
-    QApplication app(argc, argv);
-
-    QIcon icon;
-    icon.addFile(QString::fromUtf8(":/resources/icon.png"), QSize(), QIcon::Normal, QIcon::Off);
-    app.setWindowIcon(icon);
-
-    QApplication::setStyle(new cauv::gui::CauvStyle());
-
-    boost::shared_ptr<ScratchNode> node = boost::make_shared<ScratchNode>("scratch");
+    boost::shared_ptr<ScratchNode> node = boost::make_shared<ScratchNode>("scratch", argc, argv);
     if(node->parseOptions(argc, argv))
         return 0;
 
-    node->start();
+    node->run(false);
 
-    cauv::gui::f::FView view(node);
-    view.show();
-
-    int exit_status = app.exec();
-    
-    node->stopNode();
-
-    return exit_status;
+    return node->m_exit_status;
 }
