@@ -20,7 +20,11 @@
 #include <pcl/registration/icp.h>
 #include <pcl/registration/icp_nl.h>
 #include <pcl/registration/warp_point_rigid_3d.h>
-#include <pcl/registration/transformation_estimation_lm.h>
+//#include <pcl/registration/transformation_estimation_lm.h>
+#include <pcl/registration/transformation_estimation.h>
+
+#include <pcl/filters/crop_hull.h>
+#include <pcl/surface/concave_hull.h>
 
 #include <debug/cauv_debug.h>
 #include <utility/foreach.h>
@@ -41,6 +45,127 @@ static Eigen::Vector3f xythetaFrom4dAffine(Eigen::Matrix4f const& transform){
     return Eigen::Vector3f(translate[0], translate[1], rz);
 }
 
+// !!! TODO: this might be neater and more efficient if applied as a
+// CorrespondenceEstimation class, rather than transformation estimation...
+
+template<typename PointT>
+class TransformationEstimationCropping: public pcl::registration::TransformationEstimation<PointT, PointT>{
+    public:
+        typedef pcl::registration::TransformationEstimation<PointT, PointT> TransformationEstimation;
+        typedef typename TransformationEstimation::Ptr TransformationEstimationPtr;
+        typedef std::vector<int> Indices;
+        typedef boost::shared_ptr<Indices> IndicesPtr;
+            
+        typedef pcl::PointCloud<PointT> PointCloud;
+        typedef typename pcl::PointCloud<PointT>::Ptr PointCloudPtr;
+
+        TransformationEstimationCropping(
+            TransformationEstimationPtr delegate,
+            typename pcl::PointCloud<PointT>::ConstPtr target_cloud_ptr
+        )   : pcl::registration::TransformationEstimation<PointT, PointT>(),
+              m_delegate(delegate),
+              m_hull_alpha(1e3f),
+              m_tgt_cloud(target_cloud_ptr),
+              m_tgt_hull_cloud(),
+              m_tgt_hull_polygons(),
+              m_dim(0){
+            pcl::ConcaveHull<PointT> hull_calculator;
+            m_tgt_hull_cloud.reset(new pcl::PointCloud<PointT>);
+
+            hull_calculator.setInputCloud(m_tgt_cloud);
+            hull_calculator.setAlpha(m_hull_alpha);
+            hull_calculator.reconstruct(*m_tgt_hull_cloud, m_tgt_hull_polygons);
+            m_dim = hull_calculator.getDim();
+        }
+
+        virtual ~TransformationEstimationCropping(){
+        }
+        
+        static void nullCloudDeleter(PointCloud const*){}
+        static void nullIndicesDeleter(Indices const*){}
+
+        // this is the one ICP uses, so it's the one we need to reimplement
+        virtual void
+        estimateRigidTransformation (
+            const pcl::PointCloud<PointT> &cloud_src,
+            const Indices &indices_src,
+            const pcl::PointCloud<PointT> &cloud_tgt,
+            const Indices &indices_tgt,
+            Eigen::Matrix4f &transformation_matrix){
+
+            if(indices_src.size() != indices_tgt.size()){
+                error() << "estimateRigidTransformation: correspondences are not 1:1!";
+                return;
+            }
+
+            pcl::CropHull<PointT> crop_filter; 
+
+            crop_filter.setInputCloud(PointCloudPtr(const_cast<PointCloud*>(&cloud_src), &nullCloudDeleter)); // yuck
+            crop_filter.setIndices(IndicesPtr(const_cast<Indices*>(&indices_src), &nullIndicesDeleter));      // eww
+            crop_filter.setHullCloud(m_tgt_hull_cloud);
+            crop_filter.setHullIndices(m_tgt_hull_polygons);
+            crop_filter.setDim(m_dim);
+            
+            Indices filtered_indices_tgt;
+            Indices filtered_indices_src;
+
+            crop_filter.filter(filtered_indices_src);
+
+            filtered_indices_tgt.reserve(filtered_indices_src.size());
+            
+            //debug() << "cropping" << indices_src.size() << " -> "
+            //        << filtered_indices_src.size() << "correspondences";
+
+            // filter tgt indices correspondingly:
+            std::size_t i = 0, filtered_i = 0;
+            for(filtered_i = 0; filtered_i < filtered_indices_src.size(); filtered_i++){
+                while(indices_src[i] != filtered_indices_src[filtered_i] && i < indices_src.size())
+                    i++;
+                if(i != indices_src.size())
+                    filtered_indices_tgt.push_back(indices_tgt[i]);
+            }
+
+            m_delegate->estimateRigidTransformation(
+                cloud_src, filtered_indices_src,
+                cloud_tgt, filtered_indices_tgt,
+                transformation_matrix
+            );
+        }
+
+    protected:
+        // don't care about others, make sure people can't use them
+        virtual void
+        estimateRigidTransformation (
+            const pcl::PointCloud<PointT> &,
+            const pcl::PointCloud<PointT> &,
+            Eigen::Matrix4f &){
+        }
+
+        virtual void
+        estimateRigidTransformation (
+            const pcl::PointCloud<PointT> &,
+            const Indices &,
+            const pcl::PointCloud<PointT> &,
+            Eigen::Matrix4f &){
+        }
+
+        virtual void
+        estimateRigidTransformation (
+            const pcl::PointCloud<PointT> &,
+            const pcl::PointCloud<PointT> &,
+            const pcl::Correspondences &,
+            Eigen::Matrix4f &){
+        }
+    
+    private:
+        TransformationEstimationPtr m_delegate;
+        float m_hull_alpha;
+        typename pcl::PointCloud<PointT>::ConstPtr m_tgt_cloud;
+        typename pcl::PointCloud<PointT>::Ptr m_tgt_hull_cloud;
+        std::vector<pcl::Vertices> m_tgt_hull_polygons;
+        int m_dim;
+};
+
 // Valid BaseT are pcl::IterativeClosestPoint and // pcl::IterativeClosestPointNonLinear
 template <typename BaseT>
 class ICP: public BaseT{
@@ -58,6 +183,9 @@ class ICP: public BaseT{
         }
         float transformationEpsilon() const{
             return base_t::transformation_epsilon_;
+        }
+        typename base_t::TransformationEstimationPtr getTransformationEstimation() const{
+            return base_t::transformation_estimation_;
         }
         /*float euclideanFitness() const{
             // should match the check in termination condition of ICP
@@ -124,6 +252,12 @@ class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
             te->setWarpFunction(warp_fn);
 
             icp.setTransformationEstimation(te);*/
+            
+            // don't use correspondences to points outside the map cloud
+            typename ICP<BaseT>::TransformationEstimationPtr te(
+                new TransformationEstimationCropping<PointT>(icp.getTransformationEstimation(), map)
+            );
+            icp.setTransformationEstimation(te);
 
             icp.setMaxCorrespondenceDistance(m_max_correspond_dist);
             icp.setMaximumIterations(m_max_iters);

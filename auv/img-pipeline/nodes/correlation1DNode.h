@@ -31,6 +31,7 @@
 namespace cauv{
 namespace imgproc{
 
+// !!! TODO: this seems to return a slightly biased result with polar images
 class Correlation1DNode: public Node{
     public:
         Correlation1DNode(ConstructArgs const& args)

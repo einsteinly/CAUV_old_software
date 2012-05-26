@@ -10,11 +10,13 @@ for i = 1:nargin
     slam_xy = cell2mat(data(:,[6,7]));
     figure(i)
     hold off
-    plot(sim_xy(:,1), sim_xy(:,2))
+    plot(sim_xy(:,1), sim_xy(:,2), '1')
     hold on
-    plot(slam_xy(:,1), slam_xy(:,2))
-    axis([-2 32 -2 32])
+    plot(slam_xy(:,1), slam_xy(:,2), '3')
+    axis([-2 22 -2 2])
+    xlabel('Metres East')
+    ylabel('Metres North')
+    title('Simulated vs Recovered Trajectory')
 endfor
 refresh
 
-input('press enter to exit')
