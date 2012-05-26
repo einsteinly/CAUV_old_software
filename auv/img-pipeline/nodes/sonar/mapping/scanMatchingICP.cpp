@@ -148,6 +148,7 @@ class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
             // if the alignment really diverged, getFitnessScore doesn't even
             // work:
             if(!(final_transform == final_transform)){
+                error() << "NaN transform!\n" << final_transform;
                 throw PairwiseMatchException("NaN transform!");
             }
 

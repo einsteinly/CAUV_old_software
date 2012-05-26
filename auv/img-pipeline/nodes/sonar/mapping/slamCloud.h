@@ -605,11 +605,12 @@ class SlamCloudGraph{
                         << k->time() << " (\n" << m << ")\n";
             }
             keyfile.close();
-
+            
+            id = 0;
             std::ofstream locfile(std::string(mkStr() << dir << "poses-" << dump_num << ".txt").c_str());
             foreach(location_ptr p, m_all_scans){
                 const Eigen::Matrix4f m = p->globalTransform();
-                keyfile << "pose " << id++ << " " << p->relativeTo() << " "
+                locfile << "pose " << id++ << " " << p->relativeTo() << " "
                         << xyThetaFrom4DAffine(m).transpose() << " "
                         << p->time() << " (\n" << m << ")\n";
             }

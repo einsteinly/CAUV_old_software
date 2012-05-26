@@ -30,7 +30,7 @@ class Benchmarker(object):
         self.visualisation_video = False
         self.visualisation_files = False
         self.keypoints_video = False
-        self.viz_superzoom = False
+        self.viz_superzoom = True
         self.resolution = 800
         # internal stuff:
         self.video_output_nodes = []
@@ -123,14 +123,14 @@ class Benchmarker(object):
         sslam.p('feature merge distance').set(0.2)
         sslam.p('graph iters').set(10)
         #sslam.p('keyframe spacing').set(1.0)
-        sslam.p('keyframe spacing').set(4.0) # changed for viz demo
+        sslam.p('keyframe spacing').set(2.0)
         assert(self.assoc_method in ('ICP', 'NDT', 'non-linear ICP'))
         sslam.p('match algorithm').set(self.assoc_method)
-        sslam.p('grid step').set(2.5)
+        sslam.p('grid step').set(7)
         sslam.p('ransac iterations').set(10)
         # !!! TODO: sensitivity to this:
         sslam.p('max correspond dist').set(0.35)
-        sslam.p('max iters').set(20)
+        sslam.p('max iters').set(50)
         sslam.p('overlap threshold').set(0.3)
         sslam.p('reject threshold').set(0.1)
         sslam.p('score threshold').set(0.08)

@@ -25,7 +25,7 @@ class Benchmarker(object):
         self.gemini = sonar.Gemini(node)
         # configuration:        
         self.test_name = test_name
-        self.assoc_method = 'NDT' # 'ICP', 'NDT', 'non-linear ICP'        
+        self.assoc_method = 'ICP' # 'ICP', 'NDT', 'non-linear ICP'        
         self.learn_keypoints = False
         self.visualisation_video = True
         self.keypoints_video = False
@@ -49,7 +49,9 @@ class Benchmarker(object):
         # give the GUI time to get sorted out
         time.sleep(4)
         # now set the data flowing:
-        self.gemini.interPingDelay(self.inter_ping_delay)        
+        self.gemini.interPingDelay(self.inter_ping_delay)
+        # make sure slam inits at the sim origin
+        time.sleep(4)
 
     def teardown(self):
         # make sure videos get written:
@@ -119,11 +121,11 @@ class Benchmarker(object):
         sslam.p('keyframe spacing').set(1.5)
         assert(self.assoc_method in ('ICP', 'NDT', 'non-linear ICP'))
         sslam.p('match algorithm').set(self.assoc_method)
-        sslam.p('grid step').set(4.0)
+        sslam.p('grid step').set(3.0)
         sslam.p('ransac iterations').set(0)
         # !!! TODO: sensitivity to this:
         sslam.p('max correspond dist').set(0.35)
-        sslam.p('max iters').set(100)
+        sslam.p('max iters').set(10)
         sslam.p('overlap threshold').set(0.3)
         sslam.p('reject threshold').set(0.1)
         sslam.p('score threshold').set(0.05)
@@ -184,8 +186,9 @@ class Benchmarker(object):
         copyviz.o('image copy').connect(guio.i('image_in'))
 
     def runTest(self):
-        self.runTest_spin()
-        self.runTest_loop()
+        #self.runTest_spin()
+        #self.runTest_loop()
+        self.runTest_short()
     
     def runTest_spin(self):
         self.auv.bearingAndWait(0)
@@ -201,6 +204,13 @@ class Benchmarker(object):
         self.auv.bearingAndWait(300)
         self.auv.bearingAndWait(330)
         self.auv.bearingAndWait(360)
+    
+    def runTest_short(self):
+        self.auv.bearingAndWait(6)
+        self.auv.bearingAndWait(0)
+        self.auv.prop(110)
+        time.sleep(57)
+        self.auv.stop()
 
     def runTest_loop(self):
         self.auv.bearingAndWait(6)
@@ -245,7 +255,29 @@ class Benchmarker(object):
         self.auv.stop()
 
         time.sleep(10)
+    
+    def processResults(self):
+        from tools import slam_performance
+        import os
+        
+        # find the latest slam pose dump:
+        dirs = [os.path.join('/tmp/cauv/slamdump/',d) for d in os.listdir('/tmp/cauv/slamdump/')]
+        latest_dir = max(dirs, key=os.path.getmtime)
+        # and latest pose file in directory:
+        files = [os.path.join(latest_dir, f) for f in os.listdir(latest_dir) if f.startswith('poses')]
+        poses_file = max(files, key=os.path.getmtime)
 
+        # find the latest simulator log file
+        files = [os.path.join('./session-logs/', d) for d in os.listdir('./session-logs/') if d.find('sim.py.log') != -1]
+        sim_logfile = max(files, key=os.path.getmtime)
+
+        out_file = '%s-%s-learn=%s.csv' % (
+            self.test_name,
+            self.assoc_method,
+            int(self.learn_keypoints)
+        )
+
+        slam_performance.processFiles(sim_logfile, poses_file, out_file)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -257,6 +289,7 @@ if __name__ == '__main__':
     try:
         b = Benchmarker(node, opts.name)
         b.runTest()
+        b.processResults()
         b.teardown()
     finally:
         node.stop()

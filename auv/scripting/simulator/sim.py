@@ -32,7 +32,7 @@ import base_model
 def fmtArr(a):
     r = ''
     for x in a:
-        r += '%.2f,' % float(x)
+        r += '%.4f,' % float(x)
     if len(r):
         return '[' + r[:-1] + ']'
     else:

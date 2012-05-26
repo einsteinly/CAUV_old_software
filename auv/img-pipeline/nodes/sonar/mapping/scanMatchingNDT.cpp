@@ -110,6 +110,7 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
             ndt.setGridCentre(Eigen::Vector2f(map_mean[0], map_mean[1]));
             ndt.setGridExtent(Eigen::Vector2f(3*sx, 3*sy));
             ndt.setGridStep(Eigen::Vector2f(m_grid_step,m_grid_step));
+            ndt.setOptimizationStepSize(Eigen::Vector3d(0.05,0.05,0.05));
             ndt.setMaximumIterations(m_max_iters);
             ndt.setTransformationEpsilon(m_transform_eps);
             ndt.setEuclideanFitnessEpsilon(m_euclidean_fitness);
@@ -128,7 +129,8 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
             
             // if the alignment really diverged, getFitnessScore doesn't even
             // work:
-            if((final_transform == final_transform)){
+            if(!(final_transform == final_transform)){
+                error() << "NaN transform!\n" << final_transform;
                 throw PairwiseMatchException("NaN transform!");
             }
 
