@@ -83,7 +83,7 @@ class SlamCloudGraph{
             : m_overlap_threshold(0.3),
               m_keyframe_spacing(2),
               m_min_initial_points(10),
-              m_min_initial_area(5), // m^2
+              m_min_initial_area(5), // m^2 !!! should be a function of range
               m_good_keypoint_distance(0.2),
               m_max_speed(1.0),
               m_max_considered_overlaps(3),
@@ -128,7 +128,8 @@ class SlamCloudGraph{
         void setParams(float overlap_threshold,
                        float keyframe_spacing,
                        float min_initial_points,
-                       float good_keypoint_distance){
+                       float good_keypoint_distance,
+                       int max_considered_overlaps){
             if(overlap_threshold > 1.0){
                 warning() << "invalid overlap threshold" << overlap_threshold
                           << "(>1.0) will be ignored";
@@ -138,6 +139,7 @@ class SlamCloudGraph{
             m_keyframe_spacing = keyframe_spacing;
             m_min_initial_points = min_initial_points;
             m_good_keypoint_distance = good_keypoint_distance;
+            m_max_considered_overlaps = max_considered_overlaps;
         }
 
         cloud_vec const& keyScans() const{
@@ -291,7 +293,7 @@ class SlamCloudGraph{
             for(ti = transformations.begin(); ti != transformations.end(); ti++){
                 const Eigen::Matrix4f tr = ti->second.mat * ti->second.cloud->globalTransform();
                 const float speed = (tr - last_transform).block<3,1>(0,3).norm() /
-                                    (p->time() - m_all_scans.back()->time());
+                                    (p->time() - ti->second.cloud->time());
                 if(speed > m_max_speed){
                     warning() << "match implies moving too fast: ignoring ("
                               << speed << "/" << m_max_speed << ")";
@@ -304,7 +306,7 @@ class SlamCloudGraph{
                 error() << "no overlapping scans matched!";
                 if(transformations.size()){
                     // choose the best to return anyway:
-                    transformation = transformations.rbegin()->second.mat * transformations.rbegin()->second.cloud->globalTransform();
+                    transformation = transformations.rbegin()->second.cloud->globalTransform() * transformations.rbegin()->second.mat;
                 }else{
                     transformation = guess;
                 }
@@ -335,7 +337,7 @@ class SlamCloudGraph{
             p->setRelativeTo(parent_map_cloud);
             // set the returned transformation (if there are other constraints,
             // then we set this again after graph optimisation)
-            transformation = rel_transformation * parent_map_cloud->globalTransform();
+            transformation = p->globalTransform();
             
             // this scan is a key scan if it is more than a minimum distance
             // from other key-scans

@@ -29,7 +29,7 @@ class Benchmarker(object):
         self.learn_keypoints = False
         self.visualisation_video = True
         self.keypoints_video = False
-        self.inter_ping_delay = 0.8
+        self.inter_ping_delay = 0.2
         self.resolution = 800        
         # internal stuff:
         self.video_output_nodes = []
@@ -43,7 +43,7 @@ class Benchmarker(object):
         self.gemini.interPingDelay(6)
         self.gemini.range(20)
         self.gemini.gain(60)
-        self.gemini.rangeLines(400)
+        self.gemini.rangeLines(self.resolution)
         self.gemini.continuous(True)
         self.loadPipeline()
         # give the GUI time to get sorted out
@@ -125,17 +125,18 @@ class Benchmarker(object):
         sslam.p('euclidean fitness').set(1e-7)
         sslam.p('feature merge distance').set(0.2)
         sslam.p('graph iters').set(10)
-        sslam.p('keyframe spacing').set(1.5)
+        sslam.p('max matches').set(3)
+        sslam.p('keyframe spacing').set(2.0)
         assert(self.assoc_method in ('ICP', 'NDT', 'non-linear ICP'))
         sslam.p('match algorithm').set(self.assoc_method)
         sslam.p('grid step').set(3.5)
         sslam.p('ransac iterations').set(0)
         # !!! TODO: sensitivity to this:
-        sslam.p('max correspond dist').set(1.0)
+        sslam.p('max correspond dist').set(0.3)
         sslam.p('max iters').set(20)
         sslam.p('overlap threshold').set(0.3)
         sslam.p('reject threshold').set(0.05)
-        sslam.p('score threshold').set(0.1)
+        sslam.p('score threshold').set(0.02)
         sslam.p('transform eps').set(1e-9)
         sslam.p('weight test').set(0.5)
         sslam.p('xy metres/px').set(0.01) # unused, anyway
@@ -195,7 +196,8 @@ class Benchmarker(object):
     def runTest(self):
         #self.runTest_spin()
         #self.runTest_loop()
-        self.runTest_short()
+        #self.runTest_short()
+        self.runTest_reverseLoop()
     
     def runTest_spin(self):
         for bearing in(0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360):
@@ -208,20 +210,33 @@ class Benchmarker(object):
         time.sleep(57)
         self.auv.stop()
 
+    def runTest_reverseLoop(self):
+        self.auv.bearingAndWait(-6)
+
+        for bearing in (90, 0, -90, -180):
+            self.auv.bearingAndWait(bearing)
+            self.auv.prop(120)
+            time.sleep(57)
+            self.auv.prop(0)
+            time.sleep(1)
+
+        self.auv.stop()
+
+
     def runTest_loop(self):
         self.auv.bearingAndWait(-6)
         self.auv.bearingAndWait(0)
         self.auv.prop(110)
-        time.sleep(57)
+        #time.sleep(57)
 
-        #time.sleep(11.4)
-        #for x in [1,2]:
-        #    self.auv.bearing(15)
-        #    self.auv.prop(110)
-        #    time.sleep(11.4)
-        #    self.auv.bearing(-15)
-        #    self.auv.prop(110)
-        #    time.sleep(11.4)
+        time.sleep(11.4)
+        for x in [1,2]:
+            self.auv.bearing(15)
+            self.auv.prop(110)
+            time.sleep(11.4)
+            self.auv.bearing(-15)
+            self.auv.prop(110)
+            time.sleep(11.4)
 
         self.auv.prop(0)
         self.auv.bearingAndWait(45)
