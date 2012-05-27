@@ -25,7 +25,7 @@ class Benchmarker(object):
         self.gemini = sonar.Gemini(node)
         # configuration:
         self.test_name = test_name
-        self.assoc_method = 'NDT' # 'ICP', 'NDT', 'non-linear ICP'
+        self.assoc_method = 'ICP' # 'ICP', 'NDT', 'non-linear ICP'
         self.learn_keypoints = False
         self.visualisation_video = False
         self.visualisation_files = False
@@ -98,8 +98,8 @@ class Benchmarker(object):
         corners.p('non-maximum suppression').set(True)
         corners.p('threshold').set(30)
         br_crop = pl.addNode(nt.BearingRangeCrop)
-        br_crop.p('bearing start').set(-20.0)
-        br_crop.p('bearing end').set(20.0)
+        br_crop.p('bearing start').set(-50.0)
+        br_crop.p('bearing end').set(50.0)
         br_crop.p('range start').set(0.0)
         br_crop.p('range end').set(120.0)
         delay = pl.addNode(nt.Delay)
@@ -127,13 +127,13 @@ class Benchmarker(object):
         assert(self.assoc_method in ('ICP', 'NDT', 'non-linear ICP'))
         sslam.p('match algorithm').set(self.assoc_method)
         sslam.p('grid step').set(7)
-        sslam.p('ransac iterations').set(10)
+        sslam.p('ransac iterations').set(0)
         # !!! TODO: sensitivity to this:
-        sslam.p('max correspond dist').set(0.35)
-        sslam.p('max iters').set(50)
+        sslam.p('max correspond dist').set(0.5)
+        sslam.p('max iters').set(20)
         sslam.p('overlap threshold').set(0.3)
-        sslam.p('reject threshold').set(0.1)
-        sslam.p('score threshold').set(0.08)
+        sslam.p('reject threshold').set(0.3)
+        sslam.p('score threshold').set(0.12)
         sslam.p('transform eps').set(1e-9)
         sslam.p('weight test').set(0.5)
         sslam.p('xy metres/px').set(0.01) # unused, anyway
@@ -212,7 +212,7 @@ class Benchmarker(object):
         crop.o('image out (not copied)').connect(guio.i('image_in'))
     def runTest(self):
         #time.sleep(60.0*60.0*2.0)
-        time.sleep(30)
+        time.sleep(60)
 
 
 if __name__ == '__main__':
