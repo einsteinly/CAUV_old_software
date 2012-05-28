@@ -9,6 +9,7 @@ import subprocess
 import sys
 import time
 import watchfuncs
+import traceback
 
 import utils.multitasking
 from cauv.debug import debug, info, warning, error
@@ -56,13 +57,20 @@ class WatchProcess:
             else:
                 raise
 
-        null_fd = os.open("/dev/null", os.O_RDWR)
-        os.dup2(null_fd, sys.stdin.fileno())
-        os.dup2(null_fd, sys.stdout.fileno())
-        os.dup2(null_fd, sys.stderr.fileno())
-
         argv = shlex.split(command)
-        os.execlp(argv[0], *argv)
+
+        if self.settings.detach:
+            null_fd = os.open("/dev/null", os.O_RDWR)
+            os.dup2(null_fd, sys.stdin.fileno())
+            os.dup2(null_fd, sys.stdout.fileno())
+            os.dup2(null_fd, sys.stderr.fileno())
+
+        try:
+            os.execlp(argv[0], *argv)
+            error("Exec returned for some reason?")
+        except Exception as e:
+            import traceback
+            error(traceback.format_exc())
 
     def tick(self):
         if self.pid is not None:
@@ -116,11 +124,14 @@ def setup_core_dumps():
         else:
             raise
     
-Settings = collections.namedtuple('Settings', ['user', 'script_dir', 'bin_dir'])
+Settings = collections.namedtuple('Settings', ['user', 'script_dir', 'bin_dir', 'detach'])
+
+def currentUser():
+    return pwd.getpwuid(os.getuid())[0]
 
 class Watcher:
     def __init__(self, processes = None, core_dumps = False, log_dir = None,
-            default_user = None, script_dir = '', bin_dir = ''):
+            default_user = currentUser(), script_dir = '', bin_dir = '', detach = True):
         if core_dumps:
             setup_core_dumps()
         if processes is None:
@@ -128,7 +139,7 @@ class Watcher:
         if log_dir:
             os.environ["CAUV_LOG_DIR"] = log_dir
 
-        self.settings = Settings(default_user, script_dir, bin_dir)
+        self.settings = Settings(default_user, script_dir, bin_dir, detach)
 
         self.processes = [WatchProcess(p, self.settings) for p in processes]
 
@@ -138,7 +149,7 @@ class Watcher:
                 p.tick()
             time.sleep(tick_time)
 
-    def kill(self, signal):
+    def kill(self, signal=15):
         for p in self.processes:
             p.kill(signal)
 

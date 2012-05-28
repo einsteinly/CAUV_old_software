@@ -71,7 +71,6 @@ class $className : public Message
         virtual std::string _str() const; 
     
     private:
-#if $len($m.fields) > 0
         void deserialise() const;
         inline void checkDeserialised() const{
             if(!m_deserialised){
@@ -95,7 +94,6 @@ class $className : public Message
     #end for
 
         mutable const_svec_ptr m_bytes;
-#end if
 
     friend void serialise(svec_ptr, $className const&);
     friend std::string chil($className const&);

@@ -10,9 +10,6 @@ import utils.watch as watch
 from cauv.debug import debug, info, warning, error
 from cauv.messaging import debugParseOptions
 
-def currentUser():
-    return pwd.getpwuid(os.getuid())[0]
-
 parser = argparse.ArgumentParser(description = "Start up and monitor CAUV nodes and other programs", add_help = False)
 
 parser.add_argument("--session", "-s", help="session file to use")
@@ -36,7 +33,7 @@ parser.add_argument("--bin-dir",     "-b",  help="binary files directory",      
 parser.add_argument("--script-dir",  "-p",  help="script files directory",                   default = '.')
 parser.add_argument("--log-dir",     "-l",  help="log directory for files")
 parser.add_argument("--kill",        "-k",  help="Kill all processes in session",            nargs='?', type=int, const=15)
-parser.add_argument("--user",        "-u",  help="Default user to run processes as",         default=currentUser())
+parser.add_argument("--user",        "-u",  help="Default user to run processes as",         default=watch.currentUser())
 
 args = parser.parse_args()
 

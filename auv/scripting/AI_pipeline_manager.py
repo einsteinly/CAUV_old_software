@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 from AI_classes import aiProcess, external_function
 
 from cauv.debug import info, warning, error, debug

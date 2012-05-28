@@ -2,8 +2,9 @@
 import subprocess
 import time
 import argparse
-import cPickle
 import threading
+import utils.watch as watch
+import utils.watchfuncs as wf
 
 from cauv.debug import info, debug, warning, error
 from cauv import messaging
@@ -23,91 +24,68 @@ auv control - listens to messages from scripts and emergency control
 
 main process keeps sets up things alive
 """
-#TODO cope with restarts
-class Process():
-    def __init__(self, command, opts):
-        self.command = command
-        self.opts = opts
-        self.started = threading.Event()
-    def start(self):
-        c = ' '.join(self.command)+' '+' '.join(['--%s=%s' %(x[0],str(x[1])) if not isinstance(x[1], bool) else ('--'+x[0] if x[1] else '') for x in self.opts.items()])
-        info('Running command: '+c)
-        if 'restore' in self.opts: self.opts['restore'] = True #if the process stops we want to try and restore it with its old data
-        self.process = subprocess.Popen(c.split(' '))
-        self.started.wait(5)
-        if not self.started.is_set():
-            warning('Process %s did not respond in time after it was started, may be dead or still starting.' %(self.command,))
-    def status(self):
-        if self.process.poll():
-            return 0
-        return 1
-    def terminate(self):
-        pass
-
-process_data_list = (
-            ('pl_manager', '/bin/sh ./run.sh ./AI_pipeline_manager.py', ['disable_gui', 'reset_pls', 'freeze_pls', 'restore']),
-            ('auv_control', '/bin/sh ./run.sh ./AI_control_manager.py', []),
-            ('detector_control', '/bin/sh ./run.sh ./AI_detection_process.py', ['disable_control']),
-            ('task_manager', '/bin/sh ./run.sh ./AI_task_manager.py', ['mission', 'restore']),
-            ('location', '/bin/sh ./run.sh ./AI_location.py', []),
-            )
+#list of tuples of watch processes and the set of arguments to pass along to them
+# i.e. [(process, {'arg_to_pass', 'other arg'}), ...]
+processes = [
+    (wf.Process('pl_manager',        '{SDIR}',  wf.node_pid('ai_plman'),        wf.restart(3),  None,
+                    ['{SDIR}/AI_pipeline_manager.py']),
+                        {'disable_gui', 'reset_pls', 'freeze_pls', 'restore'}),
+    (wf.Process('auv_control',       '{SDIR}',  wf.node_pid('aiauv_co'),       wf.restart(3),  None, 
+                    ['{SDIR}/AI_control_manager.py']),
+                         set()),
+    (wf.Process('detector_control',  '{SDIR}',  wf.node_pid('aidetect'),  wf.restart(3),  None, 
+                    ['{SDIR}/AI_detection_process.py']),
+                         {'disable_control'}),
+    (wf.Process('task_manager',      '{SDIR}',  wf.node_pid('aitask_m'),  wf.restart(3),  None,
+                    ['{SDIR}/AI_task_manager.py']),
+                         {'mission', 'restore'}),
+    (wf.Process('location',          '{SDIR}',  wf.node_pid('ailocati'),          wf.restart(3),  None,
+                    ['{SDIR}/AI_location.py']),
+                         set()),
+]
 
 class AImanager(aiProcess):
-    def __init__(self, **kwargs):
+    def __init__(self, opts):
         aiProcess.__init__(self, "manager")
-        self.kwargs = kwargs
-        if 'disable' in self.kwargs:
-            disable = self.kwargs.pop('disable')
-        self.processes = OrderedDict()
-        for process_data in process_data_list:
-            if not process_data[0] in disable:
-                self.processes[process_data[0]] = Process(process_data[1].split(' '),opts=dict([(x,self.kwargs[x]) for x in process_data[2]]))
+        self.processes = []
+        for process, pass_args in processes:
+            if process.name in opts['disable']:
+                continue
+            #'clever' code alert
+            process.cmds[0] = process.cmds[0] + ' ' + \
+                            ' '.join(('--{}={}'.format(x, opts[x]) if not isinstance(opts[x],bool) else 
+                                      ('--' + x if opts[x] else '')
+                                      for x in opts if x in pass_args))
+            self.processes.append(process)
+        self.watcher = watch.Watcher(self.processes, detach=True)
     def _register(self):
         #do this rather than register as registering registers with this process
         print "registering"
         self.node.addObserver(self._msg_observer)
     def run(self):
-        for process_name in self.processes:
-            self.processes[process_name].start()
-        while True:
-            for process_name in self.processes:
-                process = self.processes[process_name]
-                if process.status() == 0:
-                    process.started.clear()
-                    process.start()
-                time.sleep(0.5)
-            time.sleep(2)
+        self.watcher.monitor(2)
     @external_function
     def register(self, calling_process):
-        info('Registering %s' %calling_process)
-        try:
-            self.processes[calling_process].started.set()
-        except KeyError:
-            warning("Unknown process tried to register as started.")
-            
-if __name__ == '__main__':
-    p = argparse.ArgumentParser()
-    p.add_argument('-r', '--restore', dest='restore', default=False,
-                 action='store_true', help="try and resume from last saved state")
-    p.add_argument('-m', '--mission', dest='mission', default='mission',
-                 type=str, action='store', help='which mission script to run (default = mission)')
-    p.add_argument('--disable-gui', dest='disable_gui', default=False,
-                 action='store_true', help="disable/ignore gui output nodes")
-    p.add_argument('--disable-control', dest='disable_control', default=False,
-                 action='store_true', help="stop AI script from controlling the sub")
-    p.add_argument('--disable', dest='disable', default=[],
-                 type=str, action='append', help="disable process by name")
-    p.add_argument('--reset-pls', dest='reset_pls', default=False,
-                 action='store_true', help="reset pipelines to those stored in /pipelines")
-    p.add_argument('--freeze-pls', dest='freeze_pls', default=False,
-                 action='store_true', help="ignore changes to the pipeline")
-    p.add_argument('-w', '--loc-wait', dest='wait', type=int, default=30, help="time to wait inbetween captures")
-    p.add_argument('-t', '--loc-timeout', dest='timeout', type=int, default=15, help='maximum time to wait for a position fix')
-    p.add_argument('-s', '--loc-script', dest='script', default="bay_processor", help='script to process sonar data')
-    opts, args = p.parse_known_args()
-    #unfortunately opts looks like dict but is not. fortunately opts.__dict__ is.
-    ai = AImanager(**opts.__dict__)
-    try:
-        ai.run()
-    finally:
-        ai.node.stop()
+        info('Registering %s' % calling_process)
+
+parser = argparse.ArgumentParser(description="Manage a group of AI processes")
+parser.add_argument('--disable', action='append', default=[], help="disable process by name")
+p = parser.add_argument_group(title="Arguments passed to subprocesses")
+p.add_argument('-r','--restore',      action='store_true',      help="try and resume from last saved state")
+p.add_argument('-m','--mission',      default='mission',        help='which mission script to run')
+p.add_argument('--disable-gui',       action='store_true',      help="disable/ignore gui output nodes")
+p.add_argument('--disable-control',   action='store_true',      help="stop AI script from controlling the sub")
+p.add_argument('--reset-pls',         action='store_true',      help="reset pipelines to those stored in /pipelines")
+p.add_argument('--freeze-pls',        action='store_true',      help="ignore changes to the pipeline")
+#the next two should be ints but they're just being passed along so treat them as strings
+p.add_argument('-w','--loc-wait',     default='30',             help="time to wait inbetween captures")
+p.add_argument('-t','--loc-timeout',  default='15',             help='maximum time to wait for a position fix')
+p.add_argument('-s','--loc-script',   default="bay_processor",  help='script to process sonar data')
+opts = parser.parse_args()
+ai = AImanager(opts.__dict__)
+
+try:
+    ai.run()
+finally:
+    ai.watcher.kill()
+    ai.node.stop()
