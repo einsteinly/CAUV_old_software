@@ -12,7 +12,7 @@ if (NOT CAUV_SEND_IO_STATUS_MESSAGES)
 endif()
 
 option (CAUV_POINTCLOUDS "Use PCL (enables sonar SLAM)" OFF)
-#option (CAUV_CLOUD_DUMP "Dump point-clouds to file" OFF)
+option (CAUV_DUMP_POSE_GRAPH "Dump pose graph to file" OFF)
 option (CAUV_CLOUD_VISUALISATION "Include last cloud in map visualisation (potentially expensive)" OFF)
 
 if (CAUV_POINTCLOUDS)
@@ -20,9 +20,6 @@ if (CAUV_POINTCLOUDS)
     
     #if (CAUV_CLOUD_DUMP)
     #    set (REQ_PCL_COMPONENTS ${REQ_PCL_COMPONENTS} io)
-    #endif ()
-    #if (CAUV_CLOUD_VISUALISATION)
-    #    set (REQ_PCL_COMPONENTS ${REQ_PCL_COMPONENTS} visualization)
     #endif ()
 
     find_package (PCL REQUIRED COMPONENTS ${REQ_PCL_COMPONENTS})
@@ -46,6 +43,11 @@ if (CAUV_POINTCLOUDS)
 
     if (CAUV_CLOUD_VISUALISATION)
         add_definitions(-DCAUV_CLOUD_VISUALISATION)
+    endif()
+    if (CAUV_DUMP_POSE_GRAPH)
+        add_definitions(-DCAUV_DUMP_POSE_GRAPH=1)
+    else()
+        add_definitions(-DCAUV_DUMP_POSE_GRAPH=0)
     endif()
 
     include_directories (${PCL_INCLUDE_DIRS})

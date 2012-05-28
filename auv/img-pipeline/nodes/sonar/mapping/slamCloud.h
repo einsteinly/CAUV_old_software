@@ -32,6 +32,7 @@
 #include <debug/cauv_debug.h>
 #include <generated/types/TimeStamp.h>
 #include <generated/types/KeyPoint.h>
+#include <utility/string.h>
 
 #include "graphOptimiser.h"
 #include "scanMatching.h"
@@ -89,7 +90,7 @@ class SlamCloudGraph{
               m_max_considered_overlaps(3),
               m_rotation_scale(4),
               m_graph_optimisation_count(0),
-              m_dump_pose_history(true),
+              m_dump_pose_history(CAUV_DUMP_POSE_GRAPH),
               m_key_scan_locations(new KDTreeCachingCloud<PointT>()),
               m_n_passed_good(0),
               m_n_passed_bad(0),
@@ -588,7 +589,7 @@ class SlamCloudGraph{
             return r;
         }
 
-
+        
         /* dump the pose history to file */
         void dumpPoseHistory(){
             const static int pid = getpid();

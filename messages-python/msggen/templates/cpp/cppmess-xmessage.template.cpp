@@ -92,7 +92,7 @@ const $toCPPType($f.type)& cauv::$className::${f.name}() const{
     checkDeserialised();
     #if $f.lazy
     // Lazy field: may not be deserialised yet
-    if(m_bytes && 0 == m_lazy_fields_deserialised.count($i)){
+    if(m_bytes && !m_lazy_fields_deserialised.count($i)){
         cauv::deserialise(m_bytes, m_lazy_field_${i}_offset, *m_${f.name});
         m_lazy_fields_deserialised.insert($i);
         if($m.numLazyFields() == m_lazy_fields_deserialised.size())
@@ -114,7 +114,7 @@ void cauv::$className::${f.name}($toCPPType($f.type) const& $f.name){
 #if $f.lazy
 void cauv::$className::get_${f.name}_inplace($toCPPType($f.type) &$f.name) const {
     checkDeserialised();
-    if (m_bytes && 0 == m_lazy_fields_deserialised.count($i)) {
+    if (m_bytes && !m_lazy_fields_deserialised.count($i)) {
         cauv::deserialise(m_bytes, m_lazy_field_${i}_offset, ${f.name});
     }
 }
@@ -173,7 +173,11 @@ static void serialiseLazyField(cauv::svec_ptr p, T const& v){
     *reinterpret_cast<uint32_t*>(&(*p)[initial_size]) = p->size() - initial_size;
 }
 #end if
+#if len($m.fields) > 0
 void cauv::serialise(svec_ptr p, $className const& v){
+#else
+void cauv::serialise(svec_ptr p, $className const&){
+#end if
     ## reserve estimated minimum message size
     p->reserve(#echo 4 *(1 + len($m.fields))#);
     ## message type
@@ -208,7 +212,11 @@ void cauv::$className::deserialise() const{
     m_bytes.reset();
     #end if
 }
+#if len($m.fields) > 0
 std::string cauv::chil($className const& v){
+#else
+std::string cauv::chil($className const&){
+#end if
     std::string r = "${m.id}(";
     #for i,f in $enumerate($m.fields)
         #if $f.lazy
