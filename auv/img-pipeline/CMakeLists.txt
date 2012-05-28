@@ -88,6 +88,7 @@ if (CAUV_POINTCLOUDS)
         target_link_libraries (
             test_slamCloud
             common
+            ${OpenCV_LIBS}
             ${CONDITIONAL_LIBS}
         )
     endif()
