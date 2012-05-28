@@ -298,6 +298,7 @@ class SlamCloudGraph{
                     warning() << "match implies moving too fast: ignoring ("
                               << speed << "/" << m_max_speed << ")";
                 }else{
+                    debug() << "match implies moving at" << speed / m_max_speed << "x maximum speed";
                     transformations_speed_checked.insert(*ti);
                 }
             }

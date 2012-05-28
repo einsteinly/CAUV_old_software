@@ -103,6 +103,18 @@ def processFiles(sim_log_file_name, slam_pose_file_name, out_file_name):
     with open(out_file_name, 'w') as out_file:
         writeCSV(rows, out_file)
 
+def processPosesFile(slam_pose_file_name, out_file_name):
+    with open(slam_pose_file_name) as slam_pose_file:
+        slam_xytT = xyThetaTimeFromPoseFile(slam_pose_file)
+    
+    rows = [['slam t', 'slam x', 'slam y', 'slam theta']]
+    for (x, y, t, T) in slam_xytT:
+        rows.append([ T, x, y, t])
+
+    with open(out_file_name, 'w') as out_file:
+        writeCSV(rows, out_file)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--sim-log-file", '-s', dest='sim_log_file')

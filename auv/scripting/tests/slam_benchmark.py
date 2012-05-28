@@ -313,7 +313,7 @@ if __name__ == '__main__':
     try:
         b = Benchmarker(node, opts.name)
         b.runTest()
-        b.processResults()
         b.teardown()
+        b.processResults()
     finally:
         node.stop()

@@ -7,6 +7,7 @@ import argparse
 import datetime
 import math
 import time
+import os
 
 # CAUV
 import cauv
@@ -22,16 +23,22 @@ class Benchmarker(object):
         self.node = node
         self.pl = pipeline.Model(node) 
         self.auv = control.AUV(node)
-        self.gemini = sonar.Gemini(node)
+        #self.gemini = sonar.Gemini(node)
         # configuration:
         self.test_name = test_name
         self.assoc_method = 'ICP' # 'ICP', 'NDT', 'non-linear ICP'
-        self.learn_keypoints = False
-        self.visualisation_video = False
+        self.learn_keypoints = True
+        self.visualisation_video = True
         self.visualisation_files = False
         self.keypoints_video = False
-        self.viz_superzoom = True
+        self.viz_superzoom = False
+        self.viz_midzoom = True
         self.resolution = 800
+        # important parameters:
+        self.reject_thr = 0.6      # higher = more support for score calculation, ransac support
+        self.max_correspond = 0.35 # hard to explain
+        self.weight_test = 0.1     # controls classifier ROC
+        self.score_thr = 0.09      # max error permitted for match
         # internal stuff:
         self.video_output_nodes = []
         self.setup()
@@ -46,6 +53,12 @@ class Benchmarker(object):
         for node in self.video_output_nodes:
             node.x()
         self.video_output_nodes = []
+        # close this to dump classifier stats to the log
+        self.sslam.x()
+        try:
+            os.system('ps -A | grep playLog | grep -v grep | sed "s/ *\\([0-9]*\\) .*/\\1/" | xargs kill')
+        except:
+            pass
 
     def loadPipeline(self):
         nt = msg.NodeType
@@ -108,11 +121,17 @@ class Benchmarker(object):
         draw_kps = pl.addNode(nt.DrawKeyPoints)
         correl = pl.addNode(nt.Correlation1D)
         sslam = pl.addNode(nt.SonarSLAM)
+        self.sslam = sslam
         if self.viz_superzoom:
             sslam.p('-vis origin x').set(-1.0)
             sslam.p('-vis origin y').set(-23.0)
             sslam.p('-vis resolution').set(1200)
             sslam.p('-vis size').set(40.0)
+        elif self.viz_midzoom:
+            sslam.p('-vis origin x').set(-1.0)
+            sslam.p('-vis origin y').set(-33.0)
+            sslam.p('-vis resolution').set(1200)
+            sslam.p('-vis size').set(60.0)
         else:
             sslam.p('-vis origin x').set(-2.0)
             sslam.p('-vis origin y').set(-50.0)
@@ -120,22 +139,23 @@ class Benchmarker(object):
             sslam.p('-vis size').set(100.0)
         sslam.p('clear').set(False)
         sslam.p('euclidean fitness').set(1e-7)
-        sslam.p('feature merge distance').set(0.2)
+        sslam.p('feature merge distance').set(0.4) # good-keypoint NN distance for classifier
         sslam.p('graph iters').set(10)
+        sslam.p('max matches').set(3)        
         #sslam.p('keyframe spacing').set(1.0)
-        sslam.p('keyframe spacing').set(2.0)
+        sslam.p('keyframe spacing').set(4.0)
         assert(self.assoc_method in ('ICP', 'NDT', 'non-linear ICP'))
         sslam.p('match algorithm').set(self.assoc_method)
         sslam.p('grid step').set(7)
         sslam.p('ransac iterations').set(0)
         # !!! TODO: sensitivity to this:
-        sslam.p('max correspond dist').set(0.5)
-        sslam.p('max iters').set(20)
+        sslam.p('max correspond dist').set(self.max_correspond)
+        sslam.p('max iters').set(15)
         sslam.p('overlap threshold').set(0.3)
-        sslam.p('reject threshold').set(0.3)
-        sslam.p('score threshold').set(0.12)
+        sslam.p('reject threshold').set(self.reject_thr)
+        sslam.p('score threshold').set(self.score_thr)
         sslam.p('transform eps').set(1e-9)
-        sslam.p('weight test').set(0.5)
+        sslam.p('weight test').set(self.weight_test) # lower = pass more keypoints through filter
         sslam.p('xy metres/px').set(0.01) # unused, anyway
         nop.o('image out (not copied)').connect(corners.i('image in'))
         nop.o('image out (not copied)').connect(br_crop.i('polar image'))
@@ -212,8 +232,30 @@ class Benchmarker(object):
         crop.o('image out (not copied)').connect(guio.i('image_in'))
     def runTest(self):
         #time.sleep(60.0*60.0*2.0)
-        time.sleep(60)
+        time.sleep(60.0*10)
+    
+    def processResults(self):
+        from tools import slam_performance
+        import os
+        
+        # find the latest slam pose dump:
+        dirs = [os.path.join('/tmp/cauv/slamdump/',d) for d in os.listdir('/tmp/cauv/slamdump/')]
+        latest_dir = max(dirs, key=os.path.getmtime)
+        # and latest pose file in directory:
+        files = [os.path.join(latest_dir, f) for f in os.listdir(latest_dir) if f.startswith('poses')]
+        poses_file = max(files, key=os.path.getmtime)
 
+        # find the latest simulator log file
+        #files = [os.path.join('./session-logs/', d) for d in os.listdir('./session-logs/') if d.find('sim.py.log') != -1]
+        #sim_logfile = max(files, key=os.path.getmtime)
+
+        out_file = '%s-%s-learn=%s.csv' % (
+            self.test_name,
+            self.assoc_method,
+            int(self.learn_keypoints)
+        )
+
+        slam_performance.processPosesFile(poses_file, out_file)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -226,6 +268,7 @@ if __name__ == '__main__':
         b = Benchmarker(node, opts.name)
         b.runTest()
         b.teardown()
+        b.processResults()
     finally:
         node.stop()
 
