@@ -49,8 +49,11 @@ int main(){
             i=i;
         s.callAfterMicroseconds(foo<22347>, 12347);
         s.callAfterMicroseconds(foo<22348>, 12348);
-        for(int i = 0; i < 100; i++)
-            s.callAfterMicroseconds(foo<100>, 200*i);
+        for(int i = 0; i < 10; i++)
+            s.callAfterMicroseconds(foo<100>, 2000*i);
+        s.cancelAllCallbacks();
+        for(int i = 0; i < 10; i++)
+            s.callAfterMicroseconds(foo<222>, 2000*i);
         //for(int i = 0; i < 100; i++)
         //    s.callAfterMicroseconds(foo<1000000>, i*1e6);
         s.waitForCompletion();

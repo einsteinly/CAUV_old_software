@@ -24,6 +24,7 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <debug/cauv_debug.h>
 
@@ -56,6 +57,8 @@ class AsyncService{
         }
 
         ~AsyncService(){
+            // timers must be destroyed before the ioservice that they
+            // reference
             m_inactive_timers.clear();
             m_ioservice.stop();
             for(std::vector<thread_ptr>::iterator i = m_threads.begin(); i != m_threads.end(); i++){
@@ -107,9 +110,14 @@ class AsyncService{
 
         /* self explanatory */
         void callAfterMicroseconds(function_t foo, uint32_t microseconds){
+            callAfterTime(foo, boost::posix_time::microseconds(microseconds));
+        }
+
+        template<typename Time>
+        void callAfterTime(function_t foo, Time time){
             timer_ptr timer = getTimer();
 
-            timer->expires_from_now(boost::posix_time::microseconds(microseconds));
+            timer->expires_from_now(time);
             timer->async_wait(boost::bind(&AsyncService::callbackThunk, this, _1, timer, foo));
 
             lock_t l(m_have_work_to_do_mux);

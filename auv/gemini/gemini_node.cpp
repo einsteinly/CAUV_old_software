@@ -19,10 +19,7 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
-#include <boost/thread.hpp>
-#include <boost/asio.hpp>
 #include <boost/bind.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -33,6 +30,7 @@
 #include <utility/rounding.h>
 #include <utility/foreach.h>
 #include <utility/string.h>
+#include <utility/async.h>
 #include <generated/types/TimeStamp.h>
 #include <generated/types/GeminiStatusMessage.h>
 #include <generated/types/SonarImageMessage.h>
@@ -43,11 +41,6 @@
 // Gemini SDK comes last because it pollutes the global namespace
 #include "GeminiStructuresPublic.h"
 #include "GeminiCommsPublic.h"
-
-// !!!!!!!!!!!! FIXME: this is broken at the moment.
-// !!!!!!!!!!!!        I'm going to the boost ioservice stuff into a little
-//                     helper lib for asynchronous callbacks, but it isn't a
-//                     high priority right now
 
 namespace cauv{
 
@@ -304,7 +297,7 @@ class ReBroadcaster: public GeminiObserver{
                 full_resolution_image,
                 downsampled_image,
                 downsampled_image.size(),
-                0, 0, cv::INTER_LINEAR
+                0, 0, cv::INTER_LINEAR // !!! INTER_AREA might be better
             );
             debug() << "sending SonarImageMessage:" << bearing_beams << "x" << resize_to_rangelines;
             #else
@@ -344,33 +337,32 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
               m_range_lines(200),
               m_ping_continuous(false),
               m_conn_state(),
-              m_ioservice(),
-              m_timer_ptr(boost::make_shared<boost::asio::deadline_timer>(boost::ref(m_ioservice))),
-              m_timeout_timer_ptr(boost::make_shared<boost::asio::deadline_timer>(boost::ref(m_ioservice))),
-              m_ioservice_thread(),
-              m_need_callback(),
-              m_need_callback_mux(),
-              m_stop(false),
-              m_cancel_timeout(true){
+              m_async_service(1),
+              m_cancel_timeout_mux(),
+              m_cancel_timeout(false),
+              m_gem_mux(){
             assert(!the_sonar);
             the_sonar = this;
             m_conn_state.ok = true;
             m_conn_state.initialised = false;
-            m_ioservice_thread = boost::thread(boost::bind(&GeminiSonar::runIOService, this));
         }
 
         ~GeminiSonar(){
-            lock_t l(m_gem_mux);        
-            m_stop = true;
-            m_timer_ptr->cancel();
-            m_ioservice.stop();
-            m_ioservice_thread.interrupt();
-            m_ioservice_thread.join();
+            //m_async_service.waitForCompletion();
+            lock_t l(m_gem_mux);
             the_sonar = NULL;
         }
 
         float range() const{
             return m_range;
+        }
+
+        bool ok() const{
+            return m_conn_state.ok;
+        }
+
+        bool initialised() const{
+            return m_conn_state.initialised;
         }
 
         void autoConfig(float range, float gain_percent){
@@ -394,22 +386,17 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 char mode[] = "EvoC";
                 GEM_SetGeminiSoftwareMode(mode);
                 GEM_SetHandlerFunction(&CallBackFn);
-                // shouldn't be necessary
-                //GEM_UseAltSonarIPAddress(
-                //    10, 0, 0, 100,
-                //    255, 255, 255, 0
-                //);
             }
         }
-
-        bool ok() const{
-            return m_conn_state.ok;
-        }
-
-        bool initialised() const{
-            return m_conn_state.initialised;
-        }
-
+        
+        // postcondition:
+        // Either:
+        //  An error occurs, and this function returns immediately with no
+        //  state changes
+        // Or:
+        //  m_gem_mux is locked, the config is applied to the sonar, triggering
+        //  a ping, and a timeout is setup (after three seconds) in case a ping
+        //  is not received from the sonar.
         void applyConfigAndPing(){
             debug() << "applyConfigAndPing...";
             if(!initialised()){
@@ -418,6 +405,10 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             }else if(!ok()){
                 error() << "will not ping: connection not ok";
                 return;
+            }
+            lock_t l(m_cancel_timeout_mux);
+            if(!m_cancel_timeout){
+                error() << "will not ping: ping already prepared!";
             }
             m_gem_mux.lock();
             GEM_AutoPingConfig(m_range, m_gain_percent, m_sos);
@@ -445,12 +436,10 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             GEM_SetPingMode(0);
             debug() << "SendPingConfig: range" << m_range << "gain" << m_gain_percent;
             m_cancel_timeout = false;
-            boost::system::error_code ec;
-            m_timeout_timer_ptr->expires_from_now(boost::posix_time::seconds(3), ec);
-            if(ec)
-                error() << "setting callback:" << ec.message();
-            m_timeout_timer_ptr->async_wait(boost::bind(&GeminiSonar::onTimeOut, this, _1));
-            m_need_callback.notify_all();
+            m_async_service.callAfterTime(
+                boost::bind(&GeminiSonar::prepareNextPing, this, "timeout!"),
+                boost::posix_time::seconds(3)
+            );
             GEM_SendGeminiPingConfig();
         }
 
@@ -698,7 +687,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     the_sonar->onStatusPacket(status_packet);
 
                 if(ping_tail || ping_tail_ex)
-                    the_sonar->prepareNextPing();
+                    the_sonar->prepareNextPing("ping tail");
 
                 boost::lock_guard<boost::recursive_mutex> l(the_sonar->m_observers_lock);
                 foreach(observer_ptr_t& p, the_sonar->m_observers){
@@ -726,65 +715,25 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
 
         // precondition: m_gem_mux is locked from a previous ping: this unlocks
         // it unconditionally
-        void prepareNextPing(){
+        //
+        // Another ping will only be prepared if m_ping_continuous is true
+        void prepareNextPing(std::string const& descr){
+            debug() << "prepareNextPing" << descr;
+
+            lock_t l(m_cancel_timeout_mux);
+            if(m_cancel_timeout)
+                return;
             m_cancel_timeout = true;
-            debug() << "prepareNextPing";
+
             if(m_ping_continuous){
                 debug() << "(continuous)";
                 // set off another ping after m_inter_ping_musec:
-                lock_t l(m_need_callback_mux);
-                boost::system::error_code ec;
-                m_timer_ptr->expires_from_now(boost::posix_time::microseconds(m_inter_ping_musec), ec);
-                if(ec)
-                    error() << "setting callback:" << ec.message();
-                m_timer_ptr->async_wait(boost::bind(&GeminiSonar::onTimerExpiry, this, _1));
-                m_need_callback.notify_all();
+                m_async_service.callAfterMicroseconds(
+                    boost::bind(&GeminiSonar::applyConfigAndPing, the_sonar),
+                    m_inter_ping_musec
+                );
             }
             m_gem_mux.unlock();
-        }
-
-        void onTimeOut(boost::system::error_code const& ec){
-            if(m_cancel_timeout)
-                return;
-            warning() << "timeout timer expired!";
-            if(ec == boost::asio::error::operation_aborted){
-                debug() << "timeout timer cancelled";
-            }else if(ec){
-                error() << "timeout timer error: " << ec.message();
-            }else{
-                prepareNextPing();
-            }
-        }
-
-        void onTimerExpiry(boost::system::error_code const& ec){
-            debug() << "timer expired!";
-            if(ec == boost::asio::error::operation_aborted){
-                debug() << "timer cancelled";
-            }else if(ec){
-                error() << "timer error: " << ec.message();
-            }else{
-                applyConfigAndPing();
-            }
-        }
-
-        void runIOService(){
-            debug() << "runIOService...";
-            while(true){
-                debug() << "runIOService tick";
-                boost::system::error_code ec;
-                lock_t l(m_need_callback_mux);
-                std::size_t executed = m_ioservice.run(ec);
-                if(ec)
-                    debug() << "io_service error:" << ec.message();
-                if(m_stop)
-                    break;
-                if(!executed){
-                    debug() << "didn't execute anything, resetting the IO service, waiting for need_callback...";
-                    m_ioservice.reset();
-                    m_need_callback.wait(l);
-                    debug() << "need_callback notified!";
-                }
-            }
         }
 
         float m_sos;
@@ -801,14 +750,10 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             uint16_t sonarId;
             uint32_t sonarAltIp;
         } m_conn_state;
+        
+        AsyncService m_async_service;
 
-        boost::asio::io_service m_ioservice;
-        boost::shared_ptr<boost::asio::deadline_timer> m_timer_ptr;
-        boost::shared_ptr<boost::asio::deadline_timer> m_timeout_timer_ptr;
-        boost::thread m_ioservice_thread;
-        boost::condition_variable m_need_callback;
-        mutex_t m_need_callback_mux;
-        bool m_stop;
+        mutex_t m_cancel_timeout_mux;
         bool m_cancel_timeout;
 
         mutex_t m_gem_mux;
