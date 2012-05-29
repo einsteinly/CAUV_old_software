@@ -100,7 +100,7 @@ class LinearpiecewiseApprox(blist.sorteddict):
         )
         return self.rfunc(r)
     
-    def __getitem_zeroOrder_(self, k):
+    def __getitem_zeroOrder__(self, k):
         # interpolates if a value is not present for the specified key
         # NB: self._sortedkeys not copied! (faster than using self.keys())
         sorted_keys = self._sortedkeys #pylint: disable=E1101

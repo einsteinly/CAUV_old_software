@@ -107,6 +107,7 @@ class SonarSLAMImpl{
     public:
         SonarSLAMImpl()
             : m_graph(),
+              m_cumulative_rotation_guess(0),
               m_vis_metres_per_px(0),
               m_vis_origin(0,0),
               m_vis_res(0,0),
@@ -120,16 +121,18 @@ class SonarSLAMImpl{
 
         void reset(){
             m_graph.reset();
+            m_cumulative_rotation_guess = 0;
             initVis();
         }
 
         void setGraphProperties(float overlap_threshold,
                                 float keyframe_spacing,
                                 float min_initial_points,
-                                float good_keypoint_distance){
+                                float good_keypoint_distance,
+                                int max_considered_overlaps){
             m_graph.setParams(
                 overlap_threshold, keyframe_spacing, min_initial_points,
-                good_keypoint_distance
+                good_keypoint_distance, max_considered_overlaps
             );
         }
 
@@ -137,17 +140,35 @@ class SonarSLAMImpl{
         float registerScan(cloud_ptr scan,
                            PairwiseMatcher<pt_t> const& scan_matcher,
                            GraphOptimiser const& graph_optimiser,
-                           Eigen::Matrix4f const& rotation_guess_relative_to_last_scan, 
+                           float rotation_guess_relative_to_last_scan,
+                           Eigen::Matrix4f& guessed_transformation,
                            Eigen::Matrix4f& global_transformation){
-            Eigen::Matrix4f guess = m_graph.guessTransformationAtTime(
-                scan->time(), rotation_guess_relative_to_last_scan
+
+            m_cumulative_rotation_guess += rotation_guess_relative_to_last_scan;
+
+            Eigen::Matrix4f rotation_guess = Eigen::Matrix4f::Identity();
+            rotation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
+                Eigen::AngleAxisf(m_cumulative_rotation_guess, Eigen::Vector3f::UnitZ())
             );
 
-            // return guess if no match
-            global_transformation = guess;
-            return m_graph.registerScan(
+            Eigen::Matrix4f guess = m_graph.guessTransformationAtTime(
+                scan->time(), rotation_guess
+            ); 
+            
+            guessed_transformation = guess;
+
+            const float r = m_graph.registerScan(
                 scan, guess, scan_matcher, graph_optimiser, global_transformation
             );
+
+            if(r != 0){
+                // reset cumulative rotation since last scan matched
+                m_cumulative_rotation_guess = 0;
+            }else{
+                debug() << "cumulative rotation guess grows to:" << m_cumulative_rotation_guess;
+            }
+
+            return r;
         }
 
         void setVisProperties(Eigen::Vector2i const& res,
@@ -285,8 +306,9 @@ class SonarSLAMImpl{
             m_vis_allframes_included = all_scans.size();
         }
 
-        void updateLastScanVis(cloud_ptr p, cv::Scalar const& colour){
-            m_vis_last_cloud = cv::Mat(cv::Size(m_vis_res[0], m_vis_res[1]), CV_8UC3, cv::Scalar(0));
+        void updateLastScanVis(cloud_ptr p, cv::Scalar const& colour, bool clear=false){
+            if(clear)
+                m_vis_last_cloud = cv::Mat(cv::Size(m_vis_res[0], m_vis_res[1]), CV_8UC3, cv::Scalar(0));
 
             Eigen::Matrix4f const& global_transform = p->globalTransform();
             const Eigen::Vector2f image_pt = toVisCoords(
@@ -315,6 +337,8 @@ class SonarSLAMImpl{
 
     private:
         SlamCloudGraph<pt_t> m_graph;
+        
+        float m_cumulative_rotation_guess;
 
         float m_vis_metres_per_px;
         Eigen::Vector2f m_vis_origin;
@@ -346,7 +370,6 @@ void SonarSLAMNode::init(){
     // inputs:
     registerParamID("keypoints", kp_vec(), "(xy) keypoints used to update map", Must_Be_New);
     registerParamID("training: polar keypoints", kp_vec(), "", Must_Be_New);
-    // ... not implemented yet
     requireSyncInputs("keypoints", "training: polar keypoints");
     
     registerInputID("keypoints image", Optional); // image from which the keypoints came: actually just passed straight back out with the keypoints training data
@@ -372,13 +395,18 @@ void SonarSLAMNode::init(){
     registerParamID("euclidean fitness", float(1e-7), "max error between consecutive steps for non-convergence");
     // ICP only:
     registerParamID("reject threshold", float(0.5), "RANSAC outlier rejection distance");
-    registerParamID("max correspond dist", float(1), "");
+    registerParamID("max correspond dist", float(1), ""); // also used for fitness score of NDT
     registerParamID("ransac iterations", int(10), "RANSAC iterations");
+
+    // NDT only:
+    registerParamID("grid step", float(2.5), "NDT grid step");
+
     // ICP / NDT / NDT non-linear
     registerParamID("match algorithm", std::string("ICP"), "ICP, Non-Linear ICP, or NDT");
     
     // Graph Optimisation Parameters
     registerParamID("graph iters", int(10), "Iterations of graph optimisation per key-scan");
+    registerParamID("max matches", int(3), "Maximum number of pairwise correspondences for each scan");
 
     // Visualisation Parameters:
     //registerParamID("-render resolution", float(400), "in pixels");
@@ -431,8 +459,10 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     const float max_correspond_dist = param<float>("max correspond dist");
     const std::string match_algorithm = param<std::string>("match algorithm");    
     const int ransac_iters          = param<int>("ransac iterations");
+    const float grid_step           = param<float>("grid step");
 
     const int graph_iters = param<int>("graph iters");
+    const int max_matches = param<int>("max matches");
 
     const float score_thr   = param<float>("score threshold");
     const float delta_theta = param<float>("delta theta");
@@ -454,7 +484,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     //const Eigen::Vector2f render_origin(param<int>("-render origin x"),
     //                                 param<int>("-render origin y"));
     
-    m_impl->setGraphProperties(overlap_threshold, keyframe_spacing, 10, point_merge_distance);
+    m_impl->setGraphProperties(overlap_threshold, keyframe_spacing, 10, point_merge_distance, max_matches);
     m_impl->setVisProperties(vis_res, vis_origin, vis_size/vis_res[0]);
 
     image_ptr_t xy_image = inputs["xy image"];
@@ -472,7 +502,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     boost::shared_ptr< PairwiseMatcher<pt_t> > scan_matcher;
     if(boost::iequals(match_algorithm, "NDT")){
         scan_matcher = makeNDTPairwiseMatcherShared(
-            max_iters, euclidean_fitness, transform_eps, score_thr
+            max_iters, euclidean_fitness, transform_eps, max_correspond_dist, score_thr, grid_step
         );
     }else if(boost::iequals(match_algorithm, "ICP")){
         scan_matcher = makeICPPairwiseMatcherShared(
@@ -494,18 +524,22 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     GraphOptimiserV1 graph_optimiser(graph_iters);
     
     debug () << "external delta theta =" << delta_theta * 180 / 3.14159 << "degrees";
-    Eigen::Matrix4f relative_rotation_guess = Eigen::Matrix4f::Identity();
+    /*Eigen::Matrix4f relative_rotation_guess = Eigen::Matrix4f::Identity();
     relative_rotation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
         Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ())
-    );
+    );*/
 
     Eigen::Matrix4f global_transformation = Eigen::Matrix4f::Zero();
+    Eigen::Matrix4f guessed_transformation = Eigen::Matrix4f::Zero();
 
     const float confidence = m_impl->registerScan(
         scan,
         *scan_matcher,
         graph_optimiser,
-        relative_rotation_guess,
+        //relative_rotation_guess,
+        // TODO: !!! the sign should be sorted out before this point
+        -delta_theta,
+        guessed_transformation,
         global_transformation
     );
 
@@ -517,10 +551,12 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     // potentially expensive: visualise every cloud:
     if(confidence > 0){
         // visualise at final position
-        m_impl->updateLastScanVis(scan, cv::Scalar(80, 80, 80));
+        m_impl->updateLastScanVis(scan, cv::Scalar(80, 80, 80), true);
     }else{
-        // visualise at guessed position
+        // visualise at guess and final position:
         scan->setRelativeToNone();
+        scan->setRelativeTransform(guessed_transformation);
+        m_impl->updateLastScanVis(scan, cv::Scalar(130, 10, 20), true);
         scan->setRelativeTransform(global_transformation);
         m_impl->updateLastScanVis(scan, cv::Scalar(10, 10, 120));
     }
@@ -537,141 +573,5 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     r["training: keypoints"] = training_keypoints;
     r["training: keypoints image"] = inputs["keypoints image"];
     r["training: goodness"] = scan->keyPointGoodness();
-
-
-#if 0
-    Eigen::Matrix4f delta_transformation = Eigen::Matrix4f::Identity();
-    delta_transformation.block<3,3>(0,0) = Eigen::Matrix3f(Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ()));
-
-    Eigen::Matrix4f guess = m_impl->last_transformation * delta_transformation;
-    // squish the z translation
-    guess(2,3) = 0;
-    //guess(0,2) = 0; guess(1,2) = 0;
-    //guess(2,0) = 0; guess(2,1) = 0;
-
-
-    // weight-test throwing away low scorers:
-    cloud_ptr new_cloud = kpsToCloud(
-        keypoints,
-        guess,
-        weight_test
-    );
-
-    if(!m_impl->whole_cloud){
-        if(new_cloud->size() > Min_Initial_Points){
-            info() << BashColour::Green
-                   << "new cloud with" << new_cloud->size() << "points";
-            m_impl->init(new_cloud);
-            debug(3) << "transformation is:\n" << m_impl->last_transformation;
-
-            r["whole cloud vis"] = boost::make_shared<Image>(renderCloud(
-                *(m_impl->whole_cloud), Eigen::Vector2f(0,0), m_impl->min(), m_impl->max(), render_sz, false
-            ));
-        }else{
-            r["whole cloud vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
-            debug() << "not enough points ("
-                    << new_cloud->size() << "<" << Min_Initial_Points
-                    << ") to initialise whole cloud";
-        }
-        r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
-    }else{
-        debug() << "trying to match" << new_cloud->size() << "points to cloud";
-
-        //pcl::IterativeClosestPointNonLinear<pt_t,pt_t> icp;
-        pcl::IterativeClosestPoint<pt_t,pt_t> icp;
-        icp.setInputCloud(new_cloud);
-        icp.setInputTarget(m_impl->whole_cloud);
-        //icp.setInputTarget(m_impl->last_cloud);
-
-        icp.setMaxCorrespondenceDistance(max_correspond_dist);
-        icp.setMaximumIterations(max_iters);
-        icp.setTransformationEpsilon(transform_eps);
-        icp.setEuclideanFitnessEpsilon(euclidean_fitness);
-        icp.setRANSACOutlierRejectionThreshold(reject_threshold);
-
-        /* weight-test using indices vector:
-        boost::shared_ptr< std::vector<int> >indices = boost::make_shared<std::vector<int> >();
-        for(size_t i =0; i < new_cloud->size(); i++)
-            if(new_cloud->points[i].getVector4fMap()[3] > weight_test)
-                indices->push_back(i);
-        debug() << indices->size() << "points pass weight test";
-        icp.setIndices(indices);
-        */
-
-        // do the hard work!
-        cloud_ptr final = boost::make_shared<cloud_t>();
-        icp.align(*final);
-
-        // icp doesn't copy data in the derived class...
-        final->descriptors() = new_cloud->descriptors();
-        final->ptIndices() = new_cloud->ptIndices();
-
-        // guess was applied before icp determined to remaining transformation,
-        // so post-multiply (ie, apply guess first)
-        Eigen::Matrix4f final_transform = icp.getFinalTransformation() * guess;
-        final->transformation() = final_transform;
-
-        /*
-        debug() << "guess:\n" << guess;
-        debug() << "icp transform:\n" << icp.getFinalTransformation();
-        debug() << "final transform:\n" << final_transform;
-
-        // sanity check final transform:
-        Eigen::Vector4f sc = final_transform * Eigen::Vector4f(0,0,0,1);
-        Eigen::Vector3f torg = final->back().getVector3fMap();
-        if((sc.block<3,1>(0,0) - torg).norm() > 1e-6)
-            warning() << "final transformation sanity check failed:"
-                      << sc[0] << "," << sc[1] << "," << sc[2] << "!="
-                      << torg[0] << "," << torg[1] << "," << torg[2];
-        */
-
-        // high is bad (score is sum of squared euclidean distances)
-        float score = icp.getFitnessScore();
-        info() << BashColour::Green
-               << "converged:" << icp.hasConverged()
-               << "score:" << score;
-        debug(3) << "transformation:\n" << final_transform;
-        if(icp.hasConverged() && score < score_thr){
-            // start out assuming all keypoints that have passed the weight
-            // test are good:
-            std::vector<int> point_goodness(training_keypoints.size(), 0);
-            for(std::size_t i = 0; i < final->ptIndices().size(); i++)
-                point_goodness[final->ptIndices()[i]] = 1;
-
-            m_impl->addNewCloud(final, point_merge_distance, map_merge_alpha, point_goodness);
-
-            if(xy_image){
-                m_impl->updateVis(xy_image->mat(), final_transform, m_per_pix);
-                r["mosaic"] = boost::make_shared<Image>(m_impl->vis());
-            }
-
-            Eigen::Vector3f xytheta = xyThetaFrom4dAffine(final_transform);
-            info() << BashColour::Green
-                   << "added transformed points at: " << xytheta[0] << "," << xytheta[1] << "rot=" << xytheta[2] << "degress";
-
-            r["last added vis"] = boost::make_shared<Image>(renderCloud(
-                *final, Eigen::Vector2f(xytheta[0],xytheta[1]), m_impl->min(), m_impl->max(), render_sz, false
-            ));
-
-            r["training: keypoints"] = training_keypoints;
-            r["training: keypoints image"] = inputs["keypoints image"];
-            r["training: goodness"] = point_goodness;
-
-        }else if(score >= score_thr){
-            r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
-            info() << BashColour::Brown
-                   << "points will not be added to the whole cloud (error too high: "
-                   << score << ">=" << score_thr <<")";
-        }else{
-            r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
-            info() << BashColour::Red
-                   << "points will not be added to the whole cloud (not converged)";
-        }
-
-        r["whole cloud vis"] = boost::make_shared<Image>(renderCloud(
-            *(m_impl->whole_cloud), Eigen::Vector2f(0,0), m_impl->min(), m_impl->max(), render_sz, false
-        ));
-    }
-#endif // 0
 }
 

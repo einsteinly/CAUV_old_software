@@ -160,6 +160,8 @@ static void retagByDepth(int depth, Node_ptr p){
  * to build the form of the tree: think of the constraints as being used to
  * choose a sensible parametrisation for the problem.
  */
+// !!!! errrr, could probably just do this using a depth-first search... This
+// might, maybe, perhaps, be more efficient....
 static Node_ptr spanningTree(
     constraint_vec const& constraints,
     std::map<location_ptr, Node_ptr>& node_lookup
@@ -631,6 +633,8 @@ void GraphOptimiserV1::optimiseGraph(
             // (Olsen et al & Grisetti et al use weighting schemes based on the
             //  information matrix of each component constraint, but this will
             //  do to start with)
+            // !!! TODO: currently don't use p->weight when applying the error
+            // from this constraint: should do!
             IncrementalPose d_pose = error * (alpha / num_nodes); // not num_nodes-1 since include the new constraint in distribution of error
             visitBetweenNodes(ait->second, bit->second, AddPose(d_pose));
             

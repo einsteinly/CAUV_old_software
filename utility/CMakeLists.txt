@@ -26,9 +26,18 @@ if(CAUV_BUILD_TESTS)
         serialisation-test
         serialisation-test.cpp
     )
-
     target_link_libraries(
        serialisation-test
        cauv_debug
     )
+
+    add_executable(
+        async-test
+        async-test.cpp
+    )
+    target_link_libraries(
+        async-test
+        cauv_debug
+    )
+
 endif()

@@ -40,12 +40,15 @@ float Overlap_Threshold = 0.2;
 float Keyframe_Spacing = 2;
 float Min_Initial_Points = 3;
 float Good_Keypoint_Distance = 0.1;
+int Max_Considered_Overlaps = 3;
 int Max_Iters = 20;
 float Euclidean_Fitness = 1e-7;
 float Transform_Eps = 1e-9;
 float Reject_Threshold = 0.5;
 float Max_Correspond_Dist = 1.1;
 float Score_Thr = 22;
+float Ransac_Iters = 0;
+float Grid_Step = 3.0;
 std::string Match_Algorithm = "NL-ICP";
 
 namespace po = boost::program_options;
@@ -95,7 +98,7 @@ int main(int argc, char** argv){
     ci::SlamCloudGraph<pt_t> g;
     g.setParams(
         Overlap_Threshold, Keyframe_Spacing, Min_Initial_Points,
-        Good_Keypoint_Distance
+        Good_Keypoint_Distance, Max_Considered_Overlaps
     );
 
     cauv::TimeStamp t_a(0, 0);
@@ -142,21 +145,25 @@ int main(int argc, char** argv){
     boost::shared_ptr< ci::PairwiseMatcher<pt_t> > scan_matcher;
     scan_matcher = ci::makeICPNonLinearPairwiseMatcherShared(
         Max_Iters, Euclidean_Fitness, Transform_Eps,
-        Reject_Threshold, Max_Correspond_Dist, Score_Thr
+        Reject_Threshold, Max_Correspond_Dist, Score_Thr,
+        Ransac_Iters
     );
     if(boost::iequals(Match_Algorithm, "NDT")){
         scan_matcher = ci::makeNDTPairwiseMatcherShared(
-            Max_Iters, Euclidean_Fitness, Transform_Eps, Score_Thr
+            Max_Iters, Euclidean_Fitness, Transform_Eps, Max_Correspond_Dist,
+            Score_Thr, Grid_Step
         );
     }else if(boost::iequals(Match_Algorithm, "ICP")){
         scan_matcher = ci::makeICPPairwiseMatcherShared(
             Max_Iters, Euclidean_Fitness, Transform_Eps,
-            Reject_Threshold, Max_Correspond_Dist, Score_Thr
+            Reject_Threshold, Max_Correspond_Dist, Score_Thr,
+            Ransac_Iters
         );
     }else if(boost::iequals(Match_Algorithm, "NL-ICP")){
         scan_matcher = ci::makeICPNonLinearPairwiseMatcherShared(
             Max_Iters, Euclidean_Fitness, Transform_Eps,
-            Reject_Threshold, Max_Correspond_Dist, Score_Thr
+            Reject_Threshold, Max_Correspond_Dist, Score_Thr,
+            Ransac_Iters
         );
     }else{
         error() << "invalid scan matching algorithm:" << Match_Algorithm

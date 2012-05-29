@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 import cauv.node
 from cauv import control, sonar
 from cauv.debug import debug, warning, error, info

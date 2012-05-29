@@ -72,12 +72,16 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
         NDTPairwiseMatcher(int max_iters,
                            float euclidean_fitness,
                            float transform_eps,
-                           float score_thr)
+                           float max_correspond_dist,
+                           float score_thr,
+                           float grid_step)
             : PairwiseMatcher<PointT>(),
               m_max_iters(max_iters),
               m_euclidean_fitness(euclidean_fitness),
               m_transform_eps(transform_eps),
-              m_score_thr(score_thr){
+              m_max_correspond_dist(max_correspond_dist),
+              m_score_thr(score_thr),
+              m_grid_step(grid_step){
         }
 
         // - public methods
@@ -94,8 +98,19 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
             ndt.setInputCloud(new_cloud);
             ndt.setInputTarget(map);
             
-            ndt.setGridExtent(Eigen::Vector2f(40,40));
-            ndt.setGridStep(Eigen::Vector2f(2.5,2.5));
+            const Eigen::Vector3f map_mean = map->mean();
+            const Eigen::Matrix3f map_covar = map->covar();
+            float sx = std::sqrt(map_covar(0,0));
+            float sy = std::sqrt(map_covar(1,1));
+            debug() << "map cloud mean:" << map->mean().transpose()
+                    << ", covar:\n" << map_covar;
+            debug() << "map sx, sy:" << sx << sy;
+
+            ndt.setMaxCorrespondenceDistance(m_max_correspond_dist); // for getFitnessScore only
+            ndt.setGridCentre(Eigen::Vector2f(map_mean[0], map_mean[1]));
+            ndt.setGridExtent(Eigen::Vector2f(3*sx, 3*sy));
+            ndt.setGridStep(Eigen::Vector2f(m_grid_step,m_grid_step));
+            ndt.setOptimizationStepSize(Eigen::Vector3d(0.05,0.05,0.05));
             ndt.setMaximumIterations(m_max_iters);
             ndt.setTransformationEpsilon(m_transform_eps);
             ndt.setEuclideanFitnessEpsilon(m_euclidean_fitness);
@@ -111,9 +126,16 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
             ndt.align(*transformed_cloud, relative_guess);
             // in map's coordinate system:
             const Eigen::Matrix4f final_transform = ndt.getFinalTransformation();
+            
+            // if the alignment really diverged, getFitnessScore doesn't even
+            // work:
+            if(!(final_transform == final_transform)){
+                error() << "NaN transform!\n" << final_transform;
+                throw PairwiseMatchException("NaN transform!");
+            }
 
             // high is bad (score is sum of squared euclidean distances)
-            const float score = ndt.getFitnessScore();
+            const float score = ndt.getFitnessScore(m_max_correspond_dist);
             info() << BashColour::Green
                    << "converged:" << ndt.hasConverged()
                    << "score:" << score
@@ -149,7 +171,9 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
         const int m_max_iters;
         const float m_euclidean_fitness;
         const float m_transform_eps;
+        const float m_max_correspond_dist;
         const float m_score_thr;
+        const float m_grid_step;
 };
 
 
@@ -159,10 +183,12 @@ boost::shared_ptr<PairwiseMatcher<pcl::PointXYZ> > makeNDTPairwiseMatcherShared(
     int max_iters,
     float euclidean_fitness,
     float transform_eps,
-    float score_thr
+    float max_correspond_dist,
+    float score_thr,
+    float grid_step
 ){
     return boost::make_shared< NDTPairwiseMatcher<pcl::PointXYZ> >(
-        max_iters, euclidean_fitness, transform_eps, score_thr
+        max_iters, euclidean_fitness, transform_eps, max_correspond_dist, score_thr, grid_step
     );
 }
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 """
 immediate processing
 -stop script requests
@@ -16,9 +17,7 @@ import cauv.messaging as messaging
 import cauv.node
 from cauv.debug import debug, warning, error, info
 
-#todo: check all these ae still neccesary
 import time
-import threading
 import subprocess
 import cPickle
 import shelve

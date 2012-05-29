@@ -174,6 +174,7 @@ class RFQuestion{
 typedef boost::shared_ptr<RFQuestion> Question_ptr;
 typedef boost::shared_ptr<RFQuestion const> Question_constptr;
 
+// !!! This is incorrectly named!
 class PxRatioQuestion: public RFQuestion{
     public:
         PxRatioQuestion(cv::Point px_a_offset, cv::Point px_b_offset, float difference)

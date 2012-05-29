@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 import cauv.messaging as messaging
 from cauv.debug import info, error, debug, warning
 

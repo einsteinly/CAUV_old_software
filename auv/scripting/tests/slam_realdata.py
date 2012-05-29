@@ -7,6 +7,7 @@ import argparse
 import datetime
 import math
 import time
+import os
 
 # CAUV
 import cauv
@@ -22,36 +23,30 @@ class Benchmarker(object):
         self.node = node
         self.pl = pipeline.Model(node) 
         self.auv = control.AUV(node)
-        self.gemini = sonar.Gemini(node)
-        # configuration:        
+        #self.gemini = sonar.Gemini(node)
+        # configuration:
         self.test_name = test_name
-        self.assoc_method = 'ICP' # 'ICP', 'NDT', 'non-linear ICP'        
-        self.learn_keypoints = False
+        self.assoc_method = 'ICP' # 'ICP', 'NDT', 'non-linear ICP'
+        self.learn_keypoints = True
         self.visualisation_video = True
+        self.visualisation_files = False
         self.keypoints_video = False
-        self.inter_ping_delay = 0.1
-        self.resolution = 800        
+        self.viz_superzoom = False
+        self.viz_midzoom = True
+        self.resolution = 800
+        # important parameters:
+        self.reject_thr = 0.6      # higher = more support for score calculation, ransac support
+        self.max_correspond = 0.35 # hard to explain
+        self.weight_test = 0.1     # controls classifier ROC
+        self.score_thr = 0.09      # max error permitted for match
         # internal stuff:
         self.video_output_nodes = []
         self.setup()
 
     def setup(self):
-        self.auv.stop()
-        self.auv.hbowMap(0,0)
-        self.auv.hsternMap(0,0)
-        self.auv.bearingParams(0.5, 0, 0, -1, 1, 1, 1, 1, 10) # much slower than normal!
-        self.gemini.interPingDelay(6)
-        self.gemini.range(20)
-        self.gemini.gain(60)
-        self.gemini.rangeLines(self.resolution)
-        self.gemini.continuous(True)
         self.loadPipeline()
         # give the GUI time to get sorted out
-        time.sleep(4)
-        # now set the data flowing:
-        self.gemini.interPingDelay(self.inter_ping_delay)
-        # make sure slam inits at the sim origin
-        time.sleep(4)
+        time.sleep(2.0)
 
     def teardown(self):
         # make sure videos get written:
@@ -60,6 +55,10 @@ class Benchmarker(object):
         self.video_output_nodes = []
         # close this to dump classifier stats to the log
         self.sslam.x()
+        try:
+            os.system('ps -A | grep playLog | grep -v grep | sed "s/ *\\([0-9]*\\) .*/\\1/" | xargs kill')
+        except:
+            pass
 
     def loadPipeline(self):
         nt = msg.NodeType
@@ -72,13 +71,16 @@ class Benchmarker(object):
         resize.p('fixed width').set(256)
         resize.p('fixed height').set(self.resolution)
         sonar_in.o('polar image').connect(resize.i('image_in'))
-        #copy1 = pl.addNode(nt.Copy)
         #guio = pl.addNode(nt.GuiOutput)
-        #sonar_in.o('polar image').connect(copy1.i('image'))
         #sonar_in.o('image (synced)').connect(guio.i('image_in'))
+        # This levels node improves the conditioning when we high-pass filter
+        levels0 = pl.addNode(nt.Levels)
+        levels0.p('black level').set(msg.BoundedFloat(  0, 0, 255, msg.BoundedFloatType.Clamps))
+        levels0.p('white level').set(msg.BoundedFloat( 64, 0, 255, msg.BoundedFloatType.Clamps))
+        resize.o('image_out').connect(levels0.i('image'))
         medf = pl.addNode(nt.MedianFilter)
-        medf.p('kernel').set(1)
-        resize.o('image_out').connect(medf.i('image'))        
+        medf.p('kernel').set(1) # TODO: test performance as this varies
+        levels0.o('image (not copied)').connect(medf.i('image'))
         copy2 = pl.addNode(nt.Copy)
         medf.o('image (not copied)').connect(copy2.i('image'))
         blur1 = pl.addNode(nt.GaussianBlur)
@@ -92,22 +94,22 @@ class Benchmarker(object):
         blur1.o('image (not copied)').connect(mix1.i('image'))
         copy3 = pl.addNode(nt.Copy)
         mix1.o('image (not copied)').connect(copy3.i('image'))
-        levels = pl.addNode(nt.Levels)
-        levels.p('black level').set(msg.BoundedFloat(8, 0, 255, msg.BoundedFloatType.Clamps))
-        levels.p('white level').set(msg.BoundedFloat(255, 0, 255, msg.BoundedFloatType.Clamps))
-        #ssf = pl.addNode(nt.SonarShadowFilter)
-        #ssf.p('object importance').set(1.0)
-        #ssf.p('object size').set(0.2)
-        #ssf.p('shadow importance').set(1.0)
-        #ssf.p('shadow size').set(20.0)
-        #copy3.o('image copy').connect(ssf.i('polar image'))
-        #ssf.o('polar image').connect(levels.i('image'))
-        copy3.o('image copy').connect(levels.i('image'))
+        #levels = pl.addNode(nt.Levels)
+        #levels.p('black level').set(msg.BoundedFloat(  0, 0, 255, msg.BoundedFloatType.Clamps))
+        #levels.p('white level').set(msg.BoundedFloat(255, 0, 255, msg.BoundedFloatType.Clamps))
+        #copy3.o('image copy').connect(levels.i('image'))
+        ssf = pl.addNode(nt.SonarShadowFilter)
+        ssf.p('object importance').set(1.0)
+        ssf.p('object size').set(0.2)
+        ssf.p('shadow importance').set(1.0)
+        ssf.p('shadow size').set(5.0)
+        copy3.o('image copy').connect(ssf.i('polar image'))
         nop = pl.addNode(nt.Nop)
-        levels.o('image (not copied)').connect(nop.i('image in'))
+        #levels.o('image (not copied)').connect(nop.i('image in'))
+        ssf.o('polar image').connect(nop.i('image in'))
         corners = pl.addNode(nt.FASTCorners)
         corners.p('non-maximum suppression').set(True)
-        corners.p('threshold').set(40)
+        corners.p('threshold').set(30)
         br_crop = pl.addNode(nt.BearingRangeCrop)
         br_crop.p('bearing start').set(-50.0)
         br_crop.p('bearing end').set(50.0)
@@ -120,28 +122,40 @@ class Benchmarker(object):
         correl = pl.addNode(nt.Correlation1D)
         sslam = pl.addNode(nt.SonarSLAM)
         self.sslam = sslam
-        sslam.p('-vis origin x').set(-7.0)
-        sslam.p('-vis origin y').set(-7.0)
-        sslam.p('-vis resolution').set(400)
-        sslam.p('-vis size').set(36.0)
+        if self.viz_superzoom:
+            sslam.p('-vis origin x').set(-1.0)
+            sslam.p('-vis origin y').set(-23.0)
+            sslam.p('-vis resolution').set(1200)
+            sslam.p('-vis size').set(40.0)
+        elif self.viz_midzoom:
+            sslam.p('-vis origin x').set(-1.0)
+            sslam.p('-vis origin y').set(-33.0)
+            sslam.p('-vis resolution').set(1200)
+            sslam.p('-vis size').set(60.0)
+        else:
+            sslam.p('-vis origin x').set(-2.0)
+            sslam.p('-vis origin y').set(-50.0)
+            sslam.p('-vis resolution').set(1200)
+            sslam.p('-vis size').set(100.0)
         sslam.p('clear').set(False)
         sslam.p('euclidean fitness').set(1e-7)
-        sslam.p('feature merge distance').set(0.2)
+        sslam.p('feature merge distance').set(0.4) # good-keypoint NN distance for classifier
         sslam.p('graph iters').set(10)
-        sslam.p('max matches').set(3)
-        sslam.p('keyframe spacing').set(2.0)
+        sslam.p('max matches').set(3)        
+        #sslam.p('keyframe spacing').set(1.0)
+        sslam.p('keyframe spacing').set(4.0)
         assert(self.assoc_method in ('ICP', 'NDT', 'non-linear ICP'))
         sslam.p('match algorithm').set(self.assoc_method)
-        sslam.p('grid step').set(3.5)
+        sslam.p('grid step').set(7)
         sslam.p('ransac iterations').set(0)
-        # !!! TODO: maybe increase this some more...
-        sslam.p('max correspond dist').set(0.75) 
-        sslam.p('max iters').set(20)
+        # !!! TODO: sensitivity to this:
+        sslam.p('max correspond dist').set(self.max_correspond)
+        sslam.p('max iters').set(15)
         sslam.p('overlap threshold').set(0.3)
-        sslam.p('reject threshold').set(0.14)
-        sslam.p('score threshold').set(0.04)
+        sslam.p('reject threshold').set(self.reject_thr)
+        sslam.p('score threshold').set(self.score_thr)
         sslam.p('transform eps').set(1e-9)
-        sslam.p('weight test').set(0.5)
+        sslam.p('weight test').set(self.weight_test) # lower = pass more keypoints through filter
         sslam.p('xy metres/px').set(0.01) # unused, anyway
         nop.o('image out (not copied)').connect(corners.i('image in'))
         nop.o('image out (not copied)').connect(br_crop.i('polar image'))
@@ -188,97 +202,37 @@ class Benchmarker(object):
             self.video_output_nodes.append(kps_video_out)
         copyviz = pl.addNode(nt.Copy)
         sslam.o('cloud visualisation').connect(copyviz.i('image'))
+        crop = pl.addNode(nt.Crop)
+        crop.p('height').set(600)
+        crop.p('width').set(1200)
+        crop.p('top left (x)').set(0)
+        crop.p('top left (y)').set(300)
+        copyviz.o('image copy').connect(crop.i('image in'))
         if self.visualisation_video:
             viz_video_out = pl.addNode(nt.VideoFileOutput)
             viz_video_out.param('filename').set('%s-map.avi' % self.test_name)
-            copyviz.o('image copy').connect(viz_video_out.i('image'))
+            crop.o('image out (not copied)').connect(viz_video_out.i('image'))
             self.video_output_nodes.append(viz_video_out)
+        if self.visualisation_files:
+            split = pl.addNode(nt.SplitHSV)
+            crop.o('image out (not copied)').connect(split.i('image'))
+            invert = pl.addNode(nt.Invert)
+            mixv = pl.addNode(nt.MixValue)
+            mixv.p('ch1').set(100)
+            combine = pl.addNode(nt.CombineHSV)
+            split.o('H').connect(combine.i('H'))
+            split.o('S').connect(combine.i('S'))
+            split.o('V').connect(invert.i('image'))
+            invert.o('image (not copied)').connect(mixv.i('image'))
+            mixv.o('image (not copied)').connect(combine.i('V'))
+            viz_files_out = pl.addNode(nt.FileOutput)
+            viz_files_out.param('filename').set('/tmp/viz/%s-map-%%c.jpg' % self.test_name)
+            combine.o('image').connect(viz_files_out.i('image_in'))
         guio = pl.addNode(nt.GuiOutput)
-        copyviz.o('image copy').connect(guio.i('image_in'))
-
+        crop.o('image out (not copied)').connect(guio.i('image_in'))
     def runTest(self):
-        #self.runTest_spin()
-        self.runTest_loop()
-        #self.runTest_short()
-        #self.runTest_reverseLoop()
-    
-    def runTest_spin(self):
-        for bearing in(0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360):
-            self.auv.bearingAndWait(-bearing)
-    
-    def runTest_short(self):
-        self.auv.bearingAndWait(6)
-        self.auv.bearingAndWait(0)
-        self.auv.prop(110)
-        time.sleep(57)
-        self.auv.stop()
-
-    def runTest_reverseLoop(self):
-        self.auv.bearingAndWait(-6)
-
-        for bearing in (90, 0, -90, -180):
-            self.auv.bearingAndWait(bearing)
-            self.auv.prop(120)
-            time.sleep(57)
-            self.auv.prop(0)
-            time.sleep(1)
-
-        self.auv.stop()
-
-
-    def runTest_loop(self):
-        self.auv.bearingAndWait(-6)
-        self.auv.bearingAndWait(0)
-        self.auv.prop(110)
-        #time.sleep(57)
-
-        time.sleep(11.4)
-        for x in [1,2]:
-            self.auv.bearing(15)
-            self.auv.prop(110)
-            time.sleep(11.4)
-            self.auv.bearing(-15)
-            self.auv.prop(110)
-            time.sleep(11.4)
-
-        self.auv.prop(0)
-        self.auv.bearingAndWait(45)
-        self.auv.prop(110)
-        time.sleep(10)
-        self.auv.prop(0) 
-
-        self.auv.bearingAndWait(90)
-        self.auv.prop(110)
-        time.sleep(48)
-        self.auv.prop(0)
-        self.auv.bearingAndWait(135)
-        self.auv.prop(110)
-        time.sleep(10)
-        self.auv.prop(0) 
-
-        self.auv.bearingAndWait(180)
-        self.auv.prop(110)
-        time.sleep(48)
-        self.auv.prop(0)
-        self.auv.bearingAndWait(225)
-        self.auv.prop(110)
-        time.sleep(10)
-        self.auv.prop(0) 
-
-        self.auv.bearingAndWait(270)
-        self.auv.prop(110)
-        time.sleep(48)
-        self.auv.prop(0)
-        self.auv.bearingAndWait(315)
-        self.auv.prop(110)
-        time.sleep(10)
-        self.auv.prop(0) 
-
-        self.auv.bearingAndWait(0)
-
-        self.auv.stop()
-
-        time.sleep(10)
+        #time.sleep(60.0*60.0*2.0)
+        time.sleep(60.0*10)
     
     def processResults(self):
         from tools import slam_performance
@@ -292,8 +246,8 @@ class Benchmarker(object):
         poses_file = max(files, key=os.path.getmtime)
 
         # find the latest simulator log file
-        files = [os.path.join('./session-logs/', d) for d in os.listdir('./session-logs/') if d.find('sim.py.log') != -1]
-        sim_logfile = max(files, key=os.path.getmtime)
+        #files = [os.path.join('./session-logs/', d) for d in os.listdir('./session-logs/') if d.find('sim.py.log') != -1]
+        #sim_logfile = max(files, key=os.path.getmtime)
 
         out_file = '%s-%s-learn=%s.csv' % (
             self.test_name,
@@ -301,14 +255,14 @@ class Benchmarker(object):
             int(self.learn_keypoints)
         )
 
-        slam_performance.processFiles(sim_logfile, poses_file, out_file)
+        slam_performance.processPosesFile(poses_file, out_file)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("name", nargs='?', default=datetime.datetime.utcnow().strftime('slam-benchmark-%Y%m%d%H%M%S'))
+    parser.add_argument("name", nargs='?', default=datetime.datetime.utcnow().strftime('slam-realdata-%Y%m%d%H%M%S'))
 
     opts, unknown_args = parser.parse_known_args()
-    node = cauv.node.Node('py-slamb', unknown_args)
+    node = cauv.node.Node('py-slamr', unknown_args)
 
     try:
         b = Benchmarker(node, opts.name)
@@ -317,3 +271,4 @@ if __name__ == '__main__':
         b.processResults()
     finally:
         node.stop()
+

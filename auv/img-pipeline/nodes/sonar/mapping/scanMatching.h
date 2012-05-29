@@ -105,7 +105,9 @@ boost::shared_ptr<PairwiseMatcher<pcl::PointXYZ> > makeNDTPairwiseMatcherShared(
     int max_iters,
     float euclidean_fitness,
     float transform_eps,
-    float score_thr
+    float max_correspond_dist,
+    float score_thr,
+    float grid_step
 );
 
 } // namespace cauv

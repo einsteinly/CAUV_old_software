@@ -12,6 +12,7 @@ import os
 import sys
 import random
 import re
+import subprocess
 
 parser = argparse.ArgumentParser(description = 'Manage vehicle_daemon network connections')
 parser.add_argument('--peer', '-s', help='first peer to connect to')
@@ -67,7 +68,7 @@ def normalise_addr(addr, port):
     try:
         return socket.getaddrinfo(addr, port, socket.AF_INET, socket.SOCK_STREAM)[0][4]
     except socket.gaierror as e:
-        error("error looking up addr {}:{}; {}".format(addr, port, e))
+        error("Error looking up address {}:{}; {}".format(addr, port, e))
 
 def normalise_conn_str(conn):
     if conn.startswith('tcp://'):
@@ -117,34 +118,46 @@ class connObserver(messaging.MessageObserver):
             self.send_connections()
 
     def send_connections(self):
-        debug("sending connections dictionary")
+        debug("Sending connections dictionary")
         self.node.send(messaging.DaemonConnectionsMessage(list(self.daemon_connections)))
 
     def get_conn_str(self):
         return 'tcp://{}:{}'.format(self.ip, self.port)
 
     def announce(self):
-        debug("announcing presense")
+        debug("Announcing {}".format(random.choice(['presence'] * 10 + ['presents'])))
         self.node.send(messaging.DaemonAnnounceMessage(self.daemon_id,self.get_conn_str()))
 
     def try_connect(self, conn_string):
         n_conn = normalise_conn_str(conn_string)
         if n_conn == normalise_conn_str(self.get_conn_str()):
-            debug('not connecting to self ({})'.format(self.get_conn_str()))
+            debug('Not connecting to self ({})'.format(self.get_conn_str()))
         elif n_conn not in self.daemon_connections: 
-            debug("connecting to {}".format(conn_string))
+            debug("Connecting to {}".format(conn_string))
             self.d_ctrl.run_cmd("CONNECT NET_XPUB {}".format(conn_string))
             self.daemon_connections.add(n_conn)
         else:
-            debug("already connected to {} ({})".format(conn_string, n_conn))
+            debug("Already connected to {} ({})".format(conn_string, n_conn))
 
 
 #figure out IP address
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect((opts.peer, opts.peer_port))
-ip_str = s.getsockname()[0]
+
+def get_net_ip(peer, port):
+    if peer and port:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect((opts.peer, opts.peer_port))
+        ip_str = s.getsockname()[0]
+        s.close()
+        return ip_str
+    else:
+        route_str = subprocess.check_output(["ip", "route"])
+        ip_list = re.findall("src ((?:\d{1,3}\.?){4})", route_str)
+        if len(ip_list) != 1:
+            raise RuntimeError("Couldn't determine (unique) IP address! try specifying a peer")
+        return ip_list[0]
+
+ip_str = get_net_ip(opts.peer, opts.port)
 debug("Our IP address is {}".format(ip_str))
-s.close()
 
 pgm_connect_str = 'epgm://{};{}'.format(ip_str, opts.pgm_addr)
 if opts.no_pgm:
@@ -169,7 +182,7 @@ try:
     obs.send_connections()
 
     if pgm_addr_valid:
-        debug('joining PGM stream {}'.format(pgm_connect_str))
+        debug('Joining PGM stream {}'.format(pgm_connect_str))
         broadcast_skt = zmq.Socket(zmq_context, zmq.PUB)
         broadcast_skt.connect(pgm_connect_str)
         receive_skt = zmq.Socket(zmq_context, zmq.SUB)
