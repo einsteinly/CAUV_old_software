@@ -339,7 +339,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
               m_conn_state(),
               m_async_service(1),
               m_cancel_timeout_mux(),
-              m_cancel_timeout(false),
+              m_cancel_timeout(boost::make_shared<bool>(true)),
               m_gem_mux(){
             assert(!the_sonar);
             the_sonar = this;
@@ -407,8 +407,9 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 return;
             }
             lock_t l(m_cancel_timeout_mux);
-            if(!m_cancel_timeout){
+            if(!*m_cancel_timeout){
                 error() << "will not ping: ping already prepared!";
+                return;
             }
             m_gem_mux.lock();
             GEM_AutoPingConfig(m_range, m_gain_percent, m_sos);
@@ -435,10 +436,10 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             //GEM_SetInterPingPeriod(m_inter_ping_musec);
             GEM_SetPingMode(0);
             debug() << "SendPingConfig: range" << m_range << "gain" << m_gain_percent;
-            m_cancel_timeout = false;
+            m_cancel_timeout = boost::make_shared<bool>(false);
             m_async_service.callAfterTime(
-                boost::bind(&GeminiSonar::prepareNextPing, this, "timeout!"),
-                boost::posix_time::seconds(3)
+                boost::bind(&GeminiSonar::prepareNextPing, this, "timeout!", m_cancel_timeout),
+                boost::posix_time::milliseconds(200 + 2 * 1000*(2.0*m_range/m_sos)) // twice as long, plus 200ms as a ping should take
             );
             GEM_SendGeminiPingConfig();
         }
@@ -635,7 +636,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     // so there's no extra data for the library to add.
                     // (not sure why this might be, but it does happen)
                     ping_tail = (CGemPingTail*)data;
-                    debug() << "RX: ping tail: id=" << ping_tail->m_pingID;
+                    debug() << "RX: ping tail: id=" << int(ping_tail->m_pingID);
                     break;
 
                 case PING_TAIL_EX:
@@ -687,7 +688,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     the_sonar->onStatusPacket(status_packet);
 
                 if(ping_tail || ping_tail_ex)
-                    the_sonar->prepareNextPing("ping tail");
+                    the_sonar->prepareNextPing("ping tail", the_sonar->m_cancel_timeout);
 
                 boost::lock_guard<boost::recursive_mutex> l(the_sonar->m_observers_lock);
                 foreach(observer_ptr_t& p, the_sonar->m_observers){
@@ -717,16 +718,15 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         // it unconditionally
         //
         // Another ping will only be prepared if m_ping_continuous is true
-        void prepareNextPing(std::string const& descr){
+        void prepareNextPing(std::string const& descr, boost::shared_ptr<bool> cancel_timeout){
             debug() << "prepareNextPing" << descr;
 
             lock_t l(m_cancel_timeout_mux);
-            if(m_cancel_timeout)
+            if(*cancel_timeout)
                 return;
-            m_cancel_timeout = true;
+            *cancel_timeout = true;
 
             if(m_ping_continuous){
-                debug() << "(continuous)";
                 // set off another ping after m_inter_ping_musec:
                 m_async_service.callAfterMicroseconds(
                     boost::bind(&GeminiSonar::applyConfigAndPing, the_sonar),
@@ -754,7 +754,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         AsyncService m_async_service;
 
         mutex_t m_cancel_timeout_mux;
-        bool m_cancel_timeout;
+        boost::shared_ptr<bool> m_cancel_timeout;
 
         mutex_t m_gem_mux;
 

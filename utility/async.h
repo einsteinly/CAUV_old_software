@@ -42,6 +42,7 @@ class AsyncService{
               m_ready_mux(),
               m_ready(),
               m_have_work_to_do_mux(),
+              m_have_work_count(0),
               m_have_work_to_do(),
               m_timers_lock(),
               m_inactive_timers(),
@@ -54,6 +55,9 @@ class AsyncService{
             // returning, otherwise callbacks can fall through the gap!
             lock_t l(m_ready_mux);
             m_ready.wait(l);
+            // make sure the io_service always has some work to do, so it
+            // doesn't stop until this object is destroyed
+            keepWorking();
         }
 
         ~AsyncService(){
@@ -92,7 +96,12 @@ class AsyncService{
                     first = false;
                     m_ready.notify_one();
                 }
-                m_have_work_to_do.wait(l);
+                // if more work was posted while we were executing the last bit
+                // of work, then we'll have missed the notification on the
+                // m_have_work_to_do condition variable
+                if(!m_have_work_count)
+                    m_have_work_to_do.wait(l);
+                m_have_work_count--;
                 l.unlock();
                 executed = m_ioservice.run_one(ec);
                 if(ec){
@@ -100,10 +109,9 @@ class AsyncService{
                     break;
                 }
                 if(executed == 0){
-                    //error() << "AsyncService: notified, but nothing available to execute";
-                    // think this only happens when service is stopped... so
-                    // not an error
-                    break;
+                    error() << "AsyncService: notified, but nothing available to execute";
+                    // this only happens when service is stopped... so not an error
+                    //break;
                 }
             }
         }
@@ -115,16 +123,22 @@ class AsyncService{
 
         template<typename Time>
         void callAfterTime(function_t foo, Time time){
+            //debug() << "callback setup:" << &foo << time;
             timer_ptr timer = getTimer();
 
             timer->expires_from_now(time);
             timer->async_wait(boost::bind(&AsyncService::callbackThunk, this, _1, timer, foo));
 
             lock_t l(m_have_work_to_do_mux);
+            m_have_work_count++;
             m_have_work_to_do.notify_one();
         }
 
     private:
+        void keepWorking(){
+            callAfterTime(boost::bind(&AsyncService::keepWorking, this), boost::posix_time::hours(100));
+        }
+
         timer_ptr getTimer(){
             lock_t l(m_timers_lock);
             timer_ptr r;
@@ -150,6 +164,7 @@ class AsyncService{
             }else if(ec){
                 error() << "timer error:" << ec.message();
             }else{
+                //debug() << "callback:" << &foo;
                 foo();
             }
             // leave releasing the timer until the end, so the callback happens
@@ -163,6 +178,7 @@ class AsyncService{
         boost::condition_variable m_ready;
 
         boost::mutex m_have_work_to_do_mux;
+        uint32_t m_have_work_count;
         boost::condition_variable m_have_work_to_do;
 
         boost::mutex m_timers_lock;
