@@ -50,6 +50,10 @@ class SonarInputNode: public InputNode{
         void init(){
             // don't want to drop lines:
             m_priority = priority_fastest;
+
+            // need to receive SonarDataMessage s to start with (SeaSprite
+            // sonar is default)
+            subMessage(SonarDataMessage());
             
             // registerInputID()
             registerParamID<int>("non-maximum suppression", 0, "0 for no suppression, 1 for only local maxima, 2 for only global maximum");
@@ -107,8 +111,17 @@ class SonarInputNode: public InputNode{
         }
 
         virtual void paramChanged(input_id const& param_id){
-            if(param_id == "Sonar ID")
+            if(param_id == "Sonar ID"){
                 m_sonar_id = SonarID::e(param<int>("Sonar ID"));
+                // change message subs as necessary
+                if(m_sonar_id == SonarID::Seasprite){
+                    //unsubMessage(SonarImageMessage());
+                    subMessage(SonarDataMessage());
+                }else if(m_sonar_id == SonarID::Gemini){
+                    //unsubMessage(SonarDataMessage());
+                    subMessage(SonarImageMessage());
+                }
+            }
         }
 
     protected:
