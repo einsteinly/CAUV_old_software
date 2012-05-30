@@ -41,6 +41,9 @@ class NetInputNode: public InputNode{
 
         void init(){
             // registerInputID()
+
+            // need to receive ImageMessages
+            subMessage(ImageMessage());
             
             // one output:
             registerOutputID("image_out");

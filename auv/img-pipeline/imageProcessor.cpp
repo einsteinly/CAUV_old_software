@@ -26,9 +26,9 @@ ImageProcessor::ImageProcessor(mb_ptr_t mb)
     : m_nodes_lock(), m_nodes(), m_nodes_rev(), m_input_nodes(), m_scheduler(),
       m_name("---"), m_mailbox_lock(), m_mailbox(mb){
 
-    /*m_mailbox->subMessage(ImageMessage());
-    m_mailbox->subMessage(SonarDataMessage());
-    m_mailbox->subMessage(SonarImageMessage());
+    //m_mailbox->subMessage(ImageMessage());
+    //m_mailbox->subMessage(SonarDataMessage());
+    //m_mailbox->subMessage(SonarImageMessage());
     m_mailbox->subMessage(AddNodeMessage());
     m_mailbox->subMessage(RemoveNodeMessage());
     m_mailbox->subMessage(SetNodeParameterMessage());
@@ -37,7 +37,7 @@ ImageProcessor::ImageProcessor(mb_ptr_t mb)
     m_mailbox->subMessage(GraphRequestMessage());
     m_mailbox->subMessage(ForceExecRequestMessage());
     m_mailbox->subMessage(ClearPipelineMessage());
-    m_mailbox->subMessage(PipelineDiscoveryRequestMessage());*/
+    m_mailbox->subMessage(PipelineDiscoveryRequestMessage());
 }
 
 void ImageProcessor::start(std::string const& name){
@@ -335,6 +335,11 @@ void ImageProcessor::onPipelineDiscoveryRequestMessage(PipelineDiscoveryRequestM
 void ImageProcessor::sendMessage(const boost::shared_ptr<const Message> msg, MessageReliability reliability) const{
     m_mailbox->sendMessage(msg, reliability);
 }
+
+void ImageProcessor::subMessage(Message const& msg, node_id const&){
+    m_mailbox->subMessage(msg);
+}
+
 
 ImageProcessor::~ImageProcessor(){
     m_scheduler.stopWait();

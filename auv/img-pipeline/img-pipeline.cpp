@@ -39,11 +39,7 @@ void ImagePipelineNode::onRun()
 {
     info() << "starting pipeline, name: \"" << m_pipeline_name << "\"";
     m_pipeline->start(m_pipeline_name);
-    
-    joinGroup("image");
-    joinGroup("pipeline");
-    joinGroup("pl_gui");
-    joinGroup("sonarout");
+
     addMessageObserver(m_pipeline);
 }
 

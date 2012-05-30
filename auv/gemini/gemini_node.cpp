@@ -97,7 +97,7 @@ class ReBroadcaster: public GeminiObserver{
 
         virtual void onCGemPingHead(CGemPingHead const* h, float range){
             const float sos = h->m_spdSndVel / 10.0f;
-            debug() << "PingHead:"
+            debug(2) << "PingHead:"
                     << "start:" << h->m_startRange
                     << "end:" << h->m_endRange
                     << "numBeams:" << h->m_numBeams
@@ -146,7 +146,7 @@ class ReBroadcaster: public GeminiObserver{
                 )
             );
             m_current_raw_data.resize(num_lines*num_beams);
-            debug() << "New ping: ID=" << m_current_ping_id << "lines:" << num_lines << "beams:" << num_beams;
+            debug(3) << "New ping: ID=" << m_current_ping_id << "lines:" << num_lines << "beams:" << num_beams;
 
             // This message also tells us the speed of sound: so broadcast it
             // now:
@@ -159,7 +159,7 @@ class ReBroadcaster: public GeminiObserver{
             int32_t line_idx = line_id - m_range_lines_start;
             uint16_t ping_id = l->m_pingID;
             if((ping_id & 0xff) != (m_current_ping_id & 0xff)){
-                debug() << "bad pingID";
+                debug(2) << "bad pingID";
                 return;
             }
             uint32_t num_beams = m_current_msg->image().bearing_bins.size() - 1;
@@ -235,7 +235,6 @@ class ReBroadcaster: public GeminiObserver{
             return r;
         }
         static std::vector<int32_t> computeBearingBins(uint32_t num_beams){
-            debug() << "computeBearings numbeams=" << num_beams;
             static std::vector<int32_t> bearings_256 = computeBearingBinsNoCache(256);
             if(num_beams == 256)
                 return bearings_256;
@@ -299,13 +298,13 @@ class ReBroadcaster: public GeminiObserver{
                 downsampled_image.size(),
                 0, 0, cv::INTER_LINEAR // !!! INTER_AREA might be better
             );
-            debug() << "sending SonarImageMessage:" << bearing_beams << "x" << resize_to_rangelines;
+            debug(3) << "sending SonarImageMessage:" << bearing_beams << "x" << resize_to_rangelines;
             #else
             // !!! just rely on range compression, (now I understand how it
             // works...), otherwise all we really do is introduce aliasing:
             rangeConv = m_range / source_rangelines;
             resized_data = m_current_raw_data;
-            debug() << "sending SonarImageMessage:" << bearing_beams << "x" << source_rangelines;
+            debug(3) << "sending SonarImageMessage:" << bearing_beams << "x" << source_rangelines;
             #endif
             m_node.send(m_current_msg);
         }
@@ -337,9 +336,9 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
               m_range_lines(200),
               m_ping_continuous(false),
               m_conn_state(),
-              m_async_service(1),
+              m_async_service(boost::make_shared<AsyncService>(1)),
               m_cancel_timeout_mux(),
-              m_cancel_timeout(false),
+              m_cancel_timeout(boost::make_shared<bool>(true)),
               m_gem_mux(){
             assert(!the_sonar);
             the_sonar = this;
@@ -348,8 +347,12 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         }
 
         ~GeminiSonar(){
-            //m_async_service.waitForCompletion();
-            lock_t l(m_gem_mux);
+            lock_t l(m_cancel_timeout_mux);
+            if(!*m_cancel_timeout){
+                *m_cancel_timeout = true;
+                m_gem_mux.unlock();
+            }
+            m_async_service.reset();
             the_sonar = NULL;
         }
 
@@ -398,7 +401,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         //  a ping, and a timeout is setup (after three seconds) in case a ping
         //  is not received from the sonar.
         void applyConfigAndPing(){
-            debug() << "applyConfigAndPing...";
+            debug(2) << "applyConfigAndPing...";
             if(!initialised()){
                 error() << "will not ping: connection not initialised";
                 return;
@@ -407,8 +410,9 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 return;
             }
             lock_t l(m_cancel_timeout_mux);
-            if(!m_cancel_timeout){
+            if(!*m_cancel_timeout){
                 error() << "will not ping: ping already prepared!";
+                return;
             }
             m_gem_mux.lock();
             GEM_AutoPingConfig(m_range, m_gain_percent, m_sos);
@@ -434,11 +438,11 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             //GEM_SetPingMode(m_ping_continuous);
             //GEM_SetInterPingPeriod(m_inter_ping_musec);
             GEM_SetPingMode(0);
-            debug() << "SendPingConfig: range" << m_range << "gain" << m_gain_percent;
-            m_cancel_timeout = false;
-            m_async_service.callAfterTime(
-                boost::bind(&GeminiSonar::prepareNextPing, this, "timeout!"),
-                boost::posix_time::seconds(3)
+            debug(3) << "SendPingConfig: range" << m_range << "gain" << m_gain_percent;
+            m_cancel_timeout = boost::make_shared<bool>(false);
+            m_async_service->callAfterTime(
+                boost::bind(&GeminiSonar::prepareNextPing, this, "timeout!", m_cancel_timeout),
+                boost::posix_time::milliseconds(200 + 2 * 1000*(2.0*m_range/m_sos)) // twice as long, plus 200ms as a ping should take
             );
             GEM_SendGeminiPingConfig();
         }
@@ -607,7 +611,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             }
         }
 
-        static void CallBackFn(int eType, int len, char *data){
+        static void CallBackFn(int eType, int /*len*/, char *data){
             CGemPingHead const* ping_head = NULL;
             CGemPingLine const* ping_data = NULL;
             CGemPingTail const* ping_tail = NULL;
@@ -625,7 +629,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     break;
 
                 case PING_DATA:
-                    debug(7) << "RX: ping line: len=" << len;
+                    //debug(7) << "RX: ping line: len=" << len;
                     ping_data = (CGemPingLine*)data;
                     break;
 
@@ -635,13 +639,14 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     // so there's no extra data for the library to add.
                     // (not sure why this might be, but it does happen)
                     ping_tail = (CGemPingTail*)data;
-                    debug() << "RX: ping tail: id=" << ping_tail->m_pingID;
+                    debug(2) << BashColour::Purple
+                            << "RX: ping tail: id=" << int(ping_tail->m_pingID);
                     break;
 
                 case PING_TAIL_EX:
                     ping_tail_ex = (CGemPingTailExtended*)data;
                     debug(6) << "RX: ping tail ex: id=" << int(ping_tail_ex->m_pingID);
-                    debug() << BashColour::Purple
+                    debug(2) << BashColour::Purple
                             << "retry 1:"       << ping_tail_ex->m_firstPassRetries
                             << "retry 2:"       << ping_tail_ex->m_secondPassRetries
                             << "tail retries:"  << ping_tail_ex->m_tailRetries
@@ -687,7 +692,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     the_sonar->onStatusPacket(status_packet);
 
                 if(ping_tail || ping_tail_ex)
-                    the_sonar->prepareNextPing("ping tail");
+                    the_sonar->prepareNextPing("ping tail", the_sonar->m_cancel_timeout);
 
                 boost::lock_guard<boost::recursive_mutex> l(the_sonar->m_observers_lock);
                 foreach(observer_ptr_t& p, the_sonar->m_observers){
@@ -717,18 +722,17 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         // it unconditionally
         //
         // Another ping will only be prepared if m_ping_continuous is true
-        void prepareNextPing(std::string const& descr){
-            debug() << "prepareNextPing" << descr;
+        void prepareNextPing(std::string const& descr, boost::shared_ptr<bool> cancel_timeout){
+            debug(3) << "prepareNextPing" << descr;
 
             lock_t l(m_cancel_timeout_mux);
-            if(m_cancel_timeout)
+            if(*cancel_timeout)
                 return;
-            m_cancel_timeout = true;
+            *cancel_timeout = true;
 
             if(m_ping_continuous){
-                debug() << "(continuous)";
                 // set off another ping after m_inter_ping_musec:
-                m_async_service.callAfterMicroseconds(
+                m_async_service->callAfterMicroseconds(
                     boost::bind(&GeminiSonar::applyConfigAndPing, the_sonar),
                     m_inter_ping_musec
                 );
@@ -751,10 +755,10 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             uint32_t sonarAltIp;
         } m_conn_state;
         
-        AsyncService m_async_service;
+        boost::shared_ptr<AsyncService> m_async_service;
 
         mutex_t m_cancel_timeout_mux;
-        bool m_cancel_timeout;
+        boost::shared_ptr<bool> m_cancel_timeout;
 
         mutex_t m_gem_mux;
 
@@ -809,7 +813,6 @@ void GeminiNode::onRun()
     m_sonar->addObserver(boost::make_shared<ReBroadcaster>(boost::ref(*this)));
     this->addMessageObserver(m_sonar);
 
-    debug() << "autoConfig...";
     m_sonar->autoConfig(6.0f, 40);
 
     while (true) {
@@ -824,7 +827,6 @@ void GeminiNode::addOptions(po::options_description& desc,
                             po::positional_options_description& pos)
 {
     CauvNode::addOptions(desc, pos);
-    debug() << "GeminiNode::addOptions";
 
     desc.add_options()
         ("sonar_id,d", po::value<uint16_t>()->required(), "The sonar ID (eg 1)")
@@ -838,7 +840,6 @@ int GeminiNode::useOptionsMap(po::variables_map& vm,
                               po::options_description& desc)
 {
     int ret = CauvNode::useOptionsMap(vm, desc);
-    debug() << "GeminiNode::useOptionsMap";
     if (ret != 0) return ret;
 
     uint16_t sonar_id = vm["sonar_id"].as<uint16_t>();

@@ -104,7 +104,7 @@ class Gemini:
         self.current_gain  = 60 # 0--100
         self.range_lines = 1000 # ~200 - ~8000?, about 1024 is sensible
         self.ping_continuous = False
-        self.inter_ping_delay = 0.5 # seconds 
+        self.inter_ping_delay = 0.5 # seconds, can safely be set to zero
     
     def range(self, r):
         '''Set the range in metres (1--120); longer ranges produce lots more data but support lower frame-rates.'''
@@ -119,17 +119,19 @@ class Gemini:
         self.range_lines = numLines
         self.update()
     def continuous(self, ping_continuously):
-        '''Ping repeatedly, with delay inter_ping_delay.'''
+        '''Ping repeatedly, with delay inter_ping_delay after receiving the end of each image.'''
         self.ping_continuous = ping_continuously
         self.update()
     def interPingDelay(self, inter_ping_delay):
-        '''Set inter-ping delay (floating point seconds) for continuous pinging.'''
+        '''Set inter-ping delay (floating point seconds) for continuous pinging. Can safely be set to zero, or as high as you like.'''
         self.inter_ping_delay = inter_ping_delay
         self.update()
     def update(self):
         '''Send the current config to the sonar, triggers a ping if ping_continuously is not set.'''
-        if self.ping_continuous and self.inter_ping_delay < 0.05 + 2.0 * self.current_range / 1400:
-            warning('setting a dangerously low inter-ping value!')
+        # now that the inter-ping delay is applied *after* the tail of the
+        # previous ping, it can safely be set to zero
+        #if self.ping_continuous and self.inter_ping_delay < 0.05 + 2.0 * self.current_range / 1400:
+        #    warning('setting a dangerously low inter-ping value!')
         self.__node.send(messaging.GeminiControlMessage(
             self.current_range, self.current_gain, self.range_lines, self.ping_continuous, self.inter_ping_delay
         ))

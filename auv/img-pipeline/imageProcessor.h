@@ -78,6 +78,7 @@ class ImageProcessor: public MessageObserver
          * Use m_mailbox (set by constructor) to send the specified message
          */
         void sendMessage(const boost::shared_ptr<const Message> msg, MessageReliability = RELIABLE_MSG) const;
+        void subMessage(Message const& msg, node_id const& node);
 
         ~ImageProcessor();
     

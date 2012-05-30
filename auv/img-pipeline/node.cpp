@@ -1045,6 +1045,11 @@ void Node::sendMessage(boost::shared_ptr<Message const> m, MessageReliability p)
     m_pl.sendMessage(m, p);
 }
 
+void Node::subMessage(Message const& m){
+    m_pl.subMessage(m, m_id);
+}
+
+
 /* Keep a record of which inputs are new (have changed since they were
  * last used by this node)
  * Check to see if this node should add itself to the scheduler queue
