@@ -18,6 +18,7 @@
 #include <QPointF>
 #include <QSizeF>
 #include <QRectF>
+#include <QPair>
 
 #include <ostream>
 
@@ -37,6 +38,12 @@ template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, QRectF const& s){
     return os <<"("<< s.x() <<","<< s.y() <<":"<< s.width() <<"x"<< s.height() <<")";
+}
+
+template<typename char_T, typename traits, typename T1, typename T2>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, QPair<T1, T2> const& p){
+    return os << "(" << p.first << "," << p.second << ")";
 }
 
 

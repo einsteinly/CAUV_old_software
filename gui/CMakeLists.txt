@@ -15,6 +15,7 @@ if (CAUV_BUILD_GUI)
     else()
         set (QDESIGNER_EXPORT_WIDGETS TRUE)
         set (QT_USE_QTOPENGL TRUE)
+        set (QT_USE_QTSQL TRUE)
         set (QT_USE_QTDESIGNER ON)
         include (${QT_USE_FILE})
 

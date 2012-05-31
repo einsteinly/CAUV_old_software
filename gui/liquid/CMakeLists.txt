@@ -5,6 +5,9 @@ find_package (Qt4)
 if (NOT QT4_FOUND)
     message(WARNING "Qt4 not found, not building Liquid")
 else()
+    
+    # water is the graphing library
+    add_subdirectory (water)
 
     # for generated files (mainly moc'd stuff)
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -71,6 +74,7 @@ else()
     target_link_libraries ( liquid
         ${QT_LIBRARIES}
         ${graphviz_LIBRARIES}
+        water
         cauv_debug
     )
 
