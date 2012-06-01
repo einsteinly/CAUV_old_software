@@ -49,7 +49,8 @@ Arc::Arc(ArcStyle const& of_style,
     #ifndef CAUV_DEBUG_DRAW_LAYOUT
     setFlag(ItemHasNoContents);
     #endif
-    setCacheMode(DeviceCoordinateCache);    
+    setCacheMode(DeviceCoordinateCache);
+    setBoundingRegionGranularity(0.04); // 25x25px regions
     
     if(from)
         setFrom(from);

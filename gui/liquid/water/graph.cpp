@@ -17,20 +17,39 @@
 
 namespace w = liquid::water;
 
-w::Graph::Graph(GraphConfig const& config, QString name)
-    : m(new w::internal::Graph(config, name)){
+// - DataSeries
+
+w::DataSeries::DataSeries(SeriesConfig const& config, QString series_name)
+    : m(new internal::DataSeries(config, series_name)){
 }
 
-void w::Graph::postData(double const& value, double const& time){
+void w::DataSeries::postData(double const& value, double const& time){
     m->postData(value, time);
 }
 
-// - QGraphicsItem implementation
-QRectF w::Graph::boundingRect() const{
-    
+
+// - Graph
+
+w::Graph::Graph(GraphConfig const& config, QString name, QGraphicsItem* parent)
+    : QGraphicsItem(parent),
+      m(new w::internal::Graph(config, name, this)){
 }
 
-void w::Graph::paint(QPainter *painter,
-                     const QStyleOptionGraphicsItem *option,
-                     QWidget *widget){
+void w::Graph::addDataSeries(DataSeries_ptr data_series){
+    m->addDataSeries(data_series);
+}
+
+void w::Graph::setRect(QRectF const& r){
+    prepareGeometryChange();
+    m->setRect(r);
+}
+
+// - Graph::QGraphicsItem implementation
+QRectF w::Graph::boundingRect() const{
+    return m->boundingRect();
+}
+
+
+void w::Graph::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget){
+    m->paint(painter, option, widget);
 }

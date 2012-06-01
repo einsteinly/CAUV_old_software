@@ -17,6 +17,7 @@
 #include <QDebug>
 #include <QGraphicsRectItem>
 #include <QAction>
+#include <QTimer>
 
 #include <boost/make_shared.hpp>
 
@@ -94,6 +95,36 @@ FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
     b->setZValue(1000);
     m_overlay_items.push_back(std::make_pair(QPoint(-40, -40), b));
     connect(b, SIGNAL(pressed()), m_manager.get(), SLOT(requestRefresh()));
+
+    
+    //w::Graph* g = new w::Graph(w::One_Minute, "A Graph");
+    w::GraphConfig config = {30.0};
+    w::Graph* g = new w::Graph(config, "A Graph");
+    s->addItem(g);
+    g->setRect(QRectF(0,0,600,400));
+    m_pct_series = w::DataSeries_ptr(new w::DataSeries(w::Percent_Graph, "test_pct_graph"));
+    m_pct2_series = w::DataSeries_ptr(new w::DataSeries(w::Percent_Graph, "test_pct2_graph"));
+    g->addDataSeries(m_pct_series);
+    g->addDataSeries(m_pct2_series);
+
+    m_redraw_timer = new QTimer(this);
+    m_data_timer   = new QTimer(this);
+
+    connect(m_redraw_timer, SIGNAL(timeout()), this, SLOT(update()), Qt::QueuedConnection);
+    connect(m_data_timer, SIGNAL(timeout()), this, SLOT(postData()), Qt::QueuedConnection);
+    
+    m_redraw_timer->setInterval(100);
+    m_data_timer->setInterval(4);
+    
+    m_redraw_timer->start();
+    m_data_timer->start();
+}
+
+#include <utility/time.h>
+void FView::postData(){
+    static int i = 0;
+    m_pct_series->postData(50+50*sin(i++/5e3) + ((rand() % 20) - 10), nowDouble());
+    m_pct2_series->postData(20+10*sin(i++/3e2) + ((rand() % 10) - 5), nowDouble());
 }
 
 void FView::initMenu(){

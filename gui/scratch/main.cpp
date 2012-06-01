@@ -13,6 +13,7 @@
  */
 
 #include <QtGui>
+#include <QTimer>
 
 #include <boost/make_shared.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -21,7 +22,6 @@
 
 #include "style.h"
 #include "fluidity/view.h"
-
 
 class ScratchNode: public cauv::CauvNode, public boost::enable_shared_from_this<ScratchNode>{
     public:
@@ -38,8 +38,8 @@ class ScratchNode: public cauv::CauvNode, public boost::enable_shared_from_this<
 
             QApplication::setStyle(new cauv::gui::CauvStyle());
 
-            cauv::gui::f::FView view(shared_from_this());
-            view.show();
+            cauv::gui::f::FView* view = new cauv::gui::f::FView(shared_from_this());
+            view->show();
 
             m_exit_status = app.exec();
 
@@ -49,6 +49,7 @@ class ScratchNode: public cauv::CauvNode, public boost::enable_shared_from_this<
         int m_argc;
         char** m_argv;
         int m_exit_status;
+
 };
 
 

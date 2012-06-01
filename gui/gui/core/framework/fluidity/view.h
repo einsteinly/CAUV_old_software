@@ -18,6 +18,9 @@
 #include <boost/shared_ptr.hpp>
 
 #include <liquid/view.h>
+#include <liquid/water/graph.h>
+
+namespace w = liquid::water;
 
 class QMenu;
 
@@ -70,6 +73,8 @@ class FView: public liquid::LiquidView {
         // slots
         void menuActioned();
 
+        void postData();
+
     private:
         // data
         boost::shared_ptr<CauvNode> m_cauv_node;
@@ -81,6 +86,12 @@ class FView: public liquid::LiquidView {
         // This is used, for example, to draw buttons inside the view in a
         // consistent position as the view is moved around.
         std::vector< std::pair<QPoint, QGraphicsWidget*> > m_overlay_items;
+
+        // !!! temporary graph dev stuff
+        w::DataSeries_ptr m_pct_series;
+        w::DataSeries_ptr m_pct2_series;
+        QTimer* m_redraw_timer;
+        QTimer* m_data_timer;
 };
 
 } // namespace f

@@ -109,7 +109,14 @@ Manager::~Manager(){
 
 void Manager::init(){
     m_cauv_node->addMessageObserver(shared_from_this());
-    m_cauv_node->joinGroup("pl_gui");
+    m_cauv_node->subMessage(GraphDescriptionMessage());
+    m_cauv_node->subMessage(NodeParametersMessage());
+    m_cauv_node->subMessage(NodeAddedMessage());
+    m_cauv_node->subMessage(NodeRemovedMessage());
+    m_cauv_node->subMessage(ArcAddedMessage());
+    m_cauv_node->subMessage(ArcRemovedMessage());
+    m_cauv_node->subMessage(GuiImageMessage());
+    m_cauv_node->subMessage(StatusMessage());
     requestRefresh();
 }
 

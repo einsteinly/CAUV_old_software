@@ -6,6 +6,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set (
     WATER_SRCS
     graph.cpp
+    internal/persistentMap.cpp
 )
 
 set (
@@ -15,6 +16,7 @@ set (
 set (
     WATER_H
     graph.h
+    #internal/persistentMap.h
 )
 
 set (
@@ -38,6 +40,7 @@ add_library (
 target_link_libraries ( water
     ${QT_LIBRARIES}
     cauv_debug
+    utility
 )
 
 if(CAUV_BUILD_TESTS)
