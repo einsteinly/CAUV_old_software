@@ -28,6 +28,8 @@
 #include <QPolygonF>
 #include <QPen>
 #include <QBrush>
+#include <QFont>
+#include <QFontMetrics>
 
 #include <debug/cauv_debug.h>
 
@@ -88,7 +90,8 @@ class DataWindow: public boost::noncopyable{
         }
 
         void removeSamplesBefore(double const& t){
-            while(m_sample_times.front() < t && m_sample_times.size()){
+            while((m_sample_times.size() > 1 && m_sample_times[1] <= t) ||
+                  (m_sample_times.size() == 1 && m_sample_times.front() < t)){
                 m_sample_times.pop_front();
                 m_min_values.pop_front();
                 m_mean_values.pop_front();
@@ -155,7 +158,8 @@ class DataSeries: public boost::noncopyable{
             //m_data.insert(time, value);
 
             m_insert_batch.push_back(std::pair<double,double>(time, value));
-            if(m_insert_batch.size() == Data_Batch_Size){
+            if(m_insert_batch.size() >= Data_Batch_Size){
+                //debug() << "insert batch:" << m_insert_batch.size();
                 m_data.insertMultiple(m_insert_batch.begin(), m_insert_batch.end());
                 m_insert_batch.clear();
             }
@@ -166,11 +170,17 @@ class DataSeries: public boost::noncopyable{
             if(resolution == 0)
                 resolution++;
             const double dt = (tend-tstart) / resolution;
-            Map::MinAvgMax x = {0};            
+            Map::MinAvgMax x = {0,0,0};
             for(double t = tstart; t <= tend-dt/2; t += dt)
                 if(m_data.minAvgMaxOfRange(t, t+dt, x))
                     r->addSample(x, t+dt/2);
-            //debug() << "snapshot" << tstart << tend << resolution << "->" << r->size() << "values";
+            debug() << "snapshot" << tstart << tend << resolution << "->" << r->size() << "values";
+            // !!! TODO (important) if there were no values in the snapshot, DO
+            // NOT TRY AGAIN SOON: back off (this might mean reducing the
+            // frame-rate, for example), because getting the whole snapshot can
+            // be an expensive operation, that crowds out the actual insertion
+            // of data, so we get stuck in a loop getting expensive empty
+            // snapshots
             return r;
         }
 
@@ -194,8 +204,11 @@ class DataSeries: public boost::noncopyable{
         }
 
     private:
+        //void _updateDataBatchSize(){
+        //}
+
         Map m_data;
-        enum{Data_Batch_Size = 40};
+        enum{Data_Batch_Size = 20};
         std::vector< std::pair<double, double> > m_insert_batch;
 
         SeriesConfig m_config;
@@ -236,13 +249,30 @@ class GraphAxes: public QGraphicsItem{
               m_rect(rect){
         }
 
-        QRectF contentsRect() const{
+        QRectF contentsRectAtScale(float px_per_unit) const{
+            const int px_width = px_per_unit * m_rect.width();
+            const int px_height = px_per_unit * m_rect.height();
+            if(px_width < Bare_Width || px_height < Bare_Height){
+                return m_rect;
+            }else if(px_width < Spartan_Width || px_height < Spartan_Height){
+                return m_rect.adjusted(36, 0, 0, 0);
+            }else{
+                return m_rect.adjusted(48, 36, -16, -16);
+            }
             return m_rect;
         }
 
         void setRect(QRectF const& rect){
             prepareGeometryChange();
             m_rect = rect;
+        }
+
+        void setScales(float const& xmin, float const& ymin,
+                       float const& xmax, float const& ymax){
+            m_xmin = xmin;
+            m_xmax = xmax;
+            m_ymin = ymin;
+            m_ymax = ymax;
         }
 
         // QGraphicsItem Implementation:
@@ -253,10 +283,85 @@ class GraphAxes: public QGraphicsItem{
         void paint(QPainter *painter,
                    const QStyleOptionGraphicsItem *option,
                    QWidget *widget){
+
+            painter->setClipRect(m_rect);
+            
+            painter->setPen(QPen(QColor(0, 0, 0, 128)));
+            painter->setBrush(Qt::NoBrush);
+            QFont smallfont;
+            smallfont.setPointSize(10);
+            painter->setFont(smallfont);
+
+            QFontMetrics font_metrics(painter->font());
+
+            const float px_per_unit = option->levelOfDetailFromTransform(painter->worldTransform());
+            const QRectF cr = contentsRectAtScale(px_per_unit);
+            painter->drawRect(cr);
+            const float y_labels_space = cr.left() - m_rect.left();
+            const float x_labels_space = m_rect.bottom() - cr.bottom();
+            
+            // !!! TODO change df for x and y separately based on the width and
+            // height of the graph. Or, even better, the axes labels should be
+            // pinned to 'interesting' values. Maybe allow a function to be
+            // supplied in the series config to pick interesting values.
+            const float df = 0.5;
+            float pos_adjust = 0.0;
+            if(y_labels_space >= 48){
+                for(float frac = 0; frac <= 1.0001; frac += df){
+                    QString label = QString("%1").arg(m_ymin + frac * (m_ymax-m_ymin), 7, 'f', 3);
+                    if(frac == 0)
+                        pos_adjust = -font_metrics.ascent()/2;
+                    else if(frac > 0.999)
+                        pos_adjust = font_metrics.ascent();
+                    else
+                        pos_adjust = font_metrics.ascent()/2;
+                    painter->drawText(
+                        cr.bottomLeft() - QPointF(y_labels_space, cr.height() * frac - pos_adjust), label
+                    );
+                }
+            }else if(y_labels_space >= 36){
+               for(float frac = 0; frac <= 1.0001; frac += df){
+                    QString label = QString("%1").arg(m_ymin + frac * (m_ymax-m_ymin), 7, 'f', 1);
+                    if(frac == 0)
+                        pos_adjust = -font_metrics.ascent()/2;
+                    else if(frac > 0.999)
+                        pos_adjust = font_metrics.ascent();
+                    else
+                        pos_adjust = font_metrics.ascent()/2;
+                    painter->drawText(
+                        cr.bottomLeft() - QPointF(y_labels_space, cr.height() * frac - pos_adjust), label
+                    );
+                }
+            }
+            if(x_labels_space >= 16){
+                for(float frac = 0; frac <= 1.0001; frac += df){
+                    QString label = QString("%1").arg(m_xmin + frac * (m_xmax-m_xmin), 7, 'f', 1);
+                    if(frac == 0)
+                        pos_adjust = 0;
+                    else if(frac > 0.999)
+                        pos_adjust = font_metrics.width(label);
+                    else
+                        pos_adjust = font_metrics.width(label)/2;
+                    painter->drawText(
+                        cr.bottomLeft() + QPointF(cr.width()*frac - pos_adjust, x_labels_space-1), label
+                    );
+                }
+            }
         }
     
     private:
+        enum{
+            Bare_Width = 60,
+            Bare_Height = 40,
+            Spartan_Width = 180,
+            Spartan_Height = 120
+        };
         QRectF m_rect;
+
+        float m_xmin;
+        float m_xmax;
+        float m_ymin;
+        float m_ymax;
 };
 
 namespace Graph_Const {
@@ -267,7 +372,7 @@ const static float Max_Resolution = 1200; // max data-points per data series, at
 // !!! tidy up where these little bits go
 struct SeriesData{ DataSeries_ptr data_series; DataWindow_ptr data_window; };
 bool hasInvalidWindow(SeriesData const& d){
-    return !d.data_window;
+    return !d.data_window || !d.data_window->size();
 }
 
 class Graph: public boost::noncopyable{
@@ -326,14 +431,16 @@ class Graph: public boost::noncopyable{
 
             updateDataWindows(tstart, tend, h_resolution);
             
-            const QRectF plot_rect = m_axes->contentsRect();
+            const QRectF plot_rect = m_axes->contentsRectAtScale(px_per_unit);
 
             const float scale_max = m_minimum_maximum > m_data_max?  m_minimum_maximum : m_data_max;
             const float scale_min = m_maximum_minimum < m_data_min?  m_maximum_minimum : m_data_min;
             const float v_units_per_data_unit = plot_rect.height() / (scale_max - scale_min);
             const float v_units_per_second    = double(plot_rect.width()) / (tend - tstart);
+            
+            m_axes->setScales(-m_config.time_period, 0, scale_min, scale_max);
 
-            painter->setClipRect(option->exposedRect);
+            painter->setClipRect(plot_rect);
 
             std::list<SeriesData>::iterator i;
             for(i = m_data_series.begin(); i != m_data_series.end(); i++){
@@ -350,7 +457,6 @@ class Graph: public boost::noncopyable{
             }
             
             painter->setBrush(Qt::NoBrush);
-            painter->drawRect(boundingRect().adjusted(1,1,-1,-1));
          }
 
 
@@ -384,6 +490,8 @@ class Graph: public boost::noncopyable{
             m_data_min = std::numeric_limits<float>::max();
             m_data_max = -std::numeric_limits<float>::max();
             for(i = m_data_series.begin(); i != m_data_series.end(); i++){
+                if(!i->data_window->size())
+                    continue;
                 if(i->data_window->min() < m_data_min){
                     if(i->data_window->min() < i->data_series->m->config().minimum_minimum)
                         m_data_min = i->data_series->m->config().minimum_minimum;

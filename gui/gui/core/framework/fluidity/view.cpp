@@ -101,7 +101,7 @@ FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
     w::GraphConfig config = {30.0};
     w::Graph* g = new w::Graph(config, "A Graph");
     s->addItem(g);
-    g->setRect(QRectF(0,0,600,400));
+    g->setRect(QRectF(0,0,200,140));
     m_pct_series = w::DataSeries_ptr(new w::DataSeries(w::Percent_Graph, "test_pct_graph"));
     m_pct2_series = w::DataSeries_ptr(new w::DataSeries(w::Percent_Graph, "test_pct2_graph"));
     g->addDataSeries(m_pct_series);

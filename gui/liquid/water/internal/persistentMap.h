@@ -15,11 +15,18 @@
 #ifndef __LIQUID_WATER_INTERNAL_PERSISTENT_MAP_H__
 #define __LIQUID_WATER_INTERNAL_PERSISTENT_MAP_H__
 
+#include <stdexcept>
+
 #include <QString>
 #include <QMap>
+#include <QList>
+#include <QVariant>
 #include <QPair>
 #include <QSqlQuery>
 #include <QSqlDatabase>
+#include <QSqlError>
+
+#include <utility/string.h>
 
 namespace liquid{
 namespace water{
@@ -53,11 +60,25 @@ class Map{
         // respectively (an iterator to a vector of std::pair will do)
         template<typename iteratorT>
         void insertMultiple(iteratorT begin, iteratorT end){
-            m_db.transaction();
+            QVariantList k_list;
+            QVariantList v_list;
             while(begin != end){
-                insert(begin->first, begin->second);
+                k_list.append(QVariant(double(begin->first)));
+                v_list.append(QVariant(double(begin->second)));
                 begin++;
             }
+            m_insert_query.bindValue(":k", k_list);
+            m_insert_query.bindValue(":v", v_list);
+
+            m_db.transaction();
+            bool success = m_insert_query.execBatch();
+            if(!success)
+                throw std::runtime_error(std::string(
+                    mkStr() << "failed to exec insert query (duplicate?):"
+                            << m_inrange_query.lastError().text().toUtf8().data()
+                ));
+
+            m_insert_query.finish();
             m_db.commit();
         }
 

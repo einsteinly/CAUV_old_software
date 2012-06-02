@@ -59,6 +59,12 @@ static SeriesConfig Percent_Graph = {
     0.0f, 0.0f, 100.0f, 100.0f, GraphSeriesMode::Unlimited
 };
 
+static SeriesConfig Unlimited_Graph = {
+    -std::numeric_limits<float>::max(), 0.0f, 
+    0.0f, std::numeric_limits<float>::max(),
+    GraphSeriesMode::Unlimited
+};
+
 // implementation in internal classes
 namespace internal{
 class Graph;

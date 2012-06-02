@@ -50,7 +50,7 @@ Arc::Arc(ArcStyle const& of_style,
     setFlag(ItemHasNoContents);
     #endif
     setCacheMode(DeviceCoordinateCache);
-    setBoundingRegionGranularity(0.04); // 25x25px regions
+    setBoundingRegionGranularity(0.1); // 10x10px regions
     
     if(from)
         setFrom(from);

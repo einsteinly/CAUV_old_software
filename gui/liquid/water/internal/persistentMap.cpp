@@ -84,8 +84,13 @@ wi::Map::~Map(){
     m_minavgmax_query = QSqlQuery();
     m_closeto_query = QSqlQuery();
     m_closest_query = QSqlQuery();
+    
+    QString conn_name = m_db.connectionName();
 
     m_db.close();
+    m_db = QSqlDatabase();
+
+    QSqlDatabase::removeDatabase(conn_name);
 }
 
 
@@ -151,6 +156,8 @@ uint32_t wi::Map::minAvgMaxOfRange(double const& low, double const& high, MinAvg
         output.average = m_minavgmax_query.value(2).toDouble();
         output.max = m_minavgmax_query.value(3).toDouble();
     }
+
+    //debug() << "minAvgMaxOfRange" << n << "values";
 
     m_minavgmax_query.finish();
     return n;
