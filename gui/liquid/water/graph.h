@@ -16,6 +16,7 @@
 #define __LIQUID_WATER_GRAPH_H__
 
 #include <cmath>
+#include <limits>
 
 #include <boost/shared_ptr.hpp>
 
