@@ -62,10 +62,11 @@ void test(){
     info() << m.valuesInRange(2.0, 2.1);
     info() << m.valuesInRange(2.1, 2.2);
     info() << m.valuesInRange(7.0, 12.0);
-
-    info() << m.minAvgMaxOfRange(0,100);
-    info() << m.minAvgMaxOfRange(0,10);
-    info() << m.minAvgMaxOfRange(10,20);
+    
+    Map::MinAvgMax o;
+    info() << m.minAvgMaxOfRange(0,100, o) << o;
+    info() << m.minAvgMaxOfRange(0,10, o) << o;
+    info() << m.minAvgMaxOfRange(10,20, o) << o;
 
     info() << m.valuesCloseTo(5, 1);
     info() << m.valuesCloseTo(5, 2);
