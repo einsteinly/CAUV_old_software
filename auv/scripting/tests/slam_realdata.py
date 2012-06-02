@@ -36,9 +36,9 @@ class Benchmarker(object):
         self.resolution = 800
         # important parameters:
         self.reject_thr = 0.6      # higher = more support for score calculation, ransac support
-        self.max_correspond = 0.35 # hard to explain
+        self.max_correspond = 0.6  # hard to explain
         self.weight_test = 0.1     # controls classifier ROC
-        self.score_thr = 0.09      # max error permitted for match
+        self.score_thr = 0.25      # max error permitted for match
         # internal stuff:
         self.video_output_nodes = []
         self.setup()

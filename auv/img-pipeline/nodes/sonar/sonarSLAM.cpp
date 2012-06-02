@@ -297,10 +297,10 @@ class SonarSLAMImpl{
                     const Eigen::Vector2f based_on_image_pt = toVisCoords(
                         (*j)->relativeTo()->globalTransform().block<3,1>(0,3)
                     );
-                    drawLine(
+                    /*drawLine(
                         m_vis_buffer, image_pt, based_on_image_pt,
                         cv::Scalar(100, 120, 50)
-                    );
+                    );*/
                 }
             }
             m_vis_allframes_included = all_scans.size();
@@ -523,7 +523,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
 
     GraphOptimiserV1 graph_optimiser(graph_iters);
     
-    debug () << "external delta theta =" << delta_theta * 180 / 3.14159 << "degrees";
+    debug() << "external delta theta =" << delta_theta * 180 / 3.14159 << "degrees";
     /*Eigen::Matrix4f relative_rotation_guess = Eigen::Matrix4f::Identity();
     relative_rotation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
         Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ())
@@ -543,7 +543,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
         global_transformation
     );
 
-    info() << "sonarSLAM scan confidence" << confidence;
+    //info() << "sonarSLAM scan confidence" << confidence;
 
     m_impl->updateVis();
     

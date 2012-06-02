@@ -235,7 +235,7 @@ class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
             Eigen::Matrix4f& transformation,
             base_cloud_ptr& transformed_cloud
         ) const {
-            debug() << "ICPPairwiseMatcher" << map->size() << ":" << new_cloud->size() << "points";
+            //debug() << "ICPPairwiseMatcher" << map->size() << ":" << new_cloud->size() << "points";
 
             ICP<BaseT> icp;
             icp.setInputCloud(new_cloud);
@@ -269,10 +269,10 @@ class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
 
             const Eigen::Matrix4f relative_guess = map->relativeTransform().inverse() * guess * new_cloud->globalTransform();
 
-            debug(3) << BashColour::Green << "guess:\n"
+            /*debug(3) << BashColour::Green << "guess:\n"
                      << guess;
             debug(2) << BashColour::Green << "relative guess:\n"
-                     << relative_guess;
+                     << relative_guess;*/
 
             // do the hard work!
             icp.align(*transformed_cloud, relative_guess);
@@ -288,31 +288,32 @@ class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
 
             // high is bad (score is sum of squared euclidean distances)
             const float score = icp.getFitnessScore(m_max_correspond_dist);
-            info() << BashColour::Green
-                   << "converged:" << icp.hasConverged()
-                   << "score:" << score
-                   << "after" << icp.numIters() << "/" << m_max_iters
-                   << "iterations."
-                   << "Transformation change:" << icp.transformationChange()
-                   << "/epsilon:" << icp.transformationEpsilon();
-                   /*<< "Fitness:" << icp.euclideanFitness()
-                   << "/epsilon:" << icp.euclideanFitnessEpsilon();*/
+            info infostream;
+            infostream << BashColour::Green
+                       << "ICP converged:" << icp.hasConverged()
+                       << "score:" << score
+                       << "after" << icp.numIters() << "/" << m_max_iters
+                       << "iterations."
+                       << "Transformation change:" << icp.transformationChange()
+                       << "/ epsilon:" << icp.transformationEpsilon();
+                     /*<< "Fitness:" << icp.euclideanFitness()
+                       << "/ epsilon:" << icp.euclideanFitnessEpsilon();*/
 
             if(icp.hasConverged() && score < m_score_thr){
-                debug(2) << BashColour::Green << "final transform:\n"
-                         << final_transform;
+                /*debug(2) << BashColour::Green << "final transform:\n"
+                         << final_transform;*/
                 Eigen::Vector3f xytheta = xythetaFrom4dAffine(final_transform);
-                info() << BashColour::Green << "pairwise match:"
-                       << xytheta[0] << "," << xytheta[1] << "rot=" << xytheta[2] << "deg";
+                infostream << BashColour::Green << " pairwise match:"
+                           << xytheta[0] << "," << xytheta[1] << "rot=" << xytheta[2] << "deg";
                 transformation = final_transform;
             }else if(score >= m_score_thr){
-                info() << BashColour::Brown
-                       << "ICP pairwise match failed (error too high: "
-                       << score << ">=" << m_score_thr <<")";
+                infostream << BashColour::Brown
+                           << "failed (error too high: "
+                           << score << ">=" << m_score_thr <<")";
                 throw PairwiseMatchException("error too high");
             }else{
-                info() << BashColour::Red
-                       << "ICP pairwise match failed (not converged)";
+                infostream << BashColour::Red
+                           << "failed (not converged)";
                 throw PairwiseMatchException("failed to converge");
             }
 
