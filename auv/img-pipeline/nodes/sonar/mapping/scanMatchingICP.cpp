@@ -308,12 +308,12 @@ class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
                 transformation = final_transform;
             }else if(score >= m_score_thr){
                 infostream << BashColour::Brown
-                           << "failed (error too high: "
+                           << " failed (error too high: "
                            << score << ">=" << m_score_thr <<")";
                 throw PairwiseMatchException("error too high");
             }else{
                 infostream << BashColour::Red
-                           << "failed (not converged)";
+                           << " failed (not converged)";
                 throw PairwiseMatchException("failed to converge");
             }
 

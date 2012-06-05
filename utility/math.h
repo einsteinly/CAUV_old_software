@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -18,6 +18,10 @@
 #include <cmath>
 
 namespace cauv {
+    
+    /* These modulus functions return the closest possible value to zero, and
+     * can be used safely with floating point numbers.
+     */
 
     template<typename T>
     T mod(T const& d, T const& base)

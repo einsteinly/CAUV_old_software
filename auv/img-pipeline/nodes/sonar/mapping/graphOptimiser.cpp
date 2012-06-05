@@ -25,6 +25,7 @@
 #include <utility/foreach.h>
 #include <utility/streamops.h>
 #include <utility/string.h>
+#include <utility/math.h>
 
 #include <debug/cauv_debug.h>
 
@@ -596,12 +597,9 @@ void GraphOptimiserV1::optimiseGraph(
             visitToRoot(bit->second, AccumulatePoseReverse(b_wrt_root));
             assert(((b_wrt_root - a_wrt_root) - actual_end_rel_to_start).x.squaredNorm() < 1e-5);
             #endif // !defined(CAUV_NO_DEBUG)
-
-            // !!! TODO: better angle normalisation
-            while(error.x[2] > M_PI)
-                error.x[2] -= M_PI*2;
-            while(error.x[2] <= -M_PI)
-                error.x[2] += M_PI*2;
+            
+            // normalise angle
+            error.x[2] = mod(error.x[2], float(M_PI));
 
             // if the error is too big (>45 degrees, or >3m and >4* the
             // distance) ignore it:
@@ -633,9 +631,7 @@ void GraphOptimiserV1::optimiseGraph(
             // (Olsen et al & Grisetti et al use weighting schemes based on the
             //  information matrix of each component constraint, but this will
             //  do to start with)
-            // !!! TODO: currently don't use p->weight when applying the error
-            // from this constraint: should do!
-            IncrementalPose d_pose = error * (alpha / num_nodes); // not num_nodes-1 since include the new constraint in distribution of error
+            IncrementalPose d_pose = error * p->weight * (alpha / num_nodes); // not num_nodes-1 since include the new constraint in distribution of error
             visitBetweenNodes(ait->second, bit->second, AddPose(d_pose));
             
             // sanity checking:

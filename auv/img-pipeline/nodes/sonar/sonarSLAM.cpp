@@ -125,17 +125,9 @@ class SonarSLAMImpl{
             initVis();
         }
 
-        void setGraphProperties(float overlap_threshold,
-                                float keyframe_spacing,
-                                float min_initial_points,
-                                float good_keypoint_distance,
-                                int max_considered_overlaps){
-            m_graph.setParams(
-                overlap_threshold, keyframe_spacing, min_initial_points,
-                good_keypoint_distance, max_considered_overlaps
-            );
+        void setGraphProperties(CloudGraphParams params){
+            m_graph.setParams(params);
         }
-
 
         float registerScan(cloud_ptr scan,
                            PairwiseMatcher<pt_t> const& scan_matcher,
@@ -271,9 +263,9 @@ class SonarSLAMImpl{
                         (*hull_cloud)[hull_polys[0].vertices[j]].getVector3fMap()
                     ));
                 }
-                drawPoly(
-                    m_vis_buffer, image_hull_pts, cv::Scalar(100,90,100)
-                );
+                //drawPoly(
+                //    m_vis_buffer, image_hull_pts, cv::Scalar(100,90,100)
+                //);
                 /*foreach(Eigen::Vector2f const& p, image_hull_pts)
                     drawCircle(
                         m_vis_buffer, p, 0.1/m_vis_metres_per_px, cv::Scalar(0,0,140)
@@ -407,6 +399,8 @@ void SonarSLAMNode::init(){
     // Graph Optimisation Parameters
     registerParamID("graph iters", int(10), "Iterations of graph optimisation per key-scan");
     registerParamID("max matches", int(3), "Maximum number of pairwise correspondences for each scan");
+    registerParamID("match consensus", int(2), "Consensus required for match");
+    registerParamID("consensus tolerance", float(0.3), "Metres between matches to consider consensus");
 
     // Visualisation Parameters:
     //registerParamID("-render resolution", float(400), "in pixels");
@@ -463,6 +457,8 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
 
     const int graph_iters = param<int>("graph iters");
     const int max_matches = param<int>("max matches");
+    const int require_match_consensus = param<int>("match consensus");
+    const float consensus_tolerance = param<float>("consensus tolerance");
 
     const float score_thr   = param<float>("score threshold");
     const float delta_theta = param<float>("delta theta");
@@ -483,8 +479,20 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     //const int render_size = param<int>("-vis size");
     //const Eigen::Vector2f render_origin(param<int>("-render origin x"),
     //                                 param<int>("-render origin y"));
-    
-    m_impl->setGraphProperties(overlap_threshold, keyframe_spacing, 10, point_merge_distance, max_matches);
+
+    CloudGraphParams params;
+    params.overlap_threshold = overlap_threshold;
+    params.keyframe_spacing = keyframe_spacing;
+    //params.min_initial_points = 10;
+    //params.min_initial_area = 5;
+    params.good_keypoint_distance = point_merge_distance;
+    //params.max_speed = 2.0;
+    params.max_considered_overlaps = max_matches;
+    params.min_scan_consensus = require_match_consensus;
+    params.scan_consensus_tolerance = consensus_tolerance;
+    //params.rotation_scale = 4;
+
+    m_impl->setGraphProperties(params);
     m_impl->setVisProperties(vis_res, vis_origin, vis_size/vis_res[0]);
 
     image_ptr_t xy_image = inputs["xy image"];
