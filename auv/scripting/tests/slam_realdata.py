@@ -37,7 +37,7 @@ class Benchmarker(object):
         self.resolution = 600
         # important parameters:
         self.reject_thr = 0.35     # higher = more support for score calculation, ransac support
-        self.max_correspond = 0.6  # hard to explain
+        self.max_correspond = 0.5  # hard to explain
         self.weight_test = 0.20    # controls classifier ROC (0 = pass everything, 1 = fail almost everything)
         self.score_thr = 0.2      # max error permitted for match
         self.keyframe_spacing = 1.5# minimum distance between keyframes (sort of)
