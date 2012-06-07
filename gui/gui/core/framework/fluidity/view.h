@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -19,6 +19,7 @@
 
 #include <liquid/view.h>
 #include <liquid/water/graph.h>
+#include <liquid/water/dataSeries.h>
 
 namespace w = liquid::water;
 

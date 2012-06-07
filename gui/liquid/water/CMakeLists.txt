@@ -6,8 +6,12 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set (
     WATER_SRCS
     graph.cpp
+    dataSeries.cpp
     internal/persistentMap.cpp
     internal/graph.cpp
+    internal/dataSeries.cpp
+    internal/dataWindow.cpp
+    internal/graphAxes.cpp
 )
 
 set (

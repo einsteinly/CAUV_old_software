@@ -25,48 +25,12 @@
 namespace liquid{
 namespace water{
 
-namespace GraphSeriesMode{
-enum e{Unlimited, Clamp, Modulus};
-}
-
 struct GraphConfig{
     float time_period; // only a hint, in seconds
 };
 
-struct SeriesConfig{
-    // control vertical scaling
-    // for angle graphs, maximum_maximum - minimum_minimum is used as the
-    // modulus for angle plotting magic
-    float minimum_minimum;
-    float maximum_minimum;
-    float minimum_maximum;
-    float maximum_maximum;
-    GraphSeriesMode::e mode;
-};
+extern GraphConfig One_Minute;
 
-static GraphConfig One_Minute = {
-    60.0f
-};
-
-static SeriesConfig Radians_Angle_Graph = {
-    0.0f, M_PI - M_PI/8, M_PI/8, M_PI, GraphSeriesMode::Modulus
-};
-
-static SeriesConfig Degrees_Angle_Graph = {
-    0.0f, 315.0f, 45.0f, 360.0f, GraphSeriesMode::Modulus
-};
-
-// "unlimited", but the maximum vertical scale will be limited to 0--100, so if
-// the data goes above 100 it'll go off the top.
-static SeriesConfig Percent_Graph = {
-    0.0f, 0.0f, 100.0f, 100.0f, GraphSeriesMode::Unlimited
-};
-
-static SeriesConfig Unlimited_Graph = {
-    -std::numeric_limits<float>::max(), 0.0f, 
-    0.0f, std::numeric_limits<float>::max(),
-    GraphSeriesMode::Unlimited
-};
 
 // implementation in internal classes
 namespace internal{
@@ -78,26 +42,6 @@ class Graph;
 class DataSeries;
 
 typedef boost::shared_ptr<DataSeries> DataSeries_ptr;
-
-// Represents one data series. Create Graphs by adding these to a Graph object
-class DataSeries{
-    public:
-        DataSeries(SeriesConfig const& config, QString series_name);
-
-        /* Add a data value to the data series.
-         *
-         *  value: the value, easy
-         *  time: time in floating point seconds. Should correspond to the
-         *        values returned by the nowDouble() function in utility/time.h
-         */
-        void postData(double const& value, double const& time);
-    
-    private:
-        // internal::Graph can call methods directly on m
-        friend class internal::Graph;
-
-        boost::shared_ptr<internal::DataSeries> m;
-};
 
 // Draws zero or more data series.
 class Graph: public QGraphicsItem{

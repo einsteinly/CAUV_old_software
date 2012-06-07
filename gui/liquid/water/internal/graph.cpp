@@ -12,203 +12,185 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-
 #include "graph.h"
+
+#include <boost/make_shared.hpp>
+
+#include <QStyleOptionGraphicsItem>
+#include <QPainter>
+#include <QPolygonF>
+#include <QPen>
+#include <QBrush>
+#include <QGraphicsScene>
+
+#include <debug/cauv_debug.h>
+
+#include <utility/time.h>
+#include <utility/math.h>
+
+#include "../graph.h"
+#include "dataSeries.h"
+#include "dataWindow.h"
+#include "graphAxes.h"
+
 
 namespace w = liquid::water;
 namespace wi = liquid::water::internal;
 
-
-
-// - DataWindow
-
-wi::DataWindow::DataWindow()
-    : m_sample_times(),
-      m_min_values(),
-      m_mean_values(),
-      m_max_values(),
-      m_min( std::numeric_limits<float>::max()),
-      m_max(-std::numeric_limits<float>::max()){
+wi::Graph::Graph(GraphConfig const& config, QString name, QGraphicsItem* owner)
+    : boost::noncopyable(),
+      m_owner(owner),
+      m_config(config),
+      m_data_series(),
+      m_data_min(0),
+      m_data_max(0),
+      m_rect(0,0,200,100),
+      m_rect_changed(true),
+      m_axes(new GraphAxes(m_rect, owner, name)){
 }
 
-/* config is used to wrap / clamp samples into range as appropriate */
-void wi::DataWindow::addSample(Map::MinAvgMax const& mam, double const& time, SeriesConfig const& config){
-    float min;
-    float avg;
-    float max;
-    if(m_sample_times.size() && config.mode == GraphSeriesMode::Modulus){
-        const double base = config.maximum_maximum - config.minimum_minimum;
-        /*float const& last = m_mean_values.back();
-        const float zero = base * std::floor(last/base);
-        
-        min = zero + cauv::angleMod(mam.min, base);
-        avg = zero + cauv::angleMod(mam.average, base);
-        max = zero + cauv::angleMod(mam.max, base);*/
-        min = cauv::mod(mam.min, base);
-        avg = cauv::mod(mam.average, base);
-        max = cauv::mod(mam.max, base);
+void wi::Graph::addDataSeries(DataSeries_ptr data_series){
+    SeriesData d = {data_series, DataWindow_ptr()};
+    m_data_series.insert(m_data_series.end(), d);
+    data_series->m->addGraph(this);
+    _recalcMinMaxMaxMin();
+}
 
-        //debug() << min << avg << max;
+void wi::Graph::removeDataSeries(DataSeries_ptr data_series){
+    std::list<SeriesData>::iterator i;
+    for(i = m_data_series.begin(); i != m_data_series.end(); i++)
+        if(i->data_series == data_series)
+            break;
+    m_data_series.erase(i);
+    _recalcMinMaxMaxMin();            
+}
 
-    }else if(config.mode == GraphSeriesMode::Clamp){
-        min = clamp(config.minimum_minimum, mam.min, config.maximum_maximum);
-        avg = clamp(config.minimum_minimum, mam.average, config.maximum_maximum);
-        max = clamp(config.minimum_minimum, mam.max, config.maximum_maximum);
-    }else{
-        min = mam.min;
-        avg = mam.average;
-        max = mam.max;
+void wi::Graph::updateDataWindows(double const& tstart, double const& tend, uint32_t resolution){
+    if(std::count_if(m_data_series.begin(), m_data_series.end(), hasInvalidWindow))
+        _discardAndUpdateDataWindows(tstart, tend, resolution);
+    else
+        _incrementalUpdateDataWindows(tstart, tend, resolution);
+    
+}
+
+// Delegated QGraphicsItem Implementation
+QRectF wi::Graph::boundingRect() const{
+    return m_rect;
+}
+
+void wi::Graph::requiresUpdate() const{
+    QGraphicsScene* s = m_owner->scene();
+    if(s)
+        s->update((m_owner->mapToScene(boundingRect())).boundingRect());
+}
+
+void wi::Graph::paint(QPainter *painter,
+           const QStyleOptionGraphicsItem *option,
+           QWidget *widget){
+    Q_UNUSED(widget);
+
+    const float px_per_unit = option->levelOfDetailFromTransform(painter->worldTransform());
+    const float px_width = boundingRect().width() * px_per_unit;
+    const float h_resolution_f = std::min(px_width, Graph_Const::Max_Resolution);
+    const uint32_t h_resolution = std::max(int(h_resolution_f+0.5), 1);
+    const double tend = cauv::nowDouble();
+    const double tstart = tend - m_config.time_period;
+
+    //debug() << "graph:paint" << h_resolution << tend-tstart;
+
+    updateDataWindows(tstart, tend, h_resolution);
+    
+    const QRectF plot_rect = m_axes->contentsRectAtScale(px_per_unit);
+
+    const float scale_max = m_minimum_maximum > m_data_max?  m_minimum_maximum : m_data_max;
+    const float scale_min = m_maximum_minimum < m_data_min?  m_maximum_minimum : m_data_min;
+    const float v_units_per_data_unit = plot_rect.height() / (scale_max - scale_min);
+    const float v_units_per_second    = double(plot_rect.width()) / (tend - tstart);
+    
+    m_axes->setScales(-m_config.time_period, 0, scale_min, scale_max);
+
+    painter->setClipRect(plot_rect);
+
+    std::list<SeriesData>::iterator i;
+    for(i = m_data_series.begin(); i != m_data_series.end(); i++){
+        painter->setBrush(QBrush(QColor(0, 0, 0, 64)));
+        painter->setPen(Qt::NoPen);
+        painter->drawPolygon(i->data_window->regionAtScale(
+            plot_rect.topLeft(), tstart, scale_max, v_units_per_second, v_units_per_data_unit
+        ));
+        painter->setPen(QPen(QColor(0, 0, 0, 128)));
+        //painter->setBrush(Qt::NoBrush);
+        painter->drawPolyline(i->data_window->valuesAtScale(
+            plot_rect.topLeft(), tstart, scale_max, v_units_per_second, v_units_per_data_unit
+        ));
     }
-    m_sample_times.push_back(time);
-    m_min_values.push_back(min);
-    m_mean_values.push_back(avg);
-    m_max_values.push_back(max);
-    if(mam.min < m_min)
-        m_min = mam.min;
-    if(mam.max > m_max)
-        m_max = mam.max;
-}
+    
+    painter->setBrush(Qt::NoBrush);
+ }
 
-void wi::DataWindow::removeSamplesBefore(double const& t){
-    bool recalcminmax = false;
-    while((m_sample_times.size() > 1 && m_sample_times[1] <= t) ||
-          (m_sample_times.size() == 1 && m_sample_times.front() < t)){
-        if(m_min_values.front() == m_min)
-            recalcminmax = true;
-        if(m_max_values.front() == m_max)
-            recalcminmax = true;
-        m_sample_times.pop_front();
-        m_min_values.pop_front();
-        m_mean_values.pop_front();
-        m_max_values.pop_front();
+
+ // Other drawing-associated Implementation
+ void wi::Graph::setRect(QRectF const& rect){
+    if(rect != m_rect){
+        m_rect_changed = true;
+        m_rect = rect;
     }
-    if(recalcminmax)
-        _recalcMinMax();
+    // axes are always at position zero, so don't need to adjust rect
+    m_axes->setRect(rect);
+ }
+
+void wi::Graph::_discardAndUpdateDataWindows(double const& tstart, double const& tend, uint32_t resolution){
+    std::list<SeriesData>::iterator i;
+    for(i = m_data_series.begin(); i != m_data_series.end(); i++)
+        i->data_window = i->data_series->m->snapshot(tstart, tend, resolution);
+    _updateDataMinMax();
 }
 
-QPolygonF wi::DataWindow::regionAtScale(QPointF origin, double const& tmin, float ymax, float xscale, float yscale) const{
-    QPolygonF r;
-    const int n = m_sample_times.size();
-    r.reserve(2*n);
-    for(int i = 0; i < n; i++){
-        r.push_back(QPointF((m_sample_times[i] - tmin) * xscale + origin.x(),
-                            (ymax - m_max_values[i]) * yscale + origin.y()));
+void wi::Graph::_incrementalUpdateDataWindows(double const& tstart, double const& tend, uint32_t resolution){
+    std::list<SeriesData>::iterator i;
+    for(i = m_data_series.begin(); i != m_data_series.end(); i++)
+        i->data_series->m->updateSnapshot(i->data_window, tstart, tend, resolution);
+    _updateDataMinMax();            
+}
+
+void wi::Graph::_updateDataMinMax(){
+    std::list<SeriesData>::iterator i;
+    m_data_min = std::numeric_limits<float>::max();
+    m_data_max = -std::numeric_limits<float>::max();
+    for(i = m_data_series.begin(); i != m_data_series.end(); i++){
+        if(!i->data_window->size())
+            continue;
+        if(i->data_window->min() < m_data_min){
+            if(i->data_window->min() < i->data_series->m->config().minimum_minimum)
+                m_data_min = i->data_series->m->config().minimum_minimum;
+            else
+                m_data_min = i->data_window->min();
+        }if(i->data_window->max() > m_data_max && i->data_window->max()){
+            if(i->data_window->max() > i->data_series->m->config().maximum_maximum)
+                m_data_max = i->data_series->m->config().maximum_maximum;
+            else
+                m_data_max = i->data_window->max();
+        }
     }
+    //debug() << __func__ << "min =" << m_data_min << "max = " << m_data_max;            
+}
 
-    for(int i = n-1; i >= 0; i--){
-        r.push_back(QPointF((m_sample_times[i] - tmin) * xscale + origin.x(),
-                            (ymax - m_min_values[i]) * yscale + origin.y()));
+
+void wi::Graph::_recalcMinMaxMaxMin(){
+    std::list<SeriesData>::const_iterator i;
+    m_minimum_maximum = -std::numeric_limits<float>::max();
+    m_maximum_minimum = std::numeric_limits<float>::max();
+    for(i = m_data_series.begin(); i != m_data_series.end(); i++){
+        if(i->data_series->m->config().minimum_maximum > m_minimum_maximum)
+            m_minimum_maximum = i->data_series->m->config().minimum_maximum;
+        if(i->data_series->m->config().maximum_minimum < m_maximum_minimum)
+            m_maximum_minimum = i->data_series->m->config().maximum_minimum;
     }
-
-    return r;
-}
-
-QPolygonF wi::DataWindow::valuesAtScale(QPointF origin, double const& tmin, float ymax, float xscale, float yscale) const{
-    QPolygonF r;
-    const int n = m_sample_times.size();
-    r.reserve(n);
-    for(int i = 0; i < n; i++){
-        r.push_back(QPointF((m_sample_times[i] - tmin) * xscale + origin.x(),
-                            (ymax - m_mean_values[i]) * yscale + origin.y()));
-    }
-    return r;
-}
-
-std::size_t wi::DataWindow::size() const{
-    return m_sample_times.size();
-}
-
-void wi::DataWindow::_recalcMinMax(){
-    if(m_sample_times.size()){
-        m_min = std::numeric_limits<float>::max();
-        m_max = -std::numeric_limits<float>::max();
-    }
-    foreach(float const& f, m_min_values){
-        if(f < m_min)
-            m_min = f;
-    }
-    foreach(float const& f, m_max_values){
-        if(f > m_max)
-            m_max = f;
-    }
+    //debug() << __func__ << "min max =" << m_minimum_maximum << "max min = " << m_maximum_minimum;
 }
 
 
-// - DataSeries
-
-wi::DataSeries::DataSeries(SeriesConfig const& config, QString series_name)
-    : m_data(series_name),
-      m_insert_batch(),
-      m_last_value(0),
-      m_config(config){
-}
-
-void  wi::DataSeries::postData(double value, double const& time){
-    // ensure that mean calculations with angles work correctly (at the
-    // expense of denormalised angles):
-    if(m_config.mode == GraphSeriesMode::Modulus){
-        const double base = m_config.maximum_maximum - m_config.minimum_minimum;
-        const float zero = base * std::floor(m_last_value/base);
-        value = zero + cauv::mod(value, base);
-    }
-
-    m_insert_batch.push_back(std::pair<double,double>(time, value));
-    if(m_insert_batch.size() >= Data_Batch_Size){
-        //debug() << "insert batch:" << m_insert_batch.size();
-        m_data.insertMultiple(m_insert_batch.begin(), m_insert_batch.end());
-        m_insert_batch.clear();
-        foreach(wi::Graph* g, m_in_graphs)
-            g->requiresUpdate();
-    }
-
-    m_last_value = value;
-}
-
-void  wi::DataSeries::addGraph(wi::Graph* g){
-    m_in_graphs.push_back(g);
-}
-
-wi::DataWindow_ptr  wi::DataSeries::snapshot(double const& tstart, double const& tend, unsigned resolution){
-    DataWindow_ptr r = boost::make_shared<DataWindow>();
-    if(resolution == 0)
-        resolution++;
-    const double dt = (tend-tstart) / resolution;
-    Map::MinAvgMax x = {0,0,0};
-    for(double t = tstart; t <= tend-dt/2; t += dt)
-        if(m_data.minAvgMaxOfRange(t, t+dt, x))
-            r->addSample(x, t+dt/2, m_config);
-    //debug() << "snapshot" << tstart << tend << resolution << "->" << r->size() << "values";
-    // !!! TODO (important) if there were no values in the snapshot, DO
-    // NOT TRY AGAIN SOON: back off (this might mean reducing the
-    // frame-rate, for example), because getting the whole snapshot can
-    // be an expensive operation, that crowds out the actual insertion
-    // of data, so we get stuck in a loop getting expensive empty
-    // snapshots
-    return r;
-}
-
-void  wi::DataSeries::updateSnapshot(DataWindow_ptr w, double const& tstart, double const& tend, uint32_t resolution){
-    w->removeSamplesBefore(tstart);
-    const double dt = (tend - tstart) / resolution;
-    if(!w->size()){
-        w = snapshot(tstart, tend, resolution);
-        return;
-    }
-    Map::MinAvgMax x = {0, 0, 0};
-    for(double t = w->maxTime(); t < tend-dt/2; t += dt)
-        if(m_data.minAvgMaxOfRange(t, t+dt, x))
-            w->addSample(x, t+dt/2, m_config);
-    //debug() << "incremental snapshot" << tstart << tend << resolution
-    //        << "->" << (tend - w->maxTime()) / dt << "values";
-}
-
-w::SeriesConfig const&  wi::DataSeries::config() const{
-    return m_config;
-}
-
-
-// - Free Functions
-bool wi::hasInvalidWindow(SeriesData const& d){
+bool wi::Graph::hasInvalidWindow(SeriesData const& d){
     return !d.data_window || !d.data_window->size();
 }
 

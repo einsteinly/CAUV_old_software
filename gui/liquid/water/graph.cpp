@@ -17,16 +17,9 @@
 
 namespace w = liquid::water;
 
-// - DataSeries
-
-w::DataSeries::DataSeries(SeriesConfig const& config, QString series_name)
-    : m(new internal::DataSeries(config, series_name)){
-}
-
-void w::DataSeries::postData(double const& value, double const& time){
-    m->postData(value, time);
-}
-
+w::GraphConfig w::One_Minute = {
+    60.0f
+};
 
 // - Graph
 
