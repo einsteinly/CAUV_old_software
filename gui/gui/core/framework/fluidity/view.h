@@ -90,6 +90,8 @@ class FView: public liquid::LiquidView {
         // !!! temporary graph dev stuff
         w::DataSeries_ptr m_pct_series;
         w::DataSeries_ptr m_pct2_series;
+        w::DataSeries_ptr m_unlim_series;
+        w::DataSeries_ptr m_angle_series;
         QTimer* m_redraw_timer;
         QTimer* m_data_timer;
 };

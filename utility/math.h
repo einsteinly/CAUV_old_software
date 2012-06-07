@@ -18,13 +18,23 @@
 #include <cmath>
 
 namespace cauv {
-
+    
+    /* return smallest positive value in all cases */
     template<typename T>
     T mod(T const& d, T const& base)
     {
         T ret = d % base;
         if (ret < 0)
             ret += base;
+        return ret;
+    }
+    
+    /* return closest value to zero in all cases */
+    template<typename T>
+    T angleMod(T const& d, T const& base){
+        T ret = mod(d, base);
+        if(ret > base/2)
+            ret -= base;
         return ret;
     }
    

@@ -30,11 +30,14 @@
 #include <QBrush>
 #include <QFont>
 #include <QFontMetrics>
+#include <QGraphicsScene>
 
 #include <debug/cauv_debug.h>
 
 #include <utility/time.h>
 #include <utility/foreach.h>
+#include <utility/math.h>
+#include <utility/rounding.h>
 
 #include "../graph.h"
 #include "persistentMap.h"
@@ -69,35 +72,12 @@ typedef boost::shared_ptr<DataWindow> DataWindow_ptr;
 
 class DataWindow: public boost::noncopyable{
     public:
-        DataWindow()
-            : m_sample_times(),
-              m_min_values(),
-              m_mean_values(),
-              m_max_values(),
-              m_min(-std::numeric_limits<float>::max()),
-              m_max( std::numeric_limits<float>::max()){
-        }
+        DataWindow();
+        
+        /* config is used to wrap / clamp samples into range as appropriate */
+        void addSample(Map::MinAvgMax const& mam, double const& time, SeriesConfig const& config);
 
-        void addSample(Map::MinAvgMax const& mam, double const& time){
-            m_sample_times.push_back(time);
-            m_min_values.push_back(mam.min);
-            m_mean_values.push_back(mam.average);
-            m_max_values.push_back(mam.max);
-            if(mam.min < m_min)
-                m_min = mam.min;
-            if(mam.max > m_max)
-                m_max = mam.max;
-        }
-
-        void removeSamplesBefore(double const& t){
-            while((m_sample_times.size() > 1 && m_sample_times[1] <= t) ||
-                  (m_sample_times.size() == 1 && m_sample_times.front() < t)){
-                m_sample_times.pop_front();
-                m_min_values.pop_front();
-                m_mean_values.pop_front();
-                m_max_values.pop_front();
-            }
-        }
+        void removeSamplesBefore(double const& t);
         
         float const& min() const{ return m_min; }
         float const& max() const{ return m_max; }
@@ -105,39 +85,14 @@ class DataWindow: public boost::noncopyable{
         double const& minTime() const{ return m_sample_times.front(); }
         double const& maxTime() const{ return m_sample_times.back(); }
 
-        QPolygonF regionAtScale(QPointF origin, double const& tmin, float ymax, float xscale, float yscale) const{
-            QPolygonF r;
-            const int n = m_sample_times.size();
-            r.reserve(2*n);
-            for(int i = 0; i < n; i++){
-                r.push_back(QPointF((m_sample_times[i] - tmin) * xscale + origin.x(),
-                                    (ymax - m_max_values[i]) * yscale + origin.y()));
-            }
+        QPolygonF regionAtScale(QPointF origin, double const& tmin, float ymax, float xscale, float yscale) const;
+        QPolygonF valuesAtScale(QPointF origin, double const& tmin, float ymax, float xscale, float yscale) const;
 
-            for(int i = n-1; i >= 0; i--){
-                r.push_back(QPointF((m_sample_times[i] - tmin) * xscale + origin.x(),
-                                    (ymax - m_min_values[i]) * yscale + origin.y()));
-            }
-
-            return r;
-        }
-
-        QPolygonF valuesAtScale(QPointF origin, double const& tmin, float ymax, float xscale, float yscale) const{
-            QPolygonF r;
-            const int n = m_sample_times.size();
-            r.reserve(n);
-            for(int i = 0; i < n; i++){
-                r.push_back(QPointF((m_sample_times[i] - tmin) * xscale + origin.x(),
-                                    (ymax - m_mean_values[i]) * yscale + origin.y()));
-            }
-            return r;
-        }
-
-        std::size_t size() const{
-            return m_sample_times.size();
-        }
+        std::size_t size() const;
 
     private:
+        void _recalcMinMax();
+
         std::deque<double> m_sample_times;
         std::deque<float>  m_min_values;
         std::deque<float>  m_mean_values;
@@ -148,70 +103,27 @@ class DataWindow: public boost::noncopyable{
 
 class DataSeries: public boost::noncopyable{
     public:
-        DataSeries(SeriesConfig const& config, QString series_name)
-            : m_data(series_name),
-              m_insert_batch(),
-              m_config(config){
-        }
+        DataSeries(SeriesConfig const& config, QString series_name);
 
-        void postData(double const& value, double const& time){
-            //m_data.insert(time, value);
+        void postData(double value, double const& time);
 
-            m_insert_batch.push_back(std::pair<double,double>(time, value));
-            if(m_insert_batch.size() >= Data_Batch_Size){
-                //debug() << "insert batch:" << m_insert_batch.size();
-                m_data.insertMultiple(m_insert_batch.begin(), m_insert_batch.end());
-                m_insert_batch.clear();
-            }
-        }
+        void addGraph(internal::Graph* g);
         
-        DataWindow_ptr snapshot(double const& tstart, double const& tend, unsigned resolution){
-            DataWindow_ptr r = boost::make_shared<DataWindow>();
-            if(resolution == 0)
-                resolution++;
-            const double dt = (tend-tstart) / resolution;
-            Map::MinAvgMax x = {0,0,0};
-            for(double t = tstart; t <= tend-dt/2; t += dt)
-                if(m_data.minAvgMaxOfRange(t, t+dt, x))
-                    r->addSample(x, t+dt/2);
-            debug() << "snapshot" << tstart << tend << resolution << "->" << r->size() << "values";
-            // !!! TODO (important) if there were no values in the snapshot, DO
-            // NOT TRY AGAIN SOON: back off (this might mean reducing the
-            // frame-rate, for example), because getting the whole snapshot can
-            // be an expensive operation, that crowds out the actual insertion
-            // of data, so we get stuck in a loop getting expensive empty
-            // snapshots
-            return r;
-        }
+        DataWindow_ptr snapshot(double const& tstart, double const& tend, unsigned resolution);
 
-        void updateSnapshot(DataWindow_ptr w, double const& tstart, double const& tend, uint32_t resolution){
-            w->removeSamplesBefore(tstart);
-            const double dt = (tend - tstart) / resolution;
-            if(!w->size()){
-                w = snapshot(tstart, tend, resolution);
-                return;
-            }
-            Map::MinAvgMax x = {0};            
-            for(double t = w->maxTime(); t < tend-dt/2; t += dt)
-                if(m_data.minAvgMaxOfRange(t, t+dt, x))
-                    w->addSample(x, t+dt/2);
-            //debug() << "incremental snapshot" << tstart << tend << resolution
-            //        << "->" << (tend - w->maxTime()) / dt << "values";
-        }
+        void updateSnapshot(DataWindow_ptr w, double const& tstart, double const& tend, uint32_t resolution);
 
-        SeriesConfig const& config() const{
-            return m_config;
-        }
+        SeriesConfig const& config() const;
 
     private:
-        //void _updateDataBatchSize(){
-        //}
-
         Map m_data;
         enum{Data_Batch_Size = 20};
         std::vector< std::pair<double, double> > m_insert_batch;
+        double m_last_value;
 
         SeriesConfig m_config;
+
+        std::vector<internal::Graph*> m_in_graphs;
 };
 
 /*class RedrawManager{
@@ -244,9 +156,14 @@ class GraphLegend: public QGraphicsItem{
 
 class GraphAxes: public QGraphicsItem{
     public:
-        GraphAxes(QRectF const& rect, QGraphicsItem* parent)
+        GraphAxes(QRectF const& rect, QGraphicsItem* parent, QString title)
             : QGraphicsItem(parent),
-              m_rect(rect){
+              m_rect(rect),
+              m_title(title),
+              m_xmin(0),
+              m_xmax(0),
+              m_ymin(0),
+              m_ymax(0){
         }
 
         QRectF contentsRectAtScale(float px_per_unit) const{
@@ -267,8 +184,8 @@ class GraphAxes: public QGraphicsItem{
             m_rect = rect;
         }
 
-        void setScales(float const& xmin, float const& ymin,
-                       float const& xmax, float const& ymax){
+        void setScales(float const& xmin, float const& xmax,
+                       float const& ymin, float const& ymax){
             m_xmin = xmin;
             m_xmax = xmax;
             m_ymin = ymin;
@@ -283,6 +200,7 @@ class GraphAxes: public QGraphicsItem{
         void paint(QPainter *painter,
                    const QStyleOptionGraphicsItem *option,
                    QWidget *widget){
+            Q_UNUSED(widget);
 
             painter->setClipRect(m_rect);
             
@@ -357,6 +275,7 @@ class GraphAxes: public QGraphicsItem{
             Spartan_Height = 120
         };
         QRectF m_rect;
+        QString m_title;
 
         float m_xmin;
         float m_xmax;
@@ -371,9 +290,7 @@ const static float Max_Resolution = 1200; // max data-points per data series, at
 
 // !!! tidy up where these little bits go
 struct SeriesData{ DataSeries_ptr data_series; DataWindow_ptr data_window; };
-bool hasInvalidWindow(SeriesData const& d){
-    return !d.data_window || !d.data_window->size();
-}
+bool hasInvalidWindow(SeriesData const& d);
 
 class Graph: public boost::noncopyable{
     public:
@@ -386,12 +303,13 @@ class Graph: public boost::noncopyable{
               m_data_max(0),
               m_rect(0,0,200,100),
               m_rect_changed(true),
-              m_axes(new GraphAxes(m_rect, owner)){
+              m_axes(new GraphAxes(m_rect, owner, name)){
         }
         
         void addDataSeries(DataSeries_ptr data_series){
             SeriesData d = {data_series, DataWindow_ptr()};
             m_data_series.insert(m_data_series.end(), d);
+            data_series->m->addGraph(this);
             _recalcMinMaxMaxMin();
         }
 
@@ -417,9 +335,17 @@ class Graph: public boost::noncopyable{
             return m_rect;
         }
 
+        void requiresUpdate() const{
+            QGraphicsScene* s = m_owner->scene();
+            if(s)
+                s->update((m_owner->mapToScene(boundingRect())).boundingRect());
+        }
+
         void paint(QPainter *painter,
                    const QStyleOptionGraphicsItem *option,
                    QWidget *widget){
+            Q_UNUSED(widget);
+
             const float px_per_unit = option->levelOfDetailFromTransform(painter->worldTransform());
             const float px_width = boundingRect().width() * px_per_unit;
             const float h_resolution_f = std::min(px_width, Graph_Const::Max_Resolution);
@@ -504,6 +430,7 @@ class Graph: public boost::noncopyable{
                         m_data_max = i->data_window->max();
                 }
             }
+            //debug() << __func__ << "min =" << m_data_min << "max = " << m_data_max;            
         }
 
 
@@ -517,6 +444,7 @@ class Graph: public boost::noncopyable{
                 if(i->data_series->m->config().maximum_minimum < m_maximum_minimum)
                     m_maximum_minimum = i->data_series->m->config().maximum_minimum;
             }
+            //debug() << __func__ << "min max =" << m_minimum_maximum << "max min = " << m_maximum_minimum;
         }
 
         QGraphicsItem* m_owner;

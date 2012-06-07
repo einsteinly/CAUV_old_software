@@ -7,6 +7,7 @@ set (
     WATER_SRCS
     graph.cpp
     internal/persistentMap.cpp
+    internal/graph.cpp
 )
 
 set (

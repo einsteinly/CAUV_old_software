@@ -26,7 +26,7 @@ namespace liquid{
 namespace water{
 
 namespace GraphSeriesMode{
-enum e{Unlimited, Wraps_At_Max_Max};
+enum e{Unlimited, Clamp, Modulus};
 }
 
 struct GraphConfig{
@@ -35,6 +35,8 @@ struct GraphConfig{
 
 struct SeriesConfig{
     // control vertical scaling
+    // for angle graphs, maximum_maximum - minimum_minimum is used as the
+    // modulus for angle plotting magic
     float minimum_minimum;
     float maximum_minimum;
     float minimum_maximum;
@@ -47,11 +49,11 @@ static GraphConfig One_Minute = {
 };
 
 static SeriesConfig Radians_Angle_Graph = {
-    0.0f, M_PI - M_PI/8, M_PI/8, M_PI, GraphSeriesMode::Wraps_At_Max_Max
+    0.0f, M_PI - M_PI/8, M_PI/8, M_PI, GraphSeriesMode::Modulus
 };
 
 static SeriesConfig Degrees_Angle_Graph = {
-    0.0f, 315.0f, 45.0f, 360.0f, GraphSeriesMode::Wraps_At_Max_Max
+    0.0f, 315.0f, 45.0f, 360.0f, GraphSeriesMode::Modulus
 };
 
 // "unlimited", but the maximum vertical scale will be limited to 0--100, so if

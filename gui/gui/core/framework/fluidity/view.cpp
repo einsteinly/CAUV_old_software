@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -99,13 +99,35 @@ FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
     
     //w::Graph* g = new w::Graph(w::One_Minute, "A Graph");
     w::GraphConfig config = {30.0};
-    w::Graph* g = new w::Graph(config, "A Graph");
-    s->addItem(g);
-    g->setRect(QRectF(0,0,200,140));
+    w::Graph* g1 = new w::Graph(config, "Graph 1");
+    w::Graph* g2 = new w::Graph(config, "Graph 2");
+    w::Graph* g3 = new w::Graph(config, "Graph 2");
+
+    s->addItem(g1);
+    s->addItem(g2);
+    s->addItem(g3);
+
+    g2->setPos(0, -450);
+    g1->setPos(0, 0);
+    g3->setPos(0, 170);
+
     m_pct_series = w::DataSeries_ptr(new w::DataSeries(w::Percent_Graph, "test_pct_graph"));
     m_pct2_series = w::DataSeries_ptr(new w::DataSeries(w::Percent_Graph, "test_pct2_graph"));
-    g->addDataSeries(m_pct_series);
-    g->addDataSeries(m_pct2_series);
+    m_unlim_series = w::DataSeries_ptr(new w::DataSeries(w::Unlimited_Graph, "test_unlim_graph"));
+    m_angle_series = w::DataSeries_ptr(new w::DataSeries(w::Degrees_Angle_Graph, "test_angle_graph"));
+
+    g1->setRect(QRectF(0,0,200,140));
+    g1->addDataSeries(m_pct_series);
+    g1->addDataSeries(m_pct2_series);
+    
+    g2->setRect(QRectF(0,0,600,400));
+    g2->addDataSeries(m_unlim_series);
+    g2->addDataSeries(m_angle_series);
+
+    g3->setRect(QRectF(0,0,120,80));
+    g3->addDataSeries(m_angle_series);
+    g3->addDataSeries(m_pct2_series);
+    g3->addDataSeries(m_unlim_series);
 
     m_redraw_timer = new QTimer(this);
     m_data_timer   = new QTimer(this);
@@ -113,18 +135,25 @@ FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
     connect(m_redraw_timer, SIGNAL(timeout()), this, SLOT(update()), Qt::QueuedConnection);
     connect(m_data_timer, SIGNAL(timeout()), this, SLOT(postData()), Qt::QueuedConnection);
     
-    m_redraw_timer->setInterval(100);
-    m_data_timer->setInterval(4);
+    //m_redraw_timer->setInterval(1000);
+    m_data_timer->setInterval(25);
     
-    m_redraw_timer->start();
+    //m_redraw_timer->start();
     m_data_timer->start();
 }
 
 #include <utility/time.h>
 void FView::postData(){
     static int i = 0;
-    m_pct_series->postData(50+50*sin(i++/5e3) + ((rand() % 20) - 10), nowDouble());
-    m_pct2_series->postData(20+10*sin(i++/3e2) + ((rand() % 10) - 5), nowDouble());
+    static double walk = 0;
+    const double n = nowDouble();
+    m_pct_series->postData(50+50*sin(i++/5e3) + ((rand() % 20) - 10), n);
+    if(!(i % 7))
+        m_pct2_series->postData(20+10*sin(i++/3e2) + ((rand() % 10) - 5), n);
+    if(!(i % 3))
+        //m_unlim_series->postData(((i) % 200 - 100), n);
+        m_unlim_series->postData(walk += ((rand() % 100) - 50)/10.0, n);
+    m_angle_series->postData(i/2.0, n);
 }
 
 void FView::initMenu(){
