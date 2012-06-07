@@ -46,10 +46,10 @@ class GraphAxes: public QGraphicsItem{
     
     private:
         enum{
-            Bare_Width = 60,
-            Bare_Height = 40,
-            Spartan_Width = 180,
-            Spartan_Height = 120
+            Bare_Width = 90,
+            Bare_Height = 60,
+            Spartan_Width = 270,
+            Spartan_Height = 180
         };
         QRectF m_rect;
         QString m_title;

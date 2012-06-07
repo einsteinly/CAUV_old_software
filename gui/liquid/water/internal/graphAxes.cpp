@@ -85,6 +85,7 @@ void wi::GraphAxes::paint(QPainter *painter,
     painter->drawRect(cr);
     const float y_labels_space = cr.left() - m_rect.left();
     const float x_labels_space = m_rect.bottom() - cr.bottom();
+    const float title_space = cr.top() - m_rect.top();
     
     // !!! TODO change df for x and y separately based on the width and
     // height of the graph. Or, even better, the axes labels should be
@@ -119,6 +120,7 @@ void wi::GraphAxes::paint(QPainter *painter,
             );
         }
     }
+
     if(x_labels_space >= 16){
         for(float frac = 0; frac <= 1.0001; frac += df){
             QString label = QString("%1").arg(m_xmin + frac * (m_xmax-m_xmin), 7, 'f', 1);
@@ -133,5 +135,13 @@ void wi::GraphAxes::paint(QPainter *painter,
             );
         }
     }
+
+    if(title_space >= 20){
+        pos_adjust = font_metrics.width(m_title)/2;
+        painter->drawText(
+            cr.topLeft() + QPointF(cr.width()/2-pos_adjust, -8), m_title
+        );
+    }
+
 }
        
