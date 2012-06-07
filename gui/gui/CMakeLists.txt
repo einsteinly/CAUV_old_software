@@ -54,6 +54,7 @@ else()
     cauv_install( gui )
 
     target_link_libraries ( gui
+        common
         gui-core
         liquid
         ${QT_LIBRARIES}

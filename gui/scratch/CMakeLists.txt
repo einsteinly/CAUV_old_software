@@ -45,6 +45,7 @@ add_executable (
 
 target_link_libraries (
     scratch
+    common
     gui-core
 )
 #cauv_install ( scratch )
