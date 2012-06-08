@@ -170,9 +170,6 @@ class SmartStreamBase : public boost::noncopyable
 
         // protect each stream to make sure output doesn't become garbled
         static mutex_t& getMutex(std::ostream& s);
-
-        static boost::scoped_ptr<mutex_t> m_mutex;
-        boost::scoped_ptr<lock_t> m_lock;
 #endif
         std::ostream& m_stream;
         BashColour::e m_col;
