@@ -160,6 +160,7 @@ const static liquid::NodeStyle Graph_Node_Style = {
     }
 };
 
+
 } // namespace gui
 } // namespace cauv
 

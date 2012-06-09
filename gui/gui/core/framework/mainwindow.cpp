@@ -90,15 +90,15 @@ class GraphLayoutItem: public QGraphicsLayoutItem, public liquid::water::Graph{
         GraphLayoutItem(liquid::water::GraphConfig const& config)
             : QGraphicsLayoutItem(),
               liquid::water::Graph(config){
-            setMinimumSize(10, 10);
+            setMinimumSize(16, 16);
             setMaximumSize(1200, 800);
             setPreferredSize(1200, 800);
         }
 
         void setGeometry(const QRectF& rect){
-            QGraphicsLayoutItem::setGeometry(rect);
-            liquid::water::Graph::setRect(geometry());
-            //update();
+            setPos(rect.topLeft());
+            QGraphicsLayoutItem::setGeometry(QRectF(QPointF(0,0), rect.size()));
+            setRect(geometry());
         }
 
         virtual void updateGeometry(){

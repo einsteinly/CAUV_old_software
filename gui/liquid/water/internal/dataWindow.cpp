@@ -89,12 +89,35 @@ QPolygonF wi::DataWindow::regionAtScale(QPointF origin, double const& tmin, floa
     QPolygonF r;
     const int n = m_sample_times.size();
     r.reserve(2*n);
-    for(int i = 0; i < n; i++){
+    
+    int start = 0;
+    int end = n;
+    int i;
+
+    for(i = 0; i < end; i++){
+        if(std::fabs(m_max_values[i] - m_mean_values[i]) > 2*yscale ||
+           std::fabs(m_min_values[i] - m_mean_values[i]) > 2*yscale){
+            start = i;
+            break;
+        }
+    }
+    if(i == end)
+        start = end;
+
+    for(i = n-1; i > start; i--){
+        if(std::fabs(m_max_values[i] - m_mean_values[i]) > 2*yscale ||
+           std::fabs(m_min_values[i] - m_mean_values[i]) > 2*yscale){
+            end = i+1;
+            break;
+        }
+    }
+
+    for(i = start; i < end; i++){
         r.push_back(QPointF((m_sample_times[i] - tmin) * xscale + origin.x(),
                             (ymax - m_max_values[i]) * yscale + origin.y()));
     }
 
-    for(int i = n-1; i >= 0; i--){
+    for(i = end-1; i >= start; i--){
         r.push_back(QPointF((m_sample_times[i] - tmin) * xscale + origin.x(),
                             (ymax - m_min_values[i]) * yscale + origin.y()));
     }

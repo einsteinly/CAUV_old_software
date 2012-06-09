@@ -50,6 +50,7 @@ LiquidView::LiquidView(QWidget * parent) : QGraphicsView(parent),
     m_scaleFactor(1.25), m_minScale(0.1), m_maxScale(1)
 {
     setAcceptDrops(true);
+    setCacheMode(QGraphicsView::CacheBackground);
 
     installEventFilter(new ZoomFilter());
 

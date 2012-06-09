@@ -20,6 +20,7 @@
 #include <QGraphicsSimpleTextItem>
 #include <QGraphicsSceneHoverEvent>
 #include <QPropertyAnimation>
+#include <QFontMetrics>
 
 #include <debug/cauv_debug.h>
 
@@ -57,12 +58,17 @@ NodeHeader::NodeHeader(NodeStyle const& style, QGraphicsObject *parent)
     m_info_text->setBrush(m_style.header.info.brush);
     m_info_text->setFont(m_style.header.info.font);
     m_info_text->setZValue(2);
+
+    m_width = minimumWidth();
 }
 
 float NodeHeader::minimumWidth() const{
+    const QFontMetrics title_fm(m_title->font());
+    const QFontMetrics info_fm(m_info_text->font());
+
     return m_style.tl_radius/2 + std::max(
-        m_title->boundingRect().width(),
-        m_info_text->boundingRect().width()
+        title_fm.width(m_title->text()),
+        info_fm.width(m_info_text->text())
     );
 }
 
