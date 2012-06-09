@@ -70,7 +70,7 @@ void VanishingLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem 
 
 NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
 {
-    int sceneSize = 10000;
+    int sceneSize = 4000;
 
     // a special background element that recieves drops and other events that aren't
     // accepted by items futher up the tree
@@ -80,17 +80,17 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
     addItem(dropArea);
 
     // background lines
-    for(int x = -sceneSize; x < sceneSize; x = x + 25) {
+    for(int x = -sceneSize; x < sceneSize; x = x + 50) {
         int colour = 242;
         //if(x % 100 == 0) colour = 238;
-        VanishingLineItem * line = new VanishingLineItem(0.01, -sceneSize, x, sceneSize, x);
+        VanishingLineItem * line = new VanishingLineItem(0.25, -sceneSize, x, sceneSize, x);
         line->setPen(QPen(QColor(colour, colour, colour)));
         this->addItem(line);
     }
-    for(int y = -sceneSize; y < sceneSize; y = y + 25) {
+    for(int y = -sceneSize; y < sceneSize; y = y + 50) {
         int colour = 242;
         //if(y % 100 == 0) colour = 238;
-        VanishingLineItem * line = new VanishingLineItem(0.01, y, -sceneSize, y, sceneSize);
+        VanishingLineItem * line = new VanishingLineItem(0.25, y, -sceneSize, y, sceneSize);
         line->setPen(QPen(QColor(colour, colour, colour)));
         this->addItem(line);
     }
