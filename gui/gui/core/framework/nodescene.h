@@ -54,19 +54,24 @@ protected:
 class NodeScene : public QGraphicsScene, public NodeDropListener {
 
 public:
+    typedef DropHandlerInterface<QGraphicsItem *> drop_handler_t;
+    typedef boost::shared_ptr<drop_handler_t> drop_handler_ptr;
+
     NodeScene(QObject * parent = NULL);
     virtual ~NodeScene();
 
     // drop handlers
-    virtual void registerDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > >  const& handler);
-    virtual void removeDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > >  const& handler);
-    QGraphicsItem * applyHandlers(boost::shared_ptr<Node> const& node);
+    virtual void registerDropHandler(drop_handler_ptr const& handler);
+    virtual void removeDropHandler(drop_handler_ptr const& handler);
+
     // drop listener methods
     bool accepts(boost::shared_ptr<Node> const& node);
     virtual void onNodeDroppedAt(boost::shared_ptr<Node> const&, QPointF );
 
 protected:
-    std::vector<boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > > m_handlers;
+    QGraphicsItem * applyHandlers(boost::shared_ptr<Node> const& node); 
+
+    std::vector<drop_handler_ptr> m_handlers;
 };
 
 

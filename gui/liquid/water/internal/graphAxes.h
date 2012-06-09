@@ -28,7 +28,7 @@ class GraphLegend: public QGraphicsItem{
 
 class GraphAxes: public QGraphicsItem{
     public:
-        GraphAxes(QRectF const& rect, QGraphicsItem* parent, QString title);
+        GraphAxes(QRectF const& rect, QGraphicsItem* parent);
 
         QRectF contentsRectAtScale(float px_per_unit) const;
 
@@ -52,7 +52,6 @@ class GraphAxes: public QGraphicsItem{
             Spartan_Height = 180
         };
         QRectF m_rect;
-        QString m_title;
 
         float m_xmin;
         float m_xmax;

@@ -37,7 +37,7 @@
 namespace w = liquid::water;
 namespace wi = liquid::water::internal;
 
-wi::Graph::Graph(GraphConfig const& config, QString name, QGraphicsItem* owner)
+wi::Graph::Graph(GraphConfig const& config, QGraphicsItem* owner)
     : boost::noncopyable(),
       m_owner(owner),
       m_config(config),
@@ -46,7 +46,7 @@ wi::Graph::Graph(GraphConfig const& config, QString name, QGraphicsItem* owner)
       m_data_max(0),
       m_rect(0,0,200,100),
       m_rect_changed(true),
-      m_axes(new GraphAxes(m_rect, owner, name)){
+      m_axes(new GraphAxes(m_rect, owner)){
 }
 
 void wi::Graph::addDataSeries(DataSeries_ptr data_series){

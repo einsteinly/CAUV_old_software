@@ -43,9 +43,12 @@ class DataSeries: public boost::noncopyable{
 
     private:
         Map m_data;
-        enum{Data_Batch_Size = 20};
+        
         std::vector< std::pair<double, double> > m_insert_batch;
-        double m_last_value;
+        unsigned m_insert_batch_size;
+        double   m_last_time;
+        double   m_last_value;
+        bool     m_dirty;
 
         SeriesConfig m_config;
 

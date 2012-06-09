@@ -28,8 +28,11 @@
 
 #include <debug/cauv_debug.h>
 
+#include <liquid/view.h>
 #include <liquid/node.h>
 #include <liquid/nodeHeader.h>
+#include <liquid/water/graph.h>
+#include <liquid/water/dataSeries.h>
 
 #include "cauvplugins.h"
 
@@ -78,11 +81,74 @@ public:
         return ln;
     }
 
-    protected:
-        boost::shared_ptr<NodeItemModel> m_model;
+protected:
+    boost::shared_ptr<NodeItemModel> m_model;
 };
 
+class GraphLayoutItem: public QGraphicsLayoutItem, public liquid::water::Graph{
+    public:
+        GraphLayoutItem(liquid::water::GraphConfig const& config)
+            : QGraphicsLayoutItem(),
+              liquid::water::Graph(config){
+            setMinimumSize(10, 10);
+            setMaximumSize(1200, 800);
+            setPreferredSize(1200, 800);
+        }
 
+        void setGeometry(const QRectF& rect){
+            QGraphicsLayoutItem::setGeometry(rect);
+            liquid::water::Graph::setRect(geometry());
+            //update();
+        }
+
+        virtual void updateGeometry(){
+            liquid::water::Graph::setRect(geometry());
+            QGraphicsLayoutItem::updateGeometry();
+        }
+
+    protected:
+        QSizeF sizeHint(Qt::SizeHint which, const QSizeF &constraint=QSizeF()) const{
+            switch(which){
+                case Qt::MinimumSize:   return QSizeF(60, 40);
+                default:                return constraint;
+            }
+        }
+};
+
+class GraphingDropHandler: public DropHandlerInterface<QGraphicsItem * >{
+public:
+    GraphingDropHandler(boost::shared_ptr<NodeItemModel> model) :
+        m_model(model){
+    }
+
+    virtual bool accepts(boost::shared_ptr<Node> const& node){
+        debug() << "GraphingDropHandler drop enter from" << node->nodePath();
+        return node->type == nodeType<NumericNodeBase>();
+    }
+
+    virtual QGraphicsItem* handle(boost::shared_ptr<Node> const& node) {
+        debug() << "GraphingDropHandler drop from" << node->nodePath();
+        
+        liquid::LiquidNode * ln = new liquid::LiquidNode(Graph_Node_Style);
+        ln->setResizable(true);
+        ln->header()->setTitle(QString::fromStdString(node->nodeName()));
+        ln->header()->setInfo(QString::fromStdString(node->nodePath()));
+        GraphLayoutItem* graph = new GraphLayoutItem(liquid::water::One_Minute);
+        // !!! FIXME need some sort of traits to know what is an angle
+        boost::shared_ptr<liquid::water::DataSeries> series(
+            new liquid::water::DataSeries(liquid::water::Unlimited_Graph, QString::fromStdString(node->nodeName()))
+        );
+        graph->addDataSeries(series);
+        ln->addItem(graph);
+
+        QObject::connect(node.get(), SIGNAL(onUpdate(QVariant)), series.get(), SLOT(postData(QVariant)));
+
+        return ln;
+    }
+
+protected:
+    boost::shared_ptr<NodeItemModel> m_model;
+};
 
 
 CauvMainWindow::CauvMainWindow(QApplication * app) :
@@ -158,8 +224,9 @@ void CauvMainWindow::onRun()
     // Set the viewport to use OpenGl here. Nested Gl viewports don't work
     m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
-
     m_actions->scene->registerDropHandler(boost::make_shared<GroupDropHandler>(m_actions->root));
+    m_actions->scene->registerDropHandler(boost::make_shared<GraphingDropHandler>(m_actions->root));
+
 
     this->addMessageObserver(boost::make_shared<DebugMessageObserver>(5));
 

@@ -94,7 +94,7 @@ class Graph: public boost::noncopyable{
         };
     
     public:
-        Graph(GraphConfig const& config, QString name, QGraphicsItem* owner);
+        Graph(GraphConfig const& config, QGraphicsItem* owner);
         
         void addDataSeries(DataSeries_ptr data_series);
         void removeDataSeries(DataSeries_ptr data_series);

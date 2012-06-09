@@ -28,19 +28,19 @@ main process keeps sets up things alive
 # i.e. [(process, {'arg_to_pass', 'other arg'}), ...]
 processes = [
     (wf.Process('pl_manager',        '{SDIR}',  wf.node_pid('ai_plman'),        wf.restart(3),  None,
-                    ['{SDIR}/AI_pipeline_manager.py']),
+                    ["sh -c 'PYTHONPATH=$PYTHONPATH:{SDIR} python2.7 {SDIR}/AI_pipeline_manager.py'"]),
                         {'disable_gui', 'reset_pls', 'freeze_pls', 'restore'}),
     (wf.Process('auv_control',       '{SDIR}',  wf.node_pid('aiauv_co'),       wf.restart(3),  None, 
-                    ['{SDIR}/AI_control_manager.py']),
+                    ["sh -c 'PYTHONPATH=$PYTHONPATH:{SDIR} python2.7 {SDIR}/AI_control_manager.py'"]),
                          set()),
     (wf.Process('detector_control',  '{SDIR}',  wf.node_pid('aidetect'),  wf.restart(3),  None, 
-                    ['{SDIR}/AI_detection_process.py']),
+                    ["sh -c 'PYTHONPATH=$PYTHONPATH:{SDIR} python2.7 {SDIR}/AI_detection_process.py'"]),
                          {'disable_control'}),
     (wf.Process('task_manager',      '{SDIR}',  wf.node_pid('aitask_m'),  wf.restart(3),  None,
-                    ['{SDIR}/AI_task_manager.py']),
+                    ["sh -c 'PYTHONPATH=$PYTHONPATH:{SDIR} python2.7 {SDIR}/AI_task_manager.py'"]),
                          {'mission', 'restore'}),
     (wf.Process('location',          '{SDIR}',  wf.node_pid('ailocati'),          wf.restart(3),  None,
-                    ['{SDIR}/AI_location.py']),
+                    ["sh -c 'PYTHONPATH=$PYTHONPATH:{SDIR} python2.7 {SDIR}/AI_location.py'"]),
                          set()),
 ]
 

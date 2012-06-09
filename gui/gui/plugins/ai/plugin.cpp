@@ -48,6 +48,7 @@ const QString AiPlugin::name() const{
 void AiPlugin::initialise(){
 
     foreach(boost::shared_ptr<Vehicle> vehicle, VehicleRegistry::instance()->getVehicles()){
+        debug() << "setup AI plugin for" << vehicle;
         setupVehicle(vehicle);
     }
     connect(VehicleRegistry::instance().get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
@@ -56,6 +57,11 @@ void AiPlugin::initialise(){
     boost::shared_ptr<CauvNode> node = m_actions->node.lock();
     if(node) {
         node->joinGroup("guiai");
+        // !!!! FIXME: is there a race condition here between joining the
+        // group, and sending the state request message? (if it gets received
+        // before we've subscribed to the responses, then the responses won't
+        // be sent)
+
         //!!! todo: this should be sent more often than just at startup
         //!!! maybe on membership change?
         node->send(boost::make_shared<RequestAIStateMessage>());

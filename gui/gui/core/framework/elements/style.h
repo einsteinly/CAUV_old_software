@@ -77,22 +77,28 @@ const static liquid::CutoutStyle Optional_Param_Input = {
      QBrush(QColor(235,235,235))}
 };
 
+namespace font{
+const static QFont Verdana_12pt = QFont("Verdana", 12, 1);
+const static QFont Verdana_10pt = QFont("Verdana", 10, 1);
+const static QFont Verdana_8pt  = QFont("Verdana", 8, 1);
+} // namespace font
+
 const static liquid::NodeStyle F_Node_Style = {
     QPen(QBrush(QColor(0,0,0,128)), 1, Qt::SolidLine, Qt::FlatCap),
     QBrush(QColor(243,243,243)),
-    24, 24, {
+    24, 24, 0, 0, {
         30,
         QPen(Qt::NoPen),
         QBrush(QColor(0,0,0,160)), {
             //QPen(QBrush(QColor(0,0,0,64)), 1, Qt::SolidLine, Qt::FlatCap),
             QPen(Qt::NoPen),
             QBrush(QColor(255,255,255)),
-            QFont("Verdana", 12, 1)
+            font::Verdana_12pt
         },{
             QPen(Qt::NoPen),
             //QPen(QBrush(QColor(0,0,0,64)), 1, Qt::SolidLine, Qt::FlatCap),
             QBrush(QColor(255,255,255)),
-            QFont("Verdana", 8, 1)
+            font::Verdana_8pt 
         }
     },
     QPen(QColor(255,255,255)),
@@ -100,12 +106,59 @@ const static liquid::NodeStyle F_Node_Style = {
     {
         QPen(Qt::NoPen),
         QBrush(QColor(12,12,12)),
-        QFont("Verdana", 10, 1)
+        font::Verdana_10pt 
     }
 };
 
-const static liquid::NodeStyle AI_Node_Style = F_Node_Style;
+const static liquid::NodeStyle AI_Node_Style = {
+    QPen(QBrush(QColor(0,0,0,128)), 1, Qt::SolidLine, Qt::FlatCap),
+    QBrush(QColor(243,243,243)),
+    24, 24, 0, 0, {
+        30,
+        QPen(Qt::NoPen),
+        QBrush(QColor(69,121,173,160)), {
+            QPen(Qt::NoPen),
+            QBrush(QColor(255,255,255)),
+            font::Verdana_12pt
+        },{
+            QPen(Qt::NoPen),
+            QBrush(QColor(255,255,255)),
+            font::Verdana_8pt 
+        }
+    },
+    QPen(QColor(255,255,255)),
+    QPen(QBrush(QColor(190,190,190)), 2, Qt::SolidLine, Qt::RoundCap),
+    {
+        QPen(Qt::NoPen),
+        QBrush(QColor(12,12,12)),
+        font::Verdana_10pt 
+    }
+};
 
+const static liquid::NodeStyle Graph_Node_Style = {
+    QPen(QBrush(QColor(0,0,0,128)), 1, Qt::SolidLine, Qt::FlatCap),
+    QBrush(QColor(243,243,243)),
+    24, 24, 0, 0, {
+        30,
+        QPen(Qt::NoPen),
+        QBrush(QColor(255,255,255,0)), {
+            QPen(Qt::NoPen),
+            QBrush(QColor(0,0,0)),
+            font::Verdana_12pt
+        },{
+            QPen(Qt::NoPen),
+            QBrush(QColor(0,0,0)),
+            font::Verdana_8pt 
+        }
+    },
+    QPen(QColor(255,255,255)),
+    QPen(QBrush(QColor(190,190,190)), 2, Qt::SolidLine, Qt::RoundCap),
+    {
+        QPen(Qt::NoPen),
+        QBrush(QColor(12,12,12)),
+        font::Verdana_10pt 
+    }
+};
 
 } // namespace gui
 } // namespace cauv

@@ -30,6 +30,8 @@
 #include "elements/style.h"
 #include "style.h"
 
+#include "framework/nodescene.h"
+
 #include "fluidity/fNode.h"
 #include "fluidity/managedElement.h"
 #include "fluidity/manager.h"
@@ -49,7 +51,7 @@ uint qHash(boost::shared_ptr<T> p){
 
 
 FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
-    : LiquidView(parent),
+    : liquid::LiquidView(parent),
       m_cauv_node(node),
       m_manager(),
       m_contextmenu_root(){
@@ -60,7 +62,7 @@ FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
 
     initMenu();
 
-    QGraphicsScene *s = new QGraphicsScene(this);
+    NodeScene *s = new NodeScene(this);
 
     // !!! is this really what we want to do?
     // items aren't added or removed a lot, just updated
@@ -99,9 +101,9 @@ FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
     
     //w::Graph* g = new w::Graph(w::One_Minute, "A Graph");
     w::GraphConfig config = {30.0};
-    w::Graph* g1 = new w::Graph(config, "Graph 1");
-    w::Graph* g2 = new w::Graph(config, "Graph 2");
-    w::Graph* g3 = new w::Graph(config, "Graph 2");
+    w::Graph* g1 = new w::Graph(config);
+    w::Graph* g2 = new w::Graph(config);
+    w::Graph* g3 = new w::Graph(config);
 
     s->addItem(g1);
     s->addItem(g2);

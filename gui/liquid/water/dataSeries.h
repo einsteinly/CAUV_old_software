@@ -19,6 +19,7 @@
 #include <limits>
 
 #include <QString>
+#include <QVariant>
 
 #include <boost/shared_ptr.hpp>
 
@@ -58,7 +59,9 @@ class DataSeries;
 } // namespace internal
 
 // Represents one data series. Create Graphs by adding these to a Graph object
-class DataSeries{
+class DataSeries: public QObject{
+    Q_OBJECT
+
     public:
         DataSeries(SeriesConfig const& config, QString series_name);
 
@@ -69,6 +72,10 @@ class DataSeries{
          *        values returned by the nowDouble() function in utility/time.h
          */
         void postData(double const& value, double const& time);
+    
+    public Q_SLOTS:
+        void postData(QVariant const& v);
+        void postData(QVariant const& v, double const& time);
     
     private:
         // internal::Graph can call methods directly on m

@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -49,7 +49,7 @@ class ZoomFilter : public QObject {
 LiquidView::LiquidView(QWidget * parent) : QGraphicsView(parent),
     m_scaleFactor(1.25), m_minScale(0.1), m_maxScale(1)
 {
-    this->setAcceptDrops(true);
+    setAcceptDrops(true);
 
     installEventFilter(new ZoomFilter());
 
@@ -123,6 +123,13 @@ void LiquidView::scaleAround(QPoint point, qreal scaleFactor){
     setTransform(QTransform(scale));*/
     
     scale(scaleFactor, scaleFactor);
+}
+
+std::ostream& operator<<(std::ostream& os, QStringList const& sl){
+    os << "QStringList:";
+    foreach(QString s, sl)
+        os << '\n' << s.toUtf8().data();
+    return os;
 }
 
 void LiquidView::wheelEvent(QWheelEvent *event){

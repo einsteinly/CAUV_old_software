@@ -35,7 +35,7 @@ namespace f{
 class Manager;
 class Menu;
 
-class FView: public liquid::LiquidView {
+class FView: public liquid::LiquidView{
     Q_OBJECT
     public:
         FView(boost::shared_ptr<CauvNode> node, QWidget *parent = NULL);
