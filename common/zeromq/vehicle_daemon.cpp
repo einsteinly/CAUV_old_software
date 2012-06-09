@@ -24,14 +24,18 @@
 
 typedef std::set<uint32_t> subscriptions_t;
 typedef std::map<uint32_t,std::pair <unsigned int, unsigned long int> > stats_t;
-typedef std::vector<std::string> conn_list_t;
+typedef std::pair <int, std::string> connection_t;
+typedef std::vector< connection_t > conn_list_t;
 
 std::ostream &operator<<(std::ostream &os, const conn_list_t &conn_list) {
     os << "[";
     for(conn_list_t::const_iterator it = conn_list.begin();
         it != conn_list.end(); it++) {
 
-        os << "\"" << *it << "\"";
+        os << "{" << 
+            "\"id\": " << it->first << ", " <<
+            "\"string\": " << "\"" << it->second << "\""
+            << "}";
         if (it != conn_list.end() - 1) {
             os << ", ";
         }
@@ -56,7 +60,10 @@ std::ostream &operator<<(std::ostream &os, const stats_t &stats) {
     for(stats_t::const_iterator it = stats.begin();
         it != stats.end(); it++) {
 
-        os << "{ \"id\": " << it->first << ", \"messages\": " << it->second.first << ", \"bytes\": " << it->second.second << "}";
+        os << "{ \"id\": " << it->first
+           << ", \"messages\": " << it->second.first
+           << ", \"bytes\": " << it->second.second
+           << "}";
         os << ", ";
     }
     os << "null";
@@ -83,26 +90,40 @@ std::ostream &operator<<(std::ostream &os, const SocketInfo &info) {
     return os;
 }
 
+class ConnCmp {
+    public:
+    ConnCmp(std::string conn_str) :
+        conn_str(conn_str) {};
+    bool operator() (connection_t other) {
+        return other.second == conn_str;
+    }
+    private:
+    std::string conn_str;
+};
+
+
 int SocketInfo::connect(std::string connect_str) {
-    if (std::count(connections.begin(), connections.end(), connect_str)) {
+    if (std::count_if(connections.begin(), connections.end(), ConnCmp(connect_str))) {
         return 0;
     }
-    if (xs_connect(skt, connect_str.c_str()) < 0) {
+    int ret = xs_connect(skt, connect_str.c_str());
+    if (ret < 0) {
         return errno;
     } else {
-        connections.push_back(connect_str);
+        connections.push_back(connection_t(ret, connect_str));
         return 0;
     }
 }
 
 int SocketInfo::bind(std::string bind_str) {
-    if (std::count(binds.begin(), binds.end(), bind_str)) {
+    if (std::count_if(binds.begin(), binds.end(), ConnCmp(bind_str))) {
         return 0;
     }
-    if (xs_bind(skt, bind_str.c_str()) < 0) {
+    int ret = xs_bind(skt, bind_str.c_str());
+    if (ret < 0) {
         return errno;
     } else {
-        binds.push_back(bind_str);
+        binds.push_back(connection_t(0, bind_str));
         return 0;
     }
 }
@@ -169,16 +190,25 @@ void XPubSubPair::pump_subscription(void) {
         return;
     }
     if (xs_msg_size(&message_buf) >= sizeof(uint32_t) + 1) {
-        char *data = reinterpret_cast<char*>(xs_msg_data(&message_buf));
-        const char sub = *data; 
-        const uint32_t msg_id = *reinterpret_cast<const uint32_t*>(data + 1);
-        if (msg_id == NODE_MARKER_MSGID && xs_msg_size(&message_buf) >= 2*sizeof(uint32_t) + 1) {
-            *(reinterpret_cast<uint32_t*>(data +1) + 1) |= 0x1 << 31;
-        }
-        if (sub) {
-            subs.insert(msg_id);
-        } else {
-            subs.erase(msg_id);
+        cauv::subscription_vec_t sub_vec = cauv::parse_subscription_message(
+                std::string(reinterpret_cast<char*>(xs_msg_data(&message_buf)), xs_msg_size(&message_buf)));
+        const char sub = sub_vec.first; 
+        if (sub_vec.second.size() >= 1) {
+            const uint32_t msg_id = sub_vec.second[0];
+            if (sub_vec.second.size() == 1) {
+                if (sub) {
+                    subs.insert(msg_id);
+                } else {
+                    subs.erase(msg_id);
+                }
+            }
+            if (msg_id == NODE_MARKER_MSGID && sub_vec.second.size() == 2) {
+                //avoid remote PIDs from appearing as local
+                sub_vec.second[1] |= 0x1 << 31;
+                std::string sub_buf = cauv::gen_subscription_message(sub_vec);
+                xs_send(xsub.skt, sub_buf.c_str(), sub_buf.size(), 0);
+                return;
+            }
         }
     }
     if (xs_sendmsg(xsub.skt, &message_buf, 0) < 0) {
@@ -231,19 +261,22 @@ DaemonContext::DaemonContext(const std::string vehicle_name, const std::string w
     assert(control_rep);
     assert(xs_setsockopt(control_rep, XS_LINGER, &linger, sizeof(linger)) == 0);
     std::string control_path = "ipc://" + working_directory + "/control";
-    assert(xs_bind(control_rep,control_path.c_str()) == 0);
+    assert(xs_bind(control_rep,control_path.c_str()) >= 0);
 
     std::string local_sub_path = "ipc://" + working_directory + "/sub";
     assert(local_to_net.xsub.bind(local_sub_path) == 0);
     std::string local_pub_path = "ipc://" + working_directory + "/pub";
     assert(net_to_local.xpub.bind(local_pub_path) == 0);
 
-    std::string sub_buf;
-    uint32_t msgid = DAEMON_MARKER_MSGID;
-    sub_buf += "\1";
-    sub_buf += std::string(reinterpret_cast<char*>(&msgid) ,sizeof(msgid));
-    sub_buf += std::string(reinterpret_cast<char*>(&daemon_id), sizeof(daemon_id));
-    assert(xs_send(local_to_net.xsub.skt, sub_buf.c_str(), sub_buf.size(), 0) >= 0);
+    cauv::subscription_vec_t sub;
+    sub.first = true;
+    sub.second.push_back(DAEMON_MARKER_MSGID);
+    sub.second.push_back(daemon_id);
+    std::string sub_buf = cauv::gen_subscription_message(sub);
+    if(xs_send(local_to_net.xsub.skt, sub_buf.c_str(), sub_buf.size(), 0) < 0) {
+        printf("%d %s\n",errno,xs_strerror(errno));
+        assert(0);
+    }
 }
 
 DaemonContext::~DaemonContext(void) {

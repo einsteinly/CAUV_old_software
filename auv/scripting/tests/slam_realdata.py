@@ -33,12 +33,17 @@ class Benchmarker(object):
         self.keypoints_video = False
         self.viz_superzoom = False
         self.viz_midzoom = True
-        self.resolution = 800
+        #self.inter_ping_delay = 
+        self.resolution = 600
         # important parameters:
-        self.reject_thr = 0.6      # higher = more support for score calculation, ransac support
-        self.max_correspond = 0.35 # hard to explain
-        self.weight_test = 0.1     # controls classifier ROC
-        self.score_thr = 0.09      # max error permitted for match
+        self.reject_thr = 0.35     # higher = more support for score calculation, ransac support
+        self.max_correspond = 0.5  # hard to explain
+        self.weight_test = 0.20    # controls classifier ROC (0 = pass everything, 1 = fail almost everything)
+        self.score_thr = 0.2      # max error permitted for match
+        self.keyframe_spacing = 1.5# minimum distance between keyframes (sort of)
+        self.max_matches = 15      # maximum number of pairwise correspondences attempted per scan
+        self.required_consensus = 4# consensus required for match
+        self.consensus_tolerance = 0.20# max distance (metres) between matched positions to consider tolerance 
         # internal stuff:
         self.video_output_nodes = []
         self.setup()
@@ -129,9 +134,9 @@ class Benchmarker(object):
             sslam.p('-vis size').set(40.0)
         elif self.viz_midzoom:
             sslam.p('-vis origin x').set(-1.0)
-            sslam.p('-vis origin y').set(-33.0)
+            sslam.p('-vis origin y').set(-53.0)
             sslam.p('-vis resolution').set(1200)
-            sslam.p('-vis size').set(60.0)
+            sslam.p('-vis size').set(100.0)
         else:
             sslam.p('-vis origin x').set(-2.0)
             sslam.p('-vis origin y').set(-50.0)
@@ -141,21 +146,22 @@ class Benchmarker(object):
         sslam.p('euclidean fitness').set(1e-7)
         sslam.p('feature merge distance').set(0.4) # good-keypoint NN distance for classifier
         sslam.p('graph iters').set(10)
-        sslam.p('max matches').set(3)        
+        sslam.p('max matches').set(int(self.max_matches))
+        sslam.p('match consensus').set(int(self.required_consensus))
+        sslam.p('consensus tolerance').set(float(self.consensus_tolerance))
         #sslam.p('keyframe spacing').set(1.0)
-        sslam.p('keyframe spacing').set(4.0)
+        sslam.p('keyframe spacing').set(float(self.keyframe_spacing))
         assert(self.assoc_method in ('ICP', 'NDT', 'non-linear ICP'))
         sslam.p('match algorithm').set(self.assoc_method)
-        sslam.p('grid step').set(7)
+        sslam.p('grid step').set(7.0)
         sslam.p('ransac iterations').set(0)
-        # !!! TODO: sensitivity to this:
-        sslam.p('max correspond dist').set(self.max_correspond)
+        sslam.p('max correspond dist').set(float(self.max_correspond))
         sslam.p('max iters').set(15)
-        sslam.p('overlap threshold').set(0.3)
-        sslam.p('reject threshold').set(self.reject_thr)
-        sslam.p('score threshold').set(self.score_thr)
-        sslam.p('transform eps').set(1e-9)
-        sslam.p('weight test').set(self.weight_test) # lower = pass more keypoints through filter
+        sslam.p('overlap threshold').set(0.2)
+        sslam.p('reject threshold').set(float(self.reject_thr))
+        sslam.p('score threshold').set(float(self.score_thr))
+        sslam.p('transform eps').set(1e-6)
+        sslam.p('weight test').set(float(self.weight_test)) # lower = pass more keypoints through filter
         sslam.p('xy metres/px').set(0.01) # unused, anyway
         nop.o('image out (not copied)').connect(corners.i('image in'))
         nop.o('image out (not copied)').connect(br_crop.i('polar image'))
@@ -185,8 +191,10 @@ class Benchmarker(object):
         br_crop.o('polar image').connect(delay.i('image in'))
         delay.o('image out (not copied)').connect(correl.i('Image B'))
         clamp = pl.addNode(nt.ClampFloat)
-        clamp.p('Max').set(0.2)
-        clamp.p('Min').set(-0.2)
+        #clamp.p('Max').set(0.2)
+        #clamp.p('Min').set(-0.2)
+        clamp.p('Max').set(0.05)
+        clamp.p('Min').set(-0.05)
         correl.o('max correl location').connect(clamp.i('Value'))
         clamp.o('Value').connect(sslam.i('delta theta'))
         resize = pl.addNode(nt.Resize)
@@ -232,7 +240,7 @@ class Benchmarker(object):
         crop.o('image out (not copied)').connect(guio.i('image_in'))
     def runTest(self):
         #time.sleep(60.0*60.0*2.0)
-        time.sleep(60.0*10)
+        time.sleep(60.0*20)
     
     def processResults(self):
         from tools import slam_performance

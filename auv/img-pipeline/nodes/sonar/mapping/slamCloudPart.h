@@ -288,6 +288,8 @@ class SlamCloudPart: public SlamCloudLocation,
               m_local_convexhull_verts(),
               m_local_convexhull_cloud(),
               m_local_convexhull_invalid(true),
+              m_global_convexhull_cloud(),
+              m_global_convexhull_invalid(true),
               m_rejected_points_cloud(),
               m_mean(Eigen::Vector3f::Zero()),
               m_covar(Eigen::Matrix3f::Zero()){
@@ -322,11 +324,9 @@ class SlamCloudPart: public SlamCloudLocation,
 
         void getGlobalConvexHull(base_cloud_ptr& hull_points,
                                 std::vector<pcl::Vertices>& polygons){
-            // !!! TODO: cache this result too
-            ensureLocalConvexHull();
-            polygons = m_local_convexhull_verts;
-            hull_points = boost::make_shared<base_cloud_t>();
-            pcl::transformPointCloud(*m_local_convexhull_cloud, *hull_points, globalTransform());
+            ensureGlobalConvexHull();
+            hull_points = m_global_convexhull_cloud;
+            polygons = m_local_convexhull_verts; // NB: local
         }
 
         Eigen::Vector3f mean() const{
@@ -364,6 +364,7 @@ class SlamCloudPart: public SlamCloudLocation,
             m_point_descriptors.push_back(d);
             m_keypoint_indices.push_back(idx);
             m_local_convexhull_invalid = true;
+            m_global_convexhull_invalid = true;
         }
         
         base_cloud_t const& rejectedPoints() const{
@@ -377,7 +378,7 @@ class SlamCloudPart: public SlamCloudLocation,
     protected:
         virtual void transformationChanged(){
             this->invalidateKDTree();
-            m_local_convexhull_invalid = true;
+            m_global_convexhull_invalid = true;
         }
 
         
@@ -399,6 +400,16 @@ class SlamCloudPart: public SlamCloudLocation,
 
                 hull_calculator.setInputCloud(shared_from_this());
                 hull_calculator.reconstruct(*m_local_convexhull_cloud, m_local_convexhull_verts);
+            }
+        }
+
+        void ensureGlobalConvexHull(){
+            if(m_global_convexhull_invalid){
+                m_global_convexhull_invalid = false;
+                ensureLocalConvexHull();
+                
+                m_global_convexhull_cloud = boost::make_shared<base_cloud_t>();
+                pcl::transformPointCloud(*m_local_convexhull_cloud, *m_global_convexhull_cloud, globalTransform());
             }
         }
 
@@ -451,6 +462,13 @@ class SlamCloudPart: public SlamCloudLocation,
         std::vector<pcl::Vertices> m_local_convexhull_verts;
         base_cloud_ptr m_local_convexhull_cloud;
         bool m_local_convexhull_invalid;
+        
+        // the global convex hull shares vertex indices with the local one, but
+        // the transformed cloud of hull vertices is cached and used instead of
+        // the non-transformed cloud
+        base_cloud_ptr m_global_convexhull_cloud;
+        bool m_global_convexhull_invalid;
+        
 
         base_cloud_t m_rejected_points_cloud;
 

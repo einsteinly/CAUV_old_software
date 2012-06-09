@@ -133,9 +133,9 @@ def get_connections():
     socket_conns = {}
     for socket in connections:
         conn_strs = []
-        for connection in connections[socket]['binds']:
+        for connection in (x['string'] for x in connections[socket]['binds']):
             conn_strs.append(urwid.Text(('bind', connection)))
-        for connection in connections[socket]['connections']:
+        for connection in (x['string'] for x in connections[socket]['connections']):
             conn_strs.append(urwid.Text(('connect', connection)))
         socket_conns[socket] = conn_strs
     return socket_conns

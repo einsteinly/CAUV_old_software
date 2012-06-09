@@ -140,9 +140,9 @@ class RFQuestion{
 
             if(ntrue == 0 || nfalse == 0){
                 // this question tells us nothing!
-                debug(11) << this << "no information over" << n
-                          << "points:" << good_true << good_false
-                          << bad_true << bad_false;
+                //debug(11) << this << "no information over" << n
+                //          << "points:" << good_true << good_false
+                //          << bad_true << bad_false;
                 return std::numeric_limits<entropy_t>::infinity();
             }
             
@@ -157,8 +157,8 @@ class RFQuestion{
                 r -= (good_false * good_false * std::log(entropy_t(good_false)/nfalse)) / nfalse;
             if(bad_false)
                 r -= (bad_false * bad_false * std::log(entropy_t(bad_false)/nfalse)) / nfalse;
-            debug(11) << this << "entropy of" << r << "over" << pt_indices.size() << "points:"
-                      << good_true << good_false << bad_true << bad_false << terminal_flags;
+            //debug(11) << this << "entropy of" << r << "over" << pt_indices.size() << "points:"
+            //          << good_true << good_false << bad_true << bad_false << terminal_flags;
             return r;
         }
 
@@ -295,13 +295,13 @@ class ListOfRandomRFQuestions{
                 }
                 if(terminal == TrueGoodFalseBad ||
                    terminal == TrueBadFalseGood){
-                    debug(9) << "terminal(" << terminal << ") entropy=" << entropy
-                             << "best=" << best_entropy
-                             << "test_true:" << test_true->size()
-                             << "test_false:" << test_false->size();
+                    //debug(9) << "terminal(" << terminal << ") entropy=" << entropy
+                    //         << "best=" << best_entropy
+                    //         << "test_true:" << test_true->size()
+                    //         << "test_false:" << test_false->size();
                     assert(entropy <= best_entropy);
                     break;
-                }else if(terminal){
+                }/*else if(terminal){
                     if(entropy == best_entropy)
                         debug(9) << "one-sided terminal(" << terminal << ") entropy=" << entropy
                                  << "best=" << best_entropy
@@ -312,7 +312,7 @@ class ListOfRandomRFQuestions{
                                  << "best=" << best_entropy
                                  << "test_true:" << test_true_temp->size()
                                  << "test_false:" << test_false_temp->size();
-                }
+                }*/
             }
             debug(4) << 100*float(num_useless_questions) / m_questions.size() << "% useless questions";
             if(best == m_questions.end()){
@@ -337,8 +337,8 @@ class ListOfRandomRFQuestions{
             const float ratio = ratio_dist(m_rng);
             const cv::Point a(pxoffset_dist(m_rng), pxoffset_dist(m_rng));
             const cv::Point b(pxoffset_dist(m_rng), pxoffset_dist(m_rng));
-            debug(8) << "PxRatioQuestion: (" << a.x <<","<< a.y << "), ("
-                     << b.x <<"," << b.y << "), ratio=" << ratio;
+            //debug(8) << "PxRatioQuestion: (" << a.x <<","<< a.y << "), ("
+            //         << b.x <<"," << b.y << "), ratio=" << ratio;
             return boost::make_shared<PxRatioQuestion>(a, b, ratio);
         }
 
