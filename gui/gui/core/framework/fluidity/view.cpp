@@ -128,6 +128,7 @@ FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
 
     g3->setRect(QRectF(0,0,120,80));
     g3->addDataSeries(m_angle_series);
+    g3->addDataSeries(m_pct_series);
     g3->addDataSeries(m_pct2_series);
     g3->addDataSeries(m_unlim_series);
 

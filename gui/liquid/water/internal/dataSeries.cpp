@@ -32,7 +32,7 @@ wi::DataSeries::DataSeries(SeriesConfig const& config, QString series_name)
       m_insert_batch_size(1),
       m_last_time(cauv::nowDouble()),
       m_last_value(0),
-      m_dirty(true),
+      m_dirty_in_graph(),
       m_config(config){
 }
 
@@ -66,7 +66,8 @@ void  wi::DataSeries::postData(double value, double const& time){
             g->requiresUpdate();
         m_last_time = now;
         // hit the database only if there's something new
-        m_dirty = true;
+        for(std::map<wi::Graph*, bool>::iterator i = m_dirty_in_graph.begin(); i != m_dirty_in_graph.end(); i++)
+            i->second = true;
     }
 
     m_last_value = value;
@@ -76,11 +77,14 @@ void  wi::DataSeries::addGraph(wi::Graph* g){
     m_in_graphs.push_back(g);
 }
 
-wi::DataWindow_ptr  wi::DataSeries::snapshot(double const& tstart, double const& tend, unsigned resolution){
+wi::DataWindow_ptr  wi::DataSeries::snapshot(double const& tstart, double const& tend, unsigned resolution, wi::Graph* for_graph){ 
     DataWindow_ptr r = boost::make_shared<DataWindow>();
-    if(!m_dirty)
-        return r;
-    m_dirty = false;
+    
+    // if graph wants all the data, can't optimise about not hitting the
+    // database unless there's anything new (so ignore m_dirty)
+    //if(!m_dirty_in_graph[for_graph])
+    //    return;
+    //m_dirty_in_graph[for_graph] = false;
 
     if(resolution == 0)
         resolution++;
@@ -99,17 +103,19 @@ wi::DataWindow_ptr  wi::DataSeries::snapshot(double const& tstart, double const&
     return r;
 }
 
-void  wi::DataSeries::updateSnapshot(DataWindow_ptr w, double const& tstart, double const& tend, uint32_t resolution){
-    if(!m_dirty)
-        return;
-    m_dirty = false;
-
+void  wi::DataSeries::updateSnapshot(DataWindow_ptr w, double const& tstart, double const& tend, uint32_t resolution, wi::Graph* for_graph){
     w->removeSamplesBefore(tstart);
+
     const double dt = (tend - tstart) / resolution;
     if(!w->size()){
-        w = snapshot(tstart, tend, resolution);
+        w = snapshot(tstart, tend, resolution, for_graph);
         return;
     }
+    
+    if(!m_dirty_in_graph[for_graph])
+        return;
+    m_dirty_in_graph[for_graph] = false;
+
     Map::MinAvgMax x = {0, 0, 0};
     for(double t = w->maxTime(); t < tend-dt/2; t += dt)
         if(m_data.minAvgMaxOfRange(t, t+dt, x))

@@ -104,7 +104,7 @@ QPolygonF wi::DataWindow::regionAtScale(QPointF origin, double const& tmin, floa
     if(i == end)
         start = end;
 
-    for(i = n-1; i > start; i--){
+    for(i = n-1; i > start+1; i--){
         if(std::fabs(m_max_values[i] - m_mean_values[i]) > 2*yscale ||
            std::fabs(m_min_values[i] - m_mean_values[i]) > 2*yscale){
             end = i+1;
