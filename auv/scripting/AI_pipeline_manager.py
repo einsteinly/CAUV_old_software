@@ -246,7 +246,7 @@ class PipelinesSet():
             #update node_id to pipeline map
             for node_id in self.node_id2pipeline:
                 if node_id in all_nodes:
-                    self.node_id2pipeline = os.path.join('temp','__')+pipeline+'__all'
+                    self.node_id2pipeline[node_id] = os.path.join('temp','__')+pipeline+'__all'
             with open(os.path.join('pipelines','temp','__')+pipeline+'__all'+'.pipe', 'wb') as outf:
                 st = cauv.pipeline.State()
                 st.nodes = all_nodes
