@@ -84,6 +84,8 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     connect(m_contentWidget, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
 
     status(OK);
+
+    setSize(Minimum_Size);
 }
 
 LiquidNode::~LiquidNode(){

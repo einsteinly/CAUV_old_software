@@ -23,9 +23,9 @@ w::GraphConfig w::One_Minute = {
 
 // - Graph
 
-w::Graph::Graph(GraphConfig const& config, QString name, QGraphicsItem* parent)
+w::Graph::Graph(GraphConfig const& config, QGraphicsItem* parent)
     : QGraphicsItem(parent),
-      m(new w::internal::Graph(config, name, this)){
+      m(new w::internal::Graph(config, this)){
 }
 
 void w::Graph::addDataSeries(DataSeries_ptr data_series){

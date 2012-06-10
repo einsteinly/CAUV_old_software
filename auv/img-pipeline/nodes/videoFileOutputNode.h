@@ -1,10 +1,10 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
- * 
+ *
  * See license.txt for details.
- * 
+ *
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
@@ -32,28 +32,32 @@ namespace cauv{
 namespace imgproc{
 
 class VideoFileOutputNode: public OutputNode{
+        typedef boost::mutex mutex_t;
+        typedef boost::unique_lock<mutex_t> lock_t;
     public:
         VideoFileOutputNode(ConstructArgs const& args)
-            : OutputNode(args), m_counter(0){
+            : OutputNode(args), m_write_mux(), m_writer(), m_fname(), m_videoEmpty(true), m_counter(0){
         }
 
         void init(){
             // one input:
             registerInputID("image");
-            
+
             // no outputs
-            
+
             // parameters: the filename, jpg compression, png compression
             registerParamID<std::string>("filename", "out.%d.%t.%c.avi");
         }
 
         virtual ~VideoFileOutputNode(){
+            lock_t l(m_write_mux);
             closeVideo();
         }
 
         virtual void paramChanged(input_id const& p){
             debug(4) << "VideoFileOutputNode::paramChanged";
             if(p == input_id("filename")){
+                lock_t l(m_write_mux);
                 closeVideo();
                 setAllowQueue();
             }
@@ -64,9 +68,10 @@ class VideoFileOutputNode: public OutputNode{
             using boost::algorithm::replace_all_copy;
 
             cv::Mat img = inputs["image"]->mat();
-             
+
             debug(4) << "VideoFileOutputNode::doWork()" << inputs["image"];
-            
+
+            lock_t l(m_write_mux);
             try{
                 if(!m_writer.isOpened())
                 {
@@ -82,21 +87,21 @@ class VideoFileOutputNode: public OutputNode{
                                         );
                     openVideo(img.size());
                 }
-                
+
                 accumulateFrame(img);
             }catch(cv::Exception& e){
                 error() << "VideoFileOutputNode:\n\t"
                         << e.err << "\n\t"
                         << "in" << e.func << "," << e.file << ":" << e.line;
-                closeVideo(); 
+                closeVideo();
                 throw img_pipeline_error("VideoFileOutputNode: could not write file");
             }
-            
+
         }
 
         void openVideo(cv::Size const& size){
             debug() << "VideoFileOutputNode::openVideo()" << m_fname;
-            // TODO: automagical FPS detection 
+            // TODO: automagical FPS detection
             bool r = m_writer.open(m_fname, CV_FOURCC('M','P','G','2'), 25 /*fps*/, size, true);
             m_videoEmpty = true;
             if(!r || !m_writer.isOpened()){
@@ -134,12 +139,13 @@ class VideoFileOutputNode: public OutputNode{
                 }
             }
         }
-        
+
+        mutex_t m_write_mux;
         cv::VideoWriter m_writer;
         std::string m_fname;
         bool m_videoEmpty;
         int m_counter;
-    
+
     // Register this node type
     DECLARE_NFR;
 };

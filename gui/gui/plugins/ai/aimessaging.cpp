@@ -106,6 +106,7 @@ void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
 }
 
 void AiMessageObserver::onTaskTypesMessage(TaskTypesMessage_ptr m){
+    debug() << "onTaskTypesMessage" << *m;
     foreach (std::string const& name, m->typeNames()){
         AiTaskNode::addType(name);
     }

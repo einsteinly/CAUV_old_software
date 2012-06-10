@@ -43,6 +43,41 @@
 namespace cauv{
 namespace imgproc{
 
+struct CloudGraphParams{
+    // default constructor sets sensible defaults:
+    CloudGraphParams() :
+        overlap_threshold(0.3),
+        keyframe_spacing(2),
+        min_initial_points(10),
+        min_initial_area(5), // m^2 !!! should be a function of range
+        good_keypoint_distance(0.2),
+        max_speed(1.0),
+        max_considered_overlaps(3),
+        min_scan_consensus(2),
+        scan_consensus_tolerance(0.3),
+        rotation_scale(4){
+    }
+
+    float overlap_threshold; // a fraction (0--1.0)
+    float keyframe_spacing;  // in metres
+    float min_initial_points; // for first keyframe
+    float min_initial_area;   //
+    /* new keypoints with nearest neighbours better than this are
+     * considered good for training:
+     */
+    float good_keypoint_distance;
+    float max_speed;
+    int max_considered_overlaps;
+    
+    unsigned min_scan_consensus; // n >= 1
+    float scan_consensus_tolerance; // in metres
+    
+    // Used to map rotation to a Euclidean distance when deciding to place a
+    // new keyframe if:
+    // rotation_scale * (rotation_A - rotation_B) >= keyframe_spacing
+    float rotation_scale;
+};
+
 template<typename PointT>
 class SlamCloudGraph{
     public:
@@ -77,18 +112,13 @@ class SlamCloudGraph{
             Eigen::aligned_allocator< std::pair<const score_t, mat_cloud_transformed_t> >
         > cloud_constraint_map;
 
+        typedef typename cloud_constraint_map::const_iterator ccmap_const_iter;
+
 
     public:
         // - public methods
-        SlamCloudGraph()
-            : m_overlap_threshold(0.3),
-              m_keyframe_spacing(2),
-              m_min_initial_points(10),
-              m_min_initial_area(5), // m^2 !!! should be a function of range
-              m_good_keypoint_distance(0.2),
-              m_max_speed(1.0),
-              m_max_considered_overlaps(3),
-              m_rotation_scale(4),
+        SlamCloudGraph(CloudGraphParams const& params = CloudGraphParams())
+            : m_params(params),
               m_graph_optimisation_count(0),
               m_dump_pose_history(CAUV_DUMP_POSE_GRAPH),
               m_key_scan_locations(new KDTreeCachingCloud<PointT>()),
@@ -126,6 +156,10 @@ class SlamCloudGraph{
             return m_graph_optimisation_count;
         }
 
+        void setParams(CloudGraphParams params){
+            m_params = params;
+        }
+
         void setParams(float overlap_threshold,
                        float keyframe_spacing,
                        float min_initial_points,
@@ -134,13 +168,13 @@ class SlamCloudGraph{
             if(overlap_threshold > 1.0){
                 warning() << "invalid overlap threshold" << overlap_threshold
                           << "(>1.0) will be ignored";
-                overlap_threshold = m_overlap_threshold;
+                overlap_threshold = m_params.overlap_threshold;
             }
-            m_overlap_threshold = overlap_threshold;
-            m_keyframe_spacing = keyframe_spacing;
-            m_min_initial_points = min_initial_points;
-            m_good_keypoint_distance = good_keypoint_distance;
-            m_max_considered_overlaps = max_considered_overlaps;
+            m_params.overlap_threshold = overlap_threshold;
+            m_params.keyframe_spacing = keyframe_spacing;
+            m_params.min_initial_points = min_initial_points;
+            m_params.good_keypoint_distance = good_keypoint_distance;
+            m_params.max_considered_overlaps = max_considered_overlaps;
         }
 
         cloud_vec const& keyScans() const{
@@ -190,16 +224,16 @@ class SlamCloudGraph{
                         debug() << "guess transformation in < 0.1 ms!";
                         return r;
                     }
-                    const float frac_speed = std::fabs((p-p1).norm() / (t-t1)) / m_max_speed;
+                    const float frac_speed = std::fabs((p-p1).norm() / (t-t1)) / m_params.max_speed;
                     r.block<3,1>(0,3) = p;
                     if(frac_speed >= 1.0){
                         warning() << "predicted motion > max speed (x"
                                   << frac_speed << "), will throttle";
                         r.block<3,1>(0,3) = p1 + (1.0/frac_speed) * (p1-p2)*(t-t1)/(t1-t2);
                     }
-                    if((p-p1).norm() > m_keyframe_spacing){
+                    if((p-p1).norm() > m_params.keyframe_spacing){
                         warning() << "predicted motion > keyframe spacing, will throttle";
-                        r.block<3,1>(0,3) = p1 + m_keyframe_spacing * (p1-p2).normalized();
+                        r.block<3,1>(0,3) = p1 + m_params.keyframe_spacing * (p1-p2).normalized();
                     }
                     return r;
                 }
@@ -224,11 +258,10 @@ class SlamCloudGraph{
                     transformation = Eigen::Matrix4f::Identity();
                     p->setRelativeToNone();
                     p->setRelativeTransform(transformation);
-                    const Eigen::Vector3f xyr = xyScaledTFromScanTransformation(p->globalTransform());
+                    const Eigen::Vector3f xyr = xyScaledTFromMat(p->globalTransform());
                     m_key_scan_locations->push_back(PointT(xyr[0], xyr[1], xyr[2]));
                     return 1.0f;
                 }else{
-                    debug() << "cloud not good enough for initialisation";
                     transformation = Eigen::Matrix4f::Zero();
                     return 0.0f;
                 }
@@ -251,17 +284,16 @@ class SlamCloudGraph{
                 transformation = guess;
                 return 0;
             }
-            // for each overlap (up to m_max_considered_overlaps), in order of
+            // for each overlap (up to m_params.max_considered_overlaps), in order of
             // goodness, align this new scan to the overlapping one, and save
             // the resulting transformation:
 
             // !!! scores from matching are are  0 (worst) -- 1 (best)
 
-            int limit = m_max_considered_overlaps;
+            int limit = m_params.max_considered_overlaps;
             int succeeded_match = 0;
             int failed_match = 0;
             typename cloud_overlap_map::const_iterator i;
-            debug() << "matching to overlapping scans...";
             for(i = overlaps.begin(); i != overlaps.end() && limit; i++, limit--){
                 try{
                     cloud_ptr map_cloud = i->second;
@@ -286,20 +318,22 @@ class SlamCloudGraph{
             debug() << succeeded_match << "matches succeeded"
                     << failed_match << "failed";
             
+            /* this is mostly redundant now consensus is implemented
+
             // remove scans that imply moving too fast:
             cloud_constraint_map transformations_speed_checked;            
             
             Eigen::Matrix4f last_transform = m_all_scans.back()->globalTransform();
-            typename cloud_constraint_map::const_iterator ti;
+            ccmap_const_iter ti;
             for(ti = transformations.begin(); ti != transformations.end(); ti++){
                 const Eigen::Matrix4f tr = ti->second.mat * ti->second.cloud->globalTransform();
                 const float speed = (tr - last_transform).block<3,1>(0,3).norm() /
                                     (p->time() - ti->second.cloud->time());
-                if(speed > m_max_speed){
+                if(speed > m_params.max_speed){
                     warning() << "match implies moving too fast: ignoring ("
-                              << speed << "/" << m_max_speed << ")";
+                              << speed << "/" << m_params.max_speed << ")";
                 }else{
-                    debug() << "match implies moving at" << speed / m_max_speed << "x maximum speed";
+                    //debug() << "match implies moving at" << speed / m_params.max_speed << "x maximum speed";
                     transformations_speed_checked.insert(*ti);
                 }
             }
@@ -314,26 +348,51 @@ class SlamCloudGraph{
                 }
                 return 0;
             }
-            transformations = transformations_speed_checked;            
+            transformations = transformations_speed_checked;
+            */
+            if(!transformations.size()){
+                error() << "no overlapping scans matched!";
+                transformation = guess;
+                return 0;
+            }
 
             debug() << transformations.size() << "overlapping scans matched"
                     << "scores"
                     << transformations.rbegin()->first << "--"
                     << transformations.begin()->first;
             
-            debug(5) << "transformations to map scans:";
+            /*debug(5) << "transformations to map scans:";
             for(ti = transformations.begin(); ti != transformations.end(); ti++){
                 debug(5) << "score=" << ti->first << ", relative transformation=\n" << ti->second.mat;
                 const Eigen::Vector3f xyr = xyThetaFrom4DAffine(ti->second.mat);
                 debug(5) << "pos=" << xyr[0] << "," << xyr[1] << ": rotation=" << xyr[2]*180/M_PI << "deg";
+            }*/
+
+            std::vector<ccmap_const_iter> consensus_set;
+            ccmap_const_iter best = findBestConsensusSet(
+                transformations.begin(), transformations.end(), consensus_set
+            );
+
+            if(best == transformations.end()){
+                warning() << "insufficient consensus";
+                best = consensus_set.back();
+                transformation = guess;                
+                return 0;
             }
+
+            const cloud_ptr       parent_map_cloud   = best->second.cloud;
+            const Eigen::Matrix4f rel_transformation = best->second.mat;
+            const base_cloud_ptr  transformed        = best->second.transformed;
+            r = best->first; // !!! score should include degree of consensus
             
-            // Choose the best *score* (not overlap) out of these matches, and use as the
-            // parent for this scan:
-            const cloud_ptr       parent_map_cloud   = transformations.rbegin()->second.cloud;
-            const Eigen::Matrix4f rel_transformation = transformations.rbegin()->second.mat;
-            const base_cloud_ptr  transformed        = transformations.rbegin()->second.transformed;
-            r = transformations.rbegin()->first;
+            // only consider the consensus transformations
+            cloud_constraint_map consensus_transformations;            
+            foreach(ccmap_const_iter const& c, consensus_set)
+                consensus_transformations.insert(*c);
+            
+            transformations = consensus_transformations;
+
+            // ---- best, and consensus_set content iterators now invalid ----
 
             p->setRelativeTransform(rel_transformation);
             p->setRelativeTo(parent_map_cloud);
@@ -343,9 +402,9 @@ class SlamCloudGraph{
             
             // this scan is a key scan if it is more than a minimum distance
             // from other key-scans
-            const Eigen::Vector3f xyr = xyScaledTFromScanTransformation(p->globalTransform());
+            const Eigen::Vector3f xyr = xyScaledTFromMat(p->globalTransform());
             const PointT xyr_space_loc = PointT(xyr[0], xyr[1], xyr[2]);
-            const float squared_keyframe_spacing = m_keyframe_spacing * m_keyframe_spacing;
+            const float squared_keyframe_spacing = m_params.keyframe_spacing * m_params.keyframe_spacing;
             if(m_key_scan_locations->nearestSquaredDist(xyr_space_loc) > squared_keyframe_spacing){
                 // key scans are transformed to global coordinate
                 // frame
@@ -375,6 +434,7 @@ class SlamCloudGraph{
                 transformation = p->globalTransform();
                 debug() << "post-optimisation, key frame at:"
                         << transformation.block<3,1>(0, 3).transpose();
+                _updateKeyScanLocations();
             }else{
                 // discard all the point data for non-key scans
                 m_all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
@@ -400,7 +460,7 @@ class SlamCloudGraph{
             // first, the points that passed the weight test:
             for(size_t i=0; i < transformed->size(); i++){
                 if(parent_map_cloud->nearestKSearch((*transformed)[i], 1, pt_indices, pt_squared_dists) > 0 &&
-                   pt_squared_dists[0] < m_good_keypoint_distance){
+                   pt_squared_dists[0] < m_params.good_keypoint_distance){
                     p->keyPointGoodness()[p->ptIndices()[i]] = 1;
                     n_passed_good++;
                 }else{
@@ -416,7 +476,7 @@ class SlamCloudGraph{
 
             for(size_t i = 0; i < transformed_rejected.size(); i++){
                 if(parent_map_cloud->nearestKSearch(transformed_rejected[i], 1, pt_indices, pt_squared_dists) > 0 &&
-                   pt_squared_dists[0] < m_good_keypoint_distance){
+                   pt_squared_dists[0] < m_params.good_keypoint_distance){
                     p->keyPointGoodness()[p->rejectedPtIndices()[i]] = 1;
                     n_failed_good++;
                 }else{
@@ -446,16 +506,102 @@ class SlamCloudGraph{
 
     private:
         // - private methods
-        /* Return all cloud parts in the map that overlap with p by more than
-         * m_overlap_threshold.
+        /* Find the best consensus amongst a set of possible transformations
+         *
+         * !!!! TODO: use consensus-weighted score instead?
+         *
+         * When adding a key-scan we also need to know which matching scans
+         * didn't agree, so they can be ignored, hence the whole consensus set
+         * set is returned (at little additional cost).
+         * In the case that no consensus is found, the best supported match is
+         * still returned as the first iterator in best_consensus_set.
          */
-        cloud_overlap_map overlappingClouds(cloud_ptr p) const{
+        ccmap_const_iter findBestConsensusSet(ccmap_const_iter b,
+                                              ccmap_const_iter e,
+                                              std::vector<ccmap_const_iter>& best_consensus_set) const{
+            const float sq_tolerance = m_params.scan_consensus_tolerance * m_params.scan_consensus_tolerance;
+            std::vector<ccmap_const_iter> consensus_set;
+            ccmap_const_iter i = b;
+            ccmap_const_iter m = b;
+            ccmap_const_iter r = e;
+
+            best_consensus_set.clear();
+            
+            std::vector<Eigen::Vector3f> match_xyt;
+            while(i != e){
+                match_xyt.push_back(xyScaledTFromMat(i->second.cloud->globalTransform() * i->second.mat));
+                i++;
+            }
+            
+            i = b;
+            for(unsigned j = 0; j < match_xyt.size(); j++, i++){
+                // consensus with self is given
+                consensus_set.clear();
+                consensus_set.push_back(i);
+                Eigen::Vector3f const& xyt = match_xyt[j];
+                m = b;
+                for(unsigned k = 0; k < match_xyt.size(); k++, m++){
+                    if(k == j)
+                        continue;
+                    const float sq_norm = (xyt - match_xyt[k]).squaredNorm();
+                    if(sq_norm < sq_tolerance)
+                        consensus_set.push_back(m);
+                    //debug() << "consensus? sq norm:" << sq_norm << "tolerance:" << sq_tolerance;
+                }
+                // include equal because higher scored matches are at the end,
+                // and in the case of a consensus tie it makes sense to use
+                // score to arbitrate
+                if(consensus_set.size() >= best_consensus_set.size()){
+                    r = i;
+                    best_consensus_set = consensus_set;
+                }
+            }
+            if(best_consensus_set.size() > m_params.min_scan_consensus ||
+               best_consensus_set.size() >= m_key_scans.size() * m_params.min_scan_consensus / m_params.max_considered_overlaps)
+                return r;
+            return e;
+        }
+        
+        
+        /* Re-build the key-scan location cloud after an optimisation update.
+         */
+        void _updateKeyScanLocations(){
+            m_key_scan_locations->clear();
+            
+            Eigen::Vector3f xyr;
+            PointT xyr_space_loc;
+
+            foreach(cloud_ptr k, m_key_scans){
+                xyr = xyScaledTFromMat(k->globalTransform());
+                xyr_space_loc = PointT(xyr[0], xyr[1], xyr[2]);
+                m_key_scan_locations->push_back(PointT(xyr_space_loc));
+            }
+        }
+
+        /* Return all cloud parts in the map that overlap with p by more than
+         * m_params.overlap_threshold. The search is limited to the nearest k
+         * key-scans to p.
+         *
+         * !!! should really use a sorted datastructure based on the bounding
+         * boxes of the key scans for this search, rather than just the
+         * origins. But this gives sufficiently good algorithmic complexity.
+         */
+        cloud_overlap_map overlappingClouds(cloud_ptr p, unsigned k = 25) const{
+            std::vector<int> k_indices(k);
+            std::vector<float> k_sqr_distances(k);
+            const Eigen::Vector3f xyr = xyScaledTFromMat(p->globalTransform());
+            const PointT xyr_space_loc = PointT(xyr[0], xyr[1], xyr[2]);
+
+            const int n = m_key_scan_locations->nearestKSearch(xyr_space_loc, k, k_indices, k_sqr_distances);
+
             cloud_overlap_map r;
-            foreach(cloud_ptr m, m_key_scans){
+            for(int i = 0; i < n; i++){
+                cloud_ptr m = m_key_scans[k_indices[i]];
                 float overlap = overlapPercent(m, p);
-                if(overlap > m_overlap_threshold)
+                if(overlap > m_params.overlap_threshold)
                     r.insert(typename cloud_overlap_map::value_type(overlap, m));
             }
+
             return r;
         }
 
@@ -472,12 +618,11 @@ class SlamCloudGraph{
         }
 
         /* Judge degree of overlap: new parts are added to the map when the
-         * overlap with existing parts is less than m_overlap_threshold
+         * overlap with existing parts is less than m_params.overlap_threshold
          */
         float overlapPercent(cloud_ptr a, cloud_ptr b) const{
             assert(a->size() != 0 && b->size() != 0);
 
-            // !!! TODO: cache convex hulls with point clouds
             std::vector<pcl::Vertices> a_polys;
             std::vector<pcl::Vertices> b_polys;
             base_cloud_ptr a_points;
@@ -516,9 +661,9 @@ class SlamCloudGraph{
                 const double a_area = std::fabs(ClipperLib::Area(clipper_poly_a));
                 const double b_area = std::fabs(ClipperLib::Area(clipper_poly_b));
 
-                debug(3) << "overlap pct =" << 1e-6*intersect_area
+                /*debug(3) << "overlap pct =" << 1e-6*intersect_area
                          << "/ min(" << -1e-6*a_area << "," << -1e-6*b_area << ") ="
-                         << intersect_area / std::min(a_area,b_area);
+                         << intersect_area / std::min(a_area,b_area);*/
                 return intersect_area / std::min(a_area,b_area);
             }else{
                 return 0;
@@ -529,7 +674,6 @@ class SlamCloudGraph{
         static float area(cloud_ptr a){
            assert(a->size() != 0);
 
-            // !!! TODO: cache convex hulls with point clouds
             std::vector<pcl::Vertices> a_polys;
             base_cloud_ptr a_points;
             a->getGlobalConvexHull(a_points, a_polys);
@@ -551,12 +695,12 @@ class SlamCloudGraph{
          * features, and how well it matches with itself, or something.
          */
         bool cloudIsGoodEnoughForInitialisation(cloud_ptr p) const{
-            const bool enough_points = (p->size() > m_min_initial_points);
-            const bool large_enough_area = enough_points && (area(p) > m_min_initial_area);
+            const bool enough_points = (p->size() > m_params.min_initial_points);
+            const bool large_enough_area = enough_points && (area(p) > m_params.min_initial_area);
             if(!enough_points)
-                debug() << "too few points for initialisation:" << p->size() << "<" << m_min_initial_points;
+                debug() << "too few points for initialisation:" << p->size() << "<" << m_params.min_initial_points;
             else if(!large_enough_area)
-                debug() << "too small area for initialisation:" << area(p) << "<" << m_min_initial_area;
+                debug() << "too small area for initialisation:" << area(p) << "<" << m_params.min_initial_area;
             return enough_points && large_enough_area;
         }
 
@@ -564,9 +708,9 @@ class SlamCloudGraph{
          * scaled rotation) space in which a constant distance metric is used
          * to decide on placement of new key scans
          */
-        Eigen::Vector3f xyScaledTFromScanTransformation(Eigen::Matrix4f const& a) const{
+        Eigen::Vector3f xyScaledTFromMat(Eigen::Matrix4f const& a) const{
             const Eigen::Vector3f t = xyThetaFrom4DAffine(a);
-            return Eigen::Vector3f(t[0], t[1], m_rotation_scale * t[2]);
+            return Eigen::Vector3f(t[0], t[1], m_params.rotation_scale * t[2]);
         }
 
         /* add constraints based on relative transformations, return the added
@@ -624,19 +768,7 @@ class SlamCloudGraph{
 
 
         // - private data
-        float m_overlap_threshold; // a fraction (0--1.0)
-        float m_keyframe_spacing;  // in metres
-        float m_min_initial_points; // for first keyframe
-        float m_min_initial_area;   //
-        /* new keypoints with nearest nieghbours better than this are
-         * considered good for training: */
-        float m_good_keypoint_distance;
-        float m_max_speed;
-        int m_max_considered_overlaps;
-        // Used to map rotation to a Euclidean distance when deciding to place
-        // a new keyframe if:
-        // m_rotation_scale * (rotation_A - rotation_B) >= m_keyframe_spacing
-        float m_rotation_scale;
+        CloudGraphParams m_params;
         
         // +1 each time graph optimiser is run - i.e. this number changes
         // whenever everything might have moved
@@ -645,14 +777,8 @@ class SlamCloudGraph{
         // if true, write pose history to files each time the pose graph is
         // optimised
         bool m_dump_pose_history;
-
-        // TODO: to remain efficient there MUST be a way of searching for
-        // SlamCloudParts near a location without iterating through all nodes
-        // (kdtree probably)
-        cloud_vec m_key_scans;
         
-        // !!! FIXME: currently key scan locations are not updated in this
-        // cloud when the graph optimiser changes them!
+        cloud_vec m_key_scans;
 
         // each point in this cloud is a key scan (same order as m_key_scans):
         // x,y,z map to x,y,m_rotation_scale*rotation 

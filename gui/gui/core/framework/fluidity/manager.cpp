@@ -30,6 +30,10 @@
 
 #include <liquid/layout.h>
 
+#include "framework/nodescene.h"
+
+#include "model/node.h"
+
 #include "fNode.h"
 #include "imageSource.h"
 
@@ -58,9 +62,10 @@ static bool isInvalid(node_id_t const& id){
 }
 
 // - General Public Implementation:
-Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipeline_name)
+Manager::Manager(NodeScene *scene, CauvNode *node, std::string const& pipeline_name)
     : QObject(),
       BufferedMessageObserver(),
+      DropHandlerInterface<QGraphicsItem*>(),
       boost::enable_shared_from_this<Manager>(),
       m_scene(scene),
       m_cauv_node(node),
@@ -108,6 +113,8 @@ Manager::~Manager(){
 
 
 void Manager::init(){
+    m_scene->registerDropHandler(shared_from_this());
+
     m_cauv_node->addMessageObserver(shared_from_this());
     m_cauv_node->subMessage(GraphDescriptionMessage());
     m_cauv_node->subMessage(NodeParametersMessage());
@@ -158,6 +165,17 @@ void Manager::delayLayout(){
 
 void Manager::setFocusPosition(QPointF p){
     m_focus_scenepos = QPointF(qRound(p.x()), qRound(p.y()));
+}
+
+// - DropHandlerInterface Implementation
+bool Manager::accepts(boost::shared_ptr<cauv::gui::Node> const& node){
+    debug() << "Manager drop enter from" << node->nodePath();
+    return false;
+}
+
+QGraphicsItem* Manager::handle(boost::shared_ptr<cauv::gui::Node> const& node){
+    debug() << "Manager drop from" << node->nodePath();
+    return NULL;
 }
 
 // - Message Observer Implementation: thunks

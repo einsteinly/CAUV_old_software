@@ -248,19 +248,17 @@ void ZeroMQMailbox::handle_pub_message (void) {
     if (!pub.recv(&pub_message, XS_DONTWAIT)) {
         return;
     }
-    char *data = reinterpret_cast<char*>(pub_message.data());
-    unsigned int len = pub_message.size();
-    if (len < sizeof(uint32_t) + 1) {
+    subscription_vec_t s_vec = parse_subscription_message(
+                              std::string(reinterpret_cast<char*>(pub_message.data()), pub_message.size()));
+    if (!s_vec.second.size()) {
         return;
     }
 
-    char is_sub = *data;
-    uint32_t sub_id = *reinterpret_cast<uint32_t*>(data + 1); 
+    bool is_sub = s_vec.first;
+    uint32_t sub_id = s_vec.second[0];
 
-    //poor man's deserialisation for pid marker
-    //really needs replacing, it happens too often now
-    if (sub_id == NODE_MARKER_MSGID && len >= sizeof(uint32_t) * 2 + 1) {
-        uint32_t pid = *(reinterpret_cast<uint32_t*>(data + 1) + 1);
+    if (sub_id == NODE_MARKER_MSGID && s_vec.second.size() == 2) {
+        uint32_t pid = s_vec.second[1];
         if (is_sub) {
             debug(3) << "pid" << pid << "connected";
             if (send_connect_pids.count(pid)) {
@@ -276,8 +274,8 @@ void ZeroMQMailbox::handle_pub_message (void) {
         }
     }
 
-    if (sub_id == DAEMON_MARKER_MSGID) {
-        uint32_t daemon_id = *(reinterpret_cast<uint32_t*>(data + 1) + 1);
+    if (sub_id == DAEMON_MARKER_MSGID && s_vec.second.size() == 2) {
+        uint32_t daemon_id = s_vec.second[1];
         debug() << "connected to daemon" << daemon_id;
         daemon_connected = true;
 
@@ -295,7 +293,7 @@ void ZeroMQMailbox::handle_pub_message (void) {
         return;
     }
 
-    if (len > sizeof(uint32_t) + 1) {
+    if (s_vec.second.size() > 1) {
         return;
     }
     boost::lock_guard<boost::mutex> lock(m_pub_map_mutex);

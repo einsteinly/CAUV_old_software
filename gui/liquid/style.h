@@ -73,6 +73,8 @@ namespace liquid {
 
         qreal tl_radius;
         qreal bl_radius;
+        qreal tr_radius;
+        qreal br_radius;
 
         struct Header_Style{
             qreal height;

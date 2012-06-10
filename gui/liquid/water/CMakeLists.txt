@@ -21,7 +21,12 @@ set (
 set (
     WATER_H
     graph.h
+    dataSeries.h
     #internal/persistentMap.h
+    #internal/graph.cpp
+    #internal/dataSeries.cpp
+    #internal/dataWindow.cpp
+    #internal/graphAxes.cpp
 )
 
 set (

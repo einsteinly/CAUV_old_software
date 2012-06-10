@@ -46,7 +46,7 @@ typedef boost::shared_ptr<DataSeries> DataSeries_ptr;
 // Draws zero or more data series.
 class Graph: public QGraphicsItem{
     public:
-        Graph(GraphConfig const& config, QString name, QGraphicsItem* parent=0);
+        Graph(GraphConfig const& config, QGraphicsItem* parent=0);
 
         void addDataSeries(DataSeries_ptr data_series);
 

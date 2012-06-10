@@ -15,6 +15,11 @@
 #include "dataSeries.h"
 #include "internal/dataSeries.h"
 
+// !!!FIXME bad dependency, necessary because we don't send time on the wire
+// with telemetry data yet
+#include <utility/time.h>
+
+
 namespace w = liquid::water;
 
 
@@ -50,3 +55,15 @@ w::DataSeries::DataSeries(SeriesConfig const& config, QString series_name)
 void w::DataSeries::postData(double const& value, double const& time){
     m->postData(value, time);
 }
+
+void w::DataSeries::postData(QVariant const& v){
+    postData(v, cauv::nowDouble());
+}
+
+void w::DataSeries::postData(QVariant const& value, double const& time){
+    bool ok = false;
+    const double val = value.toDouble(&ok);
+    if(ok)
+        postData(val, time);
+}
+

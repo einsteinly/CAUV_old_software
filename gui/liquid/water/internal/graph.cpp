@@ -37,7 +37,7 @@
 namespace w = liquid::water;
 namespace wi = liquid::water::internal;
 
-wi::Graph::Graph(GraphConfig const& config, QString name, QGraphicsItem* owner)
+wi::Graph::Graph(GraphConfig const& config, QGraphicsItem* owner)
     : boost::noncopyable(),
       m_owner(owner),
       m_config(config),
@@ -46,7 +46,7 @@ wi::Graph::Graph(GraphConfig const& config, QString name, QGraphicsItem* owner)
       m_data_max(0),
       m_rect(0,0,200,100),
       m_rect_changed(true),
-      m_axes(new GraphAxes(m_rect, owner, name)){
+      m_axes(new GraphAxes(m_rect, owner)){
 }
 
 void wi::Graph::addDataSeries(DataSeries_ptr data_series){
@@ -113,13 +113,16 @@ void wi::Graph::paint(QPainter *painter,
 
     std::list<SeriesData>::iterator i;
     for(i = m_data_series.begin(); i != m_data_series.end(); i++){
-        painter->setBrush(QBrush(QColor(0, 0, 0, 64)));
-        painter->setPen(Qt::NoPen);
-        painter->drawPolygon(i->data_window->regionAtScale(
+        const QPolygonF poly = i->data_window->regionAtScale(
             plot_rect.topLeft(), tstart, scale_max, v_units_per_second, v_units_per_data_unit
-        ));
+        );
+        if(poly.size()){
+            painter->setBrush(QBrush(QColor(0, 0, 0, 64)));
+            painter->setPen(Qt::NoPen);
+            painter->drawPolygon(poly);
+        }
         painter->setPen(QPen(QColor(0, 0, 0, 128)));
-        //painter->setBrush(Qt::NoBrush);
+        painter->setBrush(Qt::NoBrush);
         painter->drawPolyline(i->data_window->valuesAtScale(
             plot_rect.topLeft(), tstart, scale_max, v_units_per_second, v_units_per_data_unit
         ));
@@ -142,14 +145,14 @@ void wi::Graph::paint(QPainter *painter,
 void wi::Graph::_discardAndUpdateDataWindows(double const& tstart, double const& tend, uint32_t resolution){
     std::list<SeriesData>::iterator i;
     for(i = m_data_series.begin(); i != m_data_series.end(); i++)
-        i->data_window = i->data_series->m->snapshot(tstart, tend, resolution);
+        i->data_window = i->data_series->m->snapshot(tstart, tend, resolution, this);
     _updateDataMinMax();
 }
 
 void wi::Graph::_incrementalUpdateDataWindows(double const& tstart, double const& tend, uint32_t resolution){
     std::list<SeriesData>::iterator i;
     for(i = m_data_series.begin(); i != m_data_series.end(); i++)
-        i->data_series->m->updateSnapshot(i->data_window, tstart, tend, resolution);
+        i->data_series->m->updateSnapshot(i->data_window, tstart, tend, resolution, this);
     _updateDataMinMax();            
 }
 

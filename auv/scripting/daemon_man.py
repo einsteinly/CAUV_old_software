@@ -90,7 +90,7 @@ class connObserver(messaging.MessageObserver):
         self.found_peer = False
 
         self.daemon_id = self.d_ctrl.run_cmd('ID')['id']
-        self.daemon_connections = set((normalise_conn_str(str(c)) for c in 
+        self.daemon_connections = set((normalise_conn_str(str(c['string'])) for c in 
                                        self.d_ctrl.run_cmd('CONNECTIONS')['net_xpub']['connections']))
         debug("{}".format(self.daemon_connections))
 

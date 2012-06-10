@@ -70,7 +70,7 @@ void VanishingLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem 
 
 NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
 {
-    int sceneSize = 10000;
+    int sceneSize = 4000;
 
     // a special background element that recieves drops and other events that aren't
     // accepted by items futher up the tree
@@ -80,17 +80,17 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
     addItem(dropArea);
 
     // background lines
-    for(int x = -sceneSize; x < sceneSize; x = x + 25) {
+    for(int x = -sceneSize; x < sceneSize; x = x + 50) {
         int colour = 242;
         //if(x % 100 == 0) colour = 238;
-        VanishingLineItem * line = new VanishingLineItem(0.01, -sceneSize, x, sceneSize, x);
+        VanishingLineItem * line = new VanishingLineItem(0.25, -sceneSize, x, sceneSize, x);
         line->setPen(QPen(QColor(colour, colour, colour)));
         this->addItem(line);
     }
-    for(int y = -sceneSize; y < sceneSize; y = y + 25) {
+    for(int y = -sceneSize; y < sceneSize; y = y + 50) {
         int colour = 242;
         //if(y % 100 == 0) colour = 238;
-        VanishingLineItem * line = new VanishingLineItem(0.01, y, -sceneSize, y, sceneSize);
+        VanishingLineItem * line = new VanishingLineItem(0.25, y, -sceneSize, y, sceneSize);
         line->setPen(QPen(QColor(colour, colour, colour)));
         this->addItem(line);
     }
@@ -122,17 +122,18 @@ NodeScene::~NodeScene(){
     debug(2) << "~NodeScene()";
 }
 
-void NodeScene::registerDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler){
+void NodeScene::registerDropHandler(drop_handler_ptr const& handler){
     m_handlers.push_back(handler);
 }
 
-void NodeScene::removeDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler){
-    if(std::find(m_handlers.begin(), m_handlers.end(), handler)!=m_handlers.end())
-        m_handlers.erase(std::find(m_handlers.begin(), m_handlers.end(), handler));
+void NodeScene::removeDropHandler(drop_handler_ptr const& handler){
+    const std::vector<drop_handler_ptr>::iterator i = std::find(m_handlers.begin(), m_handlers.end(), handler);
+    if(i !=m_handlers.end())
+        m_handlers.erase(i);
 }
 
 bool NodeScene::accepts(boost::shared_ptr<Node> const& node){
-    foreach(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler, m_handlers) {
+    foreach(drop_handler_ptr const& handler, m_handlers) {
         if(handler->accepts(node)) return true;
     }
     return false;
@@ -141,14 +142,16 @@ bool NodeScene::accepts(boost::shared_ptr<Node> const& node){
 void NodeScene::onNodeDroppedAt(boost::shared_ptr<Node> const& node, QPointF pos){
     try {
         QGraphicsItem *  item = applyHandlers(node);
-        if(item->scene() == this){
-            foreach(QGraphicsView * view , this->views()){
-                view->centerOn(item);
+        if(item){
+            if(item->scene() == this){
+                foreach(QGraphicsView * view , this->views()){
+                    view->centerOn(item);
+                }
+            } else {
+                item->setPos(pos - (item->boundingRect().center().toPoint()));
+                addItem(item);
+                liquid::LayoutItems::updateLayout(this);
             }
-        } else {
-            item->setPos(pos - (item->boundingRect().center().toPoint()));
-            addItem(item);
-            liquid::LayoutItems::updateLayout(this);
         }
     } catch (drop_not_handled){
         error() << node->nodeName() << "not supported in this drop area (" << this << ")";
@@ -157,7 +160,7 @@ void NodeScene::onNodeDroppedAt(boost::shared_ptr<Node> const& node, QPointF pos
 
 QGraphicsItem *  NodeScene::applyHandlers(boost::shared_ptr<Node> const& node)
 {
-    foreach(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler, m_handlers) {
+    foreach(drop_handler_ptr const& handler, m_handlers) {
         try {
             // accept the first handler that matches
             if(handler->accepts(node))

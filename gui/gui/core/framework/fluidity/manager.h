@@ -34,27 +34,34 @@
 #include <utility/bimap.h>
 #include <utility/time.h>
 
+#include "nodedragging.h"
+
 #include "fluidity/types.h"
 
+// - Forward Declarations in ::
 class QGraphicsScene;
 class QTimer;
 
 namespace cauv{
-
+// - Forward Declarations in cauv::
 class CauvNode;
 
 namespace gui{
-namespace f{
+// - Forward Declarations in cauv::gui
+class NodeScene;
 
+namespace f{
+// - Forward Declarations in cauv::gui::f
 class ImageSource;
 
 class Manager: public QObject,
                public BufferedMessageObserver,
+               public DropHandlerInterface<QGraphicsItem*>,
                public boost::enable_shared_from_this<Manager>,
                public boost::noncopyable{
     Q_OBJECT
     public:
-        Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipeline_name);
+        Manager(NodeScene *scene, CauvNode *node, std::string const& pipeline_name);
         ~Manager();
         
         // a shared pointer to this must be held when this is called!
@@ -69,6 +76,12 @@ class Manager: public QObject,
         bool animationPermitted() const;
 
         void setFocusPosition(QPointF p);
+
+        // DropHandlerInterface: create things in response to drag-drop
+        // interaction with the associated scene
+        virtual bool accepts(boost::shared_ptr<cauv::gui::Node> const& node);
+        virtual QGraphicsItem* handle(boost::shared_ptr<cauv::gui::Node> const& node);
+
         
         // these methods are called from the messaging thread(s), they MUST NOT
         // modify anything directly: the general pattern is that these emit a
@@ -151,8 +164,8 @@ class Manager: public QObject,
         void _checkAddImageSource(node_id_t);
 
     protected:
-        QGraphicsScene *m_scene;
-        CauvNode       *m_cauv_node;
+        NodeScene *m_scene;
+        CauvNode  *m_cauv_node;
         
         typedef cauv::bimap<fnode_ptr, node_id_t> node_id_map_t;
         node_id_map_t m_nodes;

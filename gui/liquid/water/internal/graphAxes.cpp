@@ -24,10 +24,9 @@
 namespace w = liquid::water;
 namespace wi = liquid::water::internal;
 
-wi::GraphAxes::GraphAxes(QRectF const& rect, QGraphicsItem* parent, QString title)
+wi::GraphAxes::GraphAxes(QRectF const& rect, QGraphicsItem* parent)
     : QGraphicsItem(parent),
       m_rect(rect),
-      m_title(title),
       m_xmin(0),
       m_xmax(0),
       m_ymin(0),
@@ -42,7 +41,7 @@ QRectF wi::GraphAxes::contentsRectAtScale(float px_per_unit) const{
     }else if(px_width < Spartan_Width || px_height < Spartan_Height){
         return m_rect.adjusted(36, 0, 0, 0);
     }else{
-        return m_rect.adjusted(48, 36, -16, -16);
+        return m_rect.adjusted(48, 0, 0, -16);
     }
     return m_rect;
 }
@@ -85,7 +84,7 @@ void wi::GraphAxes::paint(QPainter *painter,
     painter->drawRect(cr);
     const float y_labels_space = cr.left() - m_rect.left();
     const float x_labels_space = m_rect.bottom() - cr.bottom();
-    const float title_space = cr.top() - m_rect.top();
+    //const float title_space = cr.top() - m_rect.top();
     
     // !!! TODO change df for x and y separately based on the width and
     // height of the graph. Or, even better, the axes labels should be
@@ -136,12 +135,12 @@ void wi::GraphAxes::paint(QPainter *painter,
         }
     }
 
-    if(title_space >= 20){
+    /*if(title_space >= 20){
         pos_adjust = font_metrics.width(m_title)/2;
         painter->drawText(
             cr.topLeft() + QPointF(cr.width()/2-pos_adjust, -8), m_title
         );
-    }
+    }*/
 
 }
        
