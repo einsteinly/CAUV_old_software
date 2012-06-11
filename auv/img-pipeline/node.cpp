@@ -317,11 +317,11 @@ Node::Node(ConstructArgs const& args)
 Node::~Node(){
     if(!m_stopped)
         stop();
-    debug() << "~Node" << *this;
+    debug(2) << "~Node" << *this;
 }
 
 void Node::stop(){
-    debug() << BashColour::Purple << "stop()" << *this << "check...";
+    debug(2) << BashColour::Purple << "stop()" << *this << "check...";
     // check that the node is not executing: if it is then there should still
     // be a shared pointer hanging around, and this node should not be being
     // destroyed, so complain loudly!
@@ -347,7 +347,7 @@ void Node::stop(){
     m_exec_queued_lock.unlock();
     m_allow_queue_lock.unlock();
 
-    debug() << BashColour::Purple << "stop()" << *this << ", done";
+    debug(2) << BashColour::Purple << "stop()" << *this << ", done";
     m_stopped = true;
 }
 
@@ -376,7 +376,7 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
         const input_ptr ip = i->second;
         // DONT release inputs lock
         if(ip->target && ip->target != input_link_t(n, o_id)){
-            debug() << ip << std::endl
+            error() << ip << std::endl
                     << ip->target << "!=" << input_link_t(n, o_id);
             throw link_error("old arc must be removed first");
         }
@@ -386,7 +386,7 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
                 mkStr() << "setInput: unmatched parameter types"
                         << *n << o_id << "->" << *this << i_id
             );
-        debug(-3) << BashColour::Green << "adding parent link on" << i_id << "->" << *n << o_id;
+        debug(2) << BashColour::Green << "adding parent link on" << i_id << "->" << *n << o_id;
         ip->status = NodeInputStatus::Old;
         ip->target = input_link_t(n, o_id);
 
@@ -410,7 +410,7 @@ void Node::clearInput(input_id const& i_id){
     lock_t l(m_inputs_lock);
     const private_in_map_t::iterator i = m_inputs.find(i_id);
     if(i != m_inputs.end()){
-        debug(-3) << BashColour::Purple << *this << "removing parent link on " << i_id;
+        debug(2) << BashColour::Purple << *this << "removing parent link on " << i_id;
         i->second->clear();
     }else
         throw id_error("clearInput: Invalid input id" + toStr(i_id));
@@ -418,7 +418,7 @@ void Node::clearInput(input_id const& i_id){
 
 void Node::clearInputs(node_ptr_t parent){
     lock_t l(m_inputs_lock);
-    debug(-3) << BashColour::Purple << *this << "removing parent links to" << *parent;
+    debug(2) << BashColour::Purple << *this << "removing parent links to" << *parent;
     foreach(private_in_map_t::value_type& v, m_inputs)
         if(v.second->target.node == parent)
             v.second->clear();
@@ -426,7 +426,7 @@ void Node::clearInputs(node_ptr_t parent){
 
 void Node::clearInputs(){
     lock_t l(m_inputs_lock);
-    debug(-3) << BashColour::Purple << *this << "removing all parent links";
+    debug(2) << BashColour::Purple << *this << "removing all parent links";
     foreach(private_in_map_t::value_type& v, m_inputs)
         v.second->clear();
 }
@@ -500,7 +500,7 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     lock_t l(m_outputs_lock);
     const private_out_map_t::iterator i = m_outputs.find(o_id);
     if(i == m_outputs.end()){
-        throw id_error("setOutput: Invalid output id" + toStr(o_id));
+        throw id_error("setOutput: Invalid output id " + toStr(o_id));
     }else if(i->second->isParam() != !n->inputs().count(i_id)){
         throw link_error("setOutput: Parameter <==> Image mismatch");
     }
@@ -518,7 +518,7 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     }else if(n->id() == id()){
         throw link_error("sorry, can't link nodes to themselves: blame shared mutexes being non-recursive");
     }else{
-        debug(-3) << BashColour::Green << *this << "adding output link to child: " << *n << i_id;
+        debug(2) << BashColour::Green << *this << "adding output link to child: " << *n << i_id;
         i->second->targets.push_back(output_link_t(n, i_id));
     }
 }
@@ -540,7 +540,7 @@ void Node::clearOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id
             throw id_error("clearOutput: Invalid node & input id: "
                            + toStr(m_pl.lookup(n)) + ", " + toStr(i_id));
         }else{
-            debug(-3) << BashColour::Purple << *this << "removing output link to child:" << j->node << j->id;
+            debug(2) << BashColour::Purple << *this << "removing output link to child:" << j->node << j->id;
             op->targets.erase(j);
         }
     }
@@ -554,7 +554,7 @@ struct NodeIs{
 };
 void Node::clearOutputs(node_ptr_t child){
     lock_t l(m_outputs_lock);
-    debug(-3) << BashColour::Purple << *this << "removing output links to child:" << *child;
+    debug(2) << BashColour::Purple << *this << "removing output links to child:" << *child;
     foreach(private_out_map_t::value_type& i, m_outputs)
         i.second->targets.remove_if(NodeIs<output_link_t>(child));
 }
@@ -562,7 +562,7 @@ void Node::clearOutputs(node_ptr_t child){
 void Node::clearOutputs(){
     lock_t l(m_outputs_lock);
     foreach(private_out_map_t::value_type& i, m_outputs){
-        debug(-3) << BashColour::Purple << *this << "removing output links from" << i.first;
+        debug(2) << BashColour::Purple << *this << "removing output links from" << i.first;
         i.second->targets.clear();
     }
 }
@@ -759,13 +759,13 @@ void Node::exec(){
             clearNewOutputDemanded(v.first);
             op->setValue(v.second);
             if(op->targets.size()){
-                debug(5) << "Prompting" << op->targets.size()
-                         << "children of new output on:" << v.first;
+                //debug(5) << "Prompting" << op->targets.size()
+                //         << "children of new output on:" << v.first;
                 // for each node connected to the output
                 foreach(output_link_t& link, op->targets){
                     // notify the node that it has new input
                     if(link.node){
-                        debug(5) << "will prompt new input to child on:" << v.first;
+                        //debug(5) << "will prompt new input to child on:" << v.first;
                         // we can't call methods on other nodes while
                         // m_outputs_lock is held, so collect a list of
                         // everything we need to notify, and do it after
@@ -776,7 +776,7 @@ void Node::exec(){
                     }
                 }
             }else{
-                debug(5) << "no children to prompt for output on:" << v.first;
+                ;//debug(5) << "no children to prompt for output on:" << v.first;
             }
         }
     }
@@ -809,7 +809,7 @@ Node::image_ptr_t Node::getOutputImage(output_id const& o_id,
             throw id_error("requested output is not an image_ptr_t" + toStr(o_id));
         }
     }else{
-        throw id_error("no such output" + toStr(o_id));
+        throw id_error("no such output image:" + toStr(o_id));
     }
     if(!r && !suppress_null_warning)
         warning() << m_id << "returning NULL image for" << o_id;
@@ -827,7 +827,7 @@ Node::InternalParamValue Node::getOutputParam(output_id const& o_id) const throw
             throw id_error("requested output is not a ParamValue" + toStr(o_id));
         }
     }else{
-        throw id_error("no such output" + toStr(o_id));
+        throw id_error("no such output param:" + toStr(o_id));
     }
     return r;
 }
@@ -841,9 +841,9 @@ std::set<UID> Node::getOutputParamUIDs(output_id const& o_id) const{
             r.insert(boost::apply_visitor(output_t_GetUID(), o));
         }
     }else{
-        throw id_error("no such output" + toStr(o_id));
+        throw id_error("no such output param (for UID):" + toStr(o_id));
     }
-    debug(7) << __func__ << "node:" << id() << "output:" << o_id << ":" << r;
+    //debug(7) << __func__ << "node:" << id() << "output:" << o_id << ":" << r;
     return r;
 }
 
@@ -859,7 +859,7 @@ UID Node::mostRecentUIDOnOutputInSet(output_id const& o_id,  std::set<UID> const
             }
         }
     }else{
-        throw id_error("no such output" + toStr(o_id));
+        throw id_error("no such output (for most recent UID):" + toStr(o_id));
     }
     throw img_pipeline_error("no matching UIDs on output" + toStr(o_id));
 }
@@ -879,7 +879,7 @@ Node::InternalParamValue Node::getOutputParamWithUID(
             throw id_error("requested output is not a ParamValue" + toStr(o_id));
         }
     }else{
-        throw id_error("no such output" + toStr(o_id));
+        throw id_error("no such output (with UID):" + toStr(o_id));
     }
     return r;
 }
@@ -1308,7 +1308,7 @@ void Node::_pushQueueOutputForSync(output_id const& o_id){
     if(i != m_outputs.end())
         i->second->pushShouldQueue();
     else
-        error() << "no such output:" << o_id;
+        error() << "no such output (push for sync):" << o_id;
 }
 
 void Node::_popQueueOutputForSync(output_id const& o_id){
@@ -1317,7 +1317,7 @@ void Node::_popQueueOutputForSync(output_id const& o_id){
     if(i != m_outputs.end())
         i->second->popShouldQueue();
     else
-        error() << "no such output:" << o_id;
+        error() << "no such output (pop for sync):" << o_id;
 }
 
 void Node::_statusMessage(NodeStatus::e const& status){

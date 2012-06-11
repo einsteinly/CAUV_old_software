@@ -78,6 +78,7 @@ class Scheduler
 
     public:
         Scheduler();
+        ~Scheduler();
         
         /**
          * Add a job of a particular priority to the corresponding queue
