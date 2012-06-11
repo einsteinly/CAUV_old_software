@@ -43,8 +43,8 @@ namespace cauv {
             //int heightForWidth( int w ) const;
 
         protected:
-            boost::scoped_ptr<Image> m_new_image;
-            boost::scoped_ptr<Image> m_current_image;
+            boost::scoped_ptr<BaseImage> m_new_image;
+            boost::scoped_ptr<BaseImage> m_current_image;
 
             void paintEvent(QPaintEvent *);
 

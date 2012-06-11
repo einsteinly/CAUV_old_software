@@ -19,12 +19,12 @@
 
 #include <gui/core/model/node.h>
 
-#include <common/msg_classes/image.h>
+#include <common/msg_classes/base_image.h>
 
 namespace cauv {
     namespace gui {
 
-        typedef boost::shared_ptr<const Image> image_t;
+        typedef boost::shared_ptr<const BaseImage> image_t;
 
 
         class ImageNode : public Node {

@@ -124,8 +124,6 @@ target_link_libraries ( gui-core
         cauv_debug
         liquid
         common
-        opencv_image
-        ${OpenCV_LIBS}
         ${QT_LIBRARIES}
     )
 depends_on_messages(gui-core)

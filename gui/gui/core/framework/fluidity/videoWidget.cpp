@@ -20,7 +20,7 @@
 
 #include <boost/make_shared.hpp>
 
-#include <common/msg_classes/image.h>
+#include <common/msg_classes/base_image.h>
 #include <debug/cauv_debug.h>
 
 #include <generated/types/GuiImageMessage.h>
@@ -64,31 +64,10 @@ void VideoWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
 
 void VideoWidget::displayImage(boost::shared_ptr<const GuiImageMessage> p){
     m_image_msg = p;
-    Image t;
+    BaseImage t;
     m_image_msg->get_image_inplace(t);
-    cv::Mat m = t.mat();
-    switch(m.type()){
-        case CV_8UC3:
-            m_qimg = boost::make_shared<QImage>(
-                (uchar*)m.data, m.cols, m.rows, m.step, QImage::Format_RGB888
-            );
-            break;
-        case CV_8UC4:
-            m_qimg = boost::make_shared<QImage>(
-                (uchar*)m.data, m.cols, m.rows, m.step, QImage::Format_ARGB32_Premultiplied
-            );
-            break;
-        case CV_8UC1:
-            m_qimg = boost::make_shared<QImage>(
-                (uchar*)m.data, m.cols, m.rows, m.step, QImage::Format_Indexed8
-            );
-            break;
-        default:
-            error() << "can't draw an image of type" << m.type();
-            return;
-    }
-    // :(
-    *m_qimg = m_qimg->rgbSwapped();
+    m_qimg = boost::make_shared<QImage>();
+    m_qimg->loadFromData(&t.bytes()[0], t.bytes().size(), "jpg");
     scene()->invalidate(sceneBoundingRect());
 }
 

@@ -209,7 +209,7 @@ void MessageHandler<GroupingNode, ProcessStatusMessage>::onProcessStatusMessage 
 void MessageHandler<ImageNode, ImageMessage>::onImageMessage (
         ImageMessage_ptr message){
     if(boost::get<CameraID::e>(m_node->nodeId()) == message->source()) {
-        boost::shared_ptr<Image> shared_image= boost::make_shared<Image>();
+        boost::shared_ptr<BaseImage> shared_image= boost::make_shared<BaseImage>();
         message->get_image_inplace(*shared_image);
         m_node->update(shared_image);
     }
