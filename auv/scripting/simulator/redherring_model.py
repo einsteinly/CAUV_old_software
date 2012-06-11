@@ -88,8 +88,8 @@ Drag_F = np.array((Max_Thrust*2 / 0.3, # x (sideways)
                    Max_Thrust*2 / 0.7)) # z (up/down)
 # Drag Torque: Newton metres per degree per second, measured from complete
 # guesses at maximum rotation rates:
-Drag_J = np.array((Max_Yaw_Moment / 45.0,   # yaw
-                   Max_Roll_Moment / 45.0,  # roll
+Drag_J = np.array((Max_Yaw_Moment / 20.0,   # yaw
+                   Max_Roll_Moment / 20.0,  # roll
                    Max_Pitch_Moment / 5.0)) # pitch
 
 class Model(base_model.Model):
