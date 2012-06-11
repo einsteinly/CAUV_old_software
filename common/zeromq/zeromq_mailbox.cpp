@@ -161,13 +161,11 @@ void ZeroMQMailbox::unSubMessage(const Message &msg) {
 
 void ZeroMQMailbox::startMonitoringAsync(void) {
     m_monitoring = true;
-    m_interrupted = false;
     m_thread = boost::thread(&ZeroMQMailbox::doMonitoring,this);
 }
 
 void ZeroMQMailbox::startMonitoringSync(void) {
     m_monitoring = true;
-    m_interrupted = false;
     doMonitoring();
 }
 
@@ -176,6 +174,7 @@ void ZeroMQMailbox::stopMonitoring(void) {
     if (m_thread.get_id() != boost::thread::id()) {
         m_thread.join();
     }
+    m_monitoring = false;
 }
 
 bool ZeroMQMailbox::isMonitoring(void) {

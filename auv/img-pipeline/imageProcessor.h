@@ -34,9 +34,11 @@ class ImageProcessor: public MessageObserver
         typedef boost::recursive_mutex mutex_t;
         typedef boost::unique_lock<mutex_t> lock_t;
     public:    
-        ImageProcessor(mb_ptr_t mailbox);
+        ImageProcessor(mb_ptr_t mailbox, boost::shared_ptr<Scheduler> scheduler);
        
         void start(std::string const& name);
+
+        std::string const& name() const { return m_name; }
 
         /**
          * override MessageObserver functions to take actions on messages
@@ -112,7 +114,7 @@ class ImageProcessor: public MessageObserver
         std::map<node_ptr_t, node_id> m_nodes_rev;
         std::set<input_node_ptr_t> m_input_nodes;
 
-        Scheduler m_scheduler;
+        boost::shared_ptr<Scheduler> m_scheduler;
 
         mutable mutex_t m_name_lock;
         std::string m_name;

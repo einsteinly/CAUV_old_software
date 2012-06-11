@@ -462,7 +462,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 // now we can release the inputs lock
                 l.unlock();
                 if(ip->input_type == InType_Parameter){
-                    debug() << "param" << p << "set to" << std::boolalpha << v;
+                    debug(2) << "param" << p << "set to" << std::boolalpha << v;
                     if(ip->param_value.param.which() == ParamValue(v).which()){
                         ip->param_value = InternalParamValue(v, mkUID(SensorUIDBase::Network));
                         ip->status = NodeInputStatus::New;

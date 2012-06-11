@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -22,13 +22,10 @@
 
 using namespace cauv::imgproc;
 
-ImageProcessor::ImageProcessor(mb_ptr_t mb)
-    : m_nodes_lock(), m_nodes(), m_nodes_rev(), m_input_nodes(), m_scheduler(),
+ImageProcessor::ImageProcessor(mb_ptr_t mb, boost::shared_ptr<Scheduler> scheduler)
+    : m_nodes_lock(), m_nodes(), m_nodes_rev(), m_input_nodes(), m_scheduler(scheduler),
       m_name("---"), m_mailbox_lock(), m_mailbox(mb){
 
-    //m_mailbox->subMessage(ImageMessage());
-    //m_mailbox->subMessage(SonarDataMessage());
-    //m_mailbox->subMessage(SonarImageMessage());
     m_mailbox->subMessage(AddNodeMessage());
     m_mailbox->subMessage(RemoveNodeMessage());
     m_mailbox->subMessage(SetNodeParameterMessage());
@@ -43,13 +40,11 @@ ImageProcessor::ImageProcessor(mb_ptr_t mb)
 void ImageProcessor::start(std::string const& name){
     lock_t l(m_name_lock);
     m_name = name;
-    m_scheduler.start();
 }
 
 void ImageProcessor::onImageMessage(ImageMessage_ptr m){
     lock_t l(m_nodes_lock);
     std::set<input_node_ptr_t>::iterator i;    
-    debug(5) << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
     for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
         (*i)->onImageMessage(m);
 }
@@ -57,7 +52,6 @@ void ImageProcessor::onImageMessage(ImageMessage_ptr m){
 void ImageProcessor::onSonarDataMessage(SonarDataMessage_ptr m){
     lock_t l(m_nodes_lock);
     std::set<input_node_ptr_t>::iterator i;        
-    debug(5) << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
     for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
         (*i)->onSonarDataMessage(m);
 }
@@ -65,7 +59,6 @@ void ImageProcessor::onSonarDataMessage(SonarDataMessage_ptr m){
 void ImageProcessor::onSonarImageMessage(SonarImageMessage_ptr m){
     lock_t l(m_nodes_lock);
     std::set<input_node_ptr_t>::iterator i;        
-    debug(5) << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
     for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
         (*i)->onSonarImageMessage(m);
 }
@@ -78,7 +71,7 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
     Node::msg_node_input_map_t inputs;
     Node::msg_node_output_map_t outputs;
     try{
-        node_ptr_t node = NodeFactoryRegister::create(m_scheduler, *this, m_name, m->nodeType());
+        node_ptr_t node = NodeFactoryRegister::create(*m_scheduler, *this, m_name, m->nodeType());
 
         foreach(NodeInputArc const& a, m->parents()){
             node->setInput(a.input, lookup(a.src.node), a.src.output);
@@ -93,7 +86,6 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
         lock_t l(m_nodes_lock);
         _addNode(node, new_id);
         if(node->isInputNode()){
-            debug(6) << "adding input node:" << *node;
             m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
         }
         l.unlock();
@@ -102,10 +94,10 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
         inputs = node->inputLinks();
         outputs = node->outputLinks();
 
-        info() << "Node added: (id="
-               << new_id << " type=" << m->nodeType() << " "
-               << m->parents().size() << " parents, "
-               << m->children().size() << " children)";
+        debug(2) << "Node added: (id="
+                 << new_id << " type=" << m->nodeType() << " "
+                 << m->parents().size() << " parents, "
+                 << m->children().size() << " children)";
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
@@ -135,10 +127,9 @@ void ImageProcessor::removeNode(node_id const& id){
     }       
     
     _removeNode(id); 
-    info() << "Node removed:" << id;
+    debug(2) << "Node removed:" << id;
     
     if(n->isInputNode()){
-        debug(6) << "removing input node:" << *n;
         m_input_nodes.erase(boost::dynamic_pointer_cast<InputNode, Node>(n));
     }
     l.unlock();
@@ -175,8 +166,8 @@ void ImageProcessor::onSetNodeParameterMessage(SetNodeParameterMessage_ptr m){
     try{
         node_ptr_t n = lookup(m->nodeId());
         n->setParam(m);
-        info() << "Node parameter set:" << m->nodeId() <<  m->paramId()
-               << std::string((mkStr() << std::boolalpha << m->value()).lengthLimit(100));
+        debug(2) << "Node parameter set:" << m->nodeId() <<  m->paramId()
+                 << std::string((mkStr() << std::boolalpha << m->value()).lengthLimit(100));
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
@@ -218,7 +209,7 @@ void ImageProcessor::onAddArcMessage(AddArcMessage_ptr m){
         from->setOutput(output, to, input);
         to->setInput(input, from, output);
 
-        info() << "Arc added:" << m->from() << "->" << m->to();
+        debug(2) << "Arc added:" << m->from() << "->" << m->to();
         
         if(old_from.node)
             sendMessage(boost::make_shared<ArcRemovedMessage>(m_name, old_from, m->to()));
@@ -262,7 +253,7 @@ void ImageProcessor::onRemoveArcMessage(RemoveArcMessage_ptr m){
         }
         to->clearInput(input);
 
-        info() << "Arc removed:" << m->from() << "->" << m->to();
+        debug(2) << "Arc removed:" << m->from() << "->" << m->to();
         
         sendMessage(boost::make_shared<ArcRemovedMessage>(m_name, m->from(), m->to()));
     }catch(std::exception& e){
@@ -328,7 +319,7 @@ void ImageProcessor::onClearPipelineMessage(ClearPipelineMessage_ptr m){
 
 
 void ImageProcessor::onPipelineDiscoveryRequestMessage(PipelineDiscoveryRequestMessage_ptr){
-    info() << "Pipeline discovery request message recieved";
+    debug(2) << "Pipeline discovery request message received";
     sendMessage(boost::make_shared<PipelineDiscoveryResponseMessage>(m_name));
 }
 
@@ -342,7 +333,6 @@ void ImageProcessor::subMessage(Message const& msg, node_id const&){
 
 
 ImageProcessor::~ImageProcessor(){
-    m_scheduler.stopWait();
 }
 
 

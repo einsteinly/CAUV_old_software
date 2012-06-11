@@ -36,6 +36,7 @@ class Node(messaging.CauvNode):
         setDebugName(name)
         info('CAUV Python Node Initialisation...') 
         messaging.CauvNode.__init__(self, name)
+        self.__t = None
         try:
             if os.getenv('CAUV_SHUTUP') is not None:
                 lc = getVersionInfo()[1]
@@ -57,8 +58,9 @@ class Node(messaging.CauvNode):
         debug('stopping messaging thread...')
         messaging.CauvNode.stop(self)
         debug('joining messaging thread...')
-        try: 
-            self.__t.join()
+        try:
+            if self.__t is not None:
+                self.__t.join()
         except RuntimeError:
             #tried to join current thread
             pass
