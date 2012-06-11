@@ -18,10 +18,6 @@
 #include <cmath>
 
 namespace cauv {
-    
-    /* These modulus functions return the closest possible value to zero, and
-     * can be used safely with floating point numbers.
-     */
 
     template<typename T>
     T mod(T const& d, T const& base)

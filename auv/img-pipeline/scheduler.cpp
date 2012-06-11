@@ -69,6 +69,10 @@ Scheduler::Scheduler() : m_stop(true), m_queues(), m_num_threads(), m_thread_gro
     //m_queues[priority_fastest] = boost::make_shared<node_queue_t>();
 }
 
+Scheduler::~Scheduler(){
+    stopWait();
+}
+
 /**
  * Add a job of a particular priority to the corresponding queue
  * NB: this IS threadsafe
@@ -125,14 +129,15 @@ bool Scheduler::alive() const
  */
 void Scheduler::stopWait()
 {
-    m_stop = true;
-    priority_thread_group_map_t::iterator i;
-    // NB: BOOST_FOREACH doesn't seem to work properly on std::map
-    for(i = m_thread_groups.begin(); i != m_thread_groups.end(); i++)
-    {
-        i->second->interrupt_all();
-        i->second->join_all();
-        i->second.reset();
+    if(!m_stop){
+        m_stop = true;
+        priority_thread_group_map_t::iterator i;
+        for(i = m_thread_groups.begin(); i != m_thread_groups.end(); i++)
+        {
+            i->second->interrupt_all();
+            i->second->join_all();
+            i->second.reset();
+        }
     }
 }
 
