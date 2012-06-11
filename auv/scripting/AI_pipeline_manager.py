@@ -37,10 +37,7 @@ class pipelineManager(aiProcess):
         self.detector_requests = []
         
         self.pipelines = {}
-        self.pls = {}
-        self.reqname2pl = {}
-        self.available_pls = []
-        self.next_pl_id = 0
+        self.running_pls = {}
         
         self.load_pl_data()
         self.reeval = False
@@ -148,49 +145,31 @@ class pipelineManager(aiProcess):
         """
         TODO allow gui disabling, freezing
         1) check list of currently running pl files against requested
-        2) clear unneeded pipelines, saving to temp and marking cleared
-        3) start new pipelines if needed
-        4) add any missing requested pl files
+        2) clear unneeded pipelines, saving to temp
+        3) add any missing requested pl files
         """
         #1
         files_requested = set(self.detector_requests)
         for requestors in self.requests.itervalues():
             for requests in requestors.itervalues():
                 files_requested.update(requests)
-        files_in_use = set(self.reqname2pl.keys())
+        files_in_use = set(self.running_pls.keys())
         to_remove = files_in_use.difference(files_requested)
         to_add = files_requested.difference(files_in_use)
         #2
         for reqname in to_remove:
-            plname = self.reqname2pl.pop(reqname)
+            pl = self.running_pls.pop(reqname) #remove from running_list
             try:
-                self.pls[plname].save('pipelines/temp/temp__'+name+'.pipe')
+                pl.save('pipelines/temp/temp__'+name+'.pipe')
             except Exception:
-                error('Error saving pipeline %s' %(pl_name))
+                error('Error saving pipeline %s' %(reqname))
                 traceback.print_exc()
-            self.pls[plname].clear()
-            self.available_pls.append(plname)
-        #3
-        if len(self.available_pls)<len(to_add):
-            nid = self.next_pl_id+len(to_add)-len(self.available_pls)
-            for i in range(self.next_pl_id,nid):
-                plname = 'ai%d' %i
-                subprocess.Popen(['cauv-img-pipelined', '-n', plname])
-                time.sleep(0.2) #give time to open
-                self.available_pls.append(plname)
-                self.pls[plname] = cauv.pipeline.Model(self.node, plname)
-            self.next_pl_id = nid
+            pl.clear()
         #4
         for reqname in to_add:
-            plname = self.available_pls.pop(-1)
-            self.pls[plname].set(self.pipelines[reqname])
-            self.reqname2pl[reqname] = plname
-    def broadcast_state(self):
-        #tell others which pipeline file is in which pipeline:
-        #rebroadcast to scripts
-        self.ai.task_manager.broadcast_plman_state(self.reqname2pl)
-        #tell detector_control
-        self.ai.detector_control.set_plrequest2plname(self.reqname2pl)
+            pl = cauv.pipeline.Model(self.node, 'ai/'+reqname)
+            pl.set(self.pipelines[reqname])
+            self.running_pls[reqname] = pl
     def run(self):
         #this should probably be replaced with multiple pipelines
         while True:
@@ -210,7 +189,6 @@ class pipelineManager(aiProcess):
             if self.reeval:
                 self.reeval = False
                 self.eval_state()
-                self.broadcast_state()
                 #self.state['requests'] = self.requests
                 #self.state.sync()
     

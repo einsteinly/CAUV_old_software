@@ -385,6 +385,7 @@ class aiScript(aiProcess):
         self.exit_confirmed = threading.Event()
         self.in_control = threading.Event()
         self.pl_confirmed = threading.Event()
+        self._requested_pls = []
         self.task_name = task_name
         self.options = script_opts
         self.auv = fakeAUV(self)
@@ -399,11 +400,17 @@ class aiScript(aiProcess):
     def request_pl(self, pl_name, timeout=10):
         self.pl_confirmed.clear()
         self.ai.pl_manager.request_pl('script', self.task_name, pl_name)
+        self._requested_pls.append('ai/'+pl_name)
         return self.pl_confirmed.wait(timeout)
     def drop_pl(self, pl_name):
         self.ai.pl_manager.drop_pl('script', self.task_name, pl_name)
+        try:
+            self._requested_pls.remove('ai/'+pl_name)
+        except ValueError:
+            error("Can't remove a pipeline that hasn't been requested")
     def drop_all_pl(self):
         self.ai.pl_manager.drop_all_pls('script', self.task_name)
+        self._requested_pls = []
     @external_function
     def confirm_pl_request(self):
         self.pl_confirmed.set()
@@ -470,7 +477,7 @@ class aiScript(aiProcess):
                 continue
             debug[key_str] = value
         try:
-            self.node.send(messaging.ScriptStateMessage(self.task_name,debug,[]))
+            self.node.send(messaging.ScriptStateMessage(self.task_name,debug,self._requested_pls))
         except Exception as e:
             traceback.print_exc()
     def report_loop(self):
