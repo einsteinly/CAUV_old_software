@@ -18,6 +18,7 @@
 #include <QGraphicsObject>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/model/model.h>
@@ -26,6 +27,8 @@
 #include <liquid/node.h>
 
 namespace cauv {
+    class CauvNode;
+
     namespace gui {
 
         class AiNode : public liquid::LiquidNode
@@ -40,12 +43,14 @@ namespace cauv {
 
         class AiDropHandler : public DropHandlerInterface<QGraphicsItem * > {
         public:
-            AiDropHandler(boost::shared_ptr<NodeItemModel> model);
+            AiDropHandler(boost::shared_ptr<NodeItemModel> model,
+            boost::weak_ptr<CauvNode> cauv_node);
             virtual bool accepts(boost::shared_ptr<Node> const& node);
             virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node);
 
         protected:
             boost::shared_ptr<NodeItemModel> m_model;
+            boost::weak_ptr<CauvNode> m_cauv_node;
         };
 
     } // namespace gui

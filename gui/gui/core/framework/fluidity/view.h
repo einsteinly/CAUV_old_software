@@ -38,7 +38,9 @@ class Menu;
 class FView: public liquid::LiquidView{
     Q_OBJECT
     public:
-        FView(boost::shared_ptr<CauvNode> node, QWidget *parent = NULL);
+        FView(boost::shared_ptr<CauvNode> node,
+              std::string const& pipeline_name,
+              QWidget *parent = NULL);
 
     protected:
         // QWidget

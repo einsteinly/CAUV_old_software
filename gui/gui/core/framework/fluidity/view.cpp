@@ -50,7 +50,9 @@ uint qHash(boost::shared_ptr<T> p){
 }
 
 
-FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
+FView::FView(boost::shared_ptr<CauvNode> node,
+             std::string const& pipeline_name,
+             QWidget* parent)
     : liquid::LiquidView(parent),
       m_cauv_node(node),
       m_manager(),
@@ -70,7 +72,7 @@ FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
     s->setSceneRect(-4000,-4000,8000,8000);
 
     setScene(s);
-    m_manager = boost::make_shared<Manager>(s, m_cauv_node.get(), "default");
+    m_manager = boost::make_shared<Manager>(s, m_cauv_node.get(), pipeline_name);
     m_manager->init();
 
     setMinimumSize(800, 600);

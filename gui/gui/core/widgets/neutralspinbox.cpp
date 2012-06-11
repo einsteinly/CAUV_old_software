@@ -23,7 +23,7 @@
 
 #include <limits>
 
-#include "style.h"
+#include "framework/style.h"
 
 using namespace cauv;
 using namespace cauv::gui;

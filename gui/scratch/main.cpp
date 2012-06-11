@@ -17,6 +17,7 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/program_options.hpp>
 
 #include <common/cauv_node.h>
 
@@ -26,7 +27,26 @@
 class ScratchNode: public cauv::CauvNode, public boost::enable_shared_from_this<ScratchNode>{
     public:
         ScratchNode(std::string const& n, int argc, char* argv[])
-            : cauv::CauvNode(n), m_argc(argc), m_argv(argv), m_exit_status(0){
+            : cauv::CauvNode(n), m_argc(argc), m_argv(argv), m_exit_status(0),
+              m_pipeline_name(""){
+        }
+
+        void addOptions(boost::program_options::options_description& desc,
+                        boost::program_options::positional_options_description& pos){
+            namespace po = boost::program_options;
+            CauvNode::addOptions(desc, pos);
+            
+            desc.add_options()
+                ("pipeline,n",
+                po::value<std::string>()->default_value("default"), "pipeline to connect to");
+        }
+        int useOptionsMap(boost::program_options::variables_map& vm,
+                          boost::program_options::options_description& desc){
+            namespace po = boost::program_options;
+            int ret = CauvNode::useOptionsMap(vm, desc);
+            if (ret != 0) return ret;
+
+            m_pipeline_name = vm["pipeline"].as<std::string>();
         }
 
         void onRun(){
@@ -38,7 +58,7 @@ class ScratchNode: public cauv::CauvNode, public boost::enable_shared_from_this<
 
             QApplication::setStyle(new cauv::gui::CauvStyle());
 
-            cauv::gui::f::FView* view = new cauv::gui::f::FView(shared_from_this());
+            cauv::gui::f::FView* view = new cauv::gui::f::FView(shared_from_this(), m_pipeline_name);
             view->show();
 
             m_exit_status = app.exec();
@@ -48,7 +68,8 @@ class ScratchNode: public cauv::CauvNode, public boost::enable_shared_from_this<
 
         int m_argc;
         char** m_argv;
-        int m_exit_status;
+        int m_exit_status;        
+        std::string m_pipeline_name;
 
 };
 
