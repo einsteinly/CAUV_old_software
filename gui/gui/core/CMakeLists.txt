@@ -2,8 +2,6 @@ project (gui-core)
 
 # required packages
 find_package (Qt4 REQUIRED)
-find_package (OpenCV REQUIRED)
-
 
 set ( GUI_CORE_AUX_DIRS
     framework
