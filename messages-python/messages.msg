@@ -977,6 +977,7 @@ group guiai
         conditionId : string;
         conditionOptions : map<string, ParamValue>;
         debugValues : map<string, ParamValue>;
+        pipelineIds : list<string>;
     }
     message TaskTypes : 213
     {
