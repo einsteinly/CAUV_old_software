@@ -48,6 +48,8 @@ ImagePipelineNode::ImagePipelineNode()
 
 void ImagePipelineNode::spawnNewPipeline(std::string const& with_name)
 {
+    if(with_name.find(m_pipeline_name_root) != 0)
+        return;
     if(!m_pipelines.count(with_name)){
         info() << "starting pipeline, name: \"" << with_name << "\"";
         boost::shared_ptr<ImageProcessor> p = boost::make_shared<ImageProcessor>(mailbox(), m_scheduler);
