@@ -1,9 +1,12 @@
 #include <opencv/cv.h>
 #include <utility/ratelimit.h>
 #include <generated/types/ImageMessage.h>
+#include <generated/types/SonarImageMessage.h>
 #include <common/msg_classes/image.h>
 #include <boost/make_shared.hpp>
 #include <debug/cauv_debug.h>
+
+#include <cmath>
 
 #include "sim_sonar.h"
 
@@ -18,7 +21,8 @@ SimSonar::SimSonar (osg::Node *track_node,
                     CauvNode *sim_node_,
                     unsigned int max_rate) :
            sim_node(sim_node_),
-           width(width_), height(height_), depth(300),
+           width(width_), height(height_), resolution(300),
+           range(20), fovx(120), fovy(10),
            output_limit(1, max_rate),
            viewer(new osgViewer::Viewer()),
            image(new osg::Image()),
@@ -39,9 +43,7 @@ SimSonar::SimSonar (osg::Node *track_node,
 void SimSonar::setup(osg::Node *root) {
     viewer->setSceneData(root);
     camera->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
-    double fovy,aspectratio,near,far;
-    camera->getProjectionMatrixAsPerspective(fovy,aspectratio,near,far);
-    camera->setProjectionMatrixAsPerspective(fovy,aspectratio,2,20); 
+    camera->setProjectionMatrixAsPerspective(fovy*2,fovx/fovy/2,0.5,range * 10); 
     viewer->realize();
 }
 
@@ -50,19 +52,53 @@ void SimSonar::tick(double timestamp) {
     viewer->advance();
     if(image->valid() && output_limit.click()) {
         image->flipVertical();
+        std::vector<uint8_t> beams(resolution * width);
         cv::Mat data = cv::Mat(height, width, CV_32F, image->data(), 0);
-        unsigned char init = 0;
-        cv::Mat sonarimage = cv::Mat(depth, width, CV_8UC1, init);
-        const float near = 4;
-        const float far = 40;
+        const float near = 0.5;
+        const float far = range * 10;
+        std::vector<int32_t> bearings(width);
+        float near_width = near * std::tan(fovx/2 / 360.0 * 2 * M_PI);
         for (unsigned int x = 0; x < width; x++) {
-            for (unsigned int y = 0; y < height; y++) {
+            float bearing = std::atan2(((float)x/width - 0.5) * near_width, near);
+            bearings[x] = bearing / (2 * M_PI) * 6400 * 0x10000;
+            float scale = 1/std::cos(bearing);
+            for (unsigned int y = height/2; y < height; y++) {
                 float val = data.at<float>(y,x);
-                val = 2 * near / (far + near - val * (far - near));
-                sonarimage.at<unsigned char>(val * depth, x) += 60;
+                val = 2 * near * far / (far + near - val * (far - near));
+                if (val > 0.95 * far) {
+                    continue;
+                }
+                val *= scale;
+                unsigned int pos = val / far * resolution * 10;
+                if (pos >= resolution) {
+                    continue;
+                }
+                for (int xx = -2; xx <= 2; xx++) {
+                    for (int yy = -2; yy <= 2; yy++) {
+                        if (xx + (int)x < 0 || xx + x > width - 1 ||
+                            yy + (int)pos < 0 || yy + pos > resolution) {
+                            continue;
+                        }
+                        uint8_t *cur_val = &beams[x + xx + (pos + yy) * (width - 1)];
+                        if (*cur_val < 200) {
+                            *cur_val += 2;
+                        }
+                    }
+                }
             }
         }
-        boost::shared_ptr<ImageMessage> msg = boost::make_shared<ImageMessage>(CameraID::GemSonar, cauv::Image(sonarimage), cauv::now());
+        boost::shared_ptr<SonarImageMessage> msg =
+            boost::make_shared<SonarImageMessage>(
+                SonarID::Gemini, PolarImage(
+                    beams,
+                    ImageEncodingType::RAW_uint8_1,
+                    bearings,
+                    0,
+                    far,
+                    far / (float)resolution,
+                    cauv::now()
+                )
+            );
         sim_node->send(msg, UNRELIABLE_MSG);
     }
 }
