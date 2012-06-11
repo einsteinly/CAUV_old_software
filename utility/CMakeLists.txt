@@ -38,6 +38,7 @@ if(CAUV_BUILD_TESTS)
     target_link_libraries(
         async-test
         cauv_debug
+        pthread
     )
 
 endif()
