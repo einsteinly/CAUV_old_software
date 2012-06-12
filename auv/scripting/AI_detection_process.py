@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.7
 from cauv.debug import debug, warning, error, info
+from cauv import messaging
 
 import threading, Queue
 import time
@@ -112,6 +113,8 @@ class detectionControl(aiProcess):
                     traceback.print_exc()
                 if detector.detected:
                     self.ai.task_manager.notify_detector(detector_id, True)
+                self.node.send(messaging.ConditionStateMessage(detector_id, detector.options.get_options_as_params(),
+                               detector.get_debug_values(), detector._pipelines))
             self.ai.pl_manager.set_detector_pls(pipelines)
 
 if __name__ == '__main__':

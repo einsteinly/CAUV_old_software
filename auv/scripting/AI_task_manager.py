@@ -55,7 +55,6 @@ class taskManager(aiProcess):
         self.periodic_timer = RepeatTimer(TASK_CHECK_INTERVAL, self.add_periodic_to_queue)
         self.state_save_timer = RepeatTimer(STATE_SAVE_INTERVAL, self.add_save_state_to_queue)
         #Detectors - definative list of what SHOULD be running
-        self.detector_nid = 0
         self.detectors_last_known = deque()
         self.detectors_enabled = True
         self.detector_conditions = {}
@@ -140,7 +139,8 @@ class taskManager(aiProcess):
                 task.get_static_options_as_params(),
                 task.active))
     def gui_update_condition(self, condition):
-        self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values(), []))
+        if not condition._suppress_reporting: #eg detector conditions
+            self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values(), []))
     def gui_remove_task(self, task_id):
         self.node.send(messaging.TaskRemovedMessage(task_id))
     def gui_remove_condition(self, condition_id):
@@ -192,17 +192,14 @@ class taskManager(aiProcess):
     #add/remove/modify detectors
     def add_detector(self, detector_type, listener):
         debug("Adding detector of type %s" %str(detector_type))
-        detector_id = self.detector_nid
-        self.detector_nid += 1
-        self.detector_conditions[detector_id] = listener
-        self.ai.detector_control.start(detector_id, detector_type)
-        return detector_id
+        self.detector_conditions[listener.id] = listener
+        self.ai.detector_control.start(listener.id, detector_type)
     def remove_detector(self, detector_id):
-        debug("Detector condition %s" %str(detector_id))
+        debug("Detector condition %s" %detector_id)
         self.detector_conditions.pop(detector_id)
         self.ai.detector_control.stop(detector_id)
     def set_detector_options(self, detector_id, options):
-        debug("Setting options %s on detector %d" %(str(options), detector_id))
+        debug("Setting options %s on detector %s" %(str(options), detector_id))
         self.ai.detector_control.set_options(detector_id, options)
         
     #add/remove/modify/reg tasks
