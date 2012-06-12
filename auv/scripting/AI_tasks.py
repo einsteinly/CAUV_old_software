@@ -40,12 +40,13 @@ class aiTask(object):
             error('Task already setup')
             return
         self.id = task_manager.register_task(self)
+        self.registered = True
+    def add_default_conditions(self, task_manager):
         #any default conditions need to be added to the task manager
         condition_ids = []
         for condition_class, options in self.__class__.conditions:
             condition_ids.append(task_manager.create_condition(condition_class, options))
         task_manager.set_task_options(self.id, condition_ids=condition_ids)
-        self.registered = True
     def deregister(self, task_manager):
         if not self.registered:
             error('Task not setup, so can not be deregistered')

@@ -92,7 +92,7 @@ class taskManager(aiProcess):
             except KeyError:
                 warning("Task type %s no longer exists, could cause problems" %task_type_name)
                 continue
-            task_id = self.create_task(task_type)
+            task_id = self.create_task(task_type, default_conditions=False)
             self.set_task_options(task_id, task_options, task_script_options, [old2new_ids[condition_id] for condition_id in condition_ids])
             if include_persist:
                 self.tasks[task_id].persist_state = persist_state
@@ -203,11 +203,13 @@ class taskManager(aiProcess):
         self.ai.detector_control.set_options(detector_id, options)
         
     #add/remove/modify/reg tasks
-    def create_task(self, task_type):
+    def create_task(self, task_type, default_conditions=True):
         #create task of named type
         debug("Creating task of type %s" %str(task_type))
         task = task_type()
         task.register(self)
+        if default_conditions:
+            task.add_default_conditions(self)
         #self.gui_update_task(task) skip here since is already sent by updating task options
         return task.id
     def register_task(self, task):
