@@ -57,7 +57,7 @@ namespace gui {
 class Node;
 
 
-struct BaseMessageGenerator : public QObject {
+class BaseMessageGenerator : public QObject {
     Q_OBJECT
 public:
     BaseMessageGenerator(boost::shared_ptr<Node> node){

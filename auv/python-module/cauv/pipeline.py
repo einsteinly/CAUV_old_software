@@ -449,7 +449,7 @@ class Model(messaging.MessageObserver):
         self.node_added_condition.wait(timeout)
         if self.node_added is None:
             self.node_added_condition.release()
-            raise RuntimeError('No response from pipeline, is it running?')
+            raise RuntimeError('No response from pipeline %s, is it running?' %(self.pipeline_name))
         if return_class:
             r = ConvenientNode(
                 self,
@@ -477,7 +477,7 @@ class Model(messaging.MessageObserver):
         self.node_removed_condition.wait(timeout)
         if self.node_removed is None:
             self.node_removed_condition.release()
-            raise RuntimeError('No response from pipeline, is it running?')
+            raise RuntimeError('No response from pipeline %s, is it running?' %(self.pipeline_name))
         r = self.node_removed.nodeId
         self.node_removed_condition.release()
         return None
@@ -491,7 +491,7 @@ class Model(messaging.MessageObserver):
         self.parameter_set_condition.wait(timeout)
         if self.parameter_set is None:
             self.parameter_set_condition.release()
-            raise RuntimeError('No response from pipeline, is it running?')
+            raise RuntimeError('No response from pipeline %s, is it running?' %(self.pipeline_name))
         self.parameter_set_condition.release()
         return None
     
@@ -522,7 +522,7 @@ class Model(messaging.MessageObserver):
         self.arc_added_condition.wait(timeout)
         if self.arc_added is None:
             self.arc_added_condition.release()
-            raise RuntimeError('No response from pipeline, is it running?')
+            raise RuntimeError('No response from pipeline %s, is it running?' %(self.pipeline_name))
         self.arc_added_condition.release()
         return None
     

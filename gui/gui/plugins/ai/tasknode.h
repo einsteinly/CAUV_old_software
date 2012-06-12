@@ -28,12 +28,46 @@
 
 #include <gui/plugins/ai/conditionnode.h>
 
+
+// !!! TODO: this shouldn't be defined here, should be a separate pipeline plugin (probably called FluidityNode)
+#include <boost/weak_ptr.hpp>
+#include <liquid/proxyWidget.h>
+
+namespace cauv {
+class CauvNode;
+
+namespace gui {
+
+GENERATE_SIMPLE_NODE(PipelineNode)
+
+class LiquidPipelineNode : public liquid::LiquidNode,
+                           public liquid::ArcSourceDelegate,
+                           public ManagedNode
+{
+    Q_OBJECT
+public:
+    LiquidPipelineNode(boost::shared_ptr<PipelineNode> node, QGraphicsItem *parent = 0);
+    virtual ~LiquidPipelineNode();
+
+    void ensureInited(boost::weak_ptr<CauvNode> with_cauv_node);
+
+protected:
+    boost::shared_ptr<PipelineNode> m_node;
+    liquid::ProxyWidget* m_contents;
+};
+
+} // namespace gui
+} // namespace cauv
+
+
+
+
+
 namespace cauv {
 namespace gui {
 
 
 GENERATE_SIMPLE_NODE(AiMissionNode)
-GENERATE_SIMPLE_NODE(PipelineNode) //!!! todo: this shouldn't be deifned here, should be a separate pipeline plugin (probably called FluidityNode)
 
 class AiTaskNode : public NumericNode<bool> {
     public:

@@ -166,14 +166,14 @@ void NodeHeader::setWidth(qreal w){
     // overlay text:
     QPointF title_pos = boundingRect().center() - m_title->boundingRect().center();
     title_pos.ry() = 1 + m_title->boundingRect().top();
-    m_title->setPos(title_pos);
+    m_title->setPos(QPointF(title_pos.toPoint()));
 
     QPointF info_pos = boundingRect().center() - m_info_text->boundingRect().center();
     QRectF title_rect = m_title->boundingRect();
     title_rect.translate(title_pos);
 
     info_pos.ry() = title_rect.bottom() + 1 + m_info_text->boundingRect().top();
-    m_info_text->setPos(info_pos);
+    m_info_text->setPos(QPointF(info_pos.toPoint()));
 
 }
 

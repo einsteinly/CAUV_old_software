@@ -22,7 +22,7 @@
 #include "widgets/onoff.h"
 #include "widgets/graphbar.h"
 #include "model/utils/sampler.h"
-#include "style.h"
+#include "framework/style.h"
 
 using namespace cauv;
 using namespace cauv::gui;

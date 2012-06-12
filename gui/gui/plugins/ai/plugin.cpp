@@ -67,7 +67,7 @@ void AiPlugin::initialise(){
         node->send(boost::make_shared<RequestAIStateMessage>());
     } else error() << "AiPlugin failed to lock cauv node";
 
-    m_actions->scene->registerDropHandler(boost::make_shared<AiDropHandler>(m_actions->root));
+    m_actions->scene->registerDropHandler(boost::make_shared<AiDropHandler>(m_actions->root, m_actions->node));
 
     m_actions->nodes->registerDelegate(nodeType<AiTaskNode>(), boost::make_shared<NumericDelegate>(), 1);
 
@@ -148,6 +148,7 @@ void AiPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
         boost::shared_ptr<GroupingNode> ai = vehicle->findOrCreate<GroupingNode>("ai");
         boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
         boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
+        boost::shared_ptr<GroupingNode> pipelines = ai->findOrCreate<GroupingNode>("pipelines");
 
         connect(tasks.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
                 this, SLOT(setupTask(boost::shared_ptr<Node>)));

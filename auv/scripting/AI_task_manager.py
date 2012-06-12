@@ -140,7 +140,7 @@ class taskManager(aiProcess):
                 task.get_static_options_as_params(),
                 task.active))
     def gui_update_condition(self, condition):
-        self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values()))
+        self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values(), []))
     def gui_remove_task(self, task_id):
         self.node.send(messaging.TaskRemovedMessage(task_id))
     def gui_remove_condition(self, condition_id):

@@ -57,6 +57,8 @@ AiMessageObserver::~AiMessageObserver() {
 }
 
 void AiMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
+    debug() << "AiMessageObserver::onScriptStateMessage" << *m;
+
     boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
     boost::shared_ptr<AiTaskNode> task = tasks->findOrCreate<AiTaskNode>(m->taskId());
@@ -67,6 +69,7 @@ void AiMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
 
     boost::shared_ptr<GroupingNode> pipelines = ai->findOrCreate<GroupingNode>("pipelines");
     foreach(std::string const& id, m->pipelineIds()){
+        debug() << __func__ << "addPipeline" << id;
         task->addPipeline(pipelines->findOrCreate<PipelineNode>(id));
     }
 }
@@ -79,6 +82,7 @@ void AiMessageObserver::onTaskRemovedMessage(TaskRemovedMessage_ptr m){
 }
 
 void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
+    debug() << "AiMessageObserver::onTaskStateMessage" << *m;
 
     boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
