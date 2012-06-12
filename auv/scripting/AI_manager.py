@@ -73,14 +73,11 @@ parser.add_argument('--disable', action='append', default=[], help="disable proc
 p = parser.add_argument_group(title="Arguments passed to subprocesses")
 p.add_argument('-r','--restore',      action='store_true',      help="try and resume from last saved state")
 p.add_argument('-m','--mission',      default='mission',        help='which mission script to run')
-p.add_argument('--disable-gui',       action='store_true',      help="disable/ignore gui output nodes")
-p.add_argument('--disable-control',   action='store_true',      help="stop AI script from controlling the sub")
-p.add_argument('--reset-pls',         action='store_true',      help="reset pipelines to those stored in /pipelines")
-p.add_argument('--freeze-pls',        action='store_true',      help="ignore changes to the pipeline")
-#the next two should be ints but they're just being passed along so treat them as strings
-p.add_argument('-w','--loc-wait',     default='30',             help="time to wait inbetween captures")
-p.add_argument('-t','--loc-timeout',  default='15',             help='maximum time to wait for a position fix')
-p.add_argument('-s','--loc-script',   default="bay_processor",  help='script to process sonar data')
+#currently not implemented/not implemented properly
+#p.add_argument('--disable-gui',       action='store_true',      help="disable/ignore gui output nodes")
+#p.add_argument('--disable-control',   action='store_true',      help="stop AI script from controlling the sub")
+#p.add_argument('--reset-pls',         action='store_true',      help="reset pipelines to those stored in /pipelines")
+#p.add_argument('--freeze-pls',        action='store_true',      help="ignore changes to the pipeline")
 opts = parser.parse_args()
 ai = AImanager(opts.__dict__)
 

@@ -46,7 +46,7 @@ class aiCondition(object):
     def get_options(self):
         return self.options.get_options()
     def get_debug_values(self):
-        warning('Debug values not implemented in condition %s' %str(self.__class__))
+        #warning('Debug values not implemented in condition %s' %str(self.__class__))
         return {}
     @staticmethod
     def get_pipeline_names():
@@ -72,12 +72,13 @@ class timeCondition(stateCondition):
     """
     This condition only remains true for a certain time
     """
-    class options:
+    class options(conditionOptions):
         timeout = 30
         startTimer = False
     def __init__(self, options={}, initial_state=False):
         stateCondition.__init__(self, options)
         self.timer = None
+        self.timer_started = False
         self.state = initial_state
     def set_options(self, options):
         start = options.pop('startTimer', False)
@@ -86,10 +87,14 @@ class timeCondition(stateCondition):
             if self.timer:
                 self.timer.cancel()
             self.timer = threading.Timer(self.options.timeout, self.timeout) # pylint: disable=E1101
+            self.timer_started = True
             self.state = True
             self.timer.start()
+    def get_debug_values(self):
+        return {'Timer Started': self.timer_started}
     def timeout(self):
         self.state = False
+        self.timer_started = False
         self.timer = None
     def get_state(self):
         return self.state

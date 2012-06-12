@@ -461,6 +461,7 @@ class aiScript(aiProcess):
     #debug value reporting etc
     def report_status(self):
         debug = {}
+        error_attrs = []
         for key_str in self.debug_values:
             keys = key_str.split('.')
             value = self
@@ -473,9 +474,11 @@ class aiScript(aiProcess):
                 except TypeError:
                     value = messaging.ParamValue.create(debug_converters[type(value)](value))
             except Exception:
-                warning("Could not get/encode attribute %s, skipping from debug value report" %key_str)
+                error_attrs.append(key_str)
                 continue
             debug[key_str] = value
+        if error_attrs:
+            warning("Could not get/encode attributes %s, skipping from debug value report" %str(error_attrs))
         try:
             self.node.send(messaging.ScriptStateMessage(self.task_name,debug,self._requested_pls))
         except Exception as e:
@@ -483,7 +486,7 @@ class aiScript(aiProcess):
     def report_loop(self):
         while not self.die_flag.wait(self.options.reporting_frequency):
             self.report_status()
-        debug("Exiting reporting thread")
+        debug("Exiting reporting thread.")
     def _notify_exit(self, exit_status):
         #make sure to drop pipelines
         self.drop_all_pl()
@@ -506,6 +509,7 @@ class aiDetectorOptions(aiOptions):
     pass
         
 class aiDetector(messaging.MessageObserver):
+    debug_values = []
     def __init__(self, node, opts):
         messaging.MessageObserver.__init__(self)
         self._pipelines = []
@@ -528,7 +532,26 @@ class aiDetector(messaging.MessageObserver):
         setattr(self.options, option_name, option_value)
         self.optionChanged(option_name)
     def get_debug_values(self):
-        return {}
+        debug = {}
+        error_attrs = []
+        for key_str in self.debug_values:
+            keys = key_str.split('.')
+            value = self
+            try:
+                for key in keys:
+                    value = getattr(value, key)
+                #make sure that we can transmit it
+                try:
+                    value = messaging.ParamValue.create(value)
+                except TypeError:
+                    value = messaging.ParamValue.create(debug_converters[type(value)](value))
+            except Exception:
+                error_attrs.append(key_str)
+                continue
+            debug[key_str] = value
+        if error_attrs:
+            warning("Could not get/encode attributes %s, skipping from debug value report" %str(error_attrs))
+        return debug
     def log(self, message):
         try:
             self.node.send(messaging.AIlogMessage(message), "ai")
