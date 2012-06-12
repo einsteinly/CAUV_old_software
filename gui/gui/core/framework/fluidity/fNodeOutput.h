@@ -59,7 +59,7 @@ class FNodeOutput: public QGraphicsWidget,
             hlayout->addStretch(1);
 
             liquid::LiquidLabel* text_label = new liquid::LiquidLabel(QString::fromStdString(id));
-            text_label->setFont(F_Node_Style.text.font);
+            text_label->setFont(F_Node_Style().text.font);
 
             m_text = new liquid::ProxyWidget();
             m_text->setWidget(text_label);
@@ -106,7 +106,7 @@ class FNodeOutput: public QGraphicsWidget,
 class FNodeImageOutput: public FNodeOutput{
     public:
         FNodeImageOutput(LocalNodeOutput const& output, FNode* node)
-            : FNodeOutput(node, Image_Arc_Style, output.output){
+            : FNodeOutput(node, Image_Arc_Style(), output.output){
             #ifndef CAUV_DEBUG_DRAW_LAYOUT
             setFlag(ItemHasNoContents);
             #endif // ndef CAUV_DEBUG_DRAW_LAYOUT
@@ -131,7 +131,7 @@ class FNodeImageOutput: public FNodeOutput{
 class FNodeParamOutput: public FNodeOutput{
     public:
         FNodeParamOutput(LocalNodeOutput const& output, FNode* node)
-            : FNodeOutput(node, Param_Arc_Style, output.output), m_subType(output.subType){
+            : FNodeOutput(node, Param_Arc_Style(), output.output), m_subType(output.subType){
             #ifndef CAUV_DEBUG_DRAW_LAYOUT
             setFlag(ItemHasNoContents);
             #endif // ndef CAUV_DEBUG_DRAW_LAYOUT

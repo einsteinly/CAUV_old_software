@@ -27,7 +27,7 @@ using namespace cauv::gui;
 
 
 AiNode::AiNode(QGraphicsItem *parent) :
-        liquid::LiquidNode(AI_Node_Style, parent)
+        liquid::LiquidNode(AI_Node_Style(), parent)
 {
 }
 

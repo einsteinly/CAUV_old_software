@@ -94,7 +94,6 @@
      border-top-right-radius: 0px;
      border-bottom-right-radius: 0px;
      padding: 2 8 2 22px;
-     background: white;
  }
 
 QPushButton {
@@ -132,11 +131,11 @@ QPushButton:hover {
      padding-top: 0px;
      padding-bottom: 10px;
      show-decoration-selected: 1;
-     background: white;
-     selection-background-color: transparent;
-     selection-color: black;
-     color: black;
  }
+
+QFrame {
+	background: palette(dark)
+}
 </string>
      </property>
      <property name="horizontalScrollBarPolicy">

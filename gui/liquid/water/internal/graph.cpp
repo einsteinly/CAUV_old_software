@@ -87,8 +87,6 @@ void wi::Graph::requiresUpdate() const{
 void wi::Graph::paint(QPainter *painter,
            const QStyleOptionGraphicsItem *option,
            QWidget *widget){
-    Q_UNUSED(widget);
-
     const float px_per_unit = option->levelOfDetailFromTransform(painter->worldTransform());
     const float px_width = boundingRect().width() * px_per_unit;
     const float h_resolution_f = std::min(px_width, Graph_Const::Max_Resolution);
@@ -112,16 +110,20 @@ void wi::Graph::paint(QPainter *painter,
     painter->setClipRect(plot_rect);
 
     std::list<SeriesData>::iterator i;
+    QColor poly_col = widget->palette().color(QPalette::WindowText);
+    poly_col.setAlpha(64);
+    QColor line_col = widget->palette().color(QPalette::WindowText);
+    line_col.setAlpha(128);
     for(i = m_data_series.begin(); i != m_data_series.end(); i++){
         const QPolygonF poly = i->data_window->regionAtScale(
             plot_rect.topLeft(), tstart, scale_max, v_units_per_second, v_units_per_data_unit
         );
         if(poly.size()){
-            painter->setBrush(QBrush(QColor(0, 0, 0, 64)));
+            painter->setBrush(QBrush(poly_col));
             painter->setPen(Qt::NoPen);
             painter->drawPolygon(poly);
         }
-        painter->setPen(QPen(QColor(0, 0, 0, 128)));
+        painter->setPen(QPen(line_col));
         painter->setBrush(Qt::NoBrush);
         painter->drawPolyline(i->data_window->valuesAtScale(
             plot_rect.topLeft(), tstart, scale_max, v_units_per_second, v_units_per_data_unit

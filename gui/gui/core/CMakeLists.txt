@@ -51,6 +51,8 @@ set ( GUI_CORE_SRCS
     framework/delegates.cpp
     framework/manager.cpp
 
+    framework/elements/style.cpp
+
     framework/fluidity/fNode.cpp
     framework/fluidity/view.cpp 
     framework/fluidity/managedElement.cpp

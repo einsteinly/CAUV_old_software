@@ -67,11 +67,11 @@ QRectF wi::GraphAxes::boundingRect() const{
 void wi::GraphAxes::paint(QPainter *painter,
                           const QStyleOptionGraphicsItem *option,
                           QWidget *widget){
-    Q_UNUSED(widget);
-
     painter->setClipRect(m_rect);
     
-    painter->setPen(QPen(QColor(0, 0, 0, 128)));
+    QColor color = widget->palette().color(QPalette::WindowText);
+    color.setAlpha(128);
+    painter->setPen(QPen(color));
     painter->setBrush(Qt::NoBrush);
     QFont smallfont;
     smallfont.setPointSize(10);
