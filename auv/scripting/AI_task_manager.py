@@ -428,6 +428,9 @@ class taskManager(aiProcess):
                     highest_priority = task.options.priority
         if to_start:
             self.start_script(to_start)
+        #rebroadcast condition info (since might have changin debug vals etc)
+        for condition in self.conditions.itervalues():
+            self.gui_update_condition(condition)
     def add_periodic_to_queue(self):
         self.processing_queue.append(('process_periodic', [], {}))
     def add_save_state_to_queue(self):

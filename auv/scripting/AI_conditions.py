@@ -68,7 +68,7 @@ class stateCondition(aiCondition):
     def get_state(self):
         return self.options.state
         
-class timeCondition(stateCondition):
+class timeCondition(aiCondition):
     """
     This condition only remains true for a certain time
     """
@@ -76,13 +76,13 @@ class timeCondition(stateCondition):
         timeout = 30
         startTimer = False
     def __init__(self, options={}, initial_state=False):
-        stateCondition.__init__(self, options)
+        aiCondition.__init__(self, options)
         self.timer = None
         self.timer_started = False
         self.state = initial_state
     def set_options(self, options):
         start = options.pop('startTimer', False)
-        stateCondition.set_options(self, options)
+        aiCondition.set_options(self, options)
         if start:
             if self.timer:
                 self.timer.cancel()
