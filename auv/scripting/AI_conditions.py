@@ -33,6 +33,7 @@ class aiCondition(object):
         if options:
             self.set_options(options)
         self.task_ids = []
+        self._suppress_reporting = False
     def set_options(self, options):
         for name, value in options.items():
             setattr(self.options, name, value)
@@ -116,20 +117,21 @@ class detectorCondition(aiCondition):
         aiCondition.__init__(self, options)
         self.state = False
         self.detector = None
+        self._suppress_reporting = True
     def set_options(self, options):
         aiCondition.set_options(self, options)
-        self.task_manager.set_detector_options(self.detector_id, self.options.get_options())
+        self.task_manager.set_detector_options(self.id, self.options.get_options())
     def on_state_set(self, state):
         if state != self.state:
             self.state = state
     def register(self, task_manager):
         aiCondition.register(self, task_manager)
         #We need to tell the task manager to setup the detector, and redirect messages to this condition
-        self.detector_id = task_manager.add_detector(self.detector_name, self)
-        task_manager.set_detector_options(self.detector_id, self.options.get_options())
+        task_manager.add_detector(self.detector_name, self)
+        task_manager.set_detector_options(self.id, self.options.get_options())
         self.task_manager = task_manager
     def deregister(self, task_manager):
-        task_manager.remove_detector(self.detector_id)
+        task_manager.remove_detector(self.id)
         aiCondition.deregister(self, task_manager)
     def get_state(self):
         return self.state

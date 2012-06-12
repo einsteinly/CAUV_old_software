@@ -24,7 +24,7 @@ class SimSonar {
     void setup(osg::Node *root);
     private:
     cauv::CauvNode *sim_node;
-    unsigned int width, height, depth;
+    unsigned int width, height, resolution, range, fovx, fovy;
     RateLimiter output_limit;
     osg::ref_ptr<osgViewer::Viewer> viewer;
     osg::ref_ptr<osg::Image> image;

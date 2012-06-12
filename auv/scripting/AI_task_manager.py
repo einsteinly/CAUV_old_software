@@ -55,7 +55,6 @@ class taskManager(aiProcess):
         self.periodic_timer = RepeatTimer(TASK_CHECK_INTERVAL, self.add_periodic_to_queue)
         self.state_save_timer = RepeatTimer(STATE_SAVE_INTERVAL, self.add_save_state_to_queue)
         #Detectors - definative list of what SHOULD be running
-        self.detector_nid = 0
         self.detectors_last_known = deque()
         self.detectors_enabled = True
         self.detector_conditions = {}
@@ -93,7 +92,7 @@ class taskManager(aiProcess):
             except KeyError:
                 warning("Task type %s no longer exists, could cause problems" %task_type_name)
                 continue
-            task_id = self.create_task(task_type)
+            task_id = self.create_task(task_type, default_conditions=False)
             self.set_task_options(task_id, task_options, task_script_options, [old2new_ids[condition_id] for condition_id in condition_ids])
             if include_persist:
                 self.tasks[task_id].persist_state = persist_state
@@ -140,7 +139,8 @@ class taskManager(aiProcess):
                 task.get_static_options_as_params(),
                 task.active))
     def gui_update_condition(self, condition):
-        self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values(), []))
+        if not condition._suppress_reporting: #eg detector conditions
+            self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values(), []))
     def gui_remove_task(self, task_id):
         self.node.send(messaging.TaskRemovedMessage(task_id))
     def gui_remove_condition(self, condition_id):
@@ -192,25 +192,24 @@ class taskManager(aiProcess):
     #add/remove/modify detectors
     def add_detector(self, detector_type, listener):
         debug("Adding detector of type %s" %str(detector_type))
-        detector_id = self.detector_nid
-        self.detector_nid += 1
-        self.detector_conditions[detector_id] = listener
-        self.ai.detector_control.start(detector_id, detector_type)
-        return detector_id
+        self.detector_conditions[listener.id] = listener
+        self.ai.detector_control.start(listener.id, detector_type)
     def remove_detector(self, detector_id):
-        debug("Detector condition %s" %str(detector_id))
+        debug("Detector condition %s" %detector_id)
         self.detector_conditions.pop(detector_id)
         self.ai.detector_control.stop(detector_id)
     def set_detector_options(self, detector_id, options):
-        debug("Setting options %s on detector %d" %(str(options), detector_id))
+        debug("Setting options %s on detector %s" %(str(options), detector_id))
         self.ai.detector_control.set_options(detector_id, options)
         
     #add/remove/modify/reg tasks
-    def create_task(self, task_type):
+    def create_task(self, task_type, default_conditions=True):
         #create task of named type
         debug("Creating task of type %s" %str(task_type))
         task = task_type()
         task.register(self)
+        if default_conditions:
+            task.add_default_conditions(self)
         #self.gui_update_task(task) skip here since is already sent by updating task options
         return task.id
     def register_task(self, task):
