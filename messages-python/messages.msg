@@ -104,6 +104,7 @@ enum NodeType : int8 {
     Blob,
     BearingRangeCrop,
     DrawCircles,
+    BroadcastCircles,
 }
 enum NodeStatus : int8 {
     None = 0,

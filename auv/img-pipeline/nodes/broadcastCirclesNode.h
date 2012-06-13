@@ -12,8 +12,8 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef __BROADCAST_HISTOGRAMNODE_H__
-#define __BROADCAST_HISTOGRAMNODE_H__
+#ifndef __BROADCAST_CIRCLESNODE_H__
+#define __BROADCAST_CIRCLESNODE_H__
 
 #include <map>
 #include <vector>
@@ -23,7 +23,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <generated/types/HistogramMessage.h>
+#include <generated/types/CirclesMessage.h>
 
 #include "../node.h"
 #include "outputNode.h"
@@ -32,9 +32,9 @@
 namespace cauv{
 namespace imgproc{
 
-class BroadcastHistogramNode: public OutputNode{
+class BroadcastCirclesNode: public OutputNode{
     public:
-        BroadcastHistogramNode(ConstructArgs const& args)
+        BroadcastCirclesNode(ConstructArgs const& args)
             : OutputNode(args){
         }
 
@@ -47,22 +47,22 @@ class BroadcastHistogramNode: public OutputNode{
             // no outputs
             
             // parameters:
-            registerParamID< std::vector<float> >("histogram",
-                                                  std::vector<float>(),
-                                                  "histogram to broadcast",
-                                                  Must_Be_New);
+            registerParamID< std::vector<Circle> >(
+                "Circles", std::vector<Circle>(), "Circles to broadcast", Must_Be_New
+            ); 
             registerParamID<std::string>("name",
-                                         "unnamed histogram",
-                                         "name for histogram");
+                                         "unnamed circles",
+                                         "name for circles");
         }
 
     protected:
         void doWork(in_image_map_t&, out_map_t&){
             const std::string name = param<std::string>("name");
-            const std::vector<float> histogram = param< std::vector<float> >("histogram");
+            const std::vector<Circle> circles = param< std::vector<Circle> >("Circles");
             
-            if(histogram.size())
-                sendMessage(boost::make_shared<HistogramMessage>(name, histogram));
+            if(circles.size()) {
+                sendMessage(boost::make_shared<CirclesMessage>(name, circles));
+            }
         }
 
     // Register this node type
@@ -72,5 +72,5 @@ class BroadcastHistogramNode: public OutputNode{
 } // namespace imgproc
 } // namespace cauv
 
-#endif // ndef __BROADCAST_HISTOGRAMNODE_H__
+#endif // ndef __BROADCAST_CIRCLESNODE_H__
 

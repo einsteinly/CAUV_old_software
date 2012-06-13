@@ -61,12 +61,15 @@ class DrawCirclesNode: public Node{
                 }else{
                     throw parameter_error("image must be 1, 3 or 4 channel");
                 }
+                const float width = out.cols;
+                const float height = out.rows;
                 foreach(Circle const& p, m_circles){
                     debug(3) << "draw circle:" << p;
                     cv::circle(
                         out,
-                        cv::Point(p.centre.x, p.centre.y),
-                        p.radius,
+                        cv::Point(p.centre.x * width,
+                                  p.centre.y * height),
+                        p.radius * (width + height) / 2,
                         CV_RGB(40,255,40),
                         3,
                         CV_AA
