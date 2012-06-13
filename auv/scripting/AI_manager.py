@@ -84,5 +84,5 @@ ai = AImanager(opts.__dict__)
 try:
     ai.run()
 finally:
-    ai.watcher.kill()
+    ai.watcher.kill(2) #SIGINT, AKA ^C
     ai.node.stop()
