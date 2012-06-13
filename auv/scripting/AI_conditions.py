@@ -104,7 +104,26 @@ class timeoutCondition(timeCondition):
         timeCondition.__init__(self, options, initial_state=True)
     def get_state(self):
         return not timeCondition.get_state(self)
-
+        
+class locationCondition(aiCondition):
+    class options(conditionOptions):
+        latitude = 0
+        longitude = 0
+        depth = 0
+        use_depth = False
+        error = 0.5 #meter
+    def __init__(self, options, tm_info = None):
+        self.tm_info = tm_info
+        aiCondition.__init__(self, options)
+    def get_debug_values(self):
+        return {'current latitude':self.tm_info['latitude'],
+                'current longitude':self.tm_info['longitude'],
+                'current depth':self.tm_info['depth']}
+    def get_state(self):
+        return abs(self.tm_info['latitude']-self.options.latitude)<self.options.error and \
+               abs(self.tm_info['longitude']-self.options.longitude)<self.options.error and \
+               (abs(self.tm_info['depth']-self.options.depth)<self.options.error or not self.options.use_depth)
+        
 class detectorCondition(aiCondition):
     _abstract = True
     """

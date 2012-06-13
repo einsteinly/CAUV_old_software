@@ -63,6 +63,10 @@ class taskManager(aiProcess):
         self.current_task = None
         self.current_priority = -1
         self.additional_tasks = {} #task_id: (task, script)
+        #dict of data known by task manager used by conditions
+        self.tm_info = {'latitude':None,
+                        'longitude':None,
+                        'depth':None,}
         #state data file
         self.state_shelf = shelve.open(mission)
         #Setup intial values
@@ -273,7 +277,11 @@ class taskManager(aiProcess):
     def create_condition(self, condition_type, options={}):
         debug("Creating condition of type %s" %str(condition_type))
         #create and register with self
-        condition = condition_type(options)
+        #work out if uses tm_info
+        if 'tm_info' in condition_type.__init__.im_func.func_code.co_varnames:
+            condition = condition_type(options, self.tm_info)
+        else:
+            condition = condition_type(options)
         condition.register(self)
         self.gui_update_condition(condition)
         return condition.id
@@ -295,7 +303,10 @@ class taskManager(aiProcess):
         self.gui_update_condition(condition)
         
     #commands for rebroadcasting data
-    def broadcast_position_local(self,  position):
+    def broadcast_position_local(self, position):
+        self.tm_info['latitude'] = position.latitude
+        self.tm_info['longitude'] = position.longitude
+        self.tm_info['depth'] = -position.altitude
         for task_id in self.additional_tasks:
             getattr(self.ai, task_id)._set_position(position)
         if self.current_task:
