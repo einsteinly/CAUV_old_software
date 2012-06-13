@@ -591,10 +591,8 @@ class RepeatTimer(threading.Thread):
         self.func = function
         self.args = args
         self.kwargs = kwargs
-        self.die = False
+        self.die_flag = threading.Event()
     def run(self):
-        while True:
-            time.sleep(self.time)
+        while not self.die_flag.wait(self.time):
             self.func(*self.args, **self.kwargs)
-            if self.die:
-                break
+        debug('Cleared up periodic timer.')

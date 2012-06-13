@@ -453,15 +453,18 @@ class taskManager(aiProcess):
                 error(traceback.format_exc())
     def die(self):
         try:
-            self.periodic_timer.die = True
+            self.periodic_timer.die_flag.set()
+            self.state_save_timer.die_flag.set()
             #kill any child scripts (since not managed by AI_manager, so may get left around)
-            for script in self.additional_tasks:
+            for task_id, (task, script) in self.additional_tasks.iteritems():
                 script.terminate()
-            self.running_script.terminate()
+                debug('Terminated additional task %s' %task_id)
+            if self.running_script:
+                self.running_script.terminate()
+                debug('Terminated current task %s' %current_task.id)
         except Exception as error:
             debug(error.message)
-        super(taskManager, self).die()
-        debug('Task manager succesfully cleared up')
+        aiProcess.die(self)
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
