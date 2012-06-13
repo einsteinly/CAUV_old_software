@@ -85,7 +85,6 @@ class aiMessageObserver(messaging.MessageObserver):
         debug("onAIMessage in %s: %s" %(self.parent_process.process_name, m.msg), 6)
         message = cPickle.loads(m.msg)
         if message[0] == self.parent_process.process_name: #this is where the to string appears in the cpickle output
-            message = cPickle.loads(m.msg)
             if message[2] in self.parent_process._ext_funcs:
                 try:
                     debug("onAIMessage in %s, calling function." %(self.parent_process.process_name, ), 6)
@@ -94,7 +93,7 @@ class aiMessageObserver(messaging.MessageObserver):
                     getattr(self.parent_process, message[2])(*message[3], **message[4])
                 except Exception as exc:
                     error("Error occured because of message: %s" %(str(message)))
-                    traceback.print_exc()
+                    error(traceback.format_exc())
             else:
                 error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
 
@@ -133,6 +132,7 @@ class aiProcess():
         self.node.addObserver(self._msg_observer)
         self.ai.manager.register()
     def log(self, message):
+        debug(message)
         try:
             self.node.send(messaging.AIlogMessage(message), "ai")
         except:
@@ -264,15 +264,12 @@ class fakeAUV(messaging.MessageObserver):
         self.current_bearing = m.orientation.yaw
         self.current_depth = m.depth
         self.current_pitch = m.orientation.pitch
-        self.bearingCV.acquire()
-        self.depthCV.acquire()
-        self.pitchCV.acquire()
-        self.bearingCV.notifyAll()
-        self.depthCV.notifyAll()
-        self.pitchCV.notifyAll()
-        self.bearingCV.release()
-        self.depthCV.release()
-        self.pitchCV.release()
+        with self.bearingCV:
+            with self.depthCV:
+                with self.pitchCV:
+                    self.bearingCV.notifyAll()
+                    self.depthCV.notifyAll()
+                    self.pitchCV.notifyAll()
         
     #def onLocationMessage(self, m):
     #self.latitude = m.location.latitude
@@ -292,9 +289,8 @@ class fakeAUV(messaging.MessageObserver):
         while time.time() - startTime < timeout:
             if self.current_bearing == None or min((bearing - self.current_bearing) % 360, (self.current_bearing - bearing) % 360) > epsilon:
                 #print 'bearing waiting'
-                self.bearingCV.acquire()
-                self.bearingCV.wait(timeout - time.time() + startTime)
-                self.bearingCV.release()
+                with self.bearingCV:
+                    self.bearingCV.wait(timeout - time.time() + startTime)
             else:
                 return True
         return False
@@ -307,9 +303,8 @@ class fakeAUV(messaging.MessageObserver):
         self.depth(depth)
         while time.time() - startTime < timeout:
             if self.current_depth == None or abs(depth - self.current_depth) > epsilon:
-                self.depthCV.acquire()
-                self.depthCV.wait(timeout - time.time() + startTime)
-                self.depthCV.release()
+                with self.depthCV:
+                    self.depthCV.wait(timeout - time.time() + startTime)
             else:
                 return True
         return False
@@ -322,9 +317,8 @@ class fakeAUV(messaging.MessageObserver):
         self.pitch(pitch)
         while time.time() - startTime < timeout:
             if self.current_pitch == None or min((pitch - self.current_pitch) % 360, (self.current_pitch - pitch) % 360) > epsilon:
-                self.pitchCV.acquire()
-                self.pitchCV.wait(timeout - time.time() + startTime)
-                self.pitchCV.release()
+                with self.pitchCV:
+                    self.pitchCV.wait(timeout - time.time() + startTime)
             else:
                 return True
         return False
@@ -553,11 +547,12 @@ class aiDetector(messaging.MessageObserver):
             warning("Could not get/encode attributes %s, skipping from debug value report" %str(error_attrs))
         return debug
     def log(self, message):
+        debug(message)
         try:
             self.node.send(messaging.AIlogMessage(message), "ai")
         except:
             error('Error sending high-level log message')
-            traceback.print_exc()
+            error(traceback.format_exc())
     def die(self):
         self.drop_all_pl()
         self.node.removeObserver(self)

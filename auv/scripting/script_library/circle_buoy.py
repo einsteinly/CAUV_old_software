@@ -14,11 +14,11 @@ from utils.control import expWindow, PIDController
 
 class scriptOptions(aiScriptOptions):
     Do_Prop_Limit = 10  # max prop for forward/backward adjustment
-    Camera_FOV = 60     # degrees
+    Camera_FOV = 90     # degrees
     Warn_Seconds_Between_Sights = 5
     Give_Up_Seconds_Between_Sights = 30
     Node_Name = "py-CrcB" # unused
-    Depth_Ceiling = 0.8
+    Depth_Ceiling = 3 # XXX Probably dangerous for real testing
     Strafe_Speed = 20   # (int [-127,127]) controls strafe speed
     Buoy_Size = 0.15     # (float [0.0, 1.0]) controls distance from buoy. Units are field of view (fraction) that the buoy should fill
     Size_Control_kPID = (-30, 0, 0)  # (Kp, Ki, Kd)
@@ -31,7 +31,7 @@ class scriptOptions(aiScriptOptions):
     Depth_DError_Window = expWindow(5, 0.6)
     Depth_Error_Clamp = 200
     
-    Pipeline_File = 'circle_buoy'
+    Pipeline_File = 'detect_buoy_sim'
 
     class Meta:
         dynamic = [
@@ -234,21 +234,6 @@ class script(aiScript):
                 info('Waiting for final completion...')
                 time.sleep(0.5)
             self.log('Buoy Circling: completed successfully')
-            self.log('Attempting to cut the buoy free...')
-            self.auv.bearing(self.auv.getBearing())
-            old_depth = self.auv.getDepth()
-            self.auv.depth(old_depth + 0.8)
-            self.auv.prop(80)
-            self.auv.cut(1)
-            ts = time.time()
-            while time.time() - ts < self.options.Cut_Time:
-                time.sleep(0.5)
-            if old_depth < self.options.Depth_Ceiling:
-                old_depth = self.options.Depth_Ceiling
-            self.log('Cutting complete!')
-            self.auv.depth(old_depth)
-            self.auv.cut(0)
-            self.auv.prop(0)
         except:
             exit_status = 'FAIL'
             error(traceback.format_exc())

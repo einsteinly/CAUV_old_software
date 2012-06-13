@@ -76,6 +76,7 @@ class taskManager(aiProcess):
             info('Found and loaded previous state.')
         else:
             info('No previous valid state file')
+
     def load_state(self, include_persist=False):
         #check whether there is a state
         if (not 'tasks' in self.state_shelf) or (not 'conditions' in self.state_shelf):
@@ -101,6 +102,7 @@ class taskManager(aiProcess):
             if include_persist:
                 self.tasks[task_id].persist_state = persist_state
         return True
+
     def save_state(self):
         debug('Saving mission state.')
         task_dict = {}
@@ -115,24 +117,24 @@ class taskManager(aiProcess):
     
     #ONMESSAGE FUNCTIONS
     def onAddTaskMessage(self, msg):
-        self.processing_queue.append(('create_task', [task_classes[msg.taskType]], {}))
+        self.processing_queue.append((self.create_task, [task_classes[msg.taskType]], {}))
     def onRemoveTaskMessage(self, msg):
-        self.processing_queue.append(('remove_task', [msg.taskId], {}))
+        self.processing_queue.append((self.remove_task, [msg.taskId], {}))
     def onSetTaskStateMessage(self, msg):
-        self.processing_queue.append(('set_task_options', [msg.taskId, BoostMapToDict(msg.taskOptions), BoostMapToDict(msg.scriptOptions), msg.conditionIds], {}))
+        self.processing_queue.append((self.set_task_options, [msg.taskId, BoostMapToDict(msg.taskOptions), BoostMapToDict(msg.scriptOptions), msg.conditionIds], {}))
         
     def onAddConditionMessage(self, msg):
-        self.processing_queue.append(('create_condition', [condition_classes[msg.conditionType]], {}))
+        self.processing_queue.append((self.create_condition, [condition_classes[msg.conditionType]], {}))
     def onRemoveConditionMessage(self, msg):
-        self.processing_queue.append(('remove_condition', [msg.conditionId], {}))
+        self.processing_queue.append((self.remove_condition, [msg.conditionId], {}))
     def onSetConditionStateMessage(self, msg):
-        self.processing_queue.append(('set_condition_options', [msg.conditionId, BoostMapToDict(msg.conditionOptions)], {}))
+        self.processing_queue.append((self.set_condition_options, [msg.conditionId, BoostMapToDict(msg.conditionOptions)], {}))
     
     def onScriptControlMessage(self, msg):
-        self.processing_queue.append(('process_script_control', [msg.taskId, msg.command.name], {}))
-            
+        self.processing_queue.append((self.process_script_control, [msg.taskId, msg.command.name], {}))
+
     def onRequestAIStateMessage(self, msg):
-        self.processing_queue.append(('gui_send_all', [], {}))
+        self.processing_queue.append((self.gui_send_all, [], {}))
     
     #MESSAGES TO GUI
     def gui_update_task(self, task):
@@ -149,10 +151,14 @@ class taskManager(aiProcess):
         self.node.send(messaging.TaskRemovedMessage(task_id))
     def gui_remove_condition(self, condition_id):
         self.node.send(messaging.ConditionRemovedMessage(condition_id))
+
     def gui_send_all(self):
         #send type info
-        self.node.send(messaging.TaskTypesMessage([task_name for task_name in task_classes]))
-        self.node.send(messaging.ConditionTypesMessage(dict([(condition_name, condition.get_pipeline_names()) for condition_name, condition in condition_classes.iteritems()])))
+        self.node.send(messaging.TaskTypesMessage(list(task_classes.keys())))
+        self.node.send(messaging.ConditionTypesMessage(
+            {condition_name: condition.get_pipeline_names() for 
+                condition_name, condition in condition_classes.iteritems()}))
+
         #send conditions (first, since tasks depend on conditions)
         for condition in self.conditions.itervalues():
             self.gui_update_condition(condition)
@@ -171,17 +177,17 @@ class taskManager(aiProcess):
     #from script
     @external_function
     def on_script_exit(self, task_id, status):
-        self.processing_queue.appendleft(('process_status_message', [task_id, status], {}))
+        self.processing_queue.appendleft((self.process_status_message, [task_id, status], {}))
     @external_function
     def modify_script_options(self, task_id, options):
-        self.processing_queue.append(('set_task_options', [task_id, {}, options, []], {}))
+        self.processing_queue.append((self.set_task_options, [task_id, {}, options, []], {}))
     @external_function
     def on_persist_state_change(self, task_id, key, attr):
-        self.processing_queue.append(('set_task_persist_state', [task_id, key, attr], {}))
+        self.processing_queue.append((self.set_task_persist_state, [task_id, key, attr], {}))
     #from location process
     @external_function
     def broadcast_position(self, position):
-        self.processing_queue.append(('broadcast_position_local', [position], {}))
+        self.processing_queue.append((self.broadcast_position_local, [position], {}))
     #helpful diagnostics
     @external_function
     def export_task_data(self, file_name):
@@ -324,6 +330,7 @@ class taskManager(aiProcess):
             except OSError:
                 debug('Could not kill running script (probably already dead)')
         info('Stopping additional script for task %s' %task_id)
+
     def stop_current_script(self):
         self.ai.auv_control.set_current_task_id(None, 0)
         self.ai.pl_manager.drop_task_pls(self.current_task.id)
@@ -333,6 +340,7 @@ class taskManager(aiProcess):
             except OSError:
                 debug('Could not kill running script (probably already dead)')
         info('Stopping Script')
+
     def process_status_message(self, task_id, status):
         if status == 'ERROR':
             try:
@@ -353,6 +361,7 @@ class taskManager(aiProcess):
             self.log('Task %s failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].options.frequency_limit))
             self.tasks[task_id].options.last_called = time.time()
         getattr(self.ai,str(task_id)).confirm_exit()
+
     def start_script(self, task):
         #start the new script
         self.ai.auv_control.signal(task.id)
@@ -360,7 +369,9 @@ class taskManager(aiProcess):
         # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
         script = subprocess.Popen(['python2.7','./AI_scriptparent.py', str(task.id),
                                    task.options.script_name, 
+                                   '--options',
                                    cPickle.dumps(task.get_script_options()), 
+                                   '--state',
                                    cPickle.dumps(task.persist_state)])
         if task.options.solo:
             if self.current_task:
@@ -443,9 +454,9 @@ class taskManager(aiProcess):
         for condition in self.conditions.itervalues():
             self.gui_update_condition(condition)
     def add_periodic_to_queue(self):
-        self.processing_queue.append(('process_periodic', [], {}))
+        self.processing_queue.append((self.process_periodic, [], {}))
     def add_save_state_to_queue(self):
-        self.processing_queue.append(('save_state', [], {}))
+        self.processing_queue.append((self.save_state, [], {}))
         
     #MAIN LOOP
     def run(self):
@@ -459,7 +470,7 @@ class taskManager(aiProcess):
                 except IndexError:
                     time.sleep(0.2)
                     continue
-                getattr(self, call[0])(*call[1], **call[2])
+                call[0](*call[1], **call[2])
             except Exception:
                 error(traceback.format_exc())
     def die(self):

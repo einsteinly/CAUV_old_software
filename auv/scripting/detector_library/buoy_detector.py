@@ -2,6 +2,7 @@ from AI_classes import aiDetector, aiDetectorOptions
 from cauv.debug import debug, info, warning, error
 
 import cauv.pipeline as pipeline
+from cauv.messaging import floatXYZ
 
 import time
 import sys
@@ -15,7 +16,7 @@ class detectorOptions(aiDetectorOptions):
     Sightings_Period   = 5.0 # seconds, period to consider sightings of the buoy for
     Required_Confidence = 0.9
     Required_Sightings = 5
-    Required_Pipeline = 'detect_buoy'
+    Required_Pipeline = 'detect_buoy_sim'
     Circles_Name = 'buoy'
     Histogram_Name_A = 'buoy_hue'
     Histogram_Name_B = 'buoy_hue'
@@ -109,10 +110,10 @@ class detector(aiDetector):
     def detectionConfidence(self, message):
         if len(message.circles) == 0:
             return 0
-        sx_radius = sum(map(lambda x: x.radius, message.circles))
+        sx_radius = sum((x.radius for x in  message.circles))
         mean_radius = sx_radius / len(message.circles)
-        sx  = vecops.sx(map(lambda x: x.centre, message.circles))
-        sxx = vecops.sxx(map(lambda x: x.centre, message.circles))
+        sx = vecops.sx(vecops.xyz((x.centre for x in message.circles)))
+        sxx = vecops.sxx(vecops.xyz((x.centre for x in message.circles)))
         stddev = vecops.pow(vecops.absv(vecops.sub(sxx,vecops.sqr(sx))), 0.5)
         s = (stddev.x + stddev.y) / 2
         confidence = 1 / (1 + self.options.Stddev_Mult * s/mean_radius)

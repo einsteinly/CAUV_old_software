@@ -5,7 +5,9 @@ from cauv.debug import info, warning, error, debug
 from cauv import messaging
 import cauv.pipeline
 
-import threading, os, os.path, cPickle, time, traceback, pickle, argparse, Queue, subprocess
+import threading, os, os.path, cPickle, time
+import traceback, argparse, Queue, collections
+import re
 from glob import glob
 from datetime import datetime
 
@@ -47,57 +49,63 @@ class pipelineManager(aiProcess):
         try and load pipelines
         """
         #scan the pipelines
-        pipeline_names = [x[10:-5] for x in glob(os.path.join('pipelines', '*.pipe'))]
-        pipeline_names.extend([x[10:-5] for x in glob(os.path.join('pipelines','temp','*.pipe'))])#we'll drop the 'pipelines/' prefix and '.pipe'
-        pipeline_groups = {} #pipeline main name: filenames
-        for name in pipeline_names:
+        pipeline_files = glob(os.path.join('pipelines', '*.pipe')) + \
+                         glob(os.path.join('pipelines', 'temp', '*.pipe'))
+
+        pipeline_names = [os.path.basename(x).rsplit('.',1)[0] for x in pipeline_files]
+        pipeline_groups = collections.defaultdict(list) #pipeline main name: filenames
+        for name, filename in zip(pipeline_names, pipeline_files):
             if name.startswith('temp__'):
                 warning('Found temporary pipelines in file %s.pipe, it is recommended these are sorted and deleted' %(name,))
-                try:
-                    pipeline_groups[name[6:]].append(name)
-                except KeyError:
-                    pipeline_groups[name[6:]] = [name]
+                pipeline_groups[name[6:]].append(filename)
             else:
-                try:
-                    pipeline_groups[name].append(name)
-                except KeyError:
-                    pipeline_groups[name] = [name]
+                pipeline_groups[name].append(filename)
+
         for name, filenames in pipeline_groups.iteritems():
-            filename = max(filenames, key=lambda x: os.path.getmtime('pipelines/'+x+'.pipe'))
+            filename = max(filenames, key=os.path.getmtime)
             self.add_pipeline(name, filename)
+
     def add_pipeline(self, name, filename):
         #check whether we've already loaded this pipeline
         if name in self.pipelines:
             warning('Multiple pipelines with same name (%s).' %(name))
         #load pipeline
         try:
-            pl_state = cauv.pipeline.Model.loadFile(open(os.path.join('pipelines', filename)+'.pipe'))
+            pl_state = cauv.pipeline.Model.loadFile(open(filename))
         except:
-            error('Error loading pipeline %s' %(filename,))
-            traceback.print_exc()
+            error('Error loading pipeline %s (%s)' %(name, filename))
+            error(traceback.format_exc())
             return
         self.pipelines[name] = pl_state
         
     @external_function
     def force_save(self, pipelines=None, temporary=False):
         self.reeval = True
+
     @external_function
     def request_pl(self, requestor_type, requestor_name, requested_pl):
         #VERY IMPORTANT: make sure requestor_name is same as process_name
         #since the python thread cannot be interrupted multiple times it seems, and needs to be interrupted to set up the pipeline, request must be handled in the main process
-        self.request_queue.put(('setup_pl',{'requestor_type':requestor_type, 'requestor_name':requestor_name, 'requested_pl':requested_pl}))
+        self.request_queue.put((self.setup_pl, {'requestor_type':requestor_type,
+                                                'requestor_name':requestor_name,
+                                                'requested_pl':requested_pl}))
     @external_function
     def drop_pl(self, requestor_type, requestor_name, requested_pl):
-        self.request_queue.put(('unsetup_pl',{'requestor_type':requestor_type, 'requestor_name':requestor_name, 'requested_pl':requested_pl}))
+        self.request_queue.put((self.unsetup_pl, {'requestor_type':requestor_type,
+                                                  'requestor_name':requestor_name,
+                                                  'requested_pl':requested_pl}))
     @external_function
     def drop_all_pls(self, requestor_type, requestor_name):
-        self.request_queue.put(('unsetup_all',{'requestor_type':requestor_type, 'requestor_name':requestor_name}))
+        self.request_queue.put((self.unsetup_all, {'requestor_type':requestor_type,
+                                                   'requestor_name':requestor_name}))
     @external_function
     def drop_task_pls(self, task_id):
-        self.request_queue.put(('unsetup_task',{'task_id':task_id}))
+        self.request_queue.put((self.unsetup_task, {'task_id':task_id}))
+
     @external_function
     def set_detector_pls(self, req_list):
-        self.request_queue.put(('setup_detectors',{'req_list':req_list}))
+        self.request_queue.put((self.setup_detectors, {'req_list':req_list}))
+
     def setup_pl(self, requestor_type, requestor_name, requested_pl):
         if not requestor_type in self.requests:
             error('Invalid requestor type %s, named %s' %(requestor_type, requestor_name))
@@ -114,6 +122,7 @@ class pipelineManager(aiProcess):
         if requestor_type == 'script':
             getattr(self.ai, requestor_name).confirm_pl_request()
         self.reeval = True
+
     def unsetup_pl(self, requestor_type, requestor_name, requested_pl):
         if not requestor_type in self.requests:
             error('Invalid type in requested drop pl')
@@ -126,20 +135,23 @@ class pipelineManager(aiProcess):
         else:
             self.requests[requestor_type][requestor_name].remove(requested_pl)
         self.reeval = True
+
     def unsetup_all(self, requestor_type, requestor_name):
         try:
             self.requests[requestor_type][requestor_name] = []
         except KeyError:
             error('Could not drop pls, requestor type %s invalid' %(requestor_type,))
         self.reeval = True
+
     def unsetup_task(self, task_id):
         self.requests['script'][task_id] = []
         self.reeval = True
+
     def setup_detectors(self, req_list):
         if set(req_list) != set(self.detector_requests):
             self.detector_requests = req_list
+            debug("Setting detector requests to {}".format(self.detector_requests))
             self.reeval = True
-            
             
     def eval_state(self):
         """
@@ -157,19 +169,22 @@ class pipelineManager(aiProcess):
         to_remove = files_in_use.difference(files_requested)
         to_add = files_requested.difference(files_in_use)
         #2
+        debug("State: running_pls: {}, to_remove: {}, to add: {}".format(
+               files_in_use, to_remove, to_add))
         for reqname in to_remove:
             pl = self.running_pls.pop(reqname) #remove from running_list
             try:
-                pl.save('pipelines/temp/temp__'+name+'.pipe')
+                pl.save('pipelines/temp/temp__'+reqname+'.pipe')
             except Exception:
                 error('Error saving pipeline %s' %(reqname))
-                traceback.print_exc()
+                error(traceback.format_exc())
             pl.clear()
         #4
         for reqname in to_add:
             pl = cauv.pipeline.Model(self.node, 'ai/'+reqname)
             pl.set(self.pipelines[reqname])
             self.running_pls[reqname] = pl
+
     def run(self):
         #this should probably be replaced with multiple pipelines
         while True:
@@ -179,10 +194,10 @@ class pipelineManager(aiProcess):
                 except Queue.Empty:
                     break
                 try:
-                    getattr(self,(req[0]))(**req[1])
+                    req[0](**req[1])
                 except Exception:
-                    error('Exception while trying to setup pipeline caused by '+str(req[0])+str(req[1]))
-                    traceback.print_exc()
+                    error('Exception while trying to manage pipeline: ')
+                    error(traceback.format_exc())
             else:
                 if self.request_queue.qsize()>5:
                     warning('Pipeline manager request queue is large, there may be delays')

@@ -36,6 +36,7 @@ class auvControl(aiProcess):
     def __init__(self, **kwargs):
         aiProcess.__init__(self, 'auv_control')
         self.auv = slightlyModifiedAUV(self.node)
+        self.auv.depth_disabled = False
         self.sonar = sonar.Sonar(self.node)
         self.active_tasks = {}
         self.default_task = None
