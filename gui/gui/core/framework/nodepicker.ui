@@ -123,19 +123,29 @@ QPushButton:hover {
    <item>
     <widget class="cauv::gui::NodeTreeView" name="view">
      <property name="styleSheet">
-      <string notr="true"> QTreeView {
+      <string notr="true">QFrame {
+	background: white;
+}
+
+QTreeView {
      border: 1px solid gray;
      border-radius: 10px;
      border-top-right-radius: 0px;
      border-bottom-right-radius: 0px;
      padding-top: 0px;
      padding-bottom: 10px;
-     show-decoration-selected: 1;
+     show-decoration-selected: 0;
+     color: black;
+     alternate-background-color: rgb(238, 243, 253);
+	 selection-background-color: transparent;
+	 selection-color: black;
  }
 
-QFrame {
-	background: palette(dark)
+QTreeView::branch:alternate {
+	background-color: rgb(238, 243, 253);
+	selection-background-color: rgb(238, 243, 253);
 }
+
 </string>
      </property>
      <property name="horizontalScrollBarPolicy">
