@@ -18,10 +18,10 @@
 #include <boost/shared_ptr.hpp>
 
 #include <liquid/view.h>
-#include <liquid/water/graph.h>
-#include <liquid/water/dataSeries.h>
+//#include <liquid/water/graph.h>
+//#include <liquid/water/dataSeries.h>
 
-namespace w = liquid::water;
+//namespace w = liquid::water;
 
 class QMenu;
 
@@ -41,6 +41,9 @@ class FView: public liquid::LiquidView{
         FView(boost::shared_ptr<CauvNode> node,
               std::string const& pipeline_name,
               QWidget *parent = NULL);
+        
+        enum Mode {TopLevel, Internal};
+        void setMode(Mode const& mode);
 
     protected:
         // QWidget
@@ -76,9 +79,12 @@ class FView: public liquid::LiquidView{
         // slots
         void menuActioned();
 
-        void postData();
+        //void postData();
 
     private:
+        // methods
+        void _initInMode(Mode const& m);
+
         // data
         boost::shared_ptr<CauvNode> m_cauv_node;
         boost::shared_ptr<Manager> m_manager;
@@ -89,7 +95,8 @@ class FView: public liquid::LiquidView{
         // This is used, for example, to draw buttons inside the view in a
         // consistent position as the view is moved around.
         std::vector< std::pair<QPoint, QGraphicsWidget*> > m_overlay_items;
-
+        
+        /*
         // !!! temporary graph dev stuff
         w::DataSeries_ptr m_pct_series;
         w::DataSeries_ptr m_pct2_series;
@@ -97,6 +104,9 @@ class FView: public liquid::LiquidView{
         w::DataSeries_ptr m_angle_series;
         QTimer* m_redraw_timer;
         QTimer* m_data_timer;
+        */
+
+        Mode m_mode;
 };
 
 } // namespace f

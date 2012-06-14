@@ -29,8 +29,6 @@
 #include <utility/bimap.h>
 #include <utility/string.h>
 
-#include <debug/cauv_debug.h>
-
 #include "arcSource.h"
 #include "arcSink.h"
 #include "arc.h"
@@ -54,6 +52,7 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
     for(std::set<AbstractArcSink*>::const_iterator i = g_sinks.begin(); i != g_sinks.end(); i++)
         if((*i)->scene() == scene){
             QGraphicsItem* node = (*i)->ultimateParent();
+            assert(node);
             sink_parent_lut[*i] = node;
             if(!nodes.count(*i)){
                 node_names.insert(node, mkStr() << next_name++);
@@ -62,7 +61,8 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
         }
     for(std::set<AbstractArcSource*>::const_iterator i = g_srcs.begin(); i != g_srcs.end(); i++)
         if((*i)->scene() == scene){
-            QGraphicsItem* node = (*i)->ultimateParent();        
+            QGraphicsItem* node = (*i)->ultimateParent();
+            assert(node);
             src_parent_lut[*i] = node;
             if(!nodes.count(*i)){
                 node_names.insert(node, mkStr() << next_name++);
@@ -94,10 +94,18 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
     foreach(Arc* a, g_arcs)
     {   
         QGraphicsItem* from_node = src_parent_lut[a->source()];
+        // This can happen if arc sources have been created, but not (yet)
+        // added to the scene. It is thoroughly incorrect for this to be the
+        // case, and in future this may throw / assert.
+        if(!from_node)
+            continue;
         gv::Node gfrom_node = g.node(node_names[from_node]);
         
         foreach(AbstractArcSink* s, a->sinks()){
             QGraphicsItem* to_node = sink_parent_lut[s];
+            // see corresponding comment above, for from_node
+            if(!to_node)
+                continue;
             gv::Node gto_node = g.node(node_names[to_node]);
 
             g.edge(gfrom_node, gto_node);
@@ -157,14 +165,17 @@ liquid::LayoutItems::LayoutItems(Arc* arc){
 }
 
 void liquid::LayoutItems::registerSinkItem(AbstractArcSink* sink){
+    assert(sink);
     g_sinks.insert(sink);
 }
 
 void liquid::LayoutItems::registerSourceItem(AbstractArcSource* source){
+    assert(source);
     g_srcs.insert(source);
 }
 
 void liquid::LayoutItems::registerConnection(Arc* arc){
+    assert(arc);
     g_arcs.insert(arc);
 }
 

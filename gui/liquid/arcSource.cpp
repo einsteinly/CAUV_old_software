@@ -79,6 +79,17 @@ QGraphicsItem* AbstractArcSourceInternal::ultimateParent(){
     return last_parent;
 }
 
+ConnectionSink::ConnectionStatus AbstractArcSourceInternal::connectTo(AbstractArcSink* sink){
+    const ConnectionSink::ConnectionStatus status = sink->doAcceptConnection(m_sourceDelegate);
+    if(status == ConnectionSink::Accepted){
+        m_arc->addTo(sink);
+    }else if(status == ConnectionSink::Pending){
+        m_arc->addPending(sink);
+    }
+    return status;
+}
+
+
 void AbstractArcSourceInternal::mousePressEvent(QGraphicsSceneMouseEvent *e){
     debug(5) << "AbstractArcSourceInternal::mousePressEvent";
     if(e->button() & Qt::LeftButton){
@@ -196,12 +207,8 @@ void AbstractArcSourceInternal::highlightedItemDisconnected(AbstractArcSink* sin
 }
 
 void AbstractArcSourceInternal::checkDoAcceptConnection(AbstractArcSink* item){
-    ConnectionSink::ConnectionStatus status = item->doAcceptConnection(m_sourceDelegate);
-    if(status == ConnectionSink::Accepted){
-        m_arc->addTo(item);
-    }else if(status == ConnectionSink::Pending){
-        m_arc->addPending(item);
-    }else{
+    ConnectionSink::ConnectionStatus status = connectTo(item);
+    if(status == ConnectionSink::Rejected){
         debug() << "connection rejected:" << m_sourceDelegate << "-->" << item;
     }
 }

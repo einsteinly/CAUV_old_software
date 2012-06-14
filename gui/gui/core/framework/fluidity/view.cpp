@@ -56,15 +56,16 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     : liquid::LiquidView(parent),
       m_cauv_node(node),
       m_manager(),
-      m_contextmenu_root(){
+      m_contextmenu_root(),
+      m_mode(TopLevel){
     // QGraphicsView spends most of its time testing the intersection of
-    // boinding boxes without this set, and in any case OpenGL doesn't
+    // bounding boxes without this set, and in any case OpenGL doesn't
     // support partial updates:
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 
     initMenu();
 
-    NodeScene *s = new NodeScene(this);
+    NodeScene *s = new NodeScene(this, false); // !!! false = don't set global model node scene
 
     // !!! is this really what we want to do?
     // items aren't added or removed a lot, just updated
@@ -75,7 +76,6 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     m_manager = boost::make_shared<Manager>(s, m_cauv_node.get(), pipeline_name);
     m_manager->init();
 
-    setMinimumSize(800, 600);
     setWindowTitle("Fluidity");
 
     Button *b;
@@ -100,7 +100,9 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     m_overlay_items.push_back(std::make_pair(QPoint(-40, -40), b));
     connect(b, SIGNAL(pressed()), m_manager.get(), SLOT(requestRefresh()));
 
-    
+    _initInMode(m_mode);
+
+    /*
     //w::Graph* g = new w::Graph(w::One_Minute, "A Graph");
     w::GraphConfig config = {30.0};
     w::Graph* g1 = new w::Graph(config);
@@ -145,9 +147,40 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     
     //m_redraw_timer->start();
     m_data_timer->start();
+    */
 }
 
-#include <utility/time.h>
+void FView::_initInMode(Mode const& mode){
+    m_mode = mode;
+
+    typedef std::pair<QPoint, QGraphicsWidget*> pt_widget_pair_t;
+    
+    if(mode == TopLevel){
+        setMinimumSize(800, 600);
+        foreach(pt_widget_pair_t const& oi, m_overlay_items){
+            oi.second->show();
+        }
+        scaleAround(QPoint(0,0), 4);
+        //setInteractive(true);
+    }else{
+        setMinimumSize(80, 60);
+        foreach(pt_widget_pair_t const& oi, m_overlay_items){
+            oi.second->hide();
+        }
+        //setInteractive(false);
+        scaleAround(QPoint(0,0), 0.25);
+    }
+
+}
+
+
+void FView::setMode(Mode const& m){
+    if(m_mode != m){
+        _initInMode(m);
+    }
+}
+
+/*#include <utility/time.h>
 void FView::postData(){
     static int i = 0;
     static double walk = 0;
@@ -159,7 +192,7 @@ void FView::postData(){
         //m_unlim_series->postData(((i) % 200 - 100), n);
         m_unlim_series->postData(walk += ((rand() % 100) - 50)/10.0, n);
     m_angle_series->postData(i/2.0, n);
-}
+}*/
 
 void FView::initMenu(){
     QAction_ptr_set actions;

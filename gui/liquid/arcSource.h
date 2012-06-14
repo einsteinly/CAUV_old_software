@@ -20,6 +20,7 @@
 #include <QGraphicsSceneMouseEvent>
 
 #include "layout.h"
+#include "connectionSink.h"
 
 namespace liquid {
 
@@ -64,6 +65,11 @@ class AbstractArcSourceInternal: public QGraphicsObject,
          */
         virtual QGraphicsItem* ultimateParent();
 
+        /* Returns the status of the created arc (which may be Rejected, or
+         * Pending, as well as Accepted)
+         */
+        ConnectionSink::ConnectionStatus connectTo(AbstractArcSink* sink);
+
     Q_SIGNALS:
         void geometryChanged();
 
@@ -88,6 +94,8 @@ class AbstractArcSourceInternal: public QGraphicsObject,
         void highlightedItemDisconnected(AbstractArcSink*);
     
     private:
+        // differs from connectTo only in that this prints additional debug
+        // info if the connection fails
         void checkDoAcceptConnection(AbstractArcSink* item);
 
         void disconnectParentSignals(QGraphicsItem* parent);

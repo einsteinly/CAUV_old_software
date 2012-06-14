@@ -15,6 +15,7 @@
 #include "tasknode.h"
 
 #include <QBrush>
+#include <QGraphicsLinearLayout>
 
 #include <debug/cauv_debug.h>
 
@@ -46,7 +47,27 @@ LiquidPipelineNode::LiquidPipelineNode(boost::shared_ptr<PipelineNode> node, QGr
     : liquid::LiquidNode(AI_Node_Style, parent),
       ManagedNode(this, node),
       m_node(node),
-      m_contents(NULL){
+      m_contents(NULL),
+      m_source(new liquid::ArcSource(this, new liquid::Arc(Image_Arc_Style))){
+
+    setResizable(true);
+
+    header()->setTitle(QString::fromStdString(m_node->nodeName()));
+    header()->setInfo(QString::fromStdString(m_node->nodePath()));
+
+    m_source->setParentItem(this);
+    m_source->setZValue(10);
+
+    QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(Qt::Horizontal);
+    hlayout->setSpacing(0);
+    hlayout->setContentsMargins(0,0,0,0);
+    hlayout->addStretch(1);
+    hlayout->addItem(m_source);
+    hlayout->setAlignment(m_source, Qt::AlignBottom | Qt::AlignRight);
+
+    connect(this, SIGNAL(xChanged()), m_source, SIGNAL(xChanged()));
+    connect(this, SIGNAL(yChanged()), m_source, SIGNAL(yChanged()));
+    addItem(hlayout);
 }
 
 LiquidPipelineNode::~LiquidPipelineNode(){
@@ -58,8 +79,12 @@ void LiquidPipelineNode::ensureInited(boost::weak_ptr<CauvNode> with_cauv_node){
         boost::shared_ptr<CauvNode> cauv_node = with_cauv_node.lock();
         if(cauv_node){
             f::FView* view = new f::FView(cauv_node, m_node->nodeName());
+            view->setMode(f::FView::Internal);
             m_contents = new liquid::ProxyWidget(this);
             m_contents->setWidget(view);
+            addItem(m_contents);
+        }else{
+            error() << "no cauv node available to init pipelineNode!";
         }
     }
 }
@@ -202,7 +227,7 @@ void LiquidTaskNode::highlightRunningStatus(QVariant status){
 
 void LiquidTaskNode::buildContents(){
 
-    // incoming dependancies
+    // incoming dependencies
     foreach(boost::shared_ptr<AiConditionNode> const& condition, m_node->getConditions()){
         LiquidConditionNode * conditionNode = ManagedNode::getLiquidNodeFor<LiquidConditionNode>(condition, false);
         //conditionNode->setPos(pos().x()-(conditionNode->size().width() + 30), pos().y());
@@ -210,9 +235,9 @@ void LiquidTaskNode::buildContents(){
                                                       new liquid::RejectingConnectionSink());
         liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,
                                QString::fromStdString(boost::get<std::string>(condition->nodeId())));
-        new liquid::Arc(Param_Arc_Style, conditionNode->source(), sink);
-        sink->setParent(label);
+        sink->setParentItem(label);
         this->addItem(label);
+        conditionNode->source()->arc()->addTo(label->sink());
     }
 
     foreach(boost::shared_ptr<PipelineNode> const& pipeline, m_node->getPipelines()){
@@ -221,9 +246,9 @@ void LiquidTaskNode::buildContents(){
                                                       new liquid::RejectingConnectionSink());
         liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,
                                QString::fromStdString(boost::get<std::string>(pipeline->nodeId())));
-        //new liquid::Arc(Param_Arc_Style, pipelineNode->source(), sink);
-        sink->setParent(label);
+        sink->setParentItem(label);
         this->addItem(label);
+        pipelineNode->source()->arc()->addTo(label->sink());
     }
 
     // the item view

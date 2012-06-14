@@ -123,7 +123,7 @@ void AiPlugin::setupTask(boost::shared_ptr<Node> node){
                     SetTaskStateMessage> >(node->to<AiTaskNode>())
                     );
         m_filter->addNode(node);
-    } catch(std::runtime_error e) {
+    } catch(std::runtime_error& e) {
         error() << "AiPlugin::setupTask: Expecting AiTaskNode" << e.what();
 
     }
@@ -136,7 +136,7 @@ void AiPlugin::setupCondition(boost::shared_ptr<Node> node){
                     SetConditionStateMessage> >(node->to<AiConditionNode>())
                     );
         m_filter->addNode(node);
-    } catch(std::runtime_error e) {
+    } catch(std::runtime_error& e) {
         error() << "AiPlugin::setupCondition: Expecting AiTaskNode" << e.what();
 
     }
@@ -155,14 +155,13 @@ void AiPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
         connect(conditions.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
                 this, SLOT(setupCondition(boost::shared_ptr<Node>)));
 
-
         boost::shared_ptr<CauvNode> node = m_actions->node.lock();
         if(node) {
             node->addMessageObserver(boost::make_shared<AiMessageObserver>(vehicle));
         } else error() << "Failed to lock CauvNode while setting up vehicle ai";
 
 
-    } catch(std::runtime_error e) {
+    } catch(std::runtime_error& e) {
         error() << "AiPlugin::setupVehicle: Expecting Vehicle Node" << e.what();
     }
 }

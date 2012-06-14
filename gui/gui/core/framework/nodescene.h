@@ -56,8 +56,12 @@ class NodeScene : public QGraphicsScene, public NodeDropListener {
 public:
     typedef DropHandlerInterface<QGraphicsItem *> drop_handler_t;
     typedef boost::shared_ptr<drop_handler_t> drop_handler_ptr;
-
-    NodeScene(QObject * parent = NULL);
+    
+    // !!! FIXME: dont_set_global_scene is a bit of a hack: this fixes the
+    // problem with nested scenes overwriting the scene in ManagedNode: to
+    // properly support nested scenes, the ManagedNode::m_scene should be tied
+    // to the root node of the model, or something similar
+    NodeScene(QObject * parent = NULL, bool dont_set_global_scene=false);
     virtual ~NodeScene();
 
     // drop handlers
