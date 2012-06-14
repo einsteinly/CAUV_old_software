@@ -472,7 +472,7 @@ class taskManager(aiProcess):
                     continue
                 call[0](*call[1], **call[2])
             except Exception:
-                error(traceback.format_exc())
+                error(traceback.format_exc().encode('ascii','ignore'))
     def die(self):
         try:
             self.periodic_timer.die_flag.set()

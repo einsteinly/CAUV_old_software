@@ -47,7 +47,7 @@ class detectionControl(aiProcess):
                 self.modules[detector_file] = __import__('detector_library.'+detector_file, fromlist=['detector_library'])
             except Exception:
                 error('Could not import detector %s.' %(detector_file,))
-                error(traceback.format_exc())
+                error(traceback.format_exc().encode('ascii','ignore'))
                 return
         #load and set options
         try:
@@ -73,7 +73,7 @@ class detectionControl(aiProcess):
             debug(detector_id+" does not exist, so cannot be stopped")
         except Exception as e:
             error('Could not kill detector %s.' %(detector_id,))
-            error(traceback.format_exc())
+            error(traceback.format_exc().encode('ascii','ignore'))
         else:
             info("Stopped detector %s." %(detector_id))
 
@@ -113,7 +113,7 @@ class detectionControl(aiProcess):
                     detector.process()
                 except Exception:
                     error('Exception while running %s.' %(detector_id,))
-                    error(traceback.format_exc())
+                    error(traceback.format_exc().encode('ascii','ignore'))
                 if detector.detected:
                     self.ai.task_manager.on_detector_state_change(detector_id, True)
                 self.node.send(messaging.ConditionStateMessage(detector_id, detector.options.get_options_as_params(),

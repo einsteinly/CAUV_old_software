@@ -54,7 +54,7 @@ try:
     script._notify_exit(result)
 except Exception as e:
     #pass error back to task manager
-    error(traceback.format_exc())
+    error(traceback.format_exc().encode('ascii','ignore'))
     script._notify_exit('ERROR')
     raise e
 finally:
