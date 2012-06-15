@@ -93,7 +93,7 @@ class aiMessageObserver(messaging.MessageObserver):
                     getattr(self.parent_process, message[2])(*message[3], **message[4])
                 except Exception as exc:
                     error("Error occured because of message: %s" %(str(message)))
-                    error(traceback.format_exc())
+                    error(traceback.format_exc().encode('ascii','ignore'))
             else:
                 error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
 
@@ -554,7 +554,7 @@ class aiDetector(messaging.MessageObserver):
             self.node.send(messaging.AIlogMessage(message), "ai")
         except:
             error('Error sending high-level log message')
-            error(traceback.format_exc())
+            error(traceback.format_exc().encode('ascii','ignore'))
     def die(self):
         self.drop_all_pl()
         self.node.removeObserver(self)

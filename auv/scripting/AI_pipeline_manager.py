@@ -74,7 +74,7 @@ class pipelineManager(aiProcess):
             pl_state = cauv.pipeline.Model.loadFile(open(filename))
         except:
             error('Error loading pipeline %s (%s)' %(name, filename))
-            error(traceback.format_exc())
+            error(traceback.format_exc().encode('ascii','ignore'))
             return
         self.pipelines[name] = pl_state
         
@@ -177,7 +177,7 @@ class pipelineManager(aiProcess):
                 pl.save('pipelines/temp/temp__'+reqname+'.pipe')
             except Exception:
                 error('Error saving pipeline %s' %(reqname))
-                error(traceback.format_exc())
+                error(traceback.format_exc().encode('ascii','ignore'))
             pl.clear()
         #4
         for reqname in to_add:
@@ -197,7 +197,7 @@ class pipelineManager(aiProcess):
                     req[0](**req[1])
                 except Exception:
                     error('Exception while trying to manage pipeline: ')
-                    error(traceback.format_exc())
+                    error(traceback.format_exc().encode('ascii','ignore'))
             else:
                 if self.request_queue.qsize()>5:
                     warning('Pipeline manager request queue is large, there may be delays')
