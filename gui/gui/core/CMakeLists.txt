@@ -2,8 +2,6 @@ project (gui-core)
 
 # required packages
 find_package (Qt4 REQUIRED)
-find_package (OpenCV REQUIRED)
-
 
 set ( GUI_CORE_AUX_DIRS
     framework
@@ -52,6 +50,8 @@ set ( GUI_CORE_SRCS
     framework/style.cpp
     framework/delegates.cpp
     framework/manager.cpp
+
+    framework/elements/style.cpp
 
     framework/fluidity/fNode.cpp
     framework/fluidity/view.cpp 
@@ -124,8 +124,6 @@ target_link_libraries ( gui-core
         cauv_debug
         liquid
         common
-        opencv_image
-        ${OpenCV_LIBS}
         ${QT_LIBRARIES}
     )
 depends_on_messages(gui-core)

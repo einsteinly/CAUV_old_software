@@ -93,8 +93,8 @@ std::set<std::string> AiConditionNode::getTypes(){
 
 
 LiquidConditionNode::LiquidConditionNode(boost::shared_ptr<AiConditionNode> node, QGraphicsItem * parent) :
-    liquid::LiquidNode(AI_Node_Style, parent), ManagedNode(this, node), m_node(node),
-    m_source(new liquid::ArcSource(this, new liquid::Arc(Param_Arc_Style)))
+    liquid::LiquidNode(AI_Node_Style(), parent), ManagedNode(this, node), m_node(node),
+    m_source(new liquid::ArcSource(this, new liquid::Arc(Param_Arc_Style())))
 {
     buildContents();
     setSize(QSize(300,300));

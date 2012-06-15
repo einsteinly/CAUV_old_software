@@ -98,7 +98,7 @@ FNodeInput::ConnectionStatus FNodeInput::doAcceptConnection(liquid::ArcSourceDel
 
 // - FNodeImageInput
 FNodeImageInput::FNodeImageInput(Manager& m, LocalNodeInput const& input, FNode* node)
-    : FNodeInput(m, Image_Arc_Style, cutoutStyleForSchedType(input.schedType), node, input.input){
+    : FNodeInput(m, Image_Arc_Style(), cutoutStyleForSchedType(input.schedType), node, input.input){
 }
 
 OutputType::e FNodeImageInput::ioType() const{
@@ -111,12 +111,12 @@ SubType FNodeImageInput::subType() const{
 
 liquid::CutoutStyle const& FNodeImageInput::cutoutStyleForSchedType(InputSchedType::e const& st){
     switch(st){
-        case InputSchedType::Must_Be_New: return Required_Image_Input;
-        case InputSchedType::May_Be_Old:  return Optional_Image_Input;
-        case InputSchedType::Optional:    return Optional_Image_Input;
+        case InputSchedType::Must_Be_New: return Required_Image_Input();
+        case InputSchedType::May_Be_Old:  return Optional_Image_Input();
+        case InputSchedType::Optional:    return Optional_Image_Input();
         default:
             error() << "unknown InputSchedtype:" << st;
-            return Required_Image_Input;
+            return Required_Image_Input();
     }
 }
 
@@ -174,7 +174,7 @@ static boost::shared_ptr<cauv::gui::Node> makeModelNodeForInput(std::string cons
 
 // - FNodeParamInput
 FNodeParamInput::FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode* node)
-    : FNodeInput(m, Image_Arc_Style, cutoutStyleForSchedType(input.schedType), node, input.input),
+    : FNodeInput(m, Image_Arc_Style(), cutoutStyleForSchedType(input.schedType), node, input.input),
       m_subtype(input.subType),
       m_compatible_subtypes(input.compatibleSubTypes.begin(), input.compatibleSubTypes.end()),
       m_model(),
@@ -256,12 +256,12 @@ void FNodeParamInput::modelValueChanged(QVariant value){
 
 liquid::CutoutStyle const& FNodeParamInput::cutoutStyleForSchedType(InputSchedType::e const& st){
     switch(st){
-        case InputSchedType::Must_Be_New: return Required_Param_Input;
-        case InputSchedType::May_Be_Old:  return Optional_Param_Input;
-        case InputSchedType::Optional:    return Optional_Param_Input;
+        case InputSchedType::Must_Be_New: return Required_Param_Input();
+        case InputSchedType::May_Be_Old:  return Optional_Param_Input();
+        case InputSchedType::Optional:    return Optional_Param_Input();
         default:
             error() << "unknown InputSchedtype:" << st;
-            return Required_Param_Input;
+            return Required_Param_Input();
     }
 }
 

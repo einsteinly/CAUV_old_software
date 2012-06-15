@@ -44,7 +44,7 @@ using namespace cauv::gui;
 
 
 LiquidPipelineNode::LiquidPipelineNode(boost::shared_ptr<PipelineNode> node, QGraphicsItem *parent)
-    : liquid::LiquidNode(AI_Node_Style, parent),
+    : liquid::LiquidNode(AI_Node_Style(), parent),
       ManagedNode(this, node),
       m_node(node),
       m_contents(NULL),
@@ -205,7 +205,7 @@ std::set<std::string> AiTaskNode::getTypes(){
 
 
 LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem * parent) :
-    liquid::LiquidNode(AI_Node_Style, parent), ManagedNode(this, node), m_node(node)
+    liquid::LiquidNode(AI_Node_Style(), parent), ManagedNode(this, node), m_node(node)
 {
     buildContents();
     setSize(QSize(300,300));
@@ -231,22 +231,22 @@ void LiquidTaskNode::buildContents(){
     foreach(boost::shared_ptr<AiConditionNode> const& condition, m_node->getConditions()){
         LiquidConditionNode * conditionNode = ManagedNode::getLiquidNodeFor<LiquidConditionNode>(condition, false);
         //conditionNode->setPos(pos().x()-(conditionNode->size().width() + 30), pos().y());
-        liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style, Required_Param_Input,
+        liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
                                                       new liquid::RejectingConnectionSink());
         liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,
                                QString::fromStdString(boost::get<std::string>(condition->nodeId())));
-        sink->setParentItem(label);
+        sink->setParent(label);
         this->addItem(label);
         conditionNode->source()->arc()->addTo(label->sink());
     }
 
     foreach(boost::shared_ptr<PipelineNode> const& pipeline, m_node->getPipelines()){
         LiquidPipelineNode * pipelineNode = ManagedNode::getLiquidNodeFor<LiquidPipelineNode>(pipeline, false);
-        liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style, Required_Param_Input,
+        liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
                                                       new liquid::RejectingConnectionSink());
         liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,
                                QString::fromStdString(boost::get<std::string>(pipeline->nodeId())));
-        sink->setParentItem(label);
+        sink->setParent(label);
         this->addItem(label);
         pipelineNode->source()->arc()->addTo(label->sink());
     }

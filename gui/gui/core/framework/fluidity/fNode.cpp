@@ -123,7 +123,7 @@ static int countLocalInputsWithName(std::string const& name, FNode::msg_node_par
 // - FNode
 
 FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
-    : liquid::LiquidNode(F_Node_Style, NULL), 
+    : liquid::LiquidNode(F_Node_Style(), NULL), 
       ManagedElement(m),
       m_node_id(id),
       m_type(type),
@@ -140,7 +140,7 @@ FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
 
 
 FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
-    : liquid::LiquidNode(F_Node_Style, NULL),
+    : liquid::LiquidNode(F_Node_Style(), NULL),
       ManagedElement(m),
       m_node_id(p->nodeId()),
       m_type(p->nodeType()),

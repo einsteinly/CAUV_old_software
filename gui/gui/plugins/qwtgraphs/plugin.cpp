@@ -36,7 +36,7 @@ QGraphicsItem * QwtGraphDropHandler::handle(boost::shared_ptr<Node> const& node)
 
     GraphWidget * graph = new GraphWidget(boost::static_pointer_cast<NumericNodeBase>(node));
 
-    liquid::LiquidNode * ln = new liquid::LiquidNode(AI_Node_Style);
+    liquid::LiquidNode * ln = new liquid::LiquidNode(AI_Node_Style());
     ln->setResizable(true);
 
     QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();

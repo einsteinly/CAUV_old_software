@@ -77,9 +77,9 @@ void AiPlugin::initialise(){
 
 
         AiNode *node = new AiNode();
-        node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
-        node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
-        node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
+        node->addItem(new liquid::ArcSink(Image_Arc_Style(), Required_Image_Input(), new liquid::RejectingConnectionSink()));
+        node->addItem(new liquid::ArcSink(Image_Arc_Style(), Required_Image_Input(), new liquid::RejectingConnectionSink()));
+        node->addItem(new liquid::ArcSink(Image_Arc_Style(), Required_Image_Input(), new liquid::RejectingConnectionSink()));
         QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
         proxy->setWidget(new NodePicker(m_actions->auv));
         node->addItem(proxy);

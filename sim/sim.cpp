@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <boost/make_shared.hpp>
 
+#include <osgDB/ReadFile>
 #include <osgGA/NodeTrackerManipulator>
 #include <osg/PositionAttitudeTransform>
 #include <osg/FrameStamp>
@@ -71,7 +72,7 @@ class SimNode : public CauvNode {
                             po::positional_options_description& pos);
     private:
     unsigned int max_rate;
-    std::string resource_dir;
+    std::string env_file;
     bool sim_sonar;
 };
 
@@ -81,7 +82,7 @@ void SimNode::addOptions(po::options_description& desc,
     CauvNode::addOptions(desc, pos);
     desc.add_options()
         ("max_rate,r", po::value<unsigned int>(&max_rate)->default_value(20), "Maximum rate to send camera image messages")
-        ("resource_dir,d", po::value<std::string>(&resource_dir)->default_value(""), "OSG resource directory to use")
+        ("env_file,f", po::value<std::string>(&env_file)->default_value(""), "Simulation environment .osgt file to use")
         ("sim_sonar,g", po::value<bool>(&sim_sonar)->default_value(false)->zero_tokens(), "Simulate sonar data")
     ;
 }
@@ -92,6 +93,7 @@ void SimNode::onRun(void) {
     viewer->setUpViewInWindow(0,0,640,320);
     viewer->setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
 
+#if 0
     for (int i = 0; i != 3; i++) {
         osg::ref_ptr<osg::Node> buoy = new BuoyNode(0.2);
         osg::ref_ptr<osg::PositionAttitudeTransform> buoy_pos = new osg::PositionAttitudeTransform();
@@ -99,6 +101,7 @@ void SimNode::onRun(void) {
         root_group->addChild(buoy_pos);
         buoy_pos->setPosition(osg::Vec3f(i*10,0,0));
     }
+#endif
   
     osg::ref_ptr<osg::Node> vehicle = new RedHerringNode();
     osg::ref_ptr<osg::PositionAttitudeTransform> vehicle_pos = new osg::PositionAttitudeTransform();
@@ -107,6 +110,10 @@ void SimNode::onRun(void) {
 
     //osg::ref_ptr<osg::Node> surface = new WaterNode();
     //root_group->addChild(surface);
+    //
+    
+    osg::ref_ptr<osg::Node> environment_node = osgDB::readNodeFile(env_file);
+    root_group->addChild(environment_node);
 
     osg::ref_ptr<osgGA::NodeTrackerManipulator> trackballmanip = new osgGA::NodeTrackerManipulator();
     trackballmanip->setTrackerMode(osgGA::NodeTrackerManipulator::NODE_CENTER);
@@ -148,7 +155,7 @@ void SimNode::onRun(void) {
                   osg::Vec3d(1,0,0), M_PI/2,
                   osg::Vec3d(0,0,0), 0,
                   osg::Vec3d(0,0,0), 0,
-                  512, 512,
+                  200, 50,
                   this,
                   max_rate);
     }

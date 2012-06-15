@@ -65,7 +65,7 @@ public:
 
     virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node) {
 
-        liquid::LiquidNode * ln = new liquid::LiquidNode(AI_Node_Style);
+        liquid::LiquidNode * ln = new liquid::LiquidNode(AI_Node_Style());
         ln->setResizable(true);
         ln->header()->setTitle(QString::fromStdString(node->nodeName()));
         ln->header()->setInfo(QString::fromStdString(node->nodePath()));
@@ -129,7 +129,7 @@ public:
     virtual QGraphicsItem* handle(boost::shared_ptr<Node> const& node) {
         debug() << "GraphingDropHandler drop from" << node->nodePath();
         
-        liquid::LiquidNode * ln = new liquid::LiquidNode(Graph_Node_Style);
+        liquid::LiquidNode * ln = new liquid::LiquidNode(Graph_Node_Style());
         ln->setResizable(true);
         ln->header()->setTitle(QString::fromStdString(node->nodeName()));
         ln->header()->setInfo(QString::fromStdString(node->nodePath()));

@@ -70,9 +70,9 @@ NodeInput::NodeInput(liquid::NodeStyle const& style,
     QPainterPath p;
     m_rect = QRectF(
         0,
-        -Required_Image_Input.main_cutout.cutout_base/2,
-        Required_Image_Input.main_cutout.cutout_depth,
-        Required_Image_Input.main_cutout.cutout_base
+        -Required_Image_Input().main_cutout.cutout_base/2,
+        Required_Image_Input().main_cutout.cutout_depth,
+        Required_Image_Input().main_cutout.cutout_base
     );
     p.addRect(m_rect);
     setPath(p);

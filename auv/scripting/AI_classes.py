@@ -181,7 +181,7 @@ class aiOptionsBase(type):
         #make sure converted to params if needed
         options={}
         for key, attr in cls.__dict__.iteritems():
-            if key in cls.option_classes and hasattr(cls._option_classes[key], 'asParamValue'):
+            if key in cls._option_classes and hasattr(cls._option_classes[key], 'asParamValue'):
                 options[key] = cls._option_classes[key].asParamValue(attr)
             else: options[key] = attr
         return options
@@ -206,7 +206,7 @@ class aiOptions(object):
         #make sure converted to params if needed
         options={}
         for key, attr in self.__dict__.iteritems():
-            if key in self.option_classes and hasattr(self._option_classes[key], 'asParamValue'):
+            if key in self._option_classes and hasattr(self._option_classes[key], 'asParamValue'):
                 options[key] = self._option_classes[key].asParamValue(attr)
             else: options[key] = attr
         return options
@@ -527,6 +527,8 @@ class aiDetector(messaging.MessageObserver):
     def set_option(self, option_name, option_value):
         setattr(self.options, option_name, option_value)
         self.optionChanged(option_name)
+    def get_debug_values(self):
+        return {}
     def log(self, message):
         try:
             self.node.send(messaging.AIlogMessage(message), "ai")
