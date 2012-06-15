@@ -46,6 +46,7 @@ public:
 public Q_SLOTS:
     int send(boost::shared_ptr<const Message>message);
     void registerObserver(boost::shared_ptr<MessageObserver>observer);
+    void createRadialMenu(QPoint point);
 
 protected:
     virtual void onRun();

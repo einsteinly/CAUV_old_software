@@ -46,6 +46,8 @@
 
 #include "framework/elements/style.h"
 
+#include <liquid/magma/radialMenu.h>
+
 using namespace cauv;
 using namespace cauv::gui;
 
@@ -220,7 +222,7 @@ void CauvMainWindow::onRun()
     m_actions->scene = boost::make_shared<NodeScene>();
     m_actions->view->setScene(m_actions->scene.get());
     m_actions->view->centerOn(0,0);
-
+    m_actions->view->setContextMenuPolicy(Qt::CustomContextMenu);
     // Set the viewport to use OpenGl here. Nested Gl viewports don't work
     m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
@@ -253,6 +255,9 @@ void CauvMainWindow::onRun()
     restoreState(settings.value("windowState").toByteArray());
 
     show();
+
+    connect(m_actions->view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(createRadialMenu(QPoint)));
+
     m_application->exec();
 
     foreach(CauvInterfacePlugin * plugin, m_plugins){
@@ -301,6 +306,14 @@ int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
     }
 
     return numFound;
+}
+
+void CauvMainWindow::createRadialMenu(QPoint point){
+    QPoint sc = m_actions->view->mapToGlobal(point);
+    debug() << "radial menu creation!";
+    ShapedClock * clock = new ShapedClock();
+    clock->setGeometry(QRect(sc.x()-40, sc.y()-40, 80, 80));
+    clock->show();
 }
 
 
