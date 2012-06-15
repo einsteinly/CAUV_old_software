@@ -12,35 +12,31 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef __LIQUID_MAGMA_RADIAL_MENU_H__
-#define __LIQUID_MAGMA_RADIAL_MENU_H__
+#ifndef SHAPEDCLOCK_H
+#define SHAPEDCLOCK_H
 
 #include <QWidget>
 
-namespace liquid {
-namespace magma {
-
-class RadialMenu : public QWidget
+class ShapedClock : public QWidget
 {
     Q_OBJECT
 
 public:
-    RadialMenu(QWidget *parent = 0);
+    ShapedClock(QWidget *parent = 0);
     QSize sizeHint() const;
 
 public Q_SLOTS:
     void createSubmenu(QPoint p);
 
 protected:
+    void mouseMoveEvent(QMouseEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+    void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *event);
     void focusOutEvent(QFocusEvent *event);
-    void recomputeMask();
 
 private:
     QPoint dragPosition;
 };
 
-} // namespace magma
-} // namespace liquid
-
-#endif // namespace __LIQUID_MAGMA_RADIAL_MENU_H__
+#endif

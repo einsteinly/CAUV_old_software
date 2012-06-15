@@ -6,6 +6,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set (
     MAGMA_SRCS
     radialMenu.cpp
+    radialSegment.cpp
 )
 
 set (
@@ -15,6 +16,7 @@ set (
 set (
     MAGMA_H
     radialMenu.h
+    radialSegment.h
 )
 
 set (
