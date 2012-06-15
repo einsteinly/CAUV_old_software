@@ -187,7 +187,7 @@ class pipelineManager(aiProcess):
 
     def run(self):
         #this should probably be replaced with multiple pipelines
-        while True:
+        while self.running:
             for x in range(5):
                 try:
                     req = self.request_queue.get(block=True, timeout=0.25)
@@ -208,60 +208,7 @@ class pipelineManager(aiProcess):
                 #self.state.sync()
     
 
-# These are the BSD ones
-Signal_Names = {
-    1  : "SIGHUP",
-    2  : "SIGINT",
-    3  : "SIGQUIT",
-    4  : "SIGILL",
-    5  : "SIGTRAP",
-    6  : "SIGABRT",
-    7  : "SIGEMT",
-    8  : "SIGFPE",
-    9  : "SIGKILL",
-    10 : "SIGBUS",
-    11 : "SIGSEGV",
-    12 : "SIGSYS",
-    13 : "SIGPIPE",
-    14 : "SIGALRM",
-    15 : "SIGTERM",
-    16 : "SIGURG",
-    17 : "SIGSTOP",
-    18 : "SIGTSTP",
-    19 : "SIGCONT",
-    20 : "SIGCHLD",
-    21 : "SIGTTIN",
-    22 : "SIGTTOU",
-    23 : "SIGIO",
-    24 : "SIGXCPU",
-    25 : "SIGXFSZ",
-    26 : "SIGVTALRM",
-    27 : "SIGPROF",
-    28 : "SIGWINCH",
-    29 : "SIGINFO",
-    30 : "SIGUSR1",
-    31 : "SIGUSR2"
-}
-
-import traceback
-def sigHandler(signum, frame):
-    error('Signal %s (%d) in %s' % (Signal_Names[signum], signum, ''.join(traceback.format_stack(frame))))
-    raise Exception('caught signal')
-        
 if __name__ == '__main__':
-    # temp debug code, try to work out where the KeyboardInterrupt is coming
-    # from:
-    #import signal
-    """
-    for i in xrange(0, signal.NSIG):
-        try: 
-            signal.signal(i, sigHandler);
-            debug('installed signal handler for %d' % i)
-        except ValueError:
-            pass
-        except RuntimeError:
-            pass
-    """
     p = argparse.ArgumentParser()
     p.add_argument('-r', '--restore', dest='restore', default=False,
                  action='store_true', help="try and resume from last saved state")

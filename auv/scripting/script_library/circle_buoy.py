@@ -18,8 +18,8 @@ class scriptOptions(aiScriptOptions):
     Warn_Seconds_Between_Sights = 5
     Give_Up_Seconds_Between_Sights = 30
     Node_Name = "py-CrcB" # unused
-    Depth_Ceiling = 3 # XXX Probably dangerous for real testing
-    Strafe_Speed = 20   # (int [-127,127]) controls strafe speed
+    Depth_Ceiling = 0.8
+    Strafe_Speed = 70   # (int [-127,127]) controls strafe speed
     Buoy_Size = 0.15     # (float [0.0, 1.0]) controls distance from buoy. Units are field of view (fraction) that the buoy should fill
     Size_Control_kPID = (-30, 0, 0)  # (Kp, Ki, Kd)
     Size_DError_Window = expWindow(5, 0.6)
@@ -27,7 +27,7 @@ class scriptOptions(aiScriptOptions):
     Angle_Control_kPID = (0.6, 0, 0) # (Kp, Ki, Kd)
     Angle_DError_Window = expWindow(5, 0.6)
     Angle_Error_Clamp = 1e30
-    Depth_Control_kPID = (-0.05, -0.01, 0) # (Kp, Ki, Kd)
+    Depth_Control_kPID = (0.01, 0, 0) # (Kp, Ki, Kd)
     Depth_DError_Window = expWindow(5, 0.6)
     Depth_Error_Clamp = 200
     
@@ -205,7 +205,7 @@ class script(aiScript):
         try:
             while False in entered_quarters:
                 self.auv.strafe(self.__strafe_speed)
-                time.sleep(0.5)
+                time.sleep(3)
                 time_since_seen = 0
                 if self.time_last_seen is not None:
                     time_since_seen = time.time() - self.time_last_seen

@@ -83,7 +83,7 @@ class auvControl(aiProcess):
     @external_function
     @force_calling_process
     def request_control(self, timeout=None, *args, **kwargs):
-        self.processing_queue.put(('request_control_local',[kwargs['calling_process'], timeout],{}))
+        self.processing_queue.put((self.request_control_local,[kwargs['calling_process'], timeout],{}))
     def request_control_local(self, calling_process, timeout=None):
         try:
             self.waiting_for_control[calling_process] = (self.active_tasks[calling_process], timeout+time.time() if timeout else None)
@@ -99,10 +99,10 @@ class auvControl(aiProcess):
     @external_function
     @force_calling_process
     def drop_control(self, *args, **kwargs):
-        self.processing_queue.put(('drop_control_local',[kwargs['calling_process']],{}))
+        self.processing_queue.put((self.drop_control_local,[kwargs['calling_process']],{}))
     def drop_control_local(self, task_id):
         self.waiting_for_control.pop(task_id, None)
-        #need to tel script its been paused, else if it wants control in the future it will think it already has it.
+        #need to tell script its been paused, else if it wants control in the future it will think it already has it.
         getattr(self.ai, task_id)._set_paused()
             
     #GENERAL FUNCTIONS (that could be called from anywhere)
@@ -119,7 +119,7 @@ class auvControl(aiProcess):
         self.auv.pitch(0)
         #check that depth autopilot has been set,
         if 'depth' in self._control_state and self._control_state['depth'] != None:
-            self.auv.depth(self._control_state)
+            self.auv.depth(*self._control_state['depth'][0])
     @external_function
     def lights_off(self):
         self.auv.downlights(0)
@@ -134,13 +134,13 @@ class auvControl(aiProcess):
     #TASK MANAGER COMMANDS
     @external_function
     def set_current_task_id(self, task_id, priority):
-        self.processing_queue.put(('set_current_task_id_local',[task_id, priority],{}))
+        self.processing_queue.put((self.set_current_task_id_local,[task_id, priority],{}))
     @external_function
     def add_additional_task_id(self, task_id, priority):
-        self.processing_queue.put(('add_additional_task_id_local',[task_id, priority],{}))
+        self.processing_queue.put((self.add_additional_task_id_local,[task_id, priority],{}))
     @external_function
     def remove_additional_task_id(self, task_id):
-        self.processing_queue.put(('remove_additional_task_id_local',[task_id],{}))
+        self.processing_queue.put((self.remove_additional_task_id_local,[task_id],{}))
         
     def set_current_task_id_local(self, task_id, priority):
         try:
@@ -159,7 +159,7 @@ class auvControl(aiProcess):
             else:
                 self._control_state_default = {}
         self.default_task = task_id
-        #dont add to list if default set to none
+        #Don't add to list if default set to none
         if task_id:
             self.waiting_for_control[task_id] = (priority, None)
     def add_additional_task_id_local(self, task_id, priority):
@@ -256,19 +256,18 @@ class auvControl(aiProcess):
             getattr(self.ai, self.current_task)._set_unpaused()
                     
     def run(self):
-        signalling_thread = threading.Thread(target=self.signal_loop)
-        signalling_thread.start()
-        while True:
+        signalling_thread = None
+        while self.running:
             if not self.signal_msgs.empty():
-                if not signalling_thread.is_alive():
+                if signalling_thread is None or not signalling_thread.is_alive():
                     signalling_thread = threading.Thread(target=self.signal_loop)
                     signalling_thread.start()
-            while True:
+            while self.running:
                 try:
                     function, args, kwargs = self.processing_queue.get(block=True, timeout=1)
                 except Queue.Empty:
                     break
-                getattr(self, function)(*args,**kwargs)
+                function(*args,**kwargs)
                 self.reevaluate()
     def die(self):
         self.disable()

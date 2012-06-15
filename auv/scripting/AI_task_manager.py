@@ -382,8 +382,10 @@ class taskManager(aiProcess):
             self.ai.auv_control.set_current_task_id(task.id, task.options.priority)
             #disable/enable detectors according to task
             self.detectors_enabled = task.options.detectors_enabled_while_running
-            if self.detectors_enabled: self.ai.detector_control.enable()
-            else: self.ai.detector_control.disable()
+            if self.detectors_enabled:
+                self.ai.detector_control.enable()
+            else:
+                self.ai.detector_control.disable()
             #set priority
             self.current_priority = task.options.running_priority
             self.current_task = task
@@ -463,7 +465,7 @@ class taskManager(aiProcess):
         self.periodic_timer.start()
         self.state_save_timer.start()
         self.gui_send_all() #need to make sure gui gets initial data
-        while True:
+        while self.running:
             try:
                 try:
                     call = self.processing_queue.popleft()

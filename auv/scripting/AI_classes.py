@@ -128,6 +128,7 @@ class aiProcess():
         self.node.join("guiai")
         self.process_name = process_name
         self.ai = aiAccess(self.node, self.process_name)
+        self.running = True
     def _register(self):
         self.node.addObserver(self._msg_observer)
         self.ai.manager.register()
@@ -139,6 +140,7 @@ class aiProcess():
             error('Error sending high-level log message')
             traceback.print_exc()
     def die(self):
+        self.running = False
         info('Clearing up process %s' %(self.process_name,))
         self.node.stop()
 
