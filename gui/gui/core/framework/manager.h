@@ -36,9 +36,11 @@ public:
             if(!m_scene){
                 error() << "ManagedNode must have a scene set before calling getLiquidNodeFor(...)";
             }
+            debug() << "getLiquidNodeFor" << node->nodePath() << "creating new node";
             liquidNode = new T(node);
             m_scene->addItem(liquidNode);
         } else {
+            debug() << "getLiquidNodeFor" << node->nodePath() << "returning existing node";
             liquidNode = static_cast<T*>(ln);
         }
 
@@ -47,7 +49,8 @@ public:
 
         return liquidNode;
     }
-
+    
+    // !!! FIXME: this needs to be set per-model, otherwise nested scenes break!
     static void setScene(QGraphicsScene * scene);
 
 protected:

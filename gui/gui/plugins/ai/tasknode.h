@@ -51,9 +51,12 @@ public:
 
     void ensureInited(boost::weak_ptr<CauvNode> with_cauv_node);
 
+    liquid::AbstractArcSource * source(){ return m_source; }
+
 protected:
     boost::shared_ptr<PipelineNode> m_node;
     liquid::ProxyWidget* m_contents;
+    liquid::ArcSource * m_source;    
 };
 
 } // namespace gui

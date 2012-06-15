@@ -41,6 +41,7 @@ AiDropHandler::AiDropHandler(boost::shared_ptr<NodeItemModel> model, boost::weak
 }
 
 bool AiDropHandler::accepts(boost::shared_ptr<Node> const& node){
+    debug() << "::accepts" << node->nodePath();
     return (node->type == nodeType<AiMissionNode>() ||
             node->type == nodeType<AiTaskNode>() ||
             node->type == nodeType<PipelineNode>() ||
@@ -48,6 +49,7 @@ bool AiDropHandler::accepts(boost::shared_ptr<Node> const& node){
 }
 
 QGraphicsItem * AiDropHandler::handle(boost::shared_ptr<Node> const& node) {
+    debug() << "AiDropHandler::handle" << node->type;
 
     if (node->type == nodeType<AiTaskNode>()) {
         LiquidTaskNode * n = ManagedNode::getLiquidNodeFor<LiquidTaskNode>(
@@ -57,8 +59,10 @@ QGraphicsItem * AiDropHandler::handle(boost::shared_ptr<Node> const& node) {
     }
 
     if (node->type == nodeType<PipelineNode>()) {
+        debug() << "type == PipelineNode";
         LiquidPipelineNode * n = ManagedNode::getLiquidNodeFor<LiquidPipelineNode>(
                     boost::static_pointer_cast<PipelineNode>(node));
+        debug() << n;
         // OK this is really ugly, but the only reasonable way I could find to get the
         // CauvNode to where it is needed
         n->ensureInited(m_cauv_node);

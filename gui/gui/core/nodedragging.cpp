@@ -63,7 +63,7 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
                                 dragEvent->accept();
                                 return true;
                             }
-                        } catch (std::runtime_error ex){
+                        } catch (std::runtime_error& ex){
                             warning() << ex.what();
                         }
                     }
@@ -88,7 +88,7 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
                                 dropEvent->accept();
                                 m_listener->routeNode(node,  QPointF(dropEvent->pos()));
                             }
-                        } catch (std::runtime_error ex){
+                        } catch (std::runtime_error& ex){
                             warning() << ex.what();
                         }
                     }
@@ -118,8 +118,10 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
                                     m_listener->routeNode(node, dndEvent->scenePos());
                                 }
                             }
-                        } catch (std::runtime_error ex){
+                        } catch (std::runtime_error& ex){
                             warning() << ex.what();
+                        } catch (std::exception& ex){
+                            error() << ex.what();
                         }
                     }
                 }

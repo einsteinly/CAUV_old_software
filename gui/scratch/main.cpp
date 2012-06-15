@@ -47,6 +47,7 @@ class ScratchNode: public cauv::CauvNode, public boost::enable_shared_from_this<
             if (ret != 0) return ret;
 
             m_pipeline_name = vm["pipeline"].as<std::string>();
+
             return 0;
         }
 
