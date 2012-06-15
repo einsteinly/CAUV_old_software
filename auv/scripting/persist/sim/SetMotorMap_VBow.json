@@ -1,0 +1,18 @@
+{
+    "__name__": "SetMotorMapMessage", 
+    "contents": {
+        "mapping": {
+            "__name__": "MotorMap", 
+            "contents": {
+                "maxMinus": -127, 
+                "maxPlus": 127, 
+                "zeroMinus": 0, 
+                "zeroPlus": 0
+            }
+        }, 
+        "motor": {
+            "__name__": "MotorID", 
+            "value": "VBow"
+        }
+    }
+}
