@@ -48,7 +48,7 @@ LiquidPipelineNode::LiquidPipelineNode(boost::shared_ptr<PipelineNode> node, QGr
       ManagedNode(this, node),
       m_node(node),
       m_contents(NULL),
-      m_source(new liquid::ArcSource(this, new liquid::Arc(Image_Arc_Style))){
+      m_source(new liquid::ArcSource(this, new liquid::Arc(Image_Arc_Style()))){
 
     setResizable(true);
 
