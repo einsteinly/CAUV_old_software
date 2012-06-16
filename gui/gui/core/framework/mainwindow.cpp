@@ -47,6 +47,7 @@
 #include "framework/elements/style.h"
 
 #include <liquid/magma/radialMenu.h>
+#include <liquid/magma/style.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -311,9 +312,11 @@ int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
 void CauvMainWindow::createRadialMenu(QPoint point){
     QPoint sc = m_actions->view->mapToGlobal(point);
     debug() << "radial menu creation!";
-    ShapedClock * clock = new ShapedClock();
-    clock->setGeometry(QRect(sc.x()-40, sc.y()-40, 80, 80));
-    clock->show();
+    liquid::magma::RadialMenu * menu = new liquid::magma::RadialMenu(liquid::magma::Default_RadialMenuStyle());
+    menu->setModel(m_actions->root.get());
+    QRect geo = menu->geometry();
+    menu->setGeometry(QRect(sc.x()-geo.width()/2, sc.y()-geo.height()/2, geo.height(), geo.width()));
+    menu->show();
 }
 
 

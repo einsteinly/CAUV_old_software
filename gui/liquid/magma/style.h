@@ -24,21 +24,6 @@
 namespace liquid {
 namespace magma {
 
-
-    struct RadialMenuStyle {
-        RadialSegmentStyle segment;
-        QPen   pen;
-        QBrush brush;
-        float spacing;
-    };
-
-    struct RadialSegmentStyle {
-        RadialTickStyle tick;
-        RadialTickStyle source;
-        QPen   pen;
-        QBrush brush;
-    };
-
     struct RadialTickStyle {
         QPolygon shape;
         QPen   pen;
@@ -46,6 +31,26 @@ namespace magma {
         QFont  font;
         float length;
     };
+
+    struct RadialSegmentStyle {
+        RadialTickStyle tick;
+        RadialTickStyle source;
+        QPen   pen;
+        QBrush brush;
+        float width;
+    };
+
+    struct RadialMenuStyle {
+        RadialSegmentStyle segment;
+        QPen   pen;
+        QBrush brush;
+        float spacing;
+        float centreSpace;
+    };
+
+    const liquid::magma::RadialMenuStyle    &Default_RadialMenuStyle();
+    const liquid::magma::RadialSegmentStyle &Default_RadialSegmentStyle();
+    const liquid::magma::RadialTickStyle    &Default_RadialTickStyle();
 
 } // namespace magma
 } // namespace liquid

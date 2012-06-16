@@ -7,6 +7,7 @@ set (
     MAGMA_SRCS
     radialMenu.cpp
     radialSegment.cpp
+    style.cpp
 )
 
 set (

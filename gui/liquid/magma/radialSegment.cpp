@@ -13,138 +13,197 @@
  */
 
 #include <QtGui>
+#include <QPainterPath>
 
 #include "radialSegment.h"
+#include "style.h"
 
-ShapedClock::ShapedClock(QWidget *parent)
-    : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint)
+using namespace liquid;
+using namespace liquid::magma;
+
+class ShimmeringAnimation : public QSequentialAnimationGroup {
+public:
+    ShimmeringAnimation(QObject * target, const QByteArray& property,
+                        QVariant amplitude, int duration):
+        m_target(target), m_property(property), m_amplitude(amplitude),
+        m_shimmerIn(new QPropertyAnimation(target, property, this)),
+        m_shimmerOut(new QPropertyAnimation(target, property, this))
+    {
+        m_shimmerIn->setStartValue(target->property(property));
+        m_shimmerIn->setEndValue(target->property(property).toFloat() -
+                                 m_amplitude.toFloat());
+        m_shimmerIn->setDuration(duration);
+        m_shimmerIn->setEasingCurve(QEasingCurve::InSine);
+
+        m_shimmerOut->setStartValue(target->property(property).toFloat() -
+                                 m_amplitude.toFloat());
+        m_shimmerOut->setEndValue(target->property(property));
+        m_shimmerOut->setDuration(duration);
+        m_shimmerOut->setEasingCurve(QEasingCurve::OutSine);
+
+        addAnimation(m_shimmerIn);
+        addAnimation(m_shimmerOut);
+        setLoopCount(-1);
+    }
+
+protected:
+    QObject * m_target;
+    QByteArray const& m_property;
+    QVariant m_amplitude;
+    QPropertyAnimation * m_shimmerIn;
+    QPropertyAnimation * m_shimmerOut;
+};
+
+
+RadialSegment::RadialSegment(RadialSegmentStyle const& style, float radius,
+                             float rotation, float angle, QWidget *parent)
+    : QWidget(parent), m_style(style), m_radius(radius),
+      m_rotation(rotation), m_angle(angle)
 {
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(update()));
-    timer->start(1000);
+    setFixedSize(m_radius*2,m_radius*2);
 
-    QAction *quitAction = new QAction(tr("E&xit"), this);
-    quitAction->setShortcut(tr("Ctrl+Q"));
-    connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
-    addAction(quitAction);
+    QPropertyAnimation * radiusAnimation = new QPropertyAnimation(this, "radius", this);
+    radiusAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+    radiusAnimation->setStartValue(m_style.width);
+    radiusAnimation->setEndValue(m_radius);
+    radiusAnimation->setDuration(250);
+    m_startupAnimations.addAnimation(radiusAnimation);
 
-    setContextMenuPolicy(Qt::CustomContextMenu);
+    QPropertyAnimation * angleAnimation = new QPropertyAnimation(this, "angle", this);
+    angleAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+    angleAnimation->setStartValue(0);
+    angleAnimation->setEndValue(m_angle);
+    angleAnimation->setDuration(150);
+    m_startupAnimations.addAnimation(angleAnimation);
 
-    this->connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(createSubmenu(QPoint)));
+    QPropertyAnimation * rotationAnimation = new QPropertyAnimation(this, "rotation", this);
+    //rotationAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+    rotationAnimation->setStartValue(0);
+    rotationAnimation->setEndValue(m_rotation);
+    rotationAnimation->setDuration(200);
+    m_startupAnimations.addAnimation(rotationAnimation);
 
-    setWindowTitle(tr("Shaped Analog Clock"));
-
-    this->setFocusPolicy(Qt::StrongFocus);
+    m_runningAnimations.addAnimation(new ShimmeringAnimation(this, "radius", 4.0, 8000));
+    m_runningAnimations.addAnimation(new ShimmeringAnimation(this, "angle", 5.0, 10000));
+    m_runningAnimations.addAnimation(new ShimmeringAnimation(this, "rotation", 20.0, 45000));
 }
 
-void ShapedClock::mousePressEvent(QMouseEvent *event)
+void RadialSegment::showEvent ( QShowEvent * event ) {
+    if(!event->spontaneous())
+        animateIn();
+}
+
+void RadialSegment::animateIn(){
+    m_startupAnimations.start();
+    connect(&m_startupAnimations, SIGNAL(finished()),
+            &m_runningAnimations, SLOT(start()));
+}
+
+void RadialSegment::setRadius(float r){
+    m_radius = r;
+    update();
+}
+
+float RadialSegment::getRadius(){
+    return m_radius;
+}
+
+void RadialSegment::setRotation(float r){
+    m_rotation = r;
+    update();
+}
+
+float RadialSegment::getRotation(){
+    return m_rotation;
+}
+
+void RadialSegment::setAngle(float a){
+    m_angle = a;
+    update();
+}
+
+float RadialSegment::getAngle(){
+    return m_angle;
+}
+
+void RadialSegment::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
         dragPosition = event->globalPos() - frameGeometry().topLeft();
         event->accept();
     }
+
 }
 
-void ShapedClock::mouseMoveEvent(QMouseEvent *event)
+void RadialSegment::mouseMoveEvent(QMouseEvent *event)
 {
     if (event->buttons() & Qt::LeftButton) {
         move(event->globalPos() - dragPosition);
         event->accept();
     }
-}
-
-void ShapedClock::focusOutEvent(QFocusEvent *){
-    //deleteLater();
-}
-
-void ShapedClock::createSubmenu(QPoint p){
-    ShapedClock * c = new ShapedClock(this);
-    c->show();
-
-    int side = qMin(width(), height());
-    QRegion maskedRegion(width() / 2 - side / 2, height() / 2 - side / 2, side,
-                         side, QRegion::Ellipse);
-    foreach(QObject * child, this->children()){
-        QWidget * widget = qobject_cast<QWidget*>(child);
-        if(widget)
-            maskedRegion.unite(widget->mask());
-    }
-
-    setMask(maskedRegion);
 
 }
 
-void ShapedClock::paintEvent(QPaintEvent *)
+void RadialSegment::paintEvent(QPaintEvent *)
 {
-    static const QPoint hourHand[3] = {
-        QPoint(7, 8),
-        QPoint(-7, 8),
-        QPoint(0, -40)
-    };
-    static const QPoint minuteHand[3] = {
-        QPoint(7, 8),
-        QPoint(-7, 8),
-        QPoint(0, -70)
-    };
-
-    QColor hourColor(127, 0, 127);
-    QColor minuteColor(0, 127, 127, 191);
-
-    int side = qMin(width(), height());
-    QTime time = QTime::currentTime();
-
     QPainter painter(this);
+    QPainterPath path;
     painter.setRenderHint(QPainter::Antialiasing);
+
+    //painter.fillRect(this->rect(), Qt::green);
+
+    painter.setPen(m_style.pen);
+    painter.setBrush(m_style.brush);
+    painter.setFont(m_style.tick.font);
+
+    float scale = 1.0;
+    painter.scale( 1.0/scale, 1.0/scale);
     painter.translate(width() / 2, height() / 2);
-    painter.scale(side / 200.0, side / 200.0);
 
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(hourColor);
+    float scaledRadius = (m_radius * scale) -2; // -2 means we don't draw over
+                                                // the edges of the mask which
+                                                // causing aliasing artifacts
 
-    painter.save();
-    painter.rotate(30.0 * ((time.hour() + time.minute() / 60.0)));
-    painter.drawConvexPolygon(hourHand, 3);
-    painter.restore();
+    QRectF outerElipse = QRectF(
+                -scaledRadius, -scaledRadius,
+                (2*scaledRadius), (2*scaledRadius));
 
-    painter.setPen(hourColor);
+    QRectF innerElipse = QRectF(
+                -scaledRadius    + (m_style.width/2),
+                -scaledRadius    + (m_style.width/2),
+                (2*scaledRadius) - m_style.width,
+                (2*scaledRadius) - m_style.width);
 
-    for (int i = 0; i < 12; ++i) {
-        painter.drawLine(88, 0, 96, 0);
-        painter.rotate(30.0);
-    }
+    //painter.drawEllipse(outerElipse);
+   // painter.setPen(Qt::magenta);
+   // painter.drawEllipse(innerElipse);
 
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(minuteColor);
+    path.arcMoveTo(innerElipse, m_rotation);
+    path.arcTo(outerElipse, m_rotation, m_angle);
+    path.arcTo(innerElipse, m_rotation + m_angle, - m_angle);
+    path.closeSubpath();
 
-    painter.save();
-    painter.rotate(6.0 * (time.minute() + time.second() / 60.0));
-    painter.drawConvexPolygon(minuteHand, 3);
-    painter.restore();
+    painter.drawPath(path);
 
-    painter.setPen(minuteColor);
-
-    for (int j = 0; j < 60; ++j) {
-        if ((j % 5) != 0)
-            painter.drawLine(92, 0, 96, 0);
-        painter.rotate(6.0);
-    }
 }
 
-void ShapedClock::resizeEvent(QResizeEvent * /* event */)
-{
-    int side = qMin(width(), height());
-    QRegion maskedRegion(width() / 2 - side / 2, height() / 2 - side / 2, side,
-                         side, QRegion::Ellipse);
-    foreach(QObject * child, this->children()){
-        QWidget * widget = qobject_cast<QWidget*>(child);
-        if(widget)
-            maskedRegion.unite(widget->mask());
-    }
-
+QRegion RadialSegment::recomputeMask(){
+    QRegion maskedRegion(0, 0, m_radius*2, m_radius*2, QRegion::Ellipse);
     setMask(maskedRegion);
+    Q_EMIT maskComputed(maskedRegion);
+    return maskedRegion;
 }
 
-QSize ShapedClock::sizeHint() const
+void RadialSegment::resizeEvent(QResizeEvent * /* event */)
 {
-    return QSize(100, 100);
+    recomputeMask();
+}
+
+QSize RadialSegment::sizeHint() const
+{
+    return QSize(m_radius*2, m_radius*2);
+}
+
+QModelIndex RadialSegment::indexAt(QPoint const& p){
+    return QModelIndex();
 }
