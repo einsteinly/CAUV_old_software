@@ -8,6 +8,7 @@ from cauv.debug import debug, info, warning, error
 import traceback
 import argparse
 import time
+import inspect
 import utils.jsonshelf
 
 Default_Messages_To_Watch = (
@@ -27,12 +28,6 @@ Message_ID_Fields = {
     'SetMotorMap': 'motor'
 }
 
-Ignore_Message_Attrs = (
-    'group',
-    'chil',
-    'msgId'
-)
-
 def dictFromMessage(message):
     """Turn a message into a dictionary suitable for JSON serialisation"""
     # now 20%300% hackier!
@@ -40,7 +35,6 @@ def dictFromMessage(message):
     if message.__class__.__name__ not in msg.__dict__.keys():
         #not a message / struct, just return original
         return message
-    attrs = message.__class__.__dict__
     ret = {}
     ret["__name__"] = message.__class__.__name__
     try:
@@ -51,14 +45,9 @@ def dictFromMessage(message):
     except TypeError:
         # OK, it isn't
         contents = {}
-        for k in attrs:
-            if not k.startswith('__') and not k in Ignore_Message_Attrs:
-                # hack hack hack hack hack
-                # I'm sure there is a simpler way of doing this, but m.__dict__ is
-                # unhelpfully empty...
-                # There really doesn't seem to be a better way, boost::python
-                # doesn't seem to produce nicely introspectable classes
-                contents[k] = dictFromMessage(attrs[k].__get__(message))
+        for name, member in inspect.getmembers(message.__class__,
+                                               lambda x: isinstance(x, property)):
+            contents[name] = dictFromMessage(member.__get__(message))
         ret["contents"] = contents
     #sanity check results
     dictToMessage(ret)
