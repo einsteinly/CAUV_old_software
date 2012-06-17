@@ -102,10 +102,10 @@ class FView: public liquid::LiquidView{
         w::DataSeries_ptr m_pct2_series;
         w::DataSeries_ptr m_unlim_series;
         w::DataSeries_ptr m_angle_series;
-        QTimer* m_redraw_timer;
         QTimer* m_data_timer;
         */
 
+        QTimer* m_redraw_timer;
         Mode m_mode;
 };
 

@@ -58,20 +58,12 @@ LiquidPipelineNode::LiquidPipelineNode(boost::shared_ptr<PipelineNode> node, QGr
     m_source->setParentItem(this);
     m_source->setZValue(10);
 
-    QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(Qt::Horizontal);
-    hlayout->setSpacing(0);
-    hlayout->setContentsMargins(0,0,0,0);
-    hlayout->addStretch(1);
-    hlayout->addItem(m_source);
-    hlayout->setAlignment(m_source, Qt::AlignBottom | Qt::AlignRight);
-
     connect(this, SIGNAL(xChanged()), m_source, SIGNAL(xChanged()));
     connect(this, SIGNAL(yChanged()), m_source, SIGNAL(yChanged()));
-    addItem(hlayout);
 }
 
 LiquidPipelineNode::~LiquidPipelineNode(){
-    
+    unRegisterNode(this);    
 }
 
 void LiquidPipelineNode::ensureInited(boost::weak_ptr<CauvNode> with_cauv_node){
@@ -82,7 +74,16 @@ void LiquidPipelineNode::ensureInited(boost::weak_ptr<CauvNode> with_cauv_node){
             view->setMode(f::FView::Internal);
             m_contents = new liquid::ProxyWidget(this);
             m_contents->setWidget(view);
-            addItem(m_contents);
+
+            QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(Qt::Horizontal);
+            hlayout->setSpacing(0);
+            hlayout->setContentsMargins(0,0,0,0);
+            hlayout->addStretch(1);
+            hlayout->addItem(m_contents);
+            hlayout->addItem(m_source);
+            hlayout->setAlignment(m_source, Qt::AlignBottom | Qt::AlignRight);
+
+            addItem(hlayout);
         }else{
             error() << "no cauv node available to init pipelineNode!";
         }

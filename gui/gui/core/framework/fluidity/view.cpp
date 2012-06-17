@@ -57,11 +57,8 @@ FView::FView(boost::shared_ptr<CauvNode> node,
       m_cauv_node(node),
       m_manager(),
       m_contextmenu_root(),
+      m_redraw_timer(NULL),
       m_mode(TopLevel){
-    // QGraphicsView spends most of its time testing the intersection of
-    // bounding boxes without this set, and in any case OpenGL doesn't
-    // support partial updates:
-    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 
     initMenu();
 
@@ -100,6 +97,9 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     m_overlay_items.push_back(std::make_pair(QPoint(-40, -40), b));
     connect(b, SIGNAL(pressed()), m_manager.get(), SLOT(requestRefresh()));
 
+    m_redraw_timer = new QTimer(this);
+    connect(m_redraw_timer, SIGNAL(timeout()), this, SLOT(update()), Qt::QueuedConnection);
+
     _initInMode(m_mode);
 
     /*
@@ -136,16 +136,11 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     g3->addDataSeries(m_pct2_series);
     g3->addDataSeries(m_unlim_series);
 
-    m_redraw_timer = new QTimer(this);
     m_data_timer   = new QTimer(this);
 
-    connect(m_redraw_timer, SIGNAL(timeout()), this, SLOT(update()), Qt::QueuedConnection);
     connect(m_data_timer, SIGNAL(timeout()), this, SLOT(postData()), Qt::QueuedConnection);
     
-    //m_redraw_timer->setInterval(1000);
     m_data_timer->setInterval(25);
-    
-    //m_redraw_timer->start();
     m_data_timer->start();
     */
 }
@@ -162,6 +157,13 @@ void FView::_initInMode(Mode const& mode){
         }
         scaleAround(QPoint(0,0), 4);
         //setInteractive(true);
+
+        // QGraphicsView spends most of its time testing the intersection of
+        // bounding boxes without this set, and in any case OpenGL doesn't
+        // support partial updates:
+        setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+        m_redraw_timer->stop();
+
     }else{
         setMinimumSize(80, 60);
         foreach(pt_widget_pair_t const& oi, m_overlay_items){
@@ -169,6 +171,11 @@ void FView::_initInMode(Mode const& mode){
         }
         //setInteractive(false);
         scaleAround(QPoint(0,0), 0.25);
+
+        // Fixed frame-rate
+        setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
+        m_redraw_timer->setInterval(1000);
+        m_redraw_timer->start();
     }
 
 }
