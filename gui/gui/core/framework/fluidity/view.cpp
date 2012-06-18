@@ -57,7 +57,7 @@ FView::FView(boost::shared_ptr<CauvNode> node,
       m_cauv_node(node),
       m_manager(),
       m_contextmenu_root(),
-      m_redraw_timer(NULL),
+      m_scenerect_update_timer(NULL),
       m_mode(TopLevel){
 
     initMenu();
@@ -97,8 +97,8 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     m_overlay_items.push_back(std::make_pair(QPoint(-40, -40), b));
     connect(b, SIGNAL(pressed()), m_manager.get(), SLOT(requestRefresh()));
 
-    m_redraw_timer = new QTimer(this);
-    connect(m_redraw_timer, SIGNAL(timeout()), this, SLOT(update()), Qt::QueuedConnection);
+    m_scenerect_update_timer = new QTimer(this);
+    connect(m_scenerect_update_timer, SIGNAL(timeout()), this, SLOT(setSceneRectToContents()), Qt::QueuedConnection);
 
     _initInMode(m_mode);
 
@@ -155,27 +155,27 @@ void FView::_initInMode(Mode const& mode){
         foreach(pt_widget_pair_t const& oi, m_overlay_items){
             oi.second->show();
         }
-        scaleAround(QPoint(0,0), 4);
-        //setInteractive(true);
+        setInteractive(true);
+        setDragMode(QGraphicsView::ScrollHandDrag);
 
         // QGraphicsView spends most of its time testing the intersection of
         // bounding boxes without this set, and in any case OpenGL doesn't
         // support partial updates:
         setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
-        m_redraw_timer->stop();
+        m_scenerect_update_timer->stop();
 
     }else{
         setMinimumSize(80, 60);
         foreach(pt_widget_pair_t const& oi, m_overlay_items){
             oi.second->hide();
         }
-        //setInteractive(false);
-        scaleAround(QPoint(0,0), 0.25);
+        setInteractive(false);
+        setDragMode(QGraphicsView::NoDrag);
 
         // Fixed frame-rate
         setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
-        m_redraw_timer->setInterval(1000);
-        m_redraw_timer->start();
+        m_scenerect_update_timer->setInterval(1000);
+        m_scenerect_update_timer->start();
     }
 
 }
@@ -323,6 +323,27 @@ void FView::menuActioned(){
     }
 }
 
+void FView::setSceneRectToContents(){
+    QList<QGraphicsItem*> nodes = m_manager->rootNodes();
+    
+    if(nodes.size()){
+        QRectF nodes_bounding_rect = nodes.at(0)->mapToScene(nodes.at(0)->boundingRect()).boundingRect();
+        for(int i = 0; i < nodes.size(); i++){
+            nodes_bounding_rect |= nodes.at(i)->mapToScene(nodes.at(i)->boundingRect()).boundingRect();
+        }
+        fitInView(nodes_bounding_rect.adjusted(-20, -20, 20, 20), Qt::KeepAspectRatio);
+
+        // enforce maximum scale of 0.75:1
+        QTransform tr = transform();
+        const qreal det = tr.determinant();
+        if(det > 0.75)
+            tr.scale(0.75/det, 0.75/det);
+        setTransform(tr);
+    }
+    
+    update();
+}
+
 
 void FView::contextMenuEvent(QContextMenuEvent *event){
     cauv::gui::f::Menu menu(this);
@@ -353,7 +374,7 @@ void FView::paintEvent(QPaintEvent * event){
 void FView::keyPressEvent(QKeyEvent *event){
     LiquidView::keyPressEvent(event);
     if(!event->isAccepted()){
-        event->accept();    
+        event->accept();
         switch(event->key()){
             case Qt::Key_R:
                 m_manager->requestRefresh();

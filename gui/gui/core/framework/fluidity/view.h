@@ -78,6 +78,7 @@ class FView: public liquid::LiquidView{
     private Q_SLOTS:
         // slots
         void menuActioned();
+        void setSceneRectToContents();
 
         //void postData();
 
@@ -105,7 +106,7 @@ class FView: public liquid::LiquidView{
         QTimer* m_data_timer;
         */
 
-        QTimer* m_redraw_timer;
+        QTimer* m_scenerect_update_timer;
         Mode m_mode;
 };
 

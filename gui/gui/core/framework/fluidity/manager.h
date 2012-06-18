@@ -81,7 +81,8 @@ class Manager: public QObject,
         // interaction with the associated scene
         virtual bool accepts(boost::shared_ptr<cauv::gui::Node> const& node);
         virtual QGraphicsItem* handle(boost::shared_ptr<cauv::gui::Node> const& node);
-
+        
+        QList<QGraphicsItem *> rootNodes() const;
         
         // these methods are called from the messaging thread(s), they MUST NOT
         // modify anything directly: the general pattern is that these emit a
