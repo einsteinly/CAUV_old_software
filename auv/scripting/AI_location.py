@@ -7,8 +7,7 @@ import cauv.messaging as msg
 import time
 import math
 import argparse
-import traceback
-import threading
+import utils.event as event
 from math import radians
 
 from AI_classes import aiProcess, external_function
@@ -108,16 +107,16 @@ class locationFilter(object):
         return self.last_known_location
 
 class aiLocation(aiProcess):
-    def __init__(self, opts, args):
+    def __init__(self):
         aiProcess.__init__(self, 'location')
-        self.options = opts.__dict__
-        self.args = args
         self.location_filter = locationFilter([rel_est(self.node) for rel_est in relative_estimators])
-    def run(self):
-        while True:
-            time.sleep(self.options['update_period'])
-            last_known_location = self.location_filter.get_estimate()
-            self.ai.task_manager.broadcast_position(last_known_location)
+
+    #set via options
+    @event.repeat_event(None)
+    def update(self):
+        last_known_location = self.location_filter.get_estimate()
+        self.ai.task_manager.broadcast_position(last_known_location)
+
     def die(self):
         for rel_est in self.location_filter.relative_estimators:
             rel_est.stop()
@@ -129,7 +128,9 @@ if __name__ == '__main__':
     
     opts, args = p.parse_known_args()
     
-    sc = aiLocation(opts, args)
+    sc = aiLocation()
+    sc.update.options.delay = opts.update_period
+    sc.update()
     try:
         sc.run()
     finally:

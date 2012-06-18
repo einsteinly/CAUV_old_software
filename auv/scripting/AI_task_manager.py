@@ -31,18 +31,20 @@ from AI_tasks import tasks as task_classes
 from AI_conditions import conditions as condition_classes
 
 from utils.conv import BoostMapToDict
+import utils.event as event
 
 """          
-task manager auto generates a list of what it should be running from these 'tasks', basically looking for these tasks and then running appropriate scripts
+task manager auto generates a list of what it should be running from these 'tasks',
+basically looking for these tasks and then running appropriate scripts
 """          
 
 TASK_CHECK_INTERVAL = 1
 STATE_SAVE_INTERVAL = 30
 
 class taskManager(aiProcess):
-    _store_values = ['task_nid', 'tasks', 'condition_nid', 'conditions', 'detector_nid', 'detectors_required', ]
+    #_store_values = ['task_nid', 'tasks', 'condition_nid', 'conditions', 'detector_nid', 'detectors_required', ]
     #SETUP FUNCTIONS
-    def __init__(self, restore, mission):
+    def __init__(self, opts):
         aiProcess.__init__(self, 'task_manager')
         #Tasks - list of tasks that (in right conditions) should be called
         self.task_nid = 0
@@ -50,11 +52,7 @@ class taskManager(aiProcess):
         #Conditions
         self.condition_nid = 0
         self.conditions = {}
-        #queues to add/remove
-        self.processing_queue = deque()
-        self.periodic_timer = RepeatTimer(TASK_CHECK_INTERVAL, self.add_periodic_to_queue)
-        self.state_save_timer = RepeatTimer(STATE_SAVE_INTERVAL, self.add_save_state_to_queue)
-        #Detectors - definative list of what SHOULD be running
+        #Detectors - definitive list of what SHOULD be running
         self.detectors_last_known = deque()
         self.detectors_enabled = True
         self.detector_conditions = {}
@@ -68,7 +66,7 @@ class taskManager(aiProcess):
                         'longitude':None,
                         'depth':None,}
         #state data file
-        self.state_shelf = shelve.open(mission)
+        self.state_shelf = shelve.open(opts.mission)
         #Setup intial values
         info('Looking for previous states...')
         if self.load_state():
@@ -76,6 +74,7 @@ class taskManager(aiProcess):
             info('Found and loaded previous state.')
         else:
             info('No previous valid state file')
+        self.gui_send_all()
 
     def load_state(self, include_persist=False):
         #check whether there is a state
@@ -103,6 +102,7 @@ class taskManager(aiProcess):
                 self.tasks[task_id].persist_state = persist_state
         return True
 
+    @event.repeat_event(STATE_SAVE_INTERVAL, True)
     def save_state(self):
         debug('Saving mission state.')
         task_dict = {}
@@ -110,31 +110,60 @@ class taskManager(aiProcess):
         for condition_id, condition in self.conditions.iteritems():
             cond_dict[condition_id] = (condition.__class__.__name__, condition.get_options())
         for task_id, task in self.tasks.iteritems():
-            task_dict[task_id] = (task.__class__.__name__, task.get_options(), task.get_script_options(), task.get_condition_ids(), task.persist_state)
+            task_dict[task_id] = (task.__class__.__name__, task.get_options(), 
+                    task.get_script_options(), task.get_condition_ids(), task.persist_state)
         self.state_shelf['tasks'] = task_dict
         self.state_shelf['conditions'] = cond_dict
         self.state_shelf.sync()
     
     #ONMESSAGE FUNCTIONS
+    @event.event_func
     def onAddTaskMessage(self, msg):
-        self.processing_queue.append((self.create_task, [task_classes[msg.taskType]], {}))
+        self.create_task(task_classes[msg.taskType])
+    @event.event_func
     def onRemoveTaskMessage(self, msg):
-        self.processing_queue.append((self.remove_task, [msg.taskId], {}))
+        self.remove_task(msg.taskId)
+    @event.event_func
     def onSetTaskStateMessage(self, msg):
-        self.processing_queue.append((self.set_task_options, [msg.taskId, BoostMapToDict(msg.taskOptions), BoostMapToDict(msg.scriptOptions), msg.conditionIds], {}))
+        self.set_task_options(msg.taskId, BoostMapToDict(msg.taskOptions),
+                              BoostMapToDict(msg.scriptOptions),
+                              msg.conditionIds)
         
+    @event.event_func
     def onAddConditionMessage(self, msg):
-        self.processing_queue.append((self.create_condition, [condition_classes[msg.conditionType]], {}))
+        self.create_condition(condition_classes[msg.conditionType])
+    @event.event_func
     def onRemoveConditionMessage(self, msg):
-        self.processing_queue.append((self.remove_condition, [msg.conditionId], {}))
+        self.remove_condition(msg.conditionId)
+    @event.event_func
     def onSetConditionStateMessage(self, msg):
-        self.processing_queue.append((self.set_condition_options, [msg.conditionId, BoostMapToDict(msg.conditionOptions)], {}))
-    
+        self.set_condition_options(msg.conditionId, BoostMapToDict(msg.conditionOptions))
+    @event.event_func
     def onScriptControlMessage(self, msg):
-        self.processing_queue.append((self.process_script_control, [msg.taskId, msg.command.name], {}))
+        commmand = msg.command
+        task_id = msg.taskId
+        if command in ('Stop','Restart'):
+            if task_id == self.current_task.id:
+                #stop main script
+                self.stop_current_script()
+            elif task_id in self.additional_tasks:
+                self.stop_script(task_id)
+            else:
+                warning('Tried to remove non-existant task %s' %(task_id))
+        if command == 'Restart':
+            self.tasks[task_id].persist_state = {}
+        if command in ('Start', 'Restart'):
+            try:
+                task = self.tasks[task_id]
+            except KeyError:
+                warning('Tried to start non-existant task %s' %(task_id))
+            self.start_script(task)
+        if command == 'Pause':
+            warning('Pause command not implemented')
 
+    @event.event_func
     def onRequestAIStateMessage(self, msg):
-        self.processing_queue.append((self.gui_send_all, [], {}))
+        self.gui_send_all()
     
     #MESSAGES TO GUI
     def gui_update_task(self, task):
@@ -146,7 +175,8 @@ class taskManager(aiProcess):
                 task.active))
     def gui_update_condition(self, condition):
         if not condition._suppress_reporting: #eg detector conditions
-            self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values(), []))
+            self.node.send(messaging.ConditionStateMessage(condition.id,
+                condition.get_options(), condition.get_debug_values(), []))
     def gui_remove_task(self, task_id):
         self.node.send(messaging.TaskRemovedMessage(task_id))
     def gui_remove_condition(self, condition_id):
@@ -176,25 +206,59 @@ class taskManager(aiProcess):
         self.detector_conditions[detector_id].on_state_set(state)
     #from script
     @external_function
+    @event.event_priority(-1)
+    @event.event_func
     def on_script_exit(self, task_id, status):
-        self.processing_queue.appendleft((self.process_status_message, [task_id, status], {}))
+        if status == 'ERROR':
+            try:
+                self.tasks[task_id].options.crash_count += 1
+                if self.tasks[task_id].options.crash_count >= self.tasks[task_id].options.crash_limit:
+                    self.remove_task(task_id)
+                    warning('%s had too many unhandled exceptions, so has been removed from task list.' %(task_id,))
+                self.log('Task %s failed after an exception in the script.' %(task_id, ))
+            except KeyError:
+                warning('Unrecognised task %s crashed (or default script crashed)' %(task_id,))
+            self.tasks[task_id].options.last_called = time.time()
+        elif status == 'SUCCESS':
+            self.log('Task %s suceeded, no longer trying to complete this task.' %(task_id, ))
+            self.remove_task(task_id)
+            info('%s has finished succesfully, so is being removed from active tasks.' %(task_id,))
+        else:
+            info('%s sent exit message %s' %(task_id, status))
+            self.log('Task %s failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].options.frequency_limit))
+            self.tasks[task_id].options.last_called = time.time()
+        getattr(self.ai,str(task_id)).confirm_exit()
+
     @external_function
+    @event.event_func
     def modify_script_options(self, task_id, options):
-        self.processing_queue.append((self.set_task_options, [task_id, {}, options, []], {}))
+        self.set_task_options(task_id, options)
+
     @external_function
+    @event.event_func
     def on_persist_state_change(self, task_id, key, attr):
-        self.processing_queue.append((self.set_task_persist_state, [task_id, key, attr], {}))
+        self.tasks[task_id].persist_state[key] = attr
+
     #from location process
     @external_function
+    @event.event_func
     def broadcast_position(self, position):
-        self.processing_queue.append((self.broadcast_position_local, [position], {}))
+        self.tm_info['latitude'] = position.latitude
+        self.tm_info['longitude'] = position.longitude
+        self.tm_info['depth'] = -position.altitude
+        for task_id in self.additional_tasks:
+            getattr(self.ai, task_id)._set_position(position)
+        if self.current_task:
+            getattr(self.ai, self.current_task.id)._set_position(position)
+
     #helpful diagnostics
     @external_function
     def export_task_data(self, file_name):
         f = open(file_name, 'w')
         for task in self.tasks.values():
             print task.options
-            f.write(task.name+'\n  Options:\n'+'\n'.join(['    '+x[0]+': '+str(x[1]) for x in task.options.items()])+'\n')
+            f.write(task.name+'\n  Options:\n'+'\n'.join(['    '+x[0]+': '+str(x[1]) 
+                                                            for x in task.options.items()])+'\n')
         f.close()
             
     #INTERNAL FUNCTIONS
@@ -222,12 +286,14 @@ class taskManager(aiProcess):
             task.add_default_conditions(self)
         #self.gui_update_task(task) skip here since is already sent by updating task options
         return task.id
+
     def register_task(self, task):
         #give the task an id
         task_id = task.__class__.__name__+str(self.task_nid)
         self.task_nid += 1
         self.tasks[task_id] = task
         return task_id
+
     def remove_task(self, task_id):
         debug("Removing task %s" %task_id)
         #remove task of given id (don't forget to let the task do any clearing it wants)
@@ -238,6 +304,7 @@ class taskManager(aiProcess):
         elif task_id in self.additional_tasks:
             self.stop_script(task_id)
         self.gui_remove_task(task_id)
+
     def set_task_options(self, task_id, task_options={}, script_options={}, condition_ids=[]):
         debug("Setting options %s on task %s" %(str((task_options, script_options, condition_ids)), task_id))
         task = self.tasks[task_id]
@@ -256,29 +323,7 @@ class taskManager(aiProcess):
             task.conditions[condition_id] = self.conditions[condition_id]
             self.conditions[condition_id].task_ids.append(task_id)
         self.gui_update_task(task)
-    def set_task_persist_state(self, task_id, key, attr):
-        self.tasks[task_id].persist_state[key] = attr
-        
-    def process_script_control(self, task_id, command):
-        if command in ('Stop','Restart'):
-            if task_id == self.current_task.id:
-                #stop main script
-                self.stop_current_script()
-            elif task_id in self.additional_tasks:
-                self.stop_script(task_id)
-            else:
-                warning('Tried to remove non-existant task %s' %(task_id))
-        if command == 'Restart':
-            self.tasks[task_id].persist_state = {}
-        if command in ('Start', 'Restart'):
-            try:
-                task = self.tasks[task_id]
-            except KeyError:
-                warning('Tried to start non-existant task %s' %(task_id))
-            self.start_script(task)
-        if command == 'Pause':
-            warning('Pause command not implemented')
-        
+
     #add/remove/modify conditions
     def create_condition(self, condition_type, options={}):
         debug("Creating condition of type %s" %str(condition_type))
@@ -308,16 +353,6 @@ class taskManager(aiProcess):
         condition.set_options(options)
         self.gui_update_condition(condition)
         
-    #commands for rebroadcasting data
-    def broadcast_position_local(self, position):
-        self.tm_info['latitude'] = position.latitude
-        self.tm_info['longitude'] = position.longitude
-        self.tm_info['depth'] = -position.altitude
-        for task_id in self.additional_tasks:
-            getattr(self.ai, task_id)._set_position(position)
-        if self.current_task:
-            getattr(self.ai, self.current_task.id)._set_position(position)
-        
     #script control
     def stop_script(self, task_id):
         #make sure additional task isnt blocking other tasks from doing stuff, and doesn't have any leftover pipelines
@@ -340,27 +375,6 @@ class taskManager(aiProcess):
             except OSError:
                 debug('Could not kill running script (probably already dead)')
         info('Stopping Script')
-
-    def process_status_message(self, task_id, status):
-        if status == 'ERROR':
-            try:
-                self.tasks[task_id].options.crash_count += 1
-                if self.tasks[task_id].options.crash_count >= self.tasks[task_id].options.crash_limit:
-                    self.remove_task(task_id)
-                    warning('%s had too many unhandled exceptions, so has been removed from task list.' %(task_id,))
-                self.log('Task %s failed after an exception in the script.' %(task_id, ))
-            except KeyError:
-                warning('Unrecognised task %s crashed (or default script crashed)' %(task_id,))
-            self.tasks[task_id].options.last_called = time.time()
-        elif status == 'SUCCESS':
-            self.log('Task %s suceeded, no longer trying to complete this task.' %(task_id, ))
-            self.remove_task(task_id)
-            info('%s has finished succesfully, so is being removed from active tasks.' %(task_id,))
-        else:
-            info('%s sent exit message %s' %(task_id, status))
-            self.log('Task %s failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].options.frequency_limit))
-            self.tasks[task_id].options.last_called = time.time()
-        getattr(self.ai,str(task_id)).confirm_exit()
 
     def start_script(self, task):
         #start the new script
@@ -409,6 +423,7 @@ class taskManager(aiProcess):
                 task.active))
         
     #--function run by periodic loop--
+    @event.repeat_event(TASK_CHECK_INTERVAL, True)
     def process_periodic(self):
         #check running script, clear up if has died
         if self.running_script:
@@ -455,30 +470,9 @@ class taskManager(aiProcess):
         #rebroadcast condition info (since might have changin debug vals etc)
         for condition in self.conditions.itervalues():
             self.gui_update_condition(condition)
-    def add_periodic_to_queue(self):
-        self.processing_queue.append((self.process_periodic, [], {}))
-    def add_save_state_to_queue(self):
-        self.processing_queue.append((self.save_state, [], {}))
         
-    #MAIN LOOP
-    def run(self):
-        self.periodic_timer.start()
-        self.state_save_timer.start()
-        self.gui_send_all() #need to make sure gui gets initial data
-        while self.running:
-            try:
-                try:
-                    call = self.processing_queue.popleft()
-                except IndexError:
-                    time.sleep(0.2)
-                    continue
-                call[0](*call[1], **call[2])
-            except Exception:
-                error(traceback.format_exc().encode('ascii','ignore'))
     def die(self):
         try:
-            self.periodic_timer.die_flag.set()
-            self.state_save_timer.die_flag.set()
             #kill any child scripts (since not managed by AI_manager, so may get left around)
             for task_id, (task, script) in self.additional_tasks.iteritems():
                 script.terminate()
@@ -498,7 +492,7 @@ if __name__ == '__main__':
                  action='store', help="try and resume from last saved state")
     opts, args = p.parse_known_args()
     
-    tm = taskManager(**opts.__dict__)
+    tm = taskManager(opts)
     try:
         tm.run()
     finally:
