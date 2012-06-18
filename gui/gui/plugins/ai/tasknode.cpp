@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -70,7 +70,11 @@ void LiquidPipelineNode::ensureInited(boost::weak_ptr<CauvNode> with_cauv_node){
     if(!m_contents){
         boost::shared_ptr<CauvNode> cauv_node = with_cauv_node.lock();
         if(cauv_node){
-            f::FView* view = new f::FView(cauv_node, m_node->nodeName());
+            std::string pipeline_name = m_node->nodeName();
+            if(m_node->getParent()){
+                pipeline_name = m_node->getParent()->nodeName() + "/" + pipeline_name;
+            }
+            f::FView* view = new f::FView(cauv_node, pipeline_name);
             view->setMode(f::FView::Internal);
             m_contents = new liquid::ProxyWidget(this);
             m_contents->setWidget(view);
@@ -242,6 +246,9 @@ void LiquidTaskNode::buildContents(){
     }
 
     foreach(boost::shared_ptr<PipelineNode> const& pipeline, m_node->getPipelines()){
+        // !!!! FIXME: in this case the Pipeline node will not be correctly
+        // init'd, will fix this when pipeline stuff is moved to a plugin, as
+        // the init arrangements will change (for the better) then anyway.
         LiquidPipelineNode * pipelineNode = ManagedNode::getLiquidNodeFor<LiquidPipelineNode>(pipeline, false);
         liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
                                                       new liquid::RejectingConnectionSink());

@@ -178,6 +178,14 @@ QGraphicsItem* Manager::handle(boost::shared_ptr<cauv::gui::Node> const& node){
     return NULL;
 }
 
+QList<QGraphicsItem*> Manager::rootNodes() const{
+    QList<QGraphicsItem*> r;
+    node_id_map_t::right_const_iterator i;
+    for(i = m_nodes.right().begin(); i != m_nodes.right().end(); i++)
+        r << i->left;
+    return r;
+}
+
 // - Message Observer Implementation: thunks
 void Manager::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){
     if(!_nameMatches(m)) return;
