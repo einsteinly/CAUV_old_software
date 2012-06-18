@@ -278,7 +278,7 @@ void FNodeParamInput::initView(){
     m_view->setModel(m_model);
     m_view->setColumnWidth(0,80);
     // !!! TODO: height hint?
-    m_view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(), 0);
+    m_view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>());
     //m_view->resizeRowsToContents();
     m_view->setAutoFillBackground(false);
 

@@ -178,12 +178,12 @@ void NodePicker::registerListFilter(boost::shared_ptr<NodeFilterInterface> const
    ui->view->registerListFilter(filter);
 }
 
-void NodePicker::registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate, unsigned int column){
-    ui->view->registerDelegate(nodeType, delegate, column);
+void NodePicker::registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate){
+    ui->view->registerDelegate(nodeType, delegate);
 }
 
-void NodePicker::setDelegateSizeHint(int column, QSize size){
-    ui->view->setDelegateSizeHint(column, size);
+void NodePicker::setDelegateSizeHint(QSize size){
+    ui->view->setDelegateSizeHint(size);
 }
 
 NodePicker::~NodePicker(){
@@ -201,36 +201,27 @@ NodeTreeView::NodeTreeView(QWidget *) {
     setAnimated(true);
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    setEditTriggers(QAbstractItemView::CurrentChanged |
-                    QAbstractItemView::EditKeyPressed |
-                    QAbstractItemView::DoubleClicked |
-                    QAbstractItemView::SelectedClicked);
+    setEditTriggers(QAbstractItemView::EditKeyPressed |
+                    QAbstractItemView::DoubleClicked);
 
     setRootIsDecorated( true );
     setDragEnabled(true);
     setDropIndicatorShown(true);
     setAcceptDrops(false);
 
-    connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(toggleExpanded(QModelIndex)));
+    m_delegateMap = boost::make_shared<NodeDelegateMapper>(this);
+    setItemDelegateForColumn(0, m_delegateMap.get());
+
+    //connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(toggleExpanded(QModelIndex)));
 }
 
-void NodeTreeView::registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate, unsigned int column){
-    if (!m_delegates[column]) {
-        m_delegates[column] = boost::make_shared<NodeDelegateMapper>(this);
-        setItemDelegateForColumn(column, m_delegates[column].get());
-    }
-    boost::shared_ptr<NodeDelegateMapper> mappingDelegate= m_delegates[column];
-    mappingDelegate->registerDelegate(nodeType, delegate);
+void NodeTreeView::registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate){
+    m_delegateMap->registerDelegate(nodeType, delegate);
 }
 
-void NodeTreeView::setDelegateSizeHint(int column, QSize size){
-    if (!m_delegates[column]) {
-        m_delegates[column] = boost::make_shared<NodeDelegateMapper>(this);
-        setItemDelegateForColumn(column, m_delegates[column].get());
-    }
-    m_delegates[column]->setSizeHint(size);
+void NodeTreeView::setDelegateSizeHint(QSize size){
+    m_delegateMap->setSizeHint(size);
 }
-
 
 void NodeTreeView::toggleExpanded(QModelIndex const& index){
     setExpanded(index, !isExpanded(index));

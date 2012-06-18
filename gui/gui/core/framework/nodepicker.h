@@ -92,8 +92,8 @@ public:
     virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
 
 public Q_SLOTS:
-    void setDelegateSizeHint(int column, QSize size);
-    void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate, unsigned int column = 0);
+    void setDelegateSizeHint(QSize size);
+    void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate);
 
 private Q_SLOTS:
     void applyFilters();
@@ -107,7 +107,7 @@ Q_SIGNALS:
 protected:
     std::vector<boost::shared_ptr<NodeFilterInterface> > m_filters;
     void keyPressEvent(QKeyEvent *event);
-    std::map<int, boost::shared_ptr<NodeDelegateMapper> > m_delegates;
+    boost::shared_ptr<NodeDelegateMapper> m_delegateMap;
 };
 
 
@@ -121,9 +121,9 @@ public:
     NodePicker(boost::shared_ptr<NodeItemModel> const& root);
     virtual ~NodePicker();
 
-    void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate, unsigned int column = 0);
+    void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate);
     void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
-    void setDelegateSizeHint(int column, QSize size);
+    void setDelegateSizeHint(QSize size);
 
 protected Q_SLOTS:
     void redirectKeyboardFocus(QKeyEvent* key);

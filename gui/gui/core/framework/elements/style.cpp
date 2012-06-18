@@ -126,9 +126,9 @@ const liquid::NodeStyle& Graph_Node_Style() {
     QWidget w;
     QPalette p = w.palette();
     const static liquid::NodeStyle style = {
-        QPen(QBrush(QColor(0,0,0,128)), 1, Qt::SolidLine, Qt::FlatCap),
-        QBrush(QColor(243,243,243)),
-        24, 24, 0, 0, {
+        QPen(Qt::gray),
+        QBrush(Qt::white),
+        24, 24, 24, 24, {
             30,
             QPen(Qt::NoPen),
             QBrush(QColor(255,255,255,0)), {

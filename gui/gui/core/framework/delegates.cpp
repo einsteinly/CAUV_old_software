@@ -16,6 +16,7 @@
 
 #include <QItemEditorCreator>
 #include <QApplication>
+#include <QPainter>
 
 #include "model/nodes/numericnode.h"
 #include "widgets/neutralspinbox.h"
@@ -79,8 +80,8 @@ void NodeDelegateMapper::setEditorData(QWidget *editor, const QModelIndex &index
 
 
 void NodeDelegateMapper::updateEditorGeometry(QWidget *editor,
-                          const QStyleOptionViewItem &option,
-                          const QModelIndex &index) const{
+                                              const QStyleOptionViewItem &option,
+                                              const QModelIndex &index) const{
     const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
     try {
         boost::shared_ptr<QAbstractItemDelegate> delegate = getDelegate(node);
@@ -100,26 +101,41 @@ void NodeDelegateMapper::paint(QPainter *painter, const QStyleOptionViewItem &op
     }
     const boost::shared_ptr<Node> node = static_cast<Node*>(ptr)->shared_from_this();
     if (node) {
+        QStyleOptionViewItem newOption = option;
+        newOption.rect.setLeft(option.rect.left()+5);
+
+        painter->setFont(QFont("Verdana", 12, 1));
+        int titleHeight = painter->fontMetrics().height();
+        QRectF titleRect = QRectF(newOption.rect.x(), newOption.rect.y(), newOption.rect.width(), titleHeight);
+        QString name = QString::fromStdString(node->nodeName());
+        int titleWidth = painter->fontMetrics().width(name);
+        painter->setPen(Qt::black);
+        painter->drawText(titleRect, name, QTextOption(Qt::AlignVCenter));
+
         try {
             boost::shared_ptr<QAbstractItemDelegate> delegate = getDelegate(node);
-            delegate->paint(painter, option, index);
+            // edit the rect the child delegeate can draw in
+            newOption.rect.setTop(option.rect.top()+titleHeight);
+            delegate->paint(painter, newOption, index);
         } catch (std::out_of_range){
             //debug() << "NodeDelegateMapper::paint() - not column one"
-            QStyledItemDelegate::paint(painter, option, index);
+            newOption.rect.setLeft(titleWidth);
+            QStyledItemDelegate::paint(painter, newOption, index);
         }
     } else QStyledItemDelegate::paint(painter, option, index);
 }
 
 QSize NodeDelegateMapper::sizeHint(const QStyleOptionViewItem &option,
                                    const QModelIndex &index) const{
-    if (m_hasSizeHint){
-        return m_sizeHint;
-    } else {
-        const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
-        try {
-            boost::shared_ptr<QAbstractItemDelegate> delegate = getDelegate(node);
-            return delegate->sizeHint(option, index);
-        } catch (std::out_of_range){
+
+    const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
+    try {
+        boost::shared_ptr<QAbstractItemDelegate> delegate = getDelegate(node);
+        return delegate->sizeHint(option, index);
+    } catch (std::out_of_range){
+        if (m_hasSizeHint){
+            return m_sizeHint;
+        } else {
             return QStyledItemDelegate::sizeHint(option, index);
         }
     }
@@ -146,7 +162,7 @@ NumericDelegate::NumericDelegate(QObject * parent) : QStyledItemDelegate(parent)
 
 
 void NumericDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
-                             const QModelIndex &index) const
+                            const QModelIndex &index) const
 {
 
     NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
@@ -232,4 +248,8 @@ void NumericDelegate::setEditorData(QWidget *editor, const QModelIndex &index) c
             neutral->setInverted(node->isInverted());
         }
     }
+}
+
+QSize NumericDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const{
+    return QSize(10, 38);
 }

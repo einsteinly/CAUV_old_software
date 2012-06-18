@@ -259,7 +259,7 @@ void LiquidTaskNode::buildContents(){
     NodeItemModel *model = new NodeItemModel(m_node);
     view->setModel(model);
     view->setRootIndex(model->indexFromNode(m_node));
-    view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(), 1);
+    view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>());
     QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
     proxy->setWidget(view);
     addItem(proxy);

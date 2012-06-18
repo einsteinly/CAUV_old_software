@@ -32,11 +32,11 @@ RadialMenu::RadialMenu(RadialMenuStyle const& style, QWidget *parent)
     setAttribute(Qt::WA_TranslucentBackground);
     viewport()->setAttribute(Qt::WA_TranslucentBackground);
     // WA_MacNoShadow introduced in Qt 4.8
-    #if QT_VERSION > 0x408000
+    #if QT_VERSION < 0x040800
+    #warning Radial menus may not work. update to Qt >= 4.8
+    #else
     setAttribute(Qt::WA_MacNoShadow);
     viewport()->setAttribute(Qt::WA_MacNoShadow);
-    #else
-    #warning Radial menus may not work
     #endif 
     setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     setFrameStyle(QFrame::NoFrame);
