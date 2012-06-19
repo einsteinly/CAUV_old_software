@@ -189,6 +189,9 @@ QTreeView::branch:alternate {
      <property name="headerHidden">
       <bool>true</bool>
      </property>
+     <property name="expandsOnDoubleClick">
+      <bool>false</bool>
+     </property>
      <attribute name="headerCascadingSectionResizes">
       <bool>true</bool>
      </attribute>

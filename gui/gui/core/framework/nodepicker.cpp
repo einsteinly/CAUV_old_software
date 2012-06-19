@@ -234,7 +234,6 @@ void NodeTreeView::registerDelegate(node_type nodeType, boost::shared_ptr<NodeDe
 void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
     QModelIndex index = indexAt(event->pos());
     if(!index.isValid()) {
-        info() << "clicked on an invalid index";
         return;
     }
     if(state() != QAbstractItemView::DraggingState){
@@ -244,24 +243,13 @@ void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
                     index.internalPointer())->shared_from_this();
         option.initFrom(this);
         option.rect = this->visualRect(index);
-
-        QRect editorRect = this->visualRect(index);
-        qDebug() << "editor rect " << editorRect;
-        qDebug() << "child rect " << m_delegateMap->childRect(option, node);
-        qDebug() << "point " << event->pos();
-
-        if(m_delegateMap->childRect(option, node).contains(event->pos()))
+        if(m_delegateMap->childRect(option, node).contains(event->pos()) &&
+                (model()->flags(index) & Qt::ItemIsEditable))
             edit(index);
         else toggleExpanded(index);
     } else {
-        info() << "mouse released from drag";
         QTreeView::mouseReleaseEvent(event);
     }
-}
-
-void NodeTreeView::resizeEvent(QResizeEvent *e){
-    info() << "resize event!";
-    QTreeView::resizeEvent(e);
 }
 
 QSize NodeTreeView::sizeHint() const {

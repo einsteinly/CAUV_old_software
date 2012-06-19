@@ -93,7 +93,8 @@ public:
     QSize sizeHint() const;
 
 public Q_SLOTS:
-    void registerDelegate(node_type nodeType, boost::shared_ptr<NodeDelegate> delegate);
+    void registerDelegate(node_type nodeType,
+                          boost::shared_ptr<NodeDelegate> delegate);
 
 private Q_SLOTS:
     void applyFilters();
@@ -108,7 +109,6 @@ Q_SIGNALS:
 protected:
     std::vector<boost::shared_ptr<NodeFilterInterface> > m_filters;
     void keyPressEvent(QKeyEvent *event);
-    void resizeEvent(QResizeEvent *);
     boost::shared_ptr<DefaultNodeDelegate> m_delegateMap;
 };
 
@@ -123,7 +123,8 @@ public:
     NodePicker(boost::shared_ptr<NodeItemModel> const& root);
     virtual ~NodePicker();
 
-    void registerDelegate(node_type nodeType, boost::shared_ptr<NodeDelegate> delegate);
+    void registerDelegate(node_type nodeType,
+                          boost::shared_ptr<NodeDelegate> delegate);
     void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
 
 protected Q_SLOTS:
