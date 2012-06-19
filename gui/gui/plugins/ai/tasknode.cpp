@@ -63,7 +63,7 @@ LiquidPipelineNode::LiquidPipelineNode(boost::shared_ptr<PipelineNode> node, QGr
 }
 
 LiquidPipelineNode::~LiquidPipelineNode(){
-    unRegisterNode(this);    
+    unRegisterNode(this);
 }
 
 void LiquidPipelineNode::ensureInited(boost::weak_ptr<CauvNode> with_cauv_node){
@@ -99,7 +99,7 @@ void LiquidPipelineNode::ensureInited(boost::weak_ptr<CauvNode> with_cauv_node){
 std::set<std::string> AiTaskNode::m_types;
 
 
-AiTaskNode::AiTaskNode(const nid_t id) : NumericNode<bool>(id){
+AiTaskNode::AiTaskNode(const nid_t id) : BooleanNode(id){
     type = nodeType<AiTaskNode>();
 }
 
@@ -266,7 +266,6 @@ void LiquidTaskNode::buildContents(){
     NodeItemModel *model = new NodeItemModel(m_node);
     view->setModel(model);
     view->setRootIndex(model->indexFromNode(m_node));
-    view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>());
     QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
     proxy->setWidget(view);
     addItem(proxy);

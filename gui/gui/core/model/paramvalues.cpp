@@ -48,7 +48,7 @@ template <> boost::shared_ptr<Node> ParamValueToNode::operator()(std::string & o
 
 template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand) const
 {
-    boost::shared_ptr<NumericNode<bool> > node = boost::make_shared<NumericNode<bool> >(m_id);
+    boost::shared_ptr<BooleanNode> node = boost::make_shared<BooleanNode>(m_id);
     node->update(operand);
     return node;
 }

@@ -21,6 +21,7 @@
 #include <QLayout>
 
 #include <debug/cauv_debug.h>
+#include <QDebug>
 
 #include "model/nodes/numericnode.h"
 #include "delegates.h"
@@ -178,7 +179,7 @@ void NodePicker::registerListFilter(boost::shared_ptr<NodeFilterInterface> const
    ui->view->registerListFilter(filter);
 }
 
-void NodePicker::registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate){
+void NodePicker::registerDelegate(node_type nodeType, boost::shared_ptr<NodeDelegate> delegate){
     ui->view->registerDelegate(nodeType, delegate);
 }
 
@@ -202,21 +203,40 @@ NodeTreeView::NodeTreeView(QWidget *) {
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setEditTriggers(QAbstractItemView::EditKeyPressed |
-                    QAbstractItemView::DoubleClicked);
+                    QAbstractItemView::DoubleClicked |
+                    QAbstractItemView::CurrentChanged |
+                    QAbstractItemView::SelectedClicked );
 
     setRootIsDecorated( true );
     setDragEnabled(true);
     setDropIndicatorShown(true);
     setAcceptDrops(false);
 
-    m_delegateMap = boost::make_shared<NodeDelegateMapper>(this);
+    m_delegateMap = boost::make_shared<DefaultNodeDelegate>(this);
     setItemDelegateForColumn(0, m_delegateMap.get());
 
-    //connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(toggleExpanded(QModelIndex)));
+    //this->viewport()->setStyleSheet("background:transparent;");
+    //this->setStyleSheet("background:transparent;");
+
+    QPalette p = this->palette();
+    p.setColor(QPalette::Background, QColor(0,0,0,0));
+    this->setPalette(p);
+    this->viewport()->setPalette(p);
+    this->setBackgroundRole(QPalette::Background);
+    this->viewport()->setBackgroundRole(QPalette::Background);
+    this->setFrameShape(QFrame::NoFrame);
+    this->setAutoFillBackground(false);
+
+    connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(toggleExpanded(QModelIndex)));
 }
 
-void NodeTreeView::registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate){
+void NodeTreeView::registerDelegate(node_type nodeType, boost::shared_ptr<NodeDelegate> delegate){
     m_delegateMap->registerDelegate(nodeType, delegate);
+}
+
+void NodeTreeView::resizeEvent(QResizeEvent *e){
+    info() << "resize event!";
+    QTreeView::resizeEvent(e);
 }
 
 void NodeTreeView::setDelegateSizeHint(QSize size){

@@ -72,7 +72,7 @@ namespace gui {
 
 GENERATE_SIMPLE_NODE(AiMissionNode)
 
-class AiTaskNode : public NumericNode<bool> {
+class AiTaskNode : public BooleanNode {
     public:
 
         AiTaskNode(const nid_t id);

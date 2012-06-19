@@ -27,32 +27,51 @@ namespace gui {
 class NodeTreeView;
 
 
+class NodeDelegate : public QStyledItemDelegate {
+public:
+    NodeDelegate(QObject *parent=0);
+    virtual bool providesTitle(const QStyleOptionViewItem &option,
+                               const QModelIndex &index) const;
+};
 
-class NodeDelegateMapper : public QStyledItemDelegate
+class DefaultNodeDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 
 public:
-    NodeDelegateMapper(QObject *parent = 0);
+    DefaultNodeDelegate(QObject *parent = 0);
 
-    void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate);
+    void registerDelegate(node_type nodeType,
+                          boost::shared_ptr<NodeDelegate> delegate);
 
     void registerDelegate(boost::shared_ptr<Node> node,
-                          boost::shared_ptr<QAbstractItemDelegate> delegate);
+                          boost::shared_ptr<NodeDelegate> delegate);
 
-    boost::shared_ptr<QAbstractItemDelegate> getDelegate(boost::shared_ptr<Node> node) const;
+    boost::shared_ptr<NodeDelegate> getDelegate(boost::shared_ptr<Node> node) const;
 
-    QWidget * createEditor ( QWidget * parent, const QStyleOptionViewItem & option,
+    QWidget * createEditor ( QWidget * parent,
+                             const QStyleOptionViewItem & option,
                              const QModelIndex & index ) const;
 
-    void setEditorData(QWidget *editor, const QModelIndex &index) const;
+    void setEditorData(QWidget *editor,
+                       const QModelIndex &index) const;
 
+    const QRect titleRect(const QStyleOptionViewItem& option,
+                          const boost::shared_ptr<Node>& node) const;
+
+    const QRect childRect(const QStyleOptionViewItem& option,
+                          const boost::shared_ptr<Node>& node) const;
 
     void updateEditorGeometry(QWidget *editor,
                               const QStyleOptionViewItem &option,
                               const QModelIndex &index) const;
 
-    void paint(QPainter *painter, const QStyleOptionViewItem &option,
+
+    int split(const QStyleOptionViewItem &option,
+              const boost::shared_ptr<Node>& node) const;
+
+    void paint(QPainter *painter,
+               const QStyleOptionViewItem &option,
                const QModelIndex &index) const;
 
     QSize sizeHint(const QStyleOptionViewItem &option,
@@ -61,35 +80,61 @@ public:
     void setSizeHint(const QSize size);
 
 protected:
-    std::map<boost::shared_ptr<Node>, boost::shared_ptr<QAbstractItemDelegate> > m_delegates;
-    std::map<node_type, boost::shared_ptr<QAbstractItemDelegate> > m_default_delegates;
+    std::map<boost::shared_ptr<Node>, boost::shared_ptr<NodeDelegate> > m_delegates;
+    std::map<node_type, boost::shared_ptr<NodeDelegate> > m_default_delegates;
     QSize m_sizeHint;
     bool m_hasSizeHint;
+    QFont m_font;
+};
+
+class ShortDelegate : public NodeDelegate {
+public:
+    ShortDelegate(QObject *parent=0);
+    QSize sizeHint(const QStyleOptionViewItem &option,
+                   const QModelIndex &index) const;
+};
+
+class TallDelegate : public NodeDelegate {
+public:
+    TallDelegate(QObject *parent=0);
+    QSize sizeHint(const QStyleOptionViewItem &option,
+                   const QModelIndex &index) const;
 };
 
 
-
-
-class NumericDelegate : public QStyledItemDelegate {
+class NumericDelegate : public ShortDelegate {
     Q_OBJECT
 public:
     NumericDelegate(QObject *parent=0);
 
-    void paint(QPainter *painter, const QStyleOptionViewItem &option,
+    void paint(QPainter *painter,
+               const QStyleOptionViewItem &option,
                const QModelIndex &index) const;
 
     void setEditorData(QWidget *, const QModelIndex &) const;
 
-    QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
+    virtual bool providesTitle(const QStyleOptionViewItem &option,
+                               const QModelIndex &index) const;
+protected Q_SLOTS:
+    void commit();
+};
 
-    QWidget * createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+
+class BooleanDelegate : public ShortDelegate {
+    Q_OBJECT
+public:
+    BooleanDelegate(QObject *parent=0);
+
+    void paint(QPainter *painter,
+               const QStyleOptionViewItem &option,
+               const QModelIndex &index) const;
+
+    QWidget * createEditor(QWidget *parent,
+                           const QStyleOptionViewItem &option,
+                           const QModelIndex &index) const;
 
 protected Q_SLOTS:
     void commit();
-
-protected:
-    NodeTreeView * m_view;
-    mutable std::set<QModelIndex> m_hasEditor;
 };
 
 

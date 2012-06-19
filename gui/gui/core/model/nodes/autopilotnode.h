@@ -107,11 +107,11 @@ namespace cauv {
         };
 
 
-        class AutopilotNode : public NumericNode<bool> {
+        class AutopilotNode : public BooleanNode {
             Q_OBJECT
 
         public:
-            AutopilotNode(nid_t const& id) : NumericNode<bool>(id)
+            AutopilotNode(nid_t const& id) : BooleanNode(id)
             {}
 
             boost::shared_ptr<AutopilotParamsNode> getParams() {

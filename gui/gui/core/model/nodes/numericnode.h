@@ -289,6 +289,16 @@ namespace cauv {
             }
         };
 
+
+        class BooleanNode : public NumericNode<bool> {
+        public:
+            BooleanNode(const nid_t id) : NumericNode<bool>(id) {
+                // change the type of boolean nodes so they're not really
+                // numeric nodes, but we get all the typing stuff above for free
+                type = nodeType<BooleanNode>();
+            }
+        };
+
     } //namespace gui
 } // namespace cauv
 

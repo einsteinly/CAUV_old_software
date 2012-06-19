@@ -70,7 +70,7 @@ void VanishingLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem 
 
 NodeScene::NodeScene(QObject * parent, bool dont_set_global_scene) : QGraphicsScene(parent)
 {
-    int sceneSize = 4000;
+    int sceneSize = 8000;
 
     // a special background element that recieves drops and other events that aren't
     // accepted by items futher up the tree

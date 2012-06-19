@@ -141,7 +141,7 @@ struct MakeModelNode: boost::static_visitor<boost::shared_ptr<cauv::gui::Node> >
     
     boost::shared_ptr<cauv::gui::Node> operator()(bool const&) const{
         debug(7) << "MakeModelNode: bool";    
-        return boost::make_shared< cauv::gui::NumericNode<bool> >(cauv::gui::nid_t(id));
+        return boost::make_shared< cauv::gui::BooleanNode >(cauv::gui::nid_t(id));
     }
     
     boost::shared_ptr<cauv::gui::Node> operator()(int32_t const&) const{
@@ -278,7 +278,6 @@ void FNodeParamInput::initView(){
     m_view->setModel(m_model);
     m_view->setColumnWidth(0,80);
     // !!! TODO: height hint?
-    m_view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>());
     //m_view->resizeRowsToContents();
     m_view->setAutoFillBackground(false);
 

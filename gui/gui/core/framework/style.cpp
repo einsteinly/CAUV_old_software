@@ -243,7 +243,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
         int hueRange = 100;
         int range = progressOptions->maximum - progressOptions->minimum;
-        bool hasRange = (range != 0);
+       // bool hasRange = (range != 0);
         if (range < 0) range = 0;
 
         float progress = 0;
@@ -269,10 +269,11 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
         // clear background
         painter->setPen(Qt::NoPen);
-        QLinearGradient bg(hasRange?20:0, 20, 0, 0);
-        bg.setSpread(hasRange?QLinearGradient::RepeatSpread:QLinearGradient::ReflectSpread);
-        bg.setColorAt(0, QColor(248, 248, 248));
-        bg.setColorAt(1, QColor(248, 248, 248).darker(105));
+        QLinearGradient bg(20, 20, 0, 0);
+        bg.setSpread(QLinearGradient::RepeatSpread);
+        bg.setColorAt(0, QColor(254, 254, 254));
+        bg.setColorAt(1, QColor(252, 252, 252).darker(103));
+        painter->setBrushOrigin(border.topLeft());
         painter->setBrush(bg);
         painter->drawRoundedRect(border, 5, 5);
 
@@ -296,10 +297,12 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
             font.setBold(true);
             painter->setFont(font);
             painter->setPen(progressOptions->palette.color(QPalette::Text));
-            int width = progressOptions->fontMetrics.width(progressOptions->text);
+
+            QFontMetrics fm(font);
+            int width = fm.width(progressOptions->text);
+            int height = fm.height();
             int x = option->rect.x() + (option->rect.width()/2 - width/2);
-            int height = progressOptions->fontMetrics.height();
-            int y = option->rect.y() + (option->rect.height()/2 - height/2);
+            int y = option->rect.y() + ((option->rect.height()/2 - height/2) -1);
             QRect textRect(x, y, width, height);
             painter->drawText(textRect, progressOptions->text);
         }
@@ -325,6 +328,7 @@ void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionCom
             progressOptions.rect = option->rect;
             progressOptions.direction = option->direction;
             progressOptions.state = option->state;
+            progressOptions.fontMetrics = option->fontMetrics;
             progressOptions.minimum = 0;
             progressOptions.maximum = 1000;
             progressOptions.progress = (int)(fabs(neutralSpin->level) * 1000.0);
