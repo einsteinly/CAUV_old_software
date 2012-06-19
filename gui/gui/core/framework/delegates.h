@@ -66,7 +66,6 @@ public:
                               const QStyleOptionViewItem &option,
                               const QModelIndex &index) const;
 
-
     int split(const QStyleOptionViewItem &option,
               const boost::shared_ptr<Node>& node) const;
 
@@ -77,13 +76,9 @@ public:
     QSize sizeHint(const QStyleOptionViewItem &option,
                    const QModelIndex &index) const;
 
-    void setSizeHint(const QSize size);
-
 protected:
     std::map<boost::shared_ptr<Node>, boost::shared_ptr<NodeDelegate> > m_delegates;
     std::map<node_type, boost::shared_ptr<NodeDelegate> > m_default_delegates;
-    QSize m_sizeHint;
-    bool m_hasSizeHint;
     QFont m_font;
 };
 

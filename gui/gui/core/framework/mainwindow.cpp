@@ -69,7 +69,6 @@ public:
     virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node) {
 
         liquid::LiquidNode * ln = new liquid::LiquidNode(AI_Node_Style());
-        ln->setResizable(true);
         ln->header()->setTitle(QString::fromStdString(node->nodeName()));
         ln->header()->setInfo(QString::fromStdString(node->nodePath()));
         NodeTreeView * view = new NodeTreeView();
@@ -211,7 +210,6 @@ void CauvMainWindow::onRun()
     // these bits in.
     // NodePicker is exposed
     m_actions->nodes = new NodePicker(m_actions->root);
-    m_actions->nodes->setDelegateSizeHint(QSize(45, 25));
     ui->streamsDock->setWidget(m_actions->nodes);
     // And the main window
     m_actions->window = shared_from_this();

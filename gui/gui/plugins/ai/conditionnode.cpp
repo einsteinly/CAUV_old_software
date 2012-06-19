@@ -97,8 +97,6 @@ LiquidConditionNode::LiquidConditionNode(boost::shared_ptr<AiConditionNode> node
     m_source(new liquid::ArcSource(this, new liquid::Arc(Param_Arc_Style())))
 {
     buildContents();
-    setSize(QSize(300,300));
-    this->setResizable(true);
 }
 
 LiquidConditionNode::~LiquidConditionNode() {

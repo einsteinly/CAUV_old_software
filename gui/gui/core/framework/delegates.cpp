@@ -33,7 +33,6 @@ using namespace cauv::gui;
 
 
 DefaultNodeDelegate::DefaultNodeDelegate(QObject *):
-    m_hasSizeHint(false),
     m_font("Verdana", 12, 1){
 
     registerDelegate(nodeType<BooleanNode>(), boost::make_shared<BooleanDelegate>());
@@ -87,8 +86,6 @@ void DefaultNodeDelegate::setEditorData(QWidget *editor,
         return QStyledItemDelegate::setEditorData(editor, index);
     }
 }
-
-
 
 void DefaultNodeDelegate::updateEditorGeometry(QWidget *editor,
                                                const QStyleOptionViewItem &option,
@@ -194,20 +191,15 @@ QSize DefaultNodeDelegate::sizeHint(const QStyleOptionViewItem &option,
     const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
     try {
         boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);
-        return delegate->sizeHint(option, index);
+        QSize s = delegate->sizeHint(option, index);
+        s.setWidth(std::max(titleRect(option, node).width(), s.width()));
+        return s;
     } catch (std::out_of_range){
-        if (m_hasSizeHint){
-            return m_sizeHint;
-        } else {
-            return QStyledItemDelegate::sizeHint(option, index);
-        }
+        return QSize(0,25);
     }
 }
 
-void DefaultNodeDelegate::setSizeHint(const QSize sizeHint) {
-    m_sizeHint = sizeHint;
-    m_hasSizeHint = true;
-}
+
 
 NodeDelegate::NodeDelegate(QObject * parent) : QStyledItemDelegate(parent) {}
 
@@ -220,14 +212,14 @@ ShortDelegate::ShortDelegate(QObject * parent) : NodeDelegate(parent) {}
 
 QSize ShortDelegate::sizeHint(const QStyleOptionViewItem &,
                               const QModelIndex &) const{
-    return QSize(10, 25);
+    return QSize(200, 25);
 }
 
 TallDelegate::TallDelegate(QObject * parent) : NodeDelegate(parent) {}
 
 QSize TallDelegate::sizeHint(const QStyleOptionViewItem &,
                              const QModelIndex &) const{
-    return QSize(10, 38);
+    return QSize(200, 38);
 }
 
 
@@ -264,7 +256,10 @@ void NumericDelegate::paint(QPainter *painter,
         progressBarOption.rect = option.rect;
         progressBarOption.text = QString::fromStdString(node->nodeName())
                 .append(":")
-                .append(text.append(QString::fromStdString(node->getUnits())));
+                .append(
+                    text.append(QString::fromStdString(node->getUnits())
+                                )
+                    );
         progressBarOption.textVisible = true;
         progressBarOption.invertedAppearance = node->isInverted();
         progressBarOption.palette.setColor(QPalette::Text, Qt::black);

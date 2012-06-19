@@ -213,8 +213,6 @@ LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem
     liquid::LiquidNode(AI_Node_Style(), parent), ManagedNode(this, node), m_node(node)
 {
     buildContents();
-    setSize(QSize(300,300));
-    this->setResizable(true);
     node->connect(node.get(), SIGNAL(onUpdate(QVariant)), this, SLOT(highlightRunningStatus(QVariant)));
     highlightRunningStatus(node->get());
 }

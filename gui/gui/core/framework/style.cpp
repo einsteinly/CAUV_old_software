@@ -293,18 +293,11 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
 
         if(progressOptions->textVisible){
-            QFont font = painter->font();
-            font.setBold(true);
-            painter->setFont(font);
             painter->setPen(progressOptions->palette.color(QPalette::Text));
-
-            QFontMetrics fm(font);
-            int width = fm.width(progressOptions->text);
-            int height = fm.height();
-            int x = option->rect.x() + (option->rect.width()/2 - width/2);
-            int y = option->rect.y() + ((option->rect.height()/2 - height/2) -1);
-            QRect textRect(x, y, width, height);
-            painter->drawText(textRect, progressOptions->text);
+            QRect textRect = option->rect;
+            textRect.setLeft(option->rect.left()+5);
+            textRect.setBottom(option->rect.bottom()-1);
+            painter->drawText(textRect, progressOptions->text, QTextOption(Qt::AlignVCenter));
         }
 
         //BASESTYLE::drawControl(control, &outputOptions, painter, widget);

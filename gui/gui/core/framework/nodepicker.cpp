@@ -183,10 +183,6 @@ void NodePicker::registerDelegate(node_type nodeType, boost::shared_ptr<NodeDele
     ui->view->registerDelegate(nodeType, delegate);
 }
 
-void NodePicker::setDelegateSizeHint(QSize size){
-    ui->view->setDelegateSizeHint(size);
-}
-
 NodePicker::~NodePicker(){
     delete ui;
 }
@@ -200,11 +196,11 @@ NodeTreeView::NodeTreeView(QWidget *) {
     setSelectionBehavior(QAbstractItemView::SelectRows);
     setAllColumnsShowFocus(true);
     setAnimated(true);
-    setSelectionMode(QAbstractItemView::ExtendedSelection);
+    setSelectionMode(QAbstractItemView::SingleSelection);
     setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setEditTriggers(QAbstractItemView::EditKeyPressed |
                     QAbstractItemView::DoubleClicked |
-                    QAbstractItemView::CurrentChanged |
+                    //QAbstractItemView::CurrentChanged |
                     QAbstractItemView::SelectedClicked );
 
     setRootIsDecorated( true );
@@ -214,9 +210,6 @@ NodeTreeView::NodeTreeView(QWidget *) {
 
     m_delegateMap = boost::make_shared<DefaultNodeDelegate>(this);
     setItemDelegateForColumn(0, m_delegateMap.get());
-
-    //this->viewport()->setStyleSheet("background:transparent;");
-    //this->setStyleSheet("background:transparent;");
 
     QPalette p = this->palette();
     p.setColor(QPalette::Background, QColor(0,0,0,0));
@@ -228,6 +221,8 @@ NodeTreeView::NodeTreeView(QWidget *) {
     this->setAutoFillBackground(false);
 
     connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(toggleExpanded(QModelIndex)));
+
+    this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 }
 
 void NodeTreeView::registerDelegate(node_type nodeType, boost::shared_ptr<NodeDelegate> delegate){
@@ -239,8 +234,21 @@ void NodeTreeView::resizeEvent(QResizeEvent *e){
     QTreeView::resizeEvent(e);
 }
 
-void NodeTreeView::setDelegateSizeHint(QSize size){
-    m_delegateMap->setSizeHint(size);
+QSize NodeTreeView::sizeHint() const {
+    if(!rootIndex().isValid()) return QSize();
+
+    int rows = model()->rowCount(rootIndex());
+    int height = 0;
+    int width = 0;
+    QStyleOptionViewItem option;
+    option.initFrom(this);
+    for(int i = 0; i < rows; i++){
+        QSize s = m_delegateMap->sizeHint(option, rootIndex().child(i, 0));
+        height += s.height();
+        width = std::max(width, s.width());
+    }
+
+    return QSize(width, height);
 }
 
 void NodeTreeView::toggleExpanded(QModelIndex const& index){
@@ -251,7 +259,6 @@ void NodeTreeView::keyPressEvent(QKeyEvent *event){
     Q_EMIT onKeyPressed(event);
     QTreeView::keyPressEvent(event);
 }
-
 
 void NodeTreeView::applyFilters(){
     debug(8) << "applyFilters()";

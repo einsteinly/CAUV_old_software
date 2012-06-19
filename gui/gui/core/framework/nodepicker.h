@@ -90,9 +90,9 @@ class NodeTreeView : public QTreeView {
 public:
     NodeTreeView(QWidget * parent = 0);
     virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
+    QSize sizeHint() const;
 
 public Q_SLOTS:
-    void setDelegateSizeHint(QSize size);
     void registerDelegate(node_type nodeType, boost::shared_ptr<NodeDelegate> delegate);
 
 private Q_SLOTS:
@@ -124,7 +124,6 @@ public:
 
     void registerDelegate(node_type nodeType, boost::shared_ptr<NodeDelegate> delegate);
     void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
-    void setDelegateSizeHint(QSize size);
 
 protected Q_SLOTS:
     void redirectKeyboardFocus(QKeyEvent* key);
