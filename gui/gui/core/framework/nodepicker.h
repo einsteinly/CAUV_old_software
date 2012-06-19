@@ -100,6 +100,7 @@ private Q_SLOTS:
     void applyFilters(QModelIndex const&);
     bool applyFilters(boost::shared_ptr<Node> const&);
     void toggleExpanded(QModelIndex const&);
+    void mouseReleaseEvent(QMouseEvent *event);
 
 Q_SIGNALS:
     void onKeyPressed(QKeyEvent *event);

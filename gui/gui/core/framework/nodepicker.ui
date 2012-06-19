@@ -157,7 +157,7 @@ QTreeView::branch:alternate {
       <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
      <property name="editTriggers">
-      <set>QAbstractItemView::CurrentChanged|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
+      <set>QAbstractItemView::EditKeyPressed</set>
      </property>
      <property name="alternatingRowColors">
       <bool>true</bool>

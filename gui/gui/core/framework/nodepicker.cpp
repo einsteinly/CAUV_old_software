@@ -198,10 +198,11 @@ NodeTreeView::NodeTreeView(QWidget *) {
     setAnimated(true);
     setSelectionMode(QAbstractItemView::SingleSelection);
     setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    setEditTriggers(QAbstractItemView::EditKeyPressed |
-                    QAbstractItemView::DoubleClicked |
+    setEditTriggers(QAbstractItemView::EditKeyPressed
+                    //QAbstractItemView::DoubleClicked |
                     //QAbstractItemView::CurrentChanged |
-                    QAbstractItemView::SelectedClicked );
+                    //QAbstractItemView::SelectedClicked
+                    );
 
     setRootIsDecorated( true );
     setDragEnabled(true);
@@ -227,6 +228,35 @@ NodeTreeView::NodeTreeView(QWidget *) {
 
 void NodeTreeView::registerDelegate(node_type nodeType, boost::shared_ptr<NodeDelegate> delegate){
     m_delegateMap->registerDelegate(nodeType, delegate);
+}
+
+
+void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
+    QModelIndex index = indexAt(event->pos());
+    if(!index.isValid()) {
+        info() << "clicked on an invalid index";
+        return;
+    }
+    if(state() != QAbstractItemView::DraggingState){
+        QStyleOptionViewItem option;
+
+        const boost::shared_ptr<Node> node = static_cast<Node*>(
+                    index.internalPointer())->shared_from_this();
+        option.initFrom(this);
+        option.rect = this->visualRect(index);
+
+        QRect editorRect = this->visualRect(index);
+        qDebug() << "editor rect " << editorRect;
+        qDebug() << "child rect " << m_delegateMap->childRect(option, node);
+        qDebug() << "point " << event->pos();
+
+        if(m_delegateMap->childRect(option, node).contains(event->pos()))
+            edit(index);
+        else toggleExpanded(index);
+    } else {
+        info() << "mouse released from drag";
+        QTreeView::mouseReleaseEvent(event);
+    }
 }
 
 void NodeTreeView::resizeEvent(QResizeEvent *e){
