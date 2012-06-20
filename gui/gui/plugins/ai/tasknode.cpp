@@ -222,6 +222,7 @@ LiquidTaskNode::~LiquidTaskNode() {
 }
 
 void LiquidTaskNode::highlightRunningStatus(QVariant status){
+    info() << "running status " << status.toBool();
     if(status.toBool())
         m_status_highlight->setBrush(QBrush(QColor(92,205,92)));
     else

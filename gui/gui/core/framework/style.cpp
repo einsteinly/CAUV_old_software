@@ -297,7 +297,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
             QRect textRect = option->rect;
             textRect.setLeft(option->rect.left()+5);
             textRect.setBottom(option->rect.bottom()-1);
-            painter->drawText(textRect, progressOptions->text, QTextOption(Qt::AlignVCenter));
+            painter->drawText(textRect, progressOptions->text, QTextOption(Qt::AlignCenter));
         }
 
         //BASESTYLE::drawControl(control, &outputOptions, painter, widget);

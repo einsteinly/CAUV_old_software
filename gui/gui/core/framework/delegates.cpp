@@ -54,88 +54,80 @@ void DefaultNodeDelegate::registerDelegate(boost::shared_ptr<Node> node,
     m_delegates[node] = delegate;
 }
 
-boost::shared_ptr<NodeDelegate> DefaultNodeDelegate::getDelegate(boost::shared_ptr<Node> node) const {
-    try {
-        // specific delegate first
+boost::shared_ptr<NodeDelegate> DefaultNodeDelegate::getDelegate(const boost::shared_ptr<Node> node) const {
+    if (m_delegates.find(node) != m_delegates.end())
         return m_delegates.at(node);
-    } catch (std::out_of_range){
-        // general delegate next
+    else if (m_default_delegates.find(node->type) != m_default_delegates.end())
         return m_default_delegates.at(node->type);
-    }
+    else return boost::make_shared<NodeDelegate>();
 }
 
 QWidget * DefaultNodeDelegate::createEditor ( QWidget * parent,
                                               const QStyleOptionViewItem & option,
                                               const QModelIndex & index ) const {
-    const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
-    try {
-        boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);
-        return delegate->createEditor(parent, option, index);
-    } catch (std::out_of_range){
-        return QStyledItemDelegate::createEditor(parent,option, index);
-    }
+    const boost::shared_ptr<Node> node = static_cast<Node*>(
+                index.internalPointer())->shared_from_this();
+    boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);
+    return delegate->createEditor(parent, option, index);
 }
 
 void DefaultNodeDelegate::setEditorData(QWidget *editor,
                                         const QModelIndex &index) const{
-    const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
-    try {
-        boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);
-        return delegate->setEditorData(editor, index);
-    } catch (std::out_of_range){
-        return QStyledItemDelegate::setEditorData(editor, index);
-    }
+    const boost::shared_ptr<Node> node = static_cast<Node*>(
+                index.internalPointer())->shared_from_this();
+    boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);
+    return delegate->setEditorData(editor, index);
 }
 
 void DefaultNodeDelegate::updateEditorGeometry(QWidget *editor,
                                                const QStyleOptionViewItem &option,
                                                const QModelIndex &index) const{
-    const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
+    const boost::shared_ptr<Node> node = static_cast<Node*>(
+                index.internalPointer())->shared_from_this();
     QStyleOptionViewItem newOption = option;
-    newOption.rect = childRect(option, node);
-    try {
-        boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);
-        if(delegate->providesTitle(option, index))
-            return delegate->updateEditorGeometry(editor, option, index);
-        return delegate->updateEditorGeometry(editor, newOption, index);
-    } catch (std::out_of_range){
-        return QStyledItemDelegate::updateEditorGeometry(editor, newOption, index);
-    }
+    newOption.rect = childRect(option, index);
+    boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);
+    if(delegate->providesTitle(option, index))
+        return delegate->updateEditorGeometry(editor, option, index);
+    return delegate->updateEditorGeometry(editor, newOption, index);
 }
 
 const QRect DefaultNodeDelegate::titleRect(const QStyleOptionViewItem& option,
-                                           const boost::shared_ptr<Node>& node) const {
+                                           const QModelIndex &index) const{
+    const boost::shared_ptr<Node> node = static_cast<Node*>(
+                index.internalPointer())->shared_from_this();
+
+    // add some padding
     QRect out = option.rect;
     out.setLeft(out.left()+6);
     out.setRight(out.right() -6);
     out.setTop(out.top()+2);
 
+    // and enough space for the text
     QFontMetrics fm(m_font);
     int titleHeight = fm.height();
     int titleWidth = fm.width(QString::fromStdString(node->nodeName()));
 
-    return QRect(out.x(), out.y(),
-                 titleWidth, titleHeight+2);
+    return QRect(out.x(), out.y(), titleWidth, titleHeight+2);
 }
 
 const QRect DefaultNodeDelegate::childRect(const QStyleOptionViewItem& option,
-                                           const boost::shared_ptr<Node>& node) const {
+                                           const QModelIndex &index) const{
+
+    const boost::shared_ptr<Node> node = static_cast<Node*>(
+                index.internalPointer())->shared_from_this();
+
+    if(getDelegate(node)->providesTitle(option, index))
+        return option.rect;
+
     QRect out = option.rect;
-    QRect title = titleRect(option, node);
+    QRect title = titleRect(option, index);
 
     out.setLeft(title.left());
-    //out.setTop(title.top());
-
-    //try {
-    // boost::shared_ptr<QAbstractItemDelegate> delegate = getDelegate(node);
-    //if (titleRect(option, node).width() < option.rect.width()/3)
-    //if (dynamic_cast<ShortDelegate*>(delegate.get()) || title.width() < 40)
-    if (int splitPosition = split(option, node))
+    if (int splitPosition = split(option, index))
         out.setLeft(title.left() + splitPosition);
     else out.setTop(title.bottom());
-    //} catch (std::out_of_range){
-    //    out.setLeft(title.right() + 2);
-    //}
+
     return out;
 }
 
@@ -151,10 +143,10 @@ void DefaultNodeDelegate::paint(QPainter *painter,
     const boost::shared_ptr<Node> node = static_cast<Node*>(ptr)->shared_from_this();
     if (node) {
         QStyleOptionViewItem newOption = option;
-        newOption.rect = childRect(option, node);
+        newOption.rect = childRect(option, index);
 
         painter->setFont(m_font);
-        QRectF title = titleRect(option, node);
+        QRectF title = titleRect(option, index);
         //painter->fillRect(title, Qt::green);
 
         QString name = QString::fromStdString(node->nodeName());
@@ -173,26 +165,25 @@ void DefaultNodeDelegate::paint(QPainter *painter,
 }
 
 int DefaultNodeDelegate::split(const QStyleOptionViewItem &option,
-                               const boost::shared_ptr<Node>& node) const {
+                               const QModelIndex &index) const{
 
-    try {
-        boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);
-        if (dynamic_cast<ShortDelegate*>(delegate.get()))
-            return std::max(titleRect(option, node).width(), 62);
-        else return 0;
-    } catch (std::out_of_range){
-        return std::max(titleRect(option, node).width(), 62);
-    }
+    const boost::shared_ptr<Node> node = static_cast<Node*>(
+                index.internalPointer())->shared_from_this();
+    boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);
+    if (dynamic_cast<ShortDelegate*>(delegate.get()))
+        return std::max(titleRect(option, index).width(), 62);
+    else return 0;
 }
 
 QSize DefaultNodeDelegate::sizeHint(const QStyleOptionViewItem &option,
                                     const QModelIndex &index) const{
 
-    const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
+    const boost::shared_ptr<Node> node = static_cast<Node*>(
+                index.internalPointer())->shared_from_this();
     try {
         boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);
         QSize s = delegate->sizeHint(option, index);
-        s.setWidth(std::max(titleRect(option, node).width(), s.width()));
+        s.setWidth(std::max(titleRect(option, index).width(), s.width()));
         return s;
     } catch (std::out_of_range){
         return QSize(0,25);
@@ -203,8 +194,14 @@ QSize DefaultNodeDelegate::sizeHint(const QStyleOptionViewItem &option,
 
 NodeDelegate::NodeDelegate(QObject * parent) : QStyledItemDelegate(parent) {}
 
+QSize NodeDelegate::sizeHint(const QStyleOptionViewItem &,
+                             const QModelIndex &) const{
+    return QSize(0, 25);
+}
+
+
 bool NodeDelegate::providesTitle(const QStyleOptionViewItem &,
-                           const QModelIndex &) const {
+                                 const QModelIndex &) const {
     return false;
 }
 
@@ -223,7 +220,9 @@ QSize TallDelegate::sizeHint(const QStyleOptionViewItem &,
 }
 
 
-NumericDelegate::NumericDelegate(QObject * parent) : ShortDelegate(parent) {
+NumericDelegate::NumericDelegate(bool showTitle, QObject *parent) :
+    ShortDelegate(parent),
+    m_titles(showTitle) {
     QItemEditorFactory * factory = new QItemEditorFactory();
     setItemEditorFactory(factory);
     factory->registerEditor(QVariant::Int,
@@ -249,17 +248,19 @@ void NumericDelegate::paint(QPainter *painter,
 {
     NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
     if (node) {
-        double value = node->asNumber().toDouble();
-        QString text = QString::number( value, 'g', node->getPrecision() );
+        QString value = QString::number( node->asNumber().toDouble(),
+                                         'g', node->getPrecision() );
+        value.append(QString::fromStdString(node->getUnits()));
+
+        QString text;
+
+        if(m_titles)
+            text = QString::fromStdString(node->nodeName()).append(":").append(value);
+        else text = value;
 
         QStyleOptionProgressBarV2 progressBarOption;
         progressBarOption.rect = option.rect;
-        progressBarOption.text = QString::fromStdString(node->nodeName())
-                .append(":")
-                .append(
-                    text.append(QString::fromStdString(node->getUnits())
-                                )
-                    );
+        progressBarOption.text = text;
         progressBarOption.textVisible = true;
         progressBarOption.invertedAppearance = node->isInverted();
         progressBarOption.palette.setColor(QPalette::Text, Qt::black);

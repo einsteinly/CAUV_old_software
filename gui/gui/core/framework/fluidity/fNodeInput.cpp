@@ -27,6 +27,7 @@
 #include <gui/core/model/nodes/stringnode.h>
 #include <gui/core/model/singleItemModel.h>
 #include <gui/core/framework/nodepicker.h>
+#include <gui/core/framework/delegates.h>
 
 #include <debug/cauv_debug.h>
 
@@ -268,9 +269,10 @@ liquid::CutoutStyle const& FNodeParamInput::cutoutStyleForSchedType(InputSchedTy
 void FNodeParamInput::initView(){
     assert(m_model);
     
-    const int height_hint = 21;
+    const int height_hint = 25;
 
     m_view = new NodeTreeView();
+    m_view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(false));
     m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_view->setMinimumSize(QSize(60, height_hint));

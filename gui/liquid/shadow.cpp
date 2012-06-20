@@ -43,10 +43,12 @@ void liquid::Shadow::setShape(QPainterPath shape){
 
 void liquid::Shadow::setBrush(QBrush brush){
     m_shape->setBrush(brush);
-    if(brush != QBrush(Qt::NoBrush) && !m_blur_effect_applied){
-        QGraphicsBlurEffect *blur = new QGraphicsBlurEffect();
-        blur->setBlurRadius(25);
-        m_shape->setGraphicsEffect(blur);
+    if(brush != QBrush(Qt::NoBrush)){
+        if(!m_blur_effect_applied) {
+            QGraphicsBlurEffect *blur = new QGraphicsBlurEffect();
+            blur->setBlurRadius(25);
+            m_shape->setGraphicsEffect(blur);
+        }
         m_blur_effect_applied = true;
     }else if(m_blur_effect_applied){
         m_shape->setGraphicsEffect(NULL);

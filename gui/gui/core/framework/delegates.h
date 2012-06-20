@@ -30,8 +30,12 @@ class NodeTreeView;
 class NodeDelegate : public QStyledItemDelegate {
 public:
     NodeDelegate(QObject *parent=0);
+
     virtual bool providesTitle(const QStyleOptionViewItem &option,
                                const QModelIndex &index) const;
+
+    QSize sizeHint(const QStyleOptionViewItem &option,
+                   const QModelIndex &index) const;
 };
 
 class DefaultNodeDelegate : public QStyledItemDelegate
@@ -57,17 +61,17 @@ public:
                        const QModelIndex &index) const;
 
     const QRect titleRect(const QStyleOptionViewItem& option,
-                          const boost::shared_ptr<Node>& node) const;
+                          const QModelIndex & index ) const;
 
     const QRect childRect(const QStyleOptionViewItem& option,
-                          const boost::shared_ptr<Node>& node) const;
+                          const QModelIndex & index ) const;
 
     void updateEditorGeometry(QWidget *editor,
                               const QStyleOptionViewItem &option,
                               const QModelIndex &index) const;
 
     int split(const QStyleOptionViewItem &option,
-              const boost::shared_ptr<Node>& node) const;
+              const QModelIndex &index) const;
 
     void paint(QPainter *painter,
                const QStyleOptionViewItem &option,
@@ -100,7 +104,7 @@ public:
 class NumericDelegate : public ShortDelegate {
     Q_OBJECT
 public:
-    NumericDelegate(QObject *parent=0);
+    NumericDelegate(bool showTitle = true, QObject *parent=0);
 
     void paint(QPainter *painter,
                const QStyleOptionViewItem &option,
@@ -112,6 +116,9 @@ public:
                                const QModelIndex &index) const;
 protected Q_SLOTS:
     void commit();
+
+protected:
+    bool m_titles;
 };
 
 

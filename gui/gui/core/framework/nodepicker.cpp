@@ -232,18 +232,17 @@ void NodeTreeView::registerDelegate(node_type nodeType, boost::shared_ptr<NodeDe
 
 
 void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
+    info() << "NodeTreeView::mouseReleaseEvent";
     QModelIndex index = indexAt(event->pos());
     if(!index.isValid()) {
+        info() << "NodeTreeView::mouseReleaseEvent - invalid index";
         return;
     }
     if(state() != QAbstractItemView::DraggingState){
         QStyleOptionViewItem option;
-
-        const boost::shared_ptr<Node> node = static_cast<Node*>(
-                    index.internalPointer())->shared_from_this();
         option.initFrom(this);
         option.rect = this->visualRect(index);
-        if(m_delegateMap->childRect(option, node).contains(event->pos()) &&
+        if(m_delegateMap->childRect(option, index).contains(event->pos()) &&
                 (model()->flags(index) & Qt::ItemIsEditable))
             edit(index);
         else toggleExpanded(index);
