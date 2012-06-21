@@ -38,12 +38,12 @@ namespace magma {
         QPen   pen;
         QBrush brush;
         float width;
+        float preferredAnglePerItem;
+        float maxAngle;
     };
 
     struct RadialMenuStyle {
         RadialSegmentStyle segment;
-        QPen   pen;
-        QBrush brush;
         float spacing;
         float centreSpace;
     };

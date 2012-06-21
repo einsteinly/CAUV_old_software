@@ -7,6 +7,7 @@ set (
     MAGMA_SRCS
     radialMenu.cpp
     radialSegment.cpp
+    radialMenuItem.cpp
     style.cpp
 )
 
@@ -18,6 +19,7 @@ set (
     MAGMA_H
     radialMenu.h
     radialSegment.h
+    radialMenuItem.h
 )
 
 set (

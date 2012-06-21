@@ -19,34 +19,30 @@ const liquid::magma::RadialTickStyle& Default_RadialTickStyle() {
         QPolygon() << QPoint(0,0) << QPoint(0, 1) << QPoint(1,1) << QPoint(1, 0),
         QPen(Qt::black, 1, Qt::SolidLine, Qt::FlatCap),
         QBrush(p.color(QPalette::Window)),
-        font::Verdana_8pt,
+        font::Verdana_12pt,
         10
     };
     return style;
 }
 
 const liquid::magma::RadialSegmentStyle& Default_RadialSegmentStyle() {
-    QWidget w;
-    QPalette p = w.palette();
     const static liquid::magma::RadialSegmentStyle style = {
-        Default_RadialTickStyle(),
-        Default_RadialTickStyle(),
-        QPen(Qt::black, 1, Qt::SolidLine, Qt::FlatCap),
-        QBrush(p.color(QPalette::Window)),
-        60
+        Default_RadialTickStyle(), // ticks
+        Default_RadialTickStyle(), // source tick
+        QPen(QColor(168, 173, 183, 210), 1, Qt::SolidLine, Qt::FlatCap),
+        QBrush(QColor(238, 243, 253, 230)),
+        30, // width pixels
+        30, // minAnglePerItem degrees
+        340 // maxAngle degrees
     };
     return style;
 }
 
 const liquid::magma::RadialMenuStyle& Default_RadialMenuStyle() {
-    QWidget w;
-    QPalette p = w.palette();
     const static liquid::magma::RadialMenuStyle style = {
         Default_RadialSegmentStyle(),
-        QPen(Qt::black, 1, Qt::SolidLine, Qt::FlatCap),
-        QBrush(p.color(QPalette::Window)),
-        0,
-        5
+        5,  // spacing pixels
+        30  // centreSpace pixels
     };
     return style;
 }

@@ -15,15 +15,13 @@
 #ifndef __LIQUID_MAGMA_RADIAL_SEGMENT_H__
 #define __LIQUID_MAGMA_RADIAL_SEGMENT_H__
 
-#include <QWidget>
-#include <QPropertyAnimation>
-#include <QParallelAnimationGroup>
-#include <QModelIndex>
+#include <QtGui>
 
 namespace liquid {
 namespace magma {
 
 struct RadialSegmentStyle;
+class RadialMenuItem;
 
 class RadialSegment : public QWidget
 {
@@ -33,43 +31,60 @@ class RadialSegment : public QWidget
     Q_PROPERTY(float angle READ getAngle WRITE setAngle)
 
 public:
-    RadialSegment(RadialSegmentStyle const& style, float radius = 50,
-                  float roation = 0, float angle = 150, QWidget *parent = 0);
+    RadialSegment(RadialSegmentStyle const& style,
+                  bool isRoot = false,
+                  QWidget *parent = 0
+            );
     QSize sizeHint() const;
 
     QRegion recomputeMask();
 
     void setRadius(float radius);
-    float getRadius();
+    float getRadius() const;
 
     void setRotation(float rotation);
-    float getRotation();
+    float getRotation() const;
 
     void setAngle(float angle);
-    float getAngle();
+    float getAngle() const;
 
-    QModelIndex indexAt(QPoint const& p);
+    void addItem(RadialMenuItem * );
+    void removeItem(RadialMenuItem * );
+    void relayoutItems();
+
+    const RadialMenuItem* itemAt(QPoint const& p) const;
+
+    void animateIn();
 
 protected:
     void mouseMoveEvent(QMouseEvent *event);
     void mousePressEvent(QMouseEvent *event);
     void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *event);
-    void showEvent(QShowEvent *);
 
     RadialSegmentStyle const& m_style;
     float m_radius;
     float m_rotation;
     float m_angle;
 
+    bool m_animationsSetup;
+
     QParallelAnimationGroup m_startupAnimations;
     QParallelAnimationGroup m_runningAnimations;
 
+    QList<RadialMenuItem * > m_items;
+
+    bool m_isRoot;
+
 protected Q_SLOTS:
-    void animateIn();
+    void itemHovered();
+    void itemSelected();
 
 Q_SIGNALS:
     void maskComputed(QRegion);
+    void sizeChanged(QSize);
+    void itemHovered(RadialMenuItem *);
+    void itemSelected(RadialMenuItem *);
 
 private:
     QPoint dragPosition;

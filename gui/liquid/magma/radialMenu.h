@@ -15,13 +15,14 @@
 #ifndef __LIQUID_MAGMA_RADIAL_MENU_H__
 #define __LIQUID_MAGMA_RADIAL_MENU_H__
 
-#include <QAbstractItemView>
-#include <QMap>
+#include <QtGui>
 
 namespace liquid {
 namespace magma {
 
 class RadialSegment;
+class RadialMenuItem;
+
 struct RadialSegmentStyle;
 struct RadialMenuStyle;
 
@@ -30,31 +31,47 @@ class RadialMenu : public QAbstractItemView
     Q_OBJECT
 
 public:
-    RadialMenu(RadialMenuStyle const& style, QWidget *parent=0);
+    RadialMenu(RadialMenuStyle const& style, int titleRole = Qt::UserRole, QWidget *parent=0);
 
     virtual QRect visualRect ( const QModelIndex & index ) const;
-    virtual void scrollTo(const QModelIndex&, QAbstractItemView::ScrollHint = EnsureVisible);
+    virtual void scrollTo(const QModelIndex&,
+                          QAbstractItemView::ScrollHint = EnsureVisible);
     virtual QModelIndex indexAt(const QPoint&) const;
-    virtual QModelIndex moveCursor(QAbstractItemView::CursorAction, Qt::KeyboardModifiers);
+    virtual QModelIndex moveCursor(QAbstractItemView::CursorAction,
+                                   Qt::KeyboardModifiers);
     virtual int horizontalOffset() const;
     virtual int verticalOffset() const;
     virtual bool isIndexHidden(const QModelIndex&) const;
-    virtual void setSelection(const QRect&, QFlags<QItemSelectionModel::SelectionFlag>);
+    virtual void setSelection(const QRect&,
+                              QFlags<QItemSelectionModel::SelectionFlag>);
     virtual QRegion visualRegionForSelection(const QItemSelection&) const;
-    virtual void	setModel ( QAbstractItemModel * model );
+    virtual void setModel (QAbstractItemModel * model );
+
+    virtual void recursiveOpen(const QModelIndex&, RadialMenuItem *parent = 0);
+
+    virtual QSize sizeHint() const;
 
 public Q_SLOTS:
-    void recomputeMask();
     void fitToContents();
+    void scrollTo(RadialMenuItem*);
+    void itemSelected(RadialMenuItem*);
+
+Q_SIGNALS:
+    void indexSelected(QModelIndex);
 
 protected:
-    void resizeEvent(QResizeEvent *event);
     void focusOutEvent(QFocusEvent *event);
+    void showEvent(QShowEvent *);
     void recomputeGeometry();
-    int depthOfIndex(const QModelIndex& index);
+    int depthOfIndex(const QModelIndex& index) const;
+    RadialSegment * newRadialSegmentFor(QModelIndex index, RadialMenuItem *parent = 0) const;
+    const QList<QModelIndex> validChildren(QModelIndex const& index) const;
+    void hideEverythingAbove(QModelIndex const& index);
 
     RadialMenuStyle const& m_style;
+    const int m_role;
     QMap<QModelIndex, RadialSegment*> m_segmentMap;
+    QStack<RadialSegment*> m_stack;
 };
 
 } // namespace magma

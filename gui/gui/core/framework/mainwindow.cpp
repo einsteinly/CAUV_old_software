@@ -310,11 +310,16 @@ void CauvMainWindow::createRadialMenu(QPoint point){
     debug() << "radial menu creation!";
     liquid::magma::RadialMenu * menu = new liquid::magma::RadialMenu(liquid::magma::Default_RadialMenuStyle());
     menu->setModel(m_actions->root.get());
+    menu->setRootIndex(m_actions->root->indexFromNode(VehicleRegistry::instance()->find<Vehicle>("redherring")));
+    menu->show();
     QRect geo = menu->geometry();
     menu->setGeometry(QRect(sc.x()-geo.width()/2, sc.y()-geo.height()/2, geo.height(), geo.width()));
-    menu->show();
+    menu->connect(menu, SIGNAL(indexSelected(QModelIndex)), this, SLOT(radialItemSelected(QModelIndex)));
 }
 
+void CauvMainWindow::radialItemSelected(QModelIndex index){
+    m_actions->scene->onNodeDroppedAt(m_actions->root->nodeFromIndex(index), QPointF(10,10));
+}
 
 CauvInterfacePlugin * CauvMainWindow::loadPlugin(QObject *plugin){
 

@@ -72,6 +72,9 @@ QVariant NodeItemModel::data(const QModelIndex & index, int role) const {
     case Qt::ToolTipRole:
         return QVariant(QString::fromStdString(node->nodePath()));
         break;
+    case Qt::UserRole:
+        return QVariant(QString::fromStdString(node->nodeName()));
+        break;
     default: break;
     }
     return QVariant();
