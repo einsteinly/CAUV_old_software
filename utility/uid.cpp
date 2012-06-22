@@ -15,6 +15,7 @@
 #include "uid.h"
 #include "exec.h"
 
+#include <string>
 #include <sstream>
 #include <algorithm>
 

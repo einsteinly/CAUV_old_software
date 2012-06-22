@@ -19,6 +19,8 @@
 #include <vector>
 #include <string>
 
+#include <boost/version.hpp>
+
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 #include <Eigen/Dense>

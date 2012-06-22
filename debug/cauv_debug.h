@@ -16,14 +16,15 @@
 #define __CAUV_DEBUG_H__
 
 #include <iostream>
-#include <ostream>
+#include <string>
 #include <sstream>
 #include <list>
 
 #include <boost/foreach.hpp>
-#include <boost/utility.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/program_options.hpp>
+
+#include <utility/bash_cout.h>
 
 #define CAUV_DEBUG_MUTEXES
 #define CAUV_DEBUG_PRINT_THREAD
@@ -35,13 +36,13 @@
 // Forward Declarations
 #if defined(CAUV_DEBUG_MUTEXES) || defined(CAUV_DEBUG_PRINT_THREAD)
 namespace boost{
-class mutex;
-template<typename T>
-class unique_lock;
+    class mutex;
+    template<typename T>
+    class unique_lock;
 } // namespace boost
 #endif
-
-#include <utility/bash_cout.h>
+namespace boost { namespace program_options { class options_description; } }
+namespace boost { namespace program_options { class positional_options_description; } }
 
 
 /* usage:
