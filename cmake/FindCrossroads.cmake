@@ -9,6 +9,7 @@ find_package(PkgConfig)
 pkg_check_modules(PC_CROSSROADS QUIET libxs)
 
 find_path(CROSSROADS_INCLUDE_DIR NAMES xs.h
+          PATH_SUFFIXES xs
           HINTS ${PC_CROSSROADS_INCLUDE_DIRS})
 
 find_library(CROSSROADS_LIBRARY NAMES xs
