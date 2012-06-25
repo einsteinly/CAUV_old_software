@@ -15,6 +15,7 @@
 #include "arcSource.h"
 
 #include <cmath>
+#include <limits>
 
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsScene>
