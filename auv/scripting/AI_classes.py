@@ -366,8 +366,6 @@ class aiScript(aiProcess):
         self.persist.own(self)
         self.reporting_thread=threading.Thread(target=self.report_loop)
         self.reporting_thread.start()
-    def _register(self):
-        self.node.addObserver(self._msg_observer)
     #image pipeline stuff
     def request_pl(self, pl_name, timeout=10):
         self.pl_confirmed.clear()
