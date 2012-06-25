@@ -238,8 +238,8 @@ void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
         info() << "NodeTreeView::mouseReleaseEvent - invalid index";
         return;
     }
-    debug() << state();
-    if(state() != QAbstractItemView::DraggingState){
+    if(state() != QAbstractItemView::DraggingState ||
+       state() != QAbstractItemView::AnimatingState){
         QStyleOptionViewItem option;
         option.initFrom(this);
         option.rect = this->visualRect(index);
