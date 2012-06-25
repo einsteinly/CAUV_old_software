@@ -16,6 +16,8 @@
 
 #include <algorithm>
 
+#include <utility/time.h>
+
 #include "imageProcessor.h"
 #include "pipelineTypes.h"
 #include "nodeFactory.h"
@@ -697,6 +699,7 @@ void Node::exec(){
     if(allowQueue()) status |= NodeStatus::AllowQueue;
     _statusMessage(status | NodeStatus::Executing);
     out_map_t outputs(inputs);    
+    m_throughput_counter.start();
     try{
         if(m_speed == asynchronous){
             // doWork will arrange for demandNewParentInput to be called when
@@ -712,7 +715,7 @@ void Node::exec(){
             demandNewParentInput();
         }
         // only set data rate if something bad didn't happen:
-        m_throughput_counter.tick(bits);
+        m_throughput_counter.success(bits);
         status = NodeStatus::e(status & ~NodeStatus::Bad);
     }catch(user_attention_error& e){
         // these messages are only expected from nodes (such as file/video
@@ -720,18 +723,18 @@ void Node::exec(){
         // designed for autonomy should not produce these errors.
         // !!! this message should be forwarded to GUI
         info() << "Node stopped:" << *this << ":" << e.what();
-        m_throughput_counter.tick(0);
+        m_throughput_counter.fail();
         status |= NodeStatus::Bad;
     }catch(std::exception& e){
         error() << "Error executing node: " << *this << "\n\t" << e.what();
-        m_throughput_counter.tick(0);
+        m_throughput_counter.fail();
         status |= NodeStatus::Bad;
     }catch(...){
         error() << "Evil error executing node: " << *this << "\n\t";
-        m_throughput_counter.tick(0);
+        m_throughput_counter.fail();
         status |= NodeStatus::Bad;
     }
-
+    debug(4) << "finished:" << *this << "time=" << m_throughput_counter.time_taken() << "ms, time ratio=" << m_throughput_counter.time_ratio();
     
     std::vector<output_link_t> children_to_notify;
     children_to_notify.reserve(m_outputs.size());
@@ -1324,7 +1327,8 @@ void Node::_statusMessage(NodeStatus::e const& status){
     if(status & NodeStatus::Bad || m_message_throttle.click())
         m_pl.sendMessage(boost::make_shared<StatusMessage const>(
             m_pl_name, m_id, status, m_throughput_counter.mBitPerSecond(),
-            m_throughput_counter.frequency()
+            m_throughput_counter.frequency(), m_throughput_counter.time_taken(),
+            m_throughput_counter.time_ratio()
         ));
 }
 
