@@ -27,20 +27,20 @@ main process keeps sets up things alive
 #list of tuples of watch processes and the set of arguments to pass along to them
 # i.e. [(process, {'arg_to_pass', 'other arg'}), ...]
 processes = [
-    (wf.Process('pl_manager',        '{SDIR}',  wf.node_pid('ai_plmanager'),        wf.restart(3),  None,
-                    ["sh -c 'PYTHONPATH=$PYTHONPATH:{SDIR} python2.7 {SDIR}/AI_pipeline_manager.py'"]),
+    (wf.Process('pl_manager',        '{SDIR}',  wf.node_pid('ai_pl_manager'),        wf.restart(3),  None,
+                    ["python2.7 {SDIR}/AI_pipeline_manager.py"]),
                         {'disable_gui', 'reset_pls', 'freeze_pls', 'restore'}),
-    (wf.Process('auv_control',       '{SDIR}',  wf.node_pid('aiauv_control'),       wf.restart(3),  None, 
-                    ["sh -c 'PYTHONPATH=$PYTHONPATH:{SDIR} python2.7 {SDIR}/AI_control_manager.py'"]),
+    (wf.Process('auv_control',       '{SDIR}',  wf.node_pid('ai_auv_control'),       wf.restart(3),  None, 
+                    ["python2.7 {SDIR}/AI_control_manager.py"]),
                          set()),
-    (wf.Process('detector_control',  '{SDIR}',  wf.node_pid('aidetect'),  wf.restart(3),  None, 
-                    ["sh -c 'PYTHONPATH=$PYTHONPATH:{SDIR} python2.7 {SDIR}/AI_detection_process.py'"]),
+    (wf.Process('detector_control',  '{SDIR}',  wf.node_pid('ai_detector_control'),  wf.restart(3),  None, 
+                    ["python2.7 {SDIR}/AI_detection_process.py"]),
                          {'disable_control'}),
-    (wf.Process('task_manager',      '{SDIR}',  wf.node_pid('aitask_m'),  wf.restart(3),  None,
-                    ["sh -c 'PYTHONPATH=$PYTHONPATH:{SDIR} python2.7 {SDIR}/AI_task_manager.py'"]),
+    (wf.Process('task_manager',      '{SDIR}',  wf.node_pid('ai_task_manager'),  wf.restart(3),  None,
+                    ["python2.7 {SDIR}/AI_task_manager.py"]),
                          {'mission', 'restore'}),
-    (wf.Process('location',          '{SDIR}',  wf.node_pid('ailocati'),          wf.restart(3),  None,
-                    ["sh -c 'PYTHONPATH=$PYTHONPATH:{SDIR} python2.7 {SDIR}/AI_location.py'"]),
+    (wf.Process('location',          '{SDIR}',  wf.node_pid('ai_location'),          wf.restart(3),  None,
+                    ["python2.7 {SDIR}/AI_location.py"]),
                          set()),
 ]
 

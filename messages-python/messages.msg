@@ -387,7 +387,7 @@ enum SequenceType : int8 {
 
 struct LocationSequence
 {
-    eq location : list<WGS84Coord>;
+    eq locations : list<WGS84Coord>;
     eq type : SequenceType;
 }
 
