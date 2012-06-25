@@ -188,9 +188,9 @@ struct LatLongAlt
     // parameters are interpreted are actually defined by the base class.
     // Currently there is only one base class: WGS84Coord, which uses these
     // definitions:
-    latitude : double;  // degrees north
-    longitude : double; // degrees east
-    altitude : float;   // metres up
+    eq latitude : double;  // degrees north
+    eq longitude : double; // degrees east
+    eq altitude : float;   // metres up
 }
 struct NodeInput
 {
@@ -378,6 +378,16 @@ BoundedFloatBase subclass BoundedFloat : <common/msg_classes/bounded_float.h>
 LatLongAlt subclass WGS84Coord : <common/msg_classes/wgs84_coord.h>
 floatXYZ subclass NorthEastDepth : <common/msg_classes/north_east_depth.h>
 
+enum SequenceType : int8 {
+    Points, Path, Area
+}
+
+struct LocationSequence
+{
+    eq location : list<WGS84Coord>;
+    eq type : SequenceType;
+}
+
 variant ParamValue
 {
     int32, float, string, bool,
@@ -391,6 +401,7 @@ variant ParamValue
     DynamicEnum,
     list<floatXY>,
     list<Ellipse>,
+    LocationSequence,
 }
 
 //these are zmq messaging specific

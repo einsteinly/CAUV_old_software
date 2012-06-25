@@ -483,7 +483,7 @@ class taskManager(aiProcess):
                 debug('Terminated additional task %s' %task_id)
             if self.running_script:
                 self.running_script.terminate()
-                debug('Terminated current task %s' %current_task.id)
+                debug('Terminated current task %s' %self.current_task.id)
         except Exception as error:
             debug(error.message)
         aiProcess.die(self)
