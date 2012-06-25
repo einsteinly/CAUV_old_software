@@ -26,42 +26,66 @@ class ThroughputCounter{
     public:
         ThroughputCounter(float const& filter_alpha=0.3)
             : m_filter_alpha(filter_alpha),
-              m_last_execution_time(_now()),
+              m_last_end_time(_now()),
               m_data_rate(0),
               m_frequency(0),
               m_mux(){
         }
         
-        void tick(float num_bits){
+        void start() {
             lock_t l(m_mux);
-            boost::posix_time::ptime now = _now(); 
-            float this_data_rate = 0;
-            if(now != m_last_execution_time){
-                const boost::posix_time::time_duration diff = now - m_last_execution_time;
-                const float seconds = diff.total_seconds() + diff.fractional_seconds() / 1e6;
-                this_data_rate = num_bits / seconds;
-                m_frequency = m_frequency * (1 - m_filter_alpha) + m_filter_alpha/seconds;
+            m_last_start_time = _now();
+        }
+        void success(float num_bits) {
+            end(num_bits); 
+        }
+        void fail() {
+            end(0);
+        }
+
+        void end(float num_bits){
+            boost::posix_time::ptime now = _now();
+            float time_between = 0;
+            if(now != m_last_end_time){
+                const boost::posix_time::time_duration diff = now - m_last_end_time;
+                time_between = diff.total_seconds() + diff.fractional_seconds() / 1e6;
             }else{
                 // assume just twice the update frequency that we can measure:
                 // if you actually need reliable counting for things occurring a
                 // million times a second, get back to me...
-                this_data_rate = num_bits;
-                m_frequency = m_frequency * (1 - m_filter_alpha) + m_filter_alpha/2e6;
+                time_between = 2e6;
             }
+                
+            const boost::posix_time::time_duration start_diff = now - m_last_start_time;
+            const float time_taken = start_diff.total_seconds() + start_diff.fractional_seconds() / 1e6;
+
+            m_frequency = (1 - m_filter_alpha) * m_frequency +
+                               m_filter_alpha  * 1/time_between;
+            m_time_taken = (1 - m_filter_alpha) * m_time_taken +
+                                m_filter_alpha  * time_taken;
+            m_time_ratio = m_time_taken * m_frequency;
             
-            m_data_rate = m_data_rate * (1 - m_filter_alpha) +
-                          this_data_rate * m_filter_alpha;
-            m_last_execution_time = now;
+            m_data_rate = (1 - m_filter_alpha) * m_data_rate +
+                               m_filter_alpha  * num_bits/time_between;
+            m_last_end_time = now;
         }
 
         float mBitPerSecond() const{
-            lock_t l(m_mux);
             return m_data_rate / 1e6;
         }
         
         // in Hz
         float frequency() const{
             return m_frequency;
+        }
+        
+        // in ms
+        float time_taken() const{
+            return m_time_taken * 1e3;
+        }
+        
+        float time_ratio() const{
+            return m_time_ratio;
         }
 
     private:
@@ -72,7 +96,10 @@ class ThroughputCounter{
         // exponentially filter each datapoint with m_value = alpha*data + (1-alpha)*m_value
         const float m_filter_alpha;
 
-        boost::posix_time::ptime m_last_execution_time;
+        boost::posix_time::ptime m_last_start_time;
+        boost::posix_time::ptime m_last_end_time;
+        float m_time_taken;
+        float m_time_ratio;
         float m_data_rate;
         float m_frequency;
 

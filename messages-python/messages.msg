@@ -876,6 +876,8 @@ group pl_gui
         status : NodeStatus;
         throughput : float; // bits/second
         frequency : float; // Hz
+        timeTaken : float; // milliseconds
+        timeRatio : float;
     }
 
     message InputStatus : 122
