@@ -1,7 +1,6 @@
 #ifndef __CAUV_BASEIMAGE_H__
 #define __CAUV_BASEIMAGE_H__
 
-#include <utility/streamops.h>
 #include <utility/serialisation-types.h>
 #include <generated/types/TimeStamp.h>
 #include <generated/types/UID.h>

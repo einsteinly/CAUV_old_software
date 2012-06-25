@@ -64,7 +64,7 @@ class CannyNode: public Node{
 
             cv::Mat dst;
             try{
-                cv::Canny(img->mat(), dst, t1, t2, ap, g);
+                img->apply(boost::bind(cv::Canny, _1, boost::ref(dst), t1, t2, ap, g));
                 r[Image_Out_Copied_Name] = boost::make_shared<Image>(dst);
             }catch(cv::Exception& e){
                 error() << "CannyNode:\n\t"

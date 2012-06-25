@@ -234,8 +234,8 @@ class FastMedianNode: public Node{
 
             float radius = param<float>("radius");
 
-            augmented_mat_t img = inputs["image"]->augmentedMat();
-            augmented_mat_t out = boost::apply_visitor(applyFastMedian(radius), img);
+            image_ptr_t img = inputs["image"];
+            augmented_mat_t out = img->apply_visitor(applyFastMedian(radius));
 
             r["image"] = boost::make_shared<Image>(out);
 
