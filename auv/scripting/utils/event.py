@@ -72,7 +72,7 @@ class Event(object):
             return NotImplemented
 
     def __gt__(self, other):
-        return not self.__lt__(self, other)
+        return not self.__lt__(other)
 
 class EventError(Exception):
     pass

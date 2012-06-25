@@ -122,7 +122,7 @@ class locationCondition(aiCondition):
     def get_state(self):
         return abs(self.tm_info['latitude']-self.options.latitude)<self.options.error and \
                abs(self.tm_info['longitude']-self.options.longitude)<self.options.error and \
-               (abs(self.tm_info['depth']-self.options.depth)<self.options.error or not self.options.use_depth)
+               (abs(self.tm_info['depth']-self.options.depth)<self.options.error or not self.options.use_depth)  # pylint: disable=E1101
         
 class detectorCondition(aiCondition):
     _abstract = True

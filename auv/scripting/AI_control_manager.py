@@ -83,12 +83,13 @@ class auvControl(aiProcess):
         if self.enabled.is_set() and self.current_task == task_id:
             getattr(self.sonar, command)(*args, **kwargs)
             
+    #If there are issues with scripts getting control, check here
     @event.event_func
     def control_timeout(self, process, time_out_at):
         if process in self.waiting_for_control and \
-           self.waiting_for_control[process][0] == time_out_at:
-            getattr(self.ai, task_id)._set_paused()
-            getattr(self.ai, task_id).control_timed_out()
+           self.waiting_for_control[process][1] == time_out_at:
+            getattr(self.ai, self.waiting_for_control[process][0])._set_paused()
+            getattr(self.ai, self.waiting_for_control[process][0]).control_timed_out()
             del self.waiting_for_control[process]
         self.reevaluate()
 
@@ -161,9 +162,9 @@ class auvControl(aiProcess):
                 self.auv.forwardlights(0)
                 time.sleep(2)
                 for c in str(msg):
-                    if not c in morsetab:
+                    if not c in utils.morse.tab:
                         continue
-                    for c2 in morsetab[c]:
+                    for c2 in utils.morse.tab[c]:
                         self.auv.forwardlights(255)
                         if c2 == '-':
                             time.sleep(1)

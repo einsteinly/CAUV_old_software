@@ -50,7 +50,7 @@ except AttributeError:
 try:
     script = script_class(args.task, options_class(args.options), state_class(args.state))
     #start receiving messages
-    self._register()
+    script._register()
     result = script.run()
     #notify of result
     script._notify_exit(result)

@@ -153,7 +153,7 @@ class taskManager(aiProcess):
         self.set_condition_options(msg.conditionId, BoostMapToDict(msg.conditionOptions))
     @event.event_func
     def onScriptControlMessage(self, msg):
-        commmand = msg.command
+        command = msg.command
         task_id = msg.taskId
         if command in ('Stop','Restart'):
             if task_id == self.current_task.id:
