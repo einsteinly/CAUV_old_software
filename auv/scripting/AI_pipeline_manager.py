@@ -168,7 +168,7 @@ class pipelineManager(aiProcess):
             pl.set(self.pipelines[reqname])
             self.running_pls[reqname] = pl
 
-    if False:
+        """
         def run(self):
             #this should probably be replaced with multiple pipelines
             while self.running:
@@ -190,7 +190,7 @@ class pipelineManager(aiProcess):
                     self.eval_state()
                     #self.state['requests'] = self.requests
                     #self.state.sync()
-    
+        """
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
