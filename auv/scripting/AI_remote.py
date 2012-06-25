@@ -112,6 +112,12 @@ def pause_script(ainode):
     task_id = str(raw_input('Enter task id: '))
     ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Pause))
     
+def pause_all(ainode):
+    ainode.node.send(messaging.ScriptControlMessage("",messaging.ScriptCommand.PauseAll))
+    
+def resume_all(ainode):
+    ainode.node.send(messaging.ScriptControlMessage("",messaging.ScriptCommand.ResumeAll))
+    
 def shell(ainode):
     print """
     To access AI use ainode, e.g.

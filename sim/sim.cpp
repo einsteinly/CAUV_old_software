@@ -15,6 +15,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <boost/make_shared.hpp>
+#include <boost/program_options.hpp>
 
 #include <osgDB/ReadFile>
 #include <osgGA/NodeTrackerManipulator>

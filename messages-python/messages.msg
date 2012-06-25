@@ -143,6 +143,9 @@ enum ScriptCommand : int8 {
     Stop,
     Restart,
     Pause,
+    Resume,
+    PauseAll,
+    ResumeAll,
 }
 enum SensorUIDBase : int32 {
     None = 0,
@@ -600,10 +603,6 @@ group telemetry
         track : float;
         speed: float;
         climb: float;
-    }
-    message SonarLocation : 91
-    {
-        position: floatXY;
     }
 }
 group image

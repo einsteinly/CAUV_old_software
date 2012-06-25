@@ -54,6 +54,8 @@ class taskManager(aiProcess):
         self.node.subMessage(messaging.SetConditionStateMessage())
         self.node.subMessage(messaging.RequestAIStateMessage())
         self.node.subMessage(messaging.ScriptControlMessage())
+        #start paused
+        self.all_paused = True
         #Tasks - list of tasks that (in right conditions) should be called
         self.task_nid = 0
         self.tasks = {}
@@ -169,8 +171,15 @@ class taskManager(aiProcess):
             except KeyError:
                 warning('Tried to start non-existant task %s' %(task_id))
             self.start_script(task)
-        if command == 'Pause':
+        elif command == 'Pause':
             warning('Pause command not implemented')
+        elif command == 'Resume':
+            warning('Pause command not implemented')
+        elif command == 'PauseAll':
+            self.all_paused = True
+            self.stop_all_scripts()
+        elif command == 'ResumeAll':
+            self.all_paused = False
 
     @event.event_func
     def onRequestAIStateMessage(self, msg):
@@ -387,8 +396,15 @@ class taskManager(aiProcess):
             except OSError:
                 debug('Could not kill running script (probably already dead)')
         info('Stopping Script')
+        
+    def stop_all_scripts(self):
+        for task_id in self.additional_tasks.keys():
+            self.stop_script(task_id)
+        self.stop_current_script()
 
     def start_script(self, task):
+        if self.all_paused:
+            pass
         #start the new script
         self.ai.auv_control.signal(task.id)
         info('Starting script: %s  (Task %s)' %(task.options.script_name, task.id))
@@ -486,12 +502,7 @@ class taskManager(aiProcess):
     def die(self):
         try:
             #kill any child scripts (since not managed by AI_manager, so may get left around)
-            for task_id, (task, script) in self.additional_tasks.iteritems():
-                script.terminate()
-                debug('Terminated additional task %s' %task_id)
-            if self.running_script:
-                self.running_script.terminate()
-                debug('Terminated current task %s' %self.current_task.id)
+            self.stop_all_scripts()
         except Exception as error:
             debug(error.message)
         aiProcess.die(self)
