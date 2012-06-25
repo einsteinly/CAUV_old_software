@@ -49,6 +49,8 @@ except AttributeError:
 #create class instaces, and run
 try:
     script = script_class(args.task, options_class(args.options), state_class(args.state))
+    #start receiving messages
+    self._register()
     result = script.run()
     #notify of result
     script._notify_exit(result)

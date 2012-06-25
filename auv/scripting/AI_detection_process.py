@@ -17,6 +17,9 @@ class detectionControl(aiProcess):
         self.running_detectors = {}
         self.enable_flag = threading.Event()
         self.enable_flag.set()
+        
+        #start receiving messages
+        self._register()
 
     @external_function
     @event.event_func

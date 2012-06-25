@@ -30,6 +30,9 @@ class pipelineManager(aiProcess):
         self.running_pls = {}
         
         self.load_pl_data()
+        
+        #start receiving messages
+        self._register()
 
     def load_pl_data(self):
         """

@@ -110,6 +110,9 @@ class aiLocation(aiProcess):
     def __init__(self):
         aiProcess.__init__(self, 'location')
         self.location_filter = locationFilter([rel_est(self.node) for rel_est in relative_estimators])
+        
+        #start receiving messages
+        self._register()
 
     #set via options
     @event.repeat_event(None)

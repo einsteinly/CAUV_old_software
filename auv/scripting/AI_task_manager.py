@@ -75,6 +75,9 @@ class taskManager(aiProcess):
         else:
             info('No previous valid state file')
         self.gui_send_all()
+        
+        #start receiving messages
+        self._register()
 
     def load_state(self, include_persist=False):
         #check whether there is a state
@@ -202,6 +205,7 @@ class taskManager(aiProcess):
     def on_list_of_detectors(self, detector_list):
         self.detectors_last_known.append(detector_list)
     @external_function
+    @event.event_func
     def on_detector_state_change(self, detector_id, state):
         self.detector_conditions[detector_id].on_state_set(state)
     #from script
@@ -217,7 +221,7 @@ class taskManager(aiProcess):
                     warning('%s had too many unhandled exceptions, so has been removed from task list.' %(task_id,))
                 self.log('Task %s failed after an exception in the script.' %(task_id, ))
             except KeyError:
-                warning('Unrecognised task %s crashed (or default script crashed)' %(task_id,))
+                warning('Unrecognised task %s crashed' %(task_id,))
             self.tasks[task_id].options.last_called = time.time()
         elif status == 'SUCCESS':
             self.log('Task %s suceeded, no longer trying to complete this task.' %(task_id, ))

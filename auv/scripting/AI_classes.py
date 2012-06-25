@@ -62,9 +62,10 @@ def external_function(f):
 def force_calling_process(f):
     f.caller = True
     return f
-
+    
 class aiProcess(event.EventLoop, messaging.MessageObserver):
     def __init__(self, process_name):
+        print 'initialising ' + str(self.__class__)
         #Need to be careful with use of super(), since there's now multiple
         #inheritance. It can act unexpectedly (for instance, switching the order
         #of inheritance of aiProcess will break things currently)
@@ -85,8 +86,11 @@ class aiProcess(event.EventLoop, messaging.MessageObserver):
             except AttributeError:
                 pass
         print(self.external_functions)
+        
+    #this needs to be called after initialisation, as it allows other processes to message this one
+    #the 'most child' process should call this at the end of its init method
+    def _register(self):
         self.node.addObserver(self)
-        self.ai.manager.register()
 
     def onAIMessage(self, m):
         message = cPickle.loads(m.msg)

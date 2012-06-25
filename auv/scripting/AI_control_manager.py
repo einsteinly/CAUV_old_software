@@ -55,6 +55,9 @@ class auvControl(aiProcess):
         self._control_state_default = {}
         self._sonar_state_default = {}
         
+        #start receiving messages
+        self._register()
+        
     #SCRIPT COMMANDS
     @force_calling_process
     @external_function
