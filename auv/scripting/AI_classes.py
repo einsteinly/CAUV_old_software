@@ -73,8 +73,8 @@ class aiProcess(event.EventLoop, messaging.MessageObserver):
         #set node name
         #id = process_name[:6] if len(process_name)>6 else process_name
         self.node = cauv.node.Node("ai_"+process_name)
-        self.node.join("ai")
-        self.node.join("guiai")
+        self.node.subMessage(messaging.AIMessage())
+        self.node.subMessage(messaging.AIlogMessage())
         self.process_name = process_name
         self.ai = aiAccess(self.node, self.process_name)
         self.running = True
@@ -225,7 +225,7 @@ class fakeAUV(messaging.MessageObserver):
         self.script = script #passing the script saves on the number of AI_process, as fakeAUV can now call other processes through the script
         self.sonar = fakeSonar(script)
         messaging.MessageObserver.__init__(self)
-        self.script.node.join("telemetry")
+        self.script.node.subMessage(messaging.TelemetryMessage())
         self.script.node.addObserver(self)
         self.current_bearing = None
         self.current_depth = None

@@ -46,6 +46,14 @@ class taskManager(aiProcess):
     #SETUP FUNCTIONS
     def __init__(self, opts):
         aiProcess.__init__(self, 'task_manager')
+        self.node.subMessage(messaging.AddTaskMessage())
+        self.node.subMessage(messaging.RemoveTaskMessage())
+        self.node.subMessage(messaging.SetTaskStateMessage())
+        self.node.subMessage(messaging.AddConditionMessage())
+        self.node.subMessage(messaging.RemoveConditionMessage())
+        self.node.subMessage(messaging.SetConditionStateMessage())
+        self.node.subMessage(messaging.RequestAIStateMessage())
+        self.node.subMessage(messaging.ScriptControlMessage())
         #Tasks - list of tasks that (in right conditions) should be called
         self.task_nid = 0
         self.tasks = {}
