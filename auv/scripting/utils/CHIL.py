@@ -74,7 +74,7 @@ import thirdparty.pyparsing as pp # MIT license
 
 # CAUV
 from hacks import sourceRevision, tddiv, tdmul, tdToLongMuSec
-from interpolation import LinearpiecewiseApprox, OutOfRange_Low, OutOfRange_High, zeroOrderInterp, linearInterp_timedeltas
+from interpolation import PiecewiseApprox, ZeroOrderPiecewiseApprox, OutOfRange_Low, OutOfRange_High, linearInterp, linearInterp_timedeltas
 import cauv.messaging as messaging
 
 
@@ -502,11 +502,11 @@ class ComponentPlayer(CHILer):
         self.ttn_cache = None
         # map of datetime -> seek value, linearly interpolates for values not
         # present
-        self.seek_map = LinearpiecewiseApprox(round,interp=linearInterp_timedeltas)
+        self.seek_map = PiecewiseApprox(linearInterp_timedeltas)
         # at each indexed seek position the absolute time (used for relative
         # timestamps) must be recorded
-        self.seek_time_map = LinearpiecewiseApprox(rfunc=lambda x:x, interp=zeroOrderInterp)
-        self.decoders = LinearpiecewiseApprox(rfunc=lambda x:x, interp=zeroOrderInterp)
+        self.seek_time_map = ZeroOrderPiecewiseApprox()
+        self.decoders = ZeroOrderPiecewiseApprox()
         self.default_decoder = None
         got_decoder = False
         try:
@@ -1149,7 +1149,7 @@ def testLogCoverage(loops=200):
     l.close()
 
 def testLinearPWA():
-    p = LinearpiecewiseApprox(round)
+    p = PiecewiseApprox(linearInterp)
     s = datetime.datetime.now()
     p[s] = 3
     time.sleep(0.1)

@@ -160,7 +160,6 @@ class menu():
 
 if __name__=='__main__':
     ainode = aiProcess('remote')
-    ainode._register()
     
     m = menu('Main menu', '')
     m.addFunction('Listen', listen, 'Listen to ai messages', {})

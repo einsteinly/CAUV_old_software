@@ -2,9 +2,9 @@
 from cauv.debug import debug, warning, error, info
 from cauv import messaging
 
-import threading, Queue
-import time
+import threading
 import traceback
+import utils.event as event
 
 from AI_classes import aiProcess, external_function, aiDetectorOptions
 
@@ -15,28 +15,12 @@ class detectionControl(aiProcess):
         aiProcess.__init__(self, 'detector_control')
         self.modules = {}
         self.running_detectors = {}
-        self.requests = Queue.Queue()
         self.enable_flag = threading.Event()
         self.enable_flag.set()
 
     @external_function
+    @event.event_func
     def start(self, detector_id, detector_file, options={}):
-        self.requests.put((self._start, detector_id, detector_file, options))
-    @external_function
-    def stop(self, detector_id):
-        self.requests.put((self._stop, detector_id))
-    @external_function
-    def set_options(self, detector_id, options):
-        self.requests.put((self._set_options, detector_id, options))
-    @external_function
-    def disable(self):
-        self.enable_flag.clear()
-    @external_function
-    def enable(self):
-        info("Re enabling detectors")
-        self.enable_flag.set()
-
-    def _start(self, detector_id, detector_file, options = {}):
         if detector_id in self.running_detectors:
             debug("Detector id %s is already running." %(detector_id))
             return
@@ -54,7 +38,7 @@ class detectionControl(aiProcess):
             opts = self.modules[detector_file].detectorOptions(options)
         except Exception:
             error('Could not initialise detector %s options, trying with no options.' %(detector_file,))
-            error(traceback.print_exc())
+            error(traceback.format_exc().encode('ascii', 'ignore'))
             opts = aiDetectorOptions({})
         #start detector
         try:
@@ -64,8 +48,11 @@ class detectionControl(aiProcess):
             traceback.print_exc()
             return
         info("Started detector class, id %s, %s." %(detector_file, detector_id))
+        self.detectors_changed()
 
-    def _stop(self, detector_id):
+    @external_function
+    @event.event_func
+    def stop(self, detector_id):
         try:
             self.running_detectors[detector_id].die()
             self.running_detectors.pop(detector_id)
@@ -76,49 +63,56 @@ class detectionControl(aiProcess):
             error(traceback.format_exc().encode('ascii','ignore'))
         else:
             info("Stopped detector %s." %(detector_id))
+        self.detectors_changed()
 
-    def _set_options(self, detector_id, options):
+    @external_function
+    @event.event_func
+    def set_options(self, detector_id, options):
         try:
             for key, value in options.iteritems():
                 self.running_detectors[detector_id].set_option(key, value)
         except KeyError:
             error("Detector %s doesn't exist, options can't be changed" %(detector_id))
+        self.detectors_changed()
 
-    def run(self):
-        while True:
+    @external_function
+    def disable(self):
+        self.enable_flag.clear()
+        for detector in self.running_detectors.values():
+            detector.die()
+            self.running_detectors = {}
+        self.detectors_changed()
+
+    @external_function
+    def enable(self):
+        info("Re enabling detectors")
+        self.enable_flag.set()
+        self.detectors_changed()
+
+    @event.repeat_event(1, True)
+    def process_detectors(self):
+        for detector_id, detector in self.running_detectors.iteritems():
+            #since each processing could take a while, and disabling needs to be pretty fast, check here
+            has_detected = detector.detected
             if not self.enable_flag.is_set():
-                for running_detector in self.running_detectors.values():
-                    running_detector.die()
-                self.running_detectors = {}
-                info('Detector process disabled')
-                self.enable_flag.wait(2)
-                continue
-            #update running detectors from requests (has to be done here as list of running detectors is constantly in use by this process)
-            while True:
-                try:
-                    command = self.requests.get(block = True, timeout = MAX_WAITING_TIME)
-                except Queue.Empty:
-                    break
-                command[0](*command[1:])
-            #send status
-            self.ai.task_manager.on_list_of_detectors(self.running_detectors.keys())
-            pipelines = []
-            #run detection
-            for detector_id, detector in self.running_detectors.iteritems():
-                pipelines.extend(detector._pipelines)
-                #since each processing could take a while, and disabling needs to be pretty fast, check here
-                if not self.enable_flag.is_set():
-                    break
-                try:
-                    detector.process()
-                except Exception:
-                    error('Exception while running %s.' %(detector_id,))
-                    error(traceback.format_exc().encode('ascii','ignore'))
-                if detector.detected:
-                    self.ai.task_manager.on_detector_state_change(detector_id, True)
-                self.node.send(messaging.ConditionStateMessage(detector_id, detector.options.get_options_as_params(),
-                               detector.get_debug_values(), detector._pipelines))
-            self.ai.pl_manager.set_detector_pls(pipelines)
+                break
+            try:
+                detector.process()
+            except Exception:
+                error('Exception while running %s.' %(detector_id,))
+                error(traceback.format_exc().encode('ascii','ignore'))
+            if detector.detected != has_detected:
+                self.ai.task_manager.on_detector_state_change(detector_id, detector.detected)
+            self.node.send(messaging.ConditionStateMessage(detector_id, detector.options.get_options_as_params(),
+                           detector.get_debug_values(), detector._pipelines))
+
+    def detectors_changed(self):
+        pipelines = []
+        for detector in self.running_detectors.values():
+            pipelines.extend(detector._pipelines)
+            debug("{}".format(detector._pipelines))
+        self.ai.pl_manager.set_detector_pls(pipelines)
+        self.ai.task_manager.on_list_of_detectors(self.running_detectors.keys())
 
 if __name__ == '__main__':
     try:

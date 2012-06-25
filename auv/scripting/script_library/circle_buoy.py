@@ -18,16 +18,16 @@ class scriptOptions(aiScriptOptions):
     Warn_Seconds_Between_Sights = 5
     Give_Up_Seconds_Between_Sights = 30
     Node_Name = "py-CrcB" # unused
-    Depth_Ceiling = 3 # XXX Probably dangerous for real testing
-    Strafe_Speed = 20   # (int [-127,127]) controls strafe speed
+    Depth_Ceiling = 0.8
+    Strafe_Speed = 70   # (int [-127,127]) controls strafe speed
     Buoy_Size = 0.15     # (float [0.0, 1.0]) controls distance from buoy. Units are field of view (fraction) that the buoy should fill
-    Size_Control_kPID = (-30, 0, 0)  # (Kp, Ki, Kd)
+    Size_Control_kPID = (-30, -1, 0)  # (Kp, Ki, Kd)
     Size_DError_Window = expWindow(5, 0.6)
-    Size_Error_Clamp = 1e30
+    Size_Error_Clamp = 80
     Angle_Control_kPID = (0.6, 0, 0) # (Kp, Ki, Kd)
     Angle_DError_Window = expWindow(5, 0.6)
     Angle_Error_Clamp = 1e30
-    Depth_Control_kPID = (-0.05, -0.01, 0) # (Kp, Ki, Kd)
+    Depth_Control_kPID = (0.08, 0, 0) # (Kp, Ki, Kd)
     Depth_DError_Window = expWindow(5, 0.6)
     Depth_Error_Clamp = 200
     
@@ -177,12 +177,11 @@ class script(aiScript):
         self.auv.prop(int(round(do_prop)))
         self.time_last_seen = now
 
-        debug('angle (e=%.3g, ie=%.3g de=%.3g) size (e=%.3g, ie=%.3g, de=%.3g), depth (e=%.3g, ie=%.3g de=%.3g) current_deppth=%g' % (
-            self.angle_pid.err, self.angle_pid.ierr, self.angle_pid.derr,
-            self.size_pid.err, self.size_pid.ierr, self.size_pid.derr,
-            self.depth_pid.err, self.depth_pid.ierr, self.depth_pid.derr,
-            self.getDepthNotNone()
-        ))
+        for name, controller in {"angle": self.angle_pid,
+                                 "size": self.size_pid,
+                                 "depth": self.depth_pid}.iteritems():
+            debug('{} (e={c.err:.3g}, ie={c.ierr:.3g}, de={c.derr:.3g})'.format(name, c=controller))
+        debug('current_depth = {:.3g}'.format(self.getDepthNotNone()))
         debug('turn to %g, prop to %s, dive to %g' % (turn_to, do_prop, depth_to))
         
         # Telemetry: TODO: probably move message generation to pid class, also
@@ -205,7 +204,7 @@ class script(aiScript):
         try:
             while False in entered_quarters:
                 self.auv.strafe(self.__strafe_speed)
-                time.sleep(0.5)
+                time.sleep(3)
                 time_since_seen = 0
                 if self.time_last_seen is not None:
                     time_since_seen = time.time() - self.time_last_seen
@@ -230,9 +229,6 @@ class script(aiScript):
                     entered_quarters[2] = True
                 if self.auv.getBearing() > 270 and self.auv.getBearing() < 360:
                     entered_quarters[3] = True
-            while self.auv.getBearing() < start_bearing:
-                info('Waiting for final completion...')
-                time.sleep(0.5)
             self.log('Buoy Circling: completed successfully')
         except:
             exit_status = 'FAIL'

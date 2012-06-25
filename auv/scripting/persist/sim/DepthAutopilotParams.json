@@ -1,0 +1,14 @@
+{
+    "__name__": "DepthAutopilotParamsMessage", 
+    "contents": {
+        "Ad": 2.0, 
+        "Ai": 2.0, 
+        "Ap": 2.0, 
+        "Kd": 500.0, 
+        "Ki": 0.6000000238418579, 
+        "Kp": 40.0, 
+        "maxError": 40.0, 
+        "scale": 1.0, 
+        "thr": 1.0
+    }
+}

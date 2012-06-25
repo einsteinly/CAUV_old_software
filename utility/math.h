@@ -15,8 +15,6 @@
 #ifndef __CAUV_MATH_H__
 #define __CAUV_MATH_H__
 
-#include <cmath>
-
 namespace cauv {
 
     template<typename T>

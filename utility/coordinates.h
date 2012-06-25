@@ -15,8 +15,6 @@
 #ifndef __CAUV_UTILITY_COORDINATES_H__
 #define __CAUV_UTILITY_COORDINATES_H__
 
-#include <cmath>
-
 namespace cauv{
 
 namespace coords{

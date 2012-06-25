@@ -137,7 +137,7 @@ class Model(messaging.MessageObserver):
         messaging.MessageObserver.__init__(self)
         self.node = node
         self.profile = profile
-        self.update_frequency = 10.0
+        self.update_frequency = 20.0
         self.datum = coordinates.Simulation_Datum
         
         # displacement in x (East), y (North), z (Altitude)

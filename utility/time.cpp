@@ -13,8 +13,10 @@
  */
 
 #include "time.h"
-#include <boost/date_time.hpp>
-#include <boost/thread.hpp>
+#include <ostream>
+#include <boost/date_time/gregorian/gregorian_types.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/thread/thread.hpp>
 
 cauv::TimeStamp::TimeStamp(int32_t const& secs, int32_t const& musecs) :
     secs(secs), musecs(musecs) {}

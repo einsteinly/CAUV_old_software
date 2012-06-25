@@ -56,13 +56,11 @@ class OutOfRange_High(KeyError):
     def __init__(self, s):
         KeyError.__init__(self, s)
 
-class LinearpiecewiseApprox(blist.sorteddict):
-    def __init__(self, rfunc=round, interp=linearInterp):
+class PiecewiseApprox(blist.sorteddict):
+    def __init__(self, interp, rfunc=round):
         blist.sorteddict.__init__(self)
         self.interpolate = interp
         self.rfunc = rfunc
-        if interp is zeroOrderInterp:
-            self.__getitem__ = self.__getitem_zeroOrder__
 
     def __getitem__(self, k):
         # interpolates if a value is not present for the specified key
@@ -99,8 +97,12 @@ class LinearpiecewiseApprox(blist.sorteddict):
             k
         )
         return self.rfunc(r)
+
+class ZeroOrderPiecewiseApprox(blist.sorteddict):
+    def __init__(self):
+        blist.sorteddict.__init__(self)
     
-    def __getitem_zeroOrder__(self, k):
+    def __getitem__(self, k):
         # interpolates if a value is not present for the specified key
         # NB: self._sortedkeys not copied! (faster than using self.keys())
         sorted_keys = self._sortedkeys #pylint: disable=E1101
@@ -111,5 +113,5 @@ class LinearpiecewiseApprox(blist.sorteddict):
             raise OutOfRange_Low('out of range: lt')
         klow = sorted_keys[ilow]
 
-        return self.rfunc(self._map[klow])
+        return self._map[klow]
 

@@ -15,7 +15,7 @@
 #ifndef __CAUV_UTILITY_TIME_H__
 #define __CAUV_UTILITY_TIME_H__
 
-#include <stdint.h>
+#include <boost/cstdint.hpp>
 #include <string>
 
 namespace cauv {

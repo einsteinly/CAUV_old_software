@@ -1,0 +1,11 @@
+{
+    "__name__": "SonarControlMessage", 
+    "contents": {
+        "angularRes": 16, 
+        "direction": 0, 
+        "gain": 255, 
+        "range": 50000, 
+        "rangeRes": 100, 
+        "width": 6400
+    }
+}

@@ -22,6 +22,7 @@ class SimSonar {
               unsigned int max_rate);
     void tick(double timestamp);
     void setup(osg::Node *root);
+    static const unsigned int node_mask = 0x2;
     private:
     cauv::CauvNode *sim_node;
     unsigned int width, height, resolution, range, fovx, fovy;
