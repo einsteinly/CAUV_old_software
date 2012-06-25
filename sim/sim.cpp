@@ -15,6 +15,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <boost/make_shared.hpp>
+#include <boost/program_options.hpp>
 
 #include <osgDB/ReadFile>
 #include <osgGA/NodeTrackerManipulator>
@@ -37,6 +38,7 @@
 #include "objects/red_herring.h"
 #include "objects/buoy.h"
 #include "objects/water.h"
+#include "objects/nodetrail.h"
 
 using namespace cauv;
 
@@ -72,6 +74,7 @@ class SimNode : public CauvNode {
                             po::positional_options_description& pos);
     private:
     unsigned int max_rate;
+    unsigned int trail_length;
     std::string env_file;
     bool sim_sonar;
 };
@@ -82,12 +85,15 @@ void SimNode::addOptions(po::options_description& desc,
     CauvNode::addOptions(desc, pos);
     desc.add_options()
         ("max_rate,r", po::value<unsigned int>(&max_rate)->default_value(20), "Maximum rate to send camera image messages")
+        ("trail_length,t", po::value<unsigned int>(&trail_length)->default_value(100), "length of trails to draw")
         ("env_file,f", po::value<std::string>(&env_file)->default_value(""), "Simulation environment .osgt file to use")
         ("sim_sonar,g", po::value<bool>(&sim_sonar)->default_value(false)->zero_tokens(), "Simulate sonar data")
     ;
 }
 
 void SimNode::onRun(void) {
+    static const unsigned int view_mask = 0x4;
+
     osg::ref_ptr<osg::Group> root_group = new osg::Group();
     osg::ref_ptr<osgViewer::Viewer> viewer = new osgViewer::Viewer();
     viewer->setUpViewInWindow(0,0,640,320);
@@ -105,14 +111,29 @@ void SimNode::onRun(void) {
   
     osg::ref_ptr<osg::Node> vehicle = new RedHerringNode();
     osg::ref_ptr<osg::PositionAttitudeTransform> vehicle_pos = new osg::PositionAttitudeTransform();
+    vehicle->setNodeMask(view_mask);
     vehicle_pos->addChild(vehicle);
     root_group->addChild(vehicle_pos);
 
-    //osg::ref_ptr<osg::Node> surface = new WaterNode();
-    //root_group->addChild(surface);
-    //
+    osg::ref_ptr<osg::Node> surface = new WaterNode();
+    surface->setNodeMask(view_mask | SimCamera::node_mask);
+    root_group->addChild(surface);
+
+    osg::ref_ptr<NodeTrail> front_trail;
+    osg::ref_ptr<NodeTrail> back_trail;
+    if (trail_length) {
+        front_trail = new NodeTrail(vehicle, osg::Vec3(0,0.3,0),
+                                    osg::Vec3(1,0,0), trail_length);
+        back_trail = new NodeTrail(vehicle, osg::Vec3(0,-0.3,0),
+                                    osg::Vec3(0,0,1), trail_length);
+        front_trail->setNodeMask(view_mask);
+        root_group->addChild(front_trail);
+        back_trail->setNodeMask(view_mask);
+        root_group->addChild(back_trail);
+    }
     
     osg::ref_ptr<osg::Node> environment_node = osgDB::readNodeFile(env_file);
+    environment_node->setNodeMask(view_mask | SimCamera::node_mask | SimSonar::node_mask);
     root_group->addChild(environment_node);
 
     osg::ref_ptr<osgGA::NodeTrackerManipulator> trackballmanip = new osgGA::NodeTrackerManipulator();
@@ -183,6 +204,12 @@ void SimNode::onRun(void) {
         forward.tick(simTime);
         down.tick(simTime);
         up.tick(simTime);
+        if (back_trail) {
+            back_trail->tick();
+        }
+        if (front_trail) {
+            front_trail->tick();
+        }
         if (sonar) {
             sonar->tick(simTime);
         }

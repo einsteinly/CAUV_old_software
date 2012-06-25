@@ -15,12 +15,15 @@
 #include "localMaximaNode.h"
 #include "firstAboveThresholdNode.h"
 #include "broadcastPointsNode.h"
+#ifdef CAUV_HAVE_TBB
 #include "fitEllipseNode.h"
+#endif
 #include "kmeansPointsNode.h"
 #include "drawEllipsesNode.h"
 #include "sobelNode.h"
 #include "blobNode.h"
 #include "drawCirclesNode.h"
+#include "broadcastCirclesNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -40,12 +43,15 @@ DEFINE_NFR(GlobalMaximumNode, NodeType::GlobalMaximum);
 DEFINE_NFR(LocalMaximaNode, NodeType::LocalMaxima);
 DEFINE_NFR(FirstAboveThresholdNode, NodeType::FirstAboveThreshold);
 DEFINE_NFR(BroadcastPointsNode, NodeType::BroadcastPoints);
+#ifdef CAUV_HAVE_TBB
 DEFINE_NFR(FitEllipseNode, NodeType::FitEllipse);
+#endif
 DEFINE_NFR(KMeansPointsNode, NodeType::KMeansPoints);
 DEFINE_NFR(DrawEllipsesNode, NodeType::DrawEllipses);
 DEFINE_NFR(SobelNode, NodeType::Sobel);
 DEFINE_NFR(BlobNode, NodeType::Blob);
 DEFINE_NFR(DrawCirclesNode, NodeType::DrawCircles);
+DEFINE_NFR(BroadcastCirclesNode, NodeType::BroadcastCircles);
 
 } // namespace imgproc
 } // namespace cauv

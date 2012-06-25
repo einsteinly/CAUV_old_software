@@ -445,8 +445,10 @@ class ControlLoops : public MessageObserver, public IMUObserver
         virtual void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr m)
         {
             if (m->enabled()) {
-                m_controlenabled[Bearing] = true;
-                m_controllers[Bearing].reset();
+                if (!m_controlenabled[Bearing]) {
+                    m_controlenabled[Bearing] = true;
+                    m_controllers[Bearing].reset();
+                }
                 m_controllers[Bearing].target = m->target();
             }
             else {
@@ -470,8 +472,10 @@ class ControlLoops : public MessageObserver, public IMUObserver
         virtual void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr m)
         {
             if (m->enabled()) {
-                m_controlenabled[Pitch] = true;
-                m_controllers[Pitch].reset();
+                if (!m_controlenabled[Pitch]) {
+                    m_controlenabled[Pitch] = true;
+                    m_controllers[Pitch].reset();
+                }
                 m_controllers[Pitch].target = m->target();
             }
             else {
@@ -498,8 +502,10 @@ class ControlLoops : public MessageObserver, public IMUObserver
                 if (!m_depthCalibration) {
                     warning() << "depth control will not be effective until calibration factors are set";
                 }
-                m_controlenabled[Depth] = true;
-                m_controllers[Depth].reset();
+                if (!m_controlenabled[Depth]) {
+                    m_controlenabled[Depth] = true;
+                    m_controllers[Depth].reset();
+                }
                 m_controllers[Depth].target = m->target();
             }
             else {

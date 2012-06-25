@@ -1,7 +1,7 @@
 #ifndef __CAUV_RATELIMIT_H__
 #define __CAUV_RATELIMIT_H__
 #include <list>
-#include <boost/date_time.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
 
 namespace cauv{
 

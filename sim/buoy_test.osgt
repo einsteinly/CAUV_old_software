@@ -1,0 +1,28 @@
+#Ascii Scene
+#Version 78
+#Generator OpenSceneGraph 2.9.17
+osg::Group {
+    UniqueID 1
+    Children 1 {
+            osg::Geode {
+        UniqueID 11
+        DataVariance STATIC
+        Drawables 1 {
+                    osg::ShapeDrawable {
+                UniqueID 10 
+                DataVariance STATIC 
+                Shape TRUE {
+                    osg::Sphere {
+                        UniqueID 1010 
+                        DataVariance STATIC 
+                        Center 0.00050764 4.7534452 -2.0
+                        Radius 0.39285715 
+                    }
+                }
+              Color 1.0 1.0 0.0 1 
+            }
+        }
+    
+    }
+    }
+}

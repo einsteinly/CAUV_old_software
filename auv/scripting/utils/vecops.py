@@ -28,3 +28,7 @@ def sxx(v_vec):
 
 def absv(v):
     return floatXYZ(abs(v.x),abs(v.y),abs(v.z))
+
+def xyz(vec, z = 0):
+    for v in vec:
+        yield floatXYZ(v.x, v.y, z)

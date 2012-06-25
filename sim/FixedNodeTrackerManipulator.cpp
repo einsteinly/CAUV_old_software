@@ -60,6 +60,7 @@ void FixedNodeTrackerManipulator::setTrackNode(osg::Node* node)
             OSG_NOTICE<<"osgGA::NodeTrackerManipualtor::setTrackNode(..) taking first parent path, ignoring others."<<std::endl;
         }
 
+#if 0
         for(unsigned int i=0; i<nodePaths.size(); ++i)
         {
             OSG_NOTICE<<"NodePath "<<i<<std::endl;
@@ -70,6 +71,7 @@ void FixedNodeTrackerManipulator::setTrackNode(osg::Node* node)
                 OSG_NOTICE<<"     "<<(*itr)->className()<<std::endl;
             }
         }
+#endif
         
 
         OSG_INFO<<"FixedNodeTrackerManipulator::setTrackNode(Node*"<<node<<" "<<node->getName()<<"): Path set"<<std::endl;

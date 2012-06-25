@@ -94,6 +94,15 @@ if (CAUV_POINTCLOUDS)
     endif()
 endif()
 
+find_package (TBB)
+if(${TBB_FOUND})
+    include_directories (SYSTEM ${TBB_INCLUDE_DIRS})
+    link_directories (${TBB_LIBRARY_DIRS})
+    add_definitions(-DCAUV_HAVE_TBB)
+    list(APPEND CONDITIONAL_SOURCE_FILES nodes/fitEllipseNode.cpp)
+    list(APPEND CONDITIONAL_LIBS tbb)
+endif()
+
 # sources:
 add_executable (
     img-pipeline
@@ -106,7 +115,6 @@ add_executable (
     nodes/nodes2.cpp
     nodes/math/mathNodes.cpp
     nodes/sonar/sonarNodes.cpp
-    nodes/fitEllipseNode.cpp
     ${CONDITIONAL_SOURCE_FILES}
 )
 cauv_install ( img-pipeline )
@@ -123,7 +131,6 @@ target_link_libraries (
     boost_filesystem
     boost_system
     opencv_image
-    tbb
     ${OpenCV_LIBS}
     ${CONDITIONAL_LIBS}
 )

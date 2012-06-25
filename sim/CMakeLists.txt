@@ -18,6 +18,7 @@ if (${CAUV_BUILD_SIM})
         objects/red_herring.cpp
         objects/buoy.cpp
         objects/water.cpp
+        objects/nodetrail.cpp
         FixedNodeTrackerManipulator.cpp
     )
     depends_on_messages(sim)

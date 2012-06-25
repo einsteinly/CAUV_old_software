@@ -20,6 +20,7 @@
 #include <string>
 #include <cstdio>
 
+#include <boost/bind.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
 #include <opencv2/core/core.hpp>
@@ -65,12 +66,17 @@ class VideoFileOutputNode: public OutputNode{
 
     protected:
         void doWork(in_image_map_t& inputs, out_map_t&){
-            using boost::algorithm::replace_all_copy;
-
-            cv::Mat img = inputs["image"]->mat();
+            image_ptr_t img = inputs["image"];
 
             debug(4) << "VideoFileOutputNode::doWork()" << inputs["image"];
 
+            img->apply(boost::bind(&VideoFileOutputNode::processFrame, this, _1, param<std::string>("filename")));
+        }
+
+        void processFrame(cv::Mat& img, const std::string& filename)
+        {
+            using boost::algorithm::replace_all_copy;
+            
             lock_t l(m_write_mux);
             try{
                 if(!m_writer.isOpened())
@@ -80,9 +86,8 @@ class VideoFileOutputNode: public OutputNode{
                     std::string cs = MakeString() << std::setfill('0') << std::setw(5) << m_counter++;
                     m_fname = replace_all_copy(
                                             replace_all_copy(
-                                                replace_all_copy(
-                                                    param<std::string>("filename"), "%c", cs
-                                                ), "%d", now("%Y-%m-%d")
+                                                replace_all_copy(filename, "%c", cs),
+                                                    "%d", now("%Y-%m-%d")
                                             ), "%t", now("%H-%M-%s")
                                         );
                     openVideo(img.size());
@@ -96,7 +101,6 @@ class VideoFileOutputNode: public OutputNode{
                 closeVideo();
                 throw img_pipeline_error("VideoFileOutputNode: could not write file");
             }
-
         }
 
         void openVideo(cv::Size const& size){

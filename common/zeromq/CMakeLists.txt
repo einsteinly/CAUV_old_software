@@ -2,7 +2,7 @@ find_package(ZeroMq REQUIRED)
 find_package(Crossroads REQUIRED)
 find_package(Ns3 QUIET)
 
-include_directories(${CROSSROADS_INCLUDE_DIRS})
+include_directories(${CROSSROADS_INCLUDE_DIR})
 
 add_executable(vehicle_daemon
     vehicle_daemon.cpp

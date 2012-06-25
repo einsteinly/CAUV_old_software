@@ -39,7 +39,7 @@ class BroadcastHistogramNode: public OutputNode{
         }
 
         void init(){
-            // slow node:
+            // fast node:
             m_speed = fast;
             
             // no inputs:
