@@ -17,9 +17,11 @@
 
 #include <boost/cstdint.hpp>
 #include <boost/variant.hpp>
+#include <boost/utility/result_of.hpp>
 
 #include <opencv2/core/core.hpp>
 
+#include <debug/cauv_debug.h>
 #include <utility/streamops.h>
 
 #include "base_image.h"
@@ -65,6 +67,27 @@ typedef boost::variant<
     PyramidMat
 > augmented_mat_t;
 
+template<typename Func, typename TRet>
+struct FuncVisitor : boost::static_visitor< TRet >{
+    public:
+        FuncVisitor(const Func& func) : func(func) {
+        }
+
+        TRet operator()(cv::Mat a) const {
+            return func(a);
+        }
+        TRet operator()(NonUniformPolarMat a) const {
+            return operator()(a.mat);
+        }
+        TRet operator()(PyramidMat) const {
+            error() << "no support for pyramids";
+            return TRet();
+        }
+
+    private:
+        Func func;
+};
+
 class Image : public BaseImage {
     public:
         Image();
@@ -93,6 +116,24 @@ class Image : public BaseImage {
 
         //why is this float?
         float bits() const;
+
+        template<typename Func>
+        typename Func::result_type apply(const Func& func)
+        {
+            return boost::apply_visitor(FuncVisitor<Func, typename Func::result_type>(func), m_img);
+        }
+
+        template<typename TRet, typename Func>
+        TRet apply(const Func& func)
+        {
+            return boost::apply_visitor(FuncVisitor<Func, TRet>(func), m_img);
+        }
+
+        template<typename Visitor>
+        typename Visitor::result_type apply_visitor(const Visitor& visitor)
+        {
+            return boost::apply_visitor(visitor, m_img);
+        }
 
     private:
         augmented_mat_t m_img;
