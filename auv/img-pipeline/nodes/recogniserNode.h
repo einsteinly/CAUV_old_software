@@ -35,6 +35,8 @@ class RecogniserNode: public Node{
     protected:
         void doWork(in_image_map_t& inputs, out_map_t& r){
             // TODO: Viola Jones or HOG object recognition here
+            inputs = inputs;
+            r = r;
         }
     
     private:

@@ -2,6 +2,7 @@
 #define ZEROMQ_ADDRESSES_H
 #include <string>
 #include <vector>
+#include <utility>
 #include <stdint.h>
 
 namespace cauv {

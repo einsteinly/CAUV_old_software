@@ -1,7 +1,6 @@
 #include "base_image.h"
 #include <utility/serialisation.h>
 #include <boost/make_shared.hpp>
-#include <debug/cauv_debug.h>
 
 using namespace cauv;
 

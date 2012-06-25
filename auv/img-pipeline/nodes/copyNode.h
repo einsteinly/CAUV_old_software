@@ -19,6 +19,8 @@
 #include <vector>
 #include <string>
 
+#include <boost/make_shared.hpp>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
@@ -54,7 +56,7 @@ class CopyNode: public Node{
             image_ptr_t img = inputs["image"];
             
             try{
-                r["image copy"] = image_ptr_t(new Image(*img)); 
+                r["image copy"] = boost::make_shared<Image>(*img); 
             }catch(cv::Exception& e){
                 error() << "CopyNode:\n\t"
                         << e.err << "\n\t"
