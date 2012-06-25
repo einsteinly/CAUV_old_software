@@ -28,62 +28,33 @@
 
 #include <gui/plugins/ai/conditionnode.h>
 
-
-// !!! TODO: this shouldn't be defined here, should be a separate pipeline plugin (probably called FluidityNode)
-#include <boost/weak_ptr.hpp>
-#include <liquid/proxyWidget.h>
-
-namespace cauv {
-class CauvNode;
-
-namespace gui {
-
-GENERATE_SIMPLE_NODE(PipelineNode)
-
-class LiquidPipelineNode : public liquid::LiquidNode,
-                           public liquid::ArcSourceDelegate,
-                           public ManagedNode
-{
-    Q_OBJECT
-public:
-    LiquidPipelineNode(boost::shared_ptr<PipelineNode> node, QGraphicsItem *parent = 0);
-    virtual ~LiquidPipelineNode();
-
-    void ensureInited(boost::weak_ptr<CauvNode> with_cauv_node);
-
-    liquid::AbstractArcSource * source(){ return m_source; }
-
-protected:
-    boost::shared_ptr<PipelineNode> m_node;
-    liquid::ProxyWidget* m_contents;
-    liquid::ArcSource * m_source;    
-};
-
-} // namespace gui
-} // namespace cauv
-
-
-
-
-
 namespace cauv {
 namespace gui {
+
+// !!! inter-plugin dependence
+class FluidityNode;
 
 
 GENERATE_SIMPLE_NODE(AiMissionNode)
 
 class AiTaskNode : public BooleanNode {
     public:
-
-        AiTaskNode(const nid_t id);
+        
+        // !!! inter-plugin dependence, need this to be inline
+        AiTaskNode(const nid_t id) : BooleanNode(id){
+            type = nodeType<AiTaskNode>();
+        }
 
         void addCondition(boost::shared_ptr<AiConditionNode> condition);
         void removeCondition(boost::shared_ptr<AiConditionNode> condition);
         std::set<boost::shared_ptr<AiConditionNode> > getConditions();
 
-        void addPipeline(boost::shared_ptr<PipelineNode> pipe);
-        void removePipeline(boost::shared_ptr<PipelineNode> pipe);
-        std::set<boost::shared_ptr<PipelineNode> > getPipelines();
+        // !!! inter-plugin dependence, need this to be inline
+        void addPipeline(boost::shared_ptr<FluidityNode> pipe){
+            m_pipelines.insert(pipe);
+        }
+        void removePipeline(boost::shared_ptr<FluidityNode> pipe);
+        std::set<boost::shared_ptr<FluidityNode> > getPipelines();
 
         boost::shared_ptr<Node> setDebug(std::string name, ParamValue value);
         void removeDebug(std::string name);
@@ -106,7 +77,7 @@ class AiTaskNode : public BooleanNode {
 
     protected:
         std::set<boost::shared_ptr<AiConditionNode> > m_conditions;
-        std::set<boost::shared_ptr<PipelineNode> > m_pipelines;
+        std::set<boost::shared_ptr<FluidityNode> > m_pipelines;
         std::map<std::string, boost::shared_ptr<Node> > m_debug;
         std::map<std::string, boost::shared_ptr<Node> > m_staticOptions;
         std::map<std::string, boost::shared_ptr<Node> > m_dynamicOptions;

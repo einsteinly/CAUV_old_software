@@ -1,0 +1,57 @@
+/* Copyright 2012 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ *
+ * See license.txt for details.
+ *
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
+#ifndef __CAUV_FLUIDITY_NODE_H__
+#define __CAUV_FLUIDITY_NODE_H__
+
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+
+#include <liquid/node.h>
+#include <liquid/arcSource.h>
+#include <liquid/proxyWidget.h>
+
+#include <gui/core/model/model.h>
+#include <gui/core/framework/manager.h>
+
+
+namespace cauv {
+class CauvNode;
+
+namespace gui {
+
+GENERATE_SIMPLE_NODE(FluidityNode)
+
+class LiquidFluidityNode: public liquid::LiquidNode,
+                          public liquid::ArcSourceDelegate,
+                          public ManagedNode
+{
+    Q_OBJECT
+public:
+    // !!! inter-plugin dependence, need this to be inline
+    LiquidFluidityNode(boost::shared_ptr<FluidityNode> node, QGraphicsItem *parent = 0);
+    virtual ~LiquidFluidityNode();
+
+    liquid::AbstractArcSource * source(){ return m_source; }
+
+protected:
+    boost::shared_ptr<FluidityNode> m_node;
+    liquid::ProxyWidget* m_contents;
+    liquid::ArcSource * m_source;    
+};
+
+} // namespace gui
+} // namespace cauv
+
+#endif // ndef __CAUV_FLUIDITY_NODE_H__

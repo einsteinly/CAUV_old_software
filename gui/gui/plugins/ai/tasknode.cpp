@@ -35,73 +35,19 @@
 
 #include <gui/plugins/ai/conditionnode.h>
 
-// includes for pipeline node
-#include <gui/core/framework/fluidity/view.h>
-
+// !!! inter-plugin dependence:
+#include <gui/plugins/fluidity/fluiditynode.h>
 
 using namespace cauv;
 using namespace cauv::gui;
 
 
-LiquidPipelineNode::LiquidPipelineNode(boost::shared_ptr<PipelineNode> node, QGraphicsItem *parent)
-    : liquid::LiquidNode(AI_Node_Style(), parent),
-      ManagedNode(this, node),
-      m_node(node),
-      m_contents(NULL),
-      m_source(new liquid::ArcSource(this, new liquid::Arc(Image_Arc_Style()))){
-
-    setResizable(true);
-
-    header()->setTitle(QString::fromStdString(m_node->nodeName()));
-    header()->setInfo(QString::fromStdString(m_node->nodePath()));
-
-    m_source->setParentItem(this);
-    m_source->setZValue(10);
-
-    connect(this, SIGNAL(xChanged()), m_source, SIGNAL(xChanged()));
-    connect(this, SIGNAL(yChanged()), m_source, SIGNAL(yChanged()));
-}
-
-LiquidPipelineNode::~LiquidPipelineNode(){
-    unRegisterNode(this);
-}
-
-void LiquidPipelineNode::ensureInited(boost::weak_ptr<CauvNode> with_cauv_node){
-    if(!m_contents){
-        boost::shared_ptr<CauvNode> cauv_node = with_cauv_node.lock();
-        if(cauv_node){
-            std::string pipeline_name = m_node->nodeName();
-            if(m_node->getParent()){
-                pipeline_name = m_node->getParent()->nodeName() + "/" + pipeline_name;
-            }
-            f::FView* view = new f::FView(cauv_node, pipeline_name);
-            view->setMode(f::FView::Internal);
-            m_contents = new liquid::ProxyWidget(this);
-            m_contents->setWidget(view);
-
-            QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(Qt::Horizontal);
-            hlayout->setSpacing(0);
-            hlayout->setContentsMargins(0,0,0,0);
-            hlayout->addStretch(1);
-            hlayout->addItem(m_contents);
-            hlayout->addItem(m_source);
-            hlayout->setAlignment(m_source, Qt::AlignBottom | Qt::AlignRight);
-
-            addItem(hlayout);
-        }else{
-            error() << "no cauv node available to init pipelineNode!";
-        }
-    }
-}
-
-
-
 std::set<std::string> AiTaskNode::m_types;
 
-
-AiTaskNode::AiTaskNode(const nid_t id) : BooleanNode(id){
-    type = nodeType<AiTaskNode>();
-}
+// !!! inter-plugin dependence, need this to be inline
+//AiTaskNode::AiTaskNode(const nid_t id) : BooleanNode(id){
+//    type = nodeType<AiTaskNode>();
+//}
 
 void AiTaskNode::addCondition(boost::shared_ptr<AiConditionNode> condition){
     m_conditions.insert(condition);
@@ -115,15 +61,16 @@ std::set<boost::shared_ptr<AiConditionNode> > AiTaskNode::getConditions(){
     return m_conditions;
 }
 
-void AiTaskNode::addPipeline(boost::shared_ptr<PipelineNode> pipe){
-    m_pipelines.insert(pipe);
-}
+// !!! inter-plugin dependence, need this to be inline
+//void AiTaskNode::addPipeline(boost::shared_ptr<FluidityNode> pipe){
+//    m_pipelines.insert(pipe);
+//}
 
-void AiTaskNode::removePipeline(boost::shared_ptr<PipelineNode> pipe){
+void AiTaskNode::removePipeline(boost::shared_ptr<FluidityNode> pipe){
     m_pipelines.erase(std::find(m_pipelines.begin(), m_pipelines.end(), pipe));
 }
 
-std::set<boost::shared_ptr<PipelineNode> > AiTaskNode::getPipelines(){
+std::set<boost::shared_ptr<FluidityNode> > AiTaskNode::getPipelines(){
     return m_pipelines;
 }
 
@@ -244,11 +191,8 @@ void LiquidTaskNode::buildContents(){
         conditionNode->source()->arc()->addTo(label->sink());
     }
 
-    foreach(boost::shared_ptr<PipelineNode> const& pipeline, m_node->getPipelines()){
-        // !!!! FIXME: in this case the Pipeline node will not be correctly
-        // init'd, will fix this when pipeline stuff is moved to a plugin, as
-        // the init arrangements will change (for the better) then anyway.
-        LiquidPipelineNode * pipelineNode = ManagedNode::getLiquidNodeFor<LiquidPipelineNode>(pipeline, false);
+    foreach(boost::shared_ptr<FluidityNode> const& pipeline, m_node->getPipelines()){
+        LiquidFluidityNode * pipelineNode = ManagedNode::getLiquidNodeFor<LiquidFluidityNode>(pipeline, false);
         liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
                                                       new liquid::RejectingConnectionSink());
         liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,

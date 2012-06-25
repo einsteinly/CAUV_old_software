@@ -35,12 +35,14 @@
 #include <liquid/water/dataSeries.h>
 
 #include "cauvplugins.h"
+#include "cauvfluidityplugin.h"
 
 #include "model/model.h"
 #include "model/registry.h"
 
 #include "framework/nodescene.h"
 #include "framework/nodepicker.h"
+#include "framework/manager.h"
 
 #include "fluidity/view.h"
 
@@ -327,8 +329,12 @@ CauvInterfacePlugin * CauvMainWindow::loadPlugin(QObject *plugin){
     CauvInterfacePlugin * basicPlugin = qobject_cast<CauvInterfacePlugin*>(plugin);
     if(basicPlugin) {
         basicPlugin->initialise(m_actions);
-        return basicPlugin;
+    }
+    
+    FluidityPluginInterface * fluidityPlugin = qobject_cast<FluidityPluginInterface*>(plugin);
+    if(fluidityPlugin) {
+        ManagedNode::setFluidityPlugin(fluidityPlugin);
     }
 
-    return NULL;
+    return basicPlugin;
 }
