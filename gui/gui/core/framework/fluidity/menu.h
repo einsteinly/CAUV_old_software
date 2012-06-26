@@ -15,6 +15,9 @@
 #ifndef __CAUV_GUI_F_MENU_H__
 #define __CAUV_GUI_F_MENU_H__
 
+#include <algorithm>
+#include <boost/bind.hpp>
+
 #include <QMenu>
 #include <QTextEdit>
 #include <QCoreApplication>
@@ -32,7 +35,7 @@ class Menu: public QMenu{
         Menu(QWidget* parent=0)
             : QMenu(parent),
               m_textedit(NULL),
-              m_header_string("----------"),
+              m_header(NULL),
               m_unfiltered_actions(),
               m_unfiltered_menus(),
               m_parent_menu(NULL){
@@ -46,7 +49,7 @@ class Menu: public QMenu{
             // leave space for the search box (has to draw within rect())
             //setTitle doesn't seem to add a title to contextmenus...
             //setTitle(m_header_string);
-            QMenu::addAction(m_header_string);
+            m_header = QMenu::addAction("-----------");
             QAction* separator = new QAction(this);
             separator->setSeparator(true);
             QMenu::addAction(separator);
@@ -56,7 +59,7 @@ class Menu: public QMenu{
         Menu(QString topic, QWidget* parent=0)
             : QMenu(topic, parent),
               m_textedit(NULL),
-              m_header_string(),
+              m_header(NULL),
               m_unfiltered_actions(),
               m_unfiltered_menus(),
               m_parent_menu(dynamic_cast<Menu*>(parent)){
@@ -93,17 +96,37 @@ class Menu: public QMenu{
                 debug() << "forward keypress to parent menu...";
                 m_parent_menu->keyPressEvent(e);
             }else{
-                assert(m_textedit);
-                if(!recursed_hack){
-                    recursed_hack = true;
-                    QCoreApplication::sendEvent(
-                        m_textedit,
-                        new QKeyEvent(
-                            e->type(), e->key(), e->modifiers(), e->text(), e->isAutoRepeat(), e->count()
-                        )
-                    );
-                    recursed_hack = false;
+                switch(e->key())
+                {
+                    case Qt::Key_Up:
+                        setActiveIndex(m_active_index - 1, false);
+                        break;
+                    case Qt::Key_Down:
+                        setActiveIndex(m_active_index + 1, false);
+                        break;
+                    case Qt::Key_Enter:
+                    case Qt::Key_Return:
+                        if (m_active_action)
+                            m_active_action->activate(QAction::Trigger);
+                        break;
+                    case Qt::Key_Escape:
+                        close();
+                        break;
+                    default:
+                        assert(m_textedit);
+                        if(!recursed_hack){
+                            recursed_hack = true;
+                            QCoreApplication::sendEvent(
+                                m_textedit,
+                                new QKeyEvent(
+                                    e->type(), e->key(), e->modifiers(), e->text(), e->isAutoRepeat(), e->count()
+                                )
+                            );
+                            recursed_hack = false;
+                        }
+                        break;
                 }
+
             }
             e->accept();
         }
@@ -114,66 +137,130 @@ class Menu: public QMenu{
             QMenu::showEvent(event);
         }
 
-        void updateSearchWithString(QString search){
-            debug(3) << __func__ << search.toStdString();
+        int updateSearchWithString(QString search){
+            debug(3) << title().toStdString() << "::" << __func__ << search.toStdString();
+            
+            m_total_filtered = 0;
+
             QList<QAction*> current_actions = actions();
-            //for(int i = m_unfiltered_actions.size()-1; i >=0; i--){
-            QAction* single_active_action = NULL;
             for(int i = 0; i < m_unfiltered_actions.size(); i++){
                 QAction* a = m_unfiltered_actions.at(i);
+                bool is_match = a->text().contains(search, Qt::CaseInsensitive);
+                if (is_match) {
+                    ++m_total_filtered;
+                }
+
                 if(current_actions.contains(a)){
-                    if(!a->text().contains(search, Qt::CaseInsensitive) &&
-                       !a->isSeparator() &&
-                       a->text() != m_header_string){
+                    if (!is_match && !a->isSeparator() && a != m_header){
                         QMenu::removeAction(a);
-                    }else{
-                        single_active_action = a;
                     }
                 }else{
-                    if(a->text().contains(search, Qt::CaseInsensitive) ||
-                       a->isSeparator()){
-                        QAction* next_a = NULL;
-                        for(int j = i+1; next_a == NULL && j < m_unfiltered_actions.size(); j++){
-                            QAction* maybe_next = m_unfiltered_actions.at(j);
-                            if(current_actions.contains(maybe_next))
-                                next_a = maybe_next;
-                        }
-                        QMenu::insertAction(next_a, a);
-                        single_active_action = a;                        
+                    if(is_match || a->isSeparator()){
+                        QList<QAction*>::iterator next_a = std::find_if(
+                            m_unfiltered_actions.begin()+i, m_unfiltered_actions.end(),
+                            boost::bind(&QList<QAction*>::contains, &current_actions, _1)
+                        );
+                        if (next_a != m_unfiltered_actions.end())
+                            QMenu::insertAction(*next_a, a);
+                        else
+                            QMenu::addAction(a);
                     }
                 }
             }
-            if(actions().size() - m_unfiltered_menus.size() != 1){
-                single_active_action = NULL;
-            }
             // Filter submenus... (the menus actions are included in actions(),
             // but disable them instead of removing/adding)
-            int num_active_submenus = 0;
-            QAction* single_active_submenu_action = NULL;
             foreach(Menu* m, m_unfiltered_menus){
-                m->updateSearchWithString(search);
+                int subcount = m->updateSearchWithString(search);
+                m_total_filtered += subcount;
                 QAction* ma = m->menuAction();
-                if(m->filteredSize()){
+                if(subcount > 0){
                     if(!ma->isEnabled()){
                         //ma->setVisible(true);
                         ma->setEnabled(true);
                     } 
-                    num_active_submenus++;
-                    single_active_submenu_action = ma;
-                }else if((!m->filteredSize()) && ma->isEnabled()){
+                }else if(subcount == 0 && ma->isEnabled()){
                     //ma->setVisible(false);
                     ma->setEnabled(false);
                 }
             }
-            // can't get this to work:
-            /*if(single_active_action && num_active_submenus == 0){
-                debug() << "set single active action";            
-                setActiveAction(single_active_action);
-            }else if(num_active_submenus == 1){
-                debug() << "set single active submenu";
-                setActiveAction(single_active_submenu_action);
-            }*/
+
+            if (!m_parent_menu)
+                setActiveIndex(0);
             updateTextBoxGeom();
+            
+            debug(3) << title().toStdString() << "::" << __func__ << "total filtered = " << m_total_filtered;
+
+            return m_total_filtered;
+        }
+
+        void setActiveIndex(int i, bool clearOnError = true)
+        {
+            if (m_total_filtered == 0) {
+                if (clearOnError) {
+                    setActiveAction(NULL);
+                    m_active_action = NULL;
+                }
+                return;
+            }
+
+            i = i % m_total_filtered;
+            if (i < 0)
+                i = m_total_filtered + i;
+
+            int saved_i = i;
+            std::vector<std::pair<Menu*, QAction*> > action_stack;
+            QAction* action = setActiveIndex(i, action_stack);
+            if (action) {
+                m_active_index = saved_i;
+                m_active_action = action;
+            } else {
+                if (clearOnError) {
+                    setActiveAction(NULL);
+                    m_active_action = NULL;
+                }
+            }
+        }
+        QAction* setActiveIndex(int& i, std::vector<std::pair<Menu*, QAction*> >& action_stack)
+        {
+            debug(3) << title().toStdString() << "::" << __func__ << i;
+
+            if (i < 0) {
+                return NULL;
+            }
+            
+            // Try each action
+            foreach (QAction* a, actions()) {
+                if (!a->isEnabled() || a->isSeparator() || a == m_header)
+                    continue;
+                
+                Menu* m = dynamic_cast<Menu*>(a->menu());
+                if (m) {
+                    // This is a menu, so recurse
+                    action_stack.push_back(std::make_pair(this, a));
+                    
+                    // If the menu successfully set the active action, bubble up
+                    // Otherwise, it'll change i, pop itself off the stack, and keep going
+                    QAction* ret = m->setActiveIndex(i, action_stack);
+                    if (ret)
+                        return ret;
+                    
+                    action_stack.pop_back();
+                } else if (i == 0) {
+                    // We've found it! Set everything to be active, and escape
+                    typedef std::pair<Menu*, QAction*> stack_pair_t;
+                    foreach(stack_pair_t p, action_stack) {
+                        debug(3) << p.first->title().toStdString() << "::setActiveAction" << p.second->text().toStdString();
+                        p.first->setActiveAction(p.second);
+                    }
+                    setActiveAction(a);
+                    return a;
+                } else {
+                    --i;
+                }
+            }
+
+            // Sorry Mario, your action is in another castle
+            return NULL;
         }
         
         struct HasNonFilteredStuff{
@@ -196,8 +283,11 @@ class Menu: public QMenu{
         }
 
     private:
+        int m_active_index;
+        QAction* m_active_action;
+        int m_total_filtered;
         QTextEdit* m_textedit;
-        QString m_header_string;
+        QAction* m_header;
         QList<QAction*> m_unfiltered_actions;
         QList<Menu*> m_unfiltered_menus;
         Menu* m_parent_menu;
