@@ -254,8 +254,9 @@ void CauvMainWindow::onRun()
     restoreState(settings.value("windowState").toByteArray());
 
     show();
-
-    connect(m_actions->view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(createRadialMenu(QPoint)));
+    
+    // There was a mutiny against the radial menu...
+    //connect(m_actions->view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(createRadialMenu(QPoint)));
 
     m_application->exec();
 

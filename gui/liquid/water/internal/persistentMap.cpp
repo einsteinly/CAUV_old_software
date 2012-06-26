@@ -16,6 +16,7 @@
 
 #include <debug/cauv_debug.h>
 #include <utility/string.h>
+#include <utility/qstring.h>
 
 #include <QSqlRecord>
 #include <QSqlError>
@@ -23,10 +24,14 @@
 
 namespace wi = liquid::water::internal;
 
+static uint64_t dbConnID(){
+    static uint64_t db_connection_id = 0;
+    return db_connection_id++;
+}
 
 wi::Map::Map(QString name)
     : m_table_name(name),
-      m_db(QSqlDatabase::addDatabase("QSQLITE", name + "-connection")){
+      m_db(QSqlDatabase::addDatabase("QSQLITE", name + "-connection-" + (cauv::mkQStr() << dbConnID()))){
     const char* db_name = "/tmp/cauv/gui.db.sqlite";
     bool success;
 
