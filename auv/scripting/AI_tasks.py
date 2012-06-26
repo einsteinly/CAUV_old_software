@@ -32,6 +32,7 @@ class aiTask(object):
         self.conditions = {}
         self.persist_state = {}
         self.active = False
+        self.paused = False
     def load_script_options(self):
         if self.options.script_name:
             self.script_options=__import__('script_library.'+self.options.script_name, fromlist=['scriptOptions']).scriptOptions()
