@@ -387,7 +387,7 @@ enum SequenceType : int8 {
 
 struct LocationSequence
 {
-    eq location : list<WGS84Coord>;
+    eq locations : list<WGS84Coord>;
     eq type : SequenceType;
 }
 
@@ -876,6 +876,8 @@ group pl_gui
         status : NodeStatus;
         throughput : float; // bits/second
         frequency : float; // Hz
+        timeTaken : float; // milliseconds
+        timeRatio : float;
     }
 
     message InputStatus : 122
