@@ -74,7 +74,7 @@ Length    = 1.3       # length in m, used for moment calculation only
 Ixx = Izz = (Mass*(Length**2)/12.0) # kg m^2
 Iyy = Ixx / 4
 
-Max_Thrust = 22.0 # N, used in Force_Per_Unit_Thrust only
+Max_Thrust = 11.0 # N, used in Force_Per_Unit_Thrust only
 Force_Per_Unit_Thrust = Max_Thrust/127.0 # N
 Max_Yaw_Moment   = 1.5*Max_Thrust*2
 Max_Pitch_Moment = Max_Yaw_Moment
@@ -86,11 +86,11 @@ Max_Roll_Moment  = Max_Yaw_Moment / 20
 Drag_F = np.array((Max_Thrust*2 / 0.3, # x (sideways)
                    Max_Thrust   / 0.4, # y (forwards)
                    Max_Thrust*2 / 0.7)) # z (up/down)
-# Drag Torque: Newton metres per degree per second, measured from complete
+# Drag Torque: Newton metres per radian per second, measured from complete
 # guesses at maximum rotation rates:
-Drag_J = np.array((Max_Yaw_Moment / 20.0,   # yaw
-                   Max_Roll_Moment / 20.0,  # roll
-                   Max_Pitch_Moment / 5.0)) # pitch
+Drag_J = np.array((Max_Yaw_Moment / 0.8,   # yaw
+                   Max_Roll_Moment / 1,  # roll
+                   Max_Pitch_Moment / 0.8)) # pitch
 
 class Model(base_model.Model):
     def __init__(self, node, profile=False):

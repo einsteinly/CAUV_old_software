@@ -45,7 +45,7 @@ class BlobNode: public Node{
             std::vector<cv::KeyPoint> operator()(const NonUniformPolarMat pmat) const {
                 return getBlobs(pmat.mat);
             }
-            std::vector<cv::KeyPoint> operator()(const PyramidMat pymat) const {
+            std::vector<cv::KeyPoint> operator()(const PyramidMat) const {
                 throw parameter_error("pyramidal images not supported");
             }
             private:
@@ -57,6 +57,20 @@ class BlobNode: public Node{
             private:
             const cv::SimpleBlobDetector& detector;
         };
+
+        struct getDimensions : boost::static_visitor< std::pair <int, int> > {
+            public:
+            std::pair<int, int> operator()(const cv::Mat mat) const {
+                return std::make_pair(mat.cols, mat.rows);
+            }
+            std::pair<int, int> operator()(const NonUniformPolarMat pmat) const {
+                return operator()(pmat.mat);
+            }
+            std::pair<int, int> operator()(const PyramidMat) const {
+                throw parameter_error("pyramedal images not suppored");
+            }
+        };
+
         void doWork(in_image_map_t& inputs, out_map_t& r){
             bool find_dark = param<bool>("find_dark");
             bool find_light = param<bool>("find_light");
@@ -89,18 +103,26 @@ class BlobNode: public Node{
             cv::SimpleBlobDetector blobDetector(blobDetectorParams);
 
             std::vector<cv::KeyPoint> blobs;
+            float width = 1;
+            float height = 1;
             try {
                 augmented_mat_t m = inputs["image (not copied)"]->augmentedMat();
+                std::pair<int, int> dimensions = boost::apply_visitor(getDimensions(), m);
+                width = dimensions.first;
+                height = dimensions.second;
                 blobs = boost::apply_visitor(findBlobs(blobDetector), m);
             } catch(cv::Exception& e) {
                 error() << "BlobNode:\n\t"
                         << e.err << "\n\t"
                         << "in" << e.func << "," << e.file << ":" << e.line;
+                return;
             }
             std::vector<Circle> circles;
             circles.reserve(blobs.size());
             foreach(const cv::KeyPoint& b, blobs) {
-                circles.push_back(Circle(floatXY(b.pt.x, b.pt.y), b.size));
+                circles.push_back(Circle(floatXY(b.pt.x / width,
+                                                 b.pt.y / height),
+                                                 b.size / ((width + height) / 2)));
             }
             r["blobs"] = circles;
         }

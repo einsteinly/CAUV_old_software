@@ -22,17 +22,16 @@
 #include <cctype>
 #include <ctime>
 
-#include <boost/date_time.hpp>
-#include <boost/utility.hpp>
-#include <boost/variant.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
 #if defined(CAUV_DEBUG_MUTEXES) || defined(CAUV_DEBUG_PRINT_THREAD)
-#include <boost/thread.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
 #include <boost/make_shared.hpp>
 #endif
-#include <boost/thread/locks.hpp>
 #include <boost/thread/tss.hpp>
 
 #include <utility/bash_cout.h>

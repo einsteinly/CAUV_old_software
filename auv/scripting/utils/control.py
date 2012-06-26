@@ -15,14 +15,17 @@ class Controller:
         return 0
 
 class PIDController(Controller):
-    def __init__(self, (Kp, Ki, Kd), d_window = [1], err_clamp = 1e9):
+    def __init__(self, (Kp, Ki, Kd), d_window = None, err_clamp = 1e9):
         # the most recent end of the window is the start
         self.err = 0
         self.last_time = None
         self.derrs = []
         self.ierr = 0
         self.derr = 0
-        self.derr_window = d_window
+        if d_window is None:
+            self.derr_window = [1]
+        else:
+            self.derr_window = d_window
         self.err_clamp = err_clamp
         if abs(sum(d_window)) < 1e-30:
             raise Exception('Bad Window')

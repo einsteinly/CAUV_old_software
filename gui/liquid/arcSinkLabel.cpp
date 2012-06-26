@@ -35,7 +35,8 @@ ArcSinkLabel::ArcSinkLabel(ArcSink * arc_sink,
     : QGraphicsWidget(node),
       RequiresCutout(),
       m_arc_sink(arc_sink),
-      m_text(NULL){
+      m_text(NULL),
+      m_hlayout(NULL){
 
     /*
      *    This widget
@@ -64,28 +65,28 @@ ArcSinkLabel::ArcSinkLabel(ArcSink * arc_sink,
     vlayout->setSpacing(0);
     vlayout->setContentsMargins(0,0,0,0);    
 
-    QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(
+    m_hlayout = new QGraphicsLinearLayout(
         Qt::Horizontal, vlayout
     );
-    hlayout->setSpacing(0);
-    hlayout->setContentsMargins(0,0,0,0);
-    vlayout->addItem(hlayout);
+    m_hlayout->setSpacing(0);
+    m_hlayout->setContentsMargins(0,0,0,0);
+    vlayout->addItem(m_hlayout);
 
     m_arc_sink->setParentItem(this);
-    hlayout->addItem(m_arc_sink);
-    hlayout->setAlignment(m_arc_sink, Qt::AlignVCenter | Qt::AlignLeft);
+    m_hlayout->addItem(m_arc_sink);
+    m_hlayout->setAlignment(m_arc_sink, Qt::AlignVCenter | Qt::AlignLeft);
 
     LiquidLabel* text_label = new LiquidLabel(id);
     text_label->setFont(node->style().text.font);
 
     m_text = new ProxyWidget();
     m_text->setWidget(text_label);
-    hlayout->addItem(m_text);
-    hlayout->setAlignment(m_text, Qt::AlignVCenter | Qt::AlignLeft);
+    m_hlayout->addItem(m_text);
+    m_hlayout->setAlignment(m_text, Qt::AlignVCenter | Qt::AlignLeft);
 
-    hlayout->setItemSpacing(0, 4.0);
-    hlayout->setItemSpacing(1, 2.0);
-    hlayout->addStretch(1);
+    m_hlayout->setItemSpacing(0, 4.0);
+    //m_hlayout->setItemSpacing(1, 2.0);
+    //m_hlayout->addStretch(1);
 
     setLayout(vlayout);
 
@@ -137,7 +138,10 @@ void ArcSinkLabel::paint(QPainter *painter,
     #endif // def CAUV_DEBUG_DRAW_LAYOUT
 }
 
-QGraphicsLinearLayout* ArcSinkLabel::vLayout() const{
+/*QGraphicsLinearLayout* ArcSinkLabel::vLayout() const{
     return dynamic_cast<QGraphicsLinearLayout*>(QGraphicsWidget::layout());
-}
+}*/
 
+QGraphicsLinearLayout* ArcSinkLabel::hLayout() const{
+    return m_hlayout;
+}

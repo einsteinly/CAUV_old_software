@@ -112,6 +112,12 @@ def pause_script(ainode):
     task_id = str(raw_input('Enter task id: '))
     ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Pause))
     
+def pause_all(ainode):
+    ainode.node.send(messaging.ScriptControlMessage("",messaging.ScriptCommand.PauseAll))
+    
+def resume_all(ainode):
+    ainode.node.send(messaging.ScriptControlMessage("",messaging.ScriptCommand.ResumeAll))
+    
 def shell(ainode):
     print """
     To access AI use ainode, e.g.
@@ -160,13 +166,13 @@ class menu():
 
 if __name__=='__main__':
     ainode = aiProcess('remote')
-    ainode._register()
     
     m = menu('Main menu', '')
     m.addFunction('Listen', listen, 'Listen to ai messages', {})
     m.addFunction('Listen to state', listen_state, 'Listen to ai state messages', {})
     m.addFunction('Stop listening to state', stop_listen_state, 'Stop listening to ai state messages', {})
     m.addFunction('Resend data', resend_data, '', {})
+    m.addFunction('shell', shell, '', {})
     
     t = menu('Task menu', '')
     t.addFunction('Add Task', add_task, '', {})

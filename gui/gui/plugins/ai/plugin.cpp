@@ -67,7 +67,7 @@ void AiPlugin::initialise(){
         node->send(boost::make_shared<RequestAIStateMessage>());
     } else error() << "AiPlugin failed to lock cauv node";
 
-    m_actions->scene->registerDropHandler(boost::make_shared<AiDropHandler>(m_actions->root, m_actions->node));
+    m_actions->scene->registerDropHandler(boost::make_shared<AiDropHandler>(m_actions->root));
 
     m_actions->nodes->registerDelegate(nodeType<AiTaskNode>(), boost::make_shared<NumericDelegate>());
 

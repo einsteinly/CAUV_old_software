@@ -66,25 +66,6 @@ void AiMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
     foreach(param_map_t::value_type i, m->debugValues()){
         task->setDebug(i.first, i.second);
     }
-
-    boost::shared_ptr<GroupingNode> pipelines = ai->findOrCreate<GroupingNode>("pipelines");
-    foreach(std::string const& id, m->pipelineIds()){
-        QString full_pipeline_name = QString::fromStdString(id);
-        QStringList basename_subname = full_pipeline_name.split('/');
-        if(basename_subname.size() == 1){
-            // no sub-name
-            task->addPipeline(pipelines->findOrCreate<PipelineNode>(id));
-        } else if(basename_subname.size() == 2){
-            boost::shared_ptr<GroupingNode> pipeline_group = pipelines->findOrCreate<GroupingNode>(
-                std::string(basename_subname[0].toUtf8().data())
-            );
-            task->addPipeline(pipeline_group->findOrCreate<PipelineNode>(
-                std::string(basename_subname[1].toUtf8().data())
-            ));
-        } else {
-            error() << "invalid pipeline ID:" << id;
-        }
-    }
 }
 
 

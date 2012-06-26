@@ -325,13 +325,15 @@ void FNode::status(Status const& s, std::string const& status_information){
         LiquidNode::status(s, mkStr() << m_node_id << ": " << status_information);
 }
 
-void FNode::status(Status const& s, float const& throughput, float const& frequency){
+void FNode::status(Status const& s, float const& throughput, float const& frequency, float const& time_taken, float const& time_ratio){
     LiquidNode::status(
         s,
         mkStr()
             << m_node_id << ": "
             << std::setprecision(1) << std::setiosflags(std::ios::fixed) << throughput << "Mb/s "
-            << std::setprecision(1) << std::setiosflags(std::ios::fixed) << frequency << "Hz"
+            << std::setprecision(1) << std::setiosflags(std::ios::fixed) << frequency << "Hz "
+            << std::setprecision(0) << std::setiosflags(std::ios::fixed) << time_taken << "ms "
+            << std::setprecision(0) << std::setiosflags(std::ios::fixed) << time_ratio*100 << "%"
     );
 }
 

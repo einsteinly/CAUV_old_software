@@ -119,14 +119,10 @@ class BearingRangeToXYNode: public Node{
             UID kps_uid;
             boost::tie(in_kps, kps_uid) = paramAndUID< kp_vec >("keypoints");
 
-            augmented_mat_t in = img->augmentedMat();
-            
             debug(4) << "BearingRangeToXYNode:" << in_kps.size() << "kps, img:"
                      << img->id() << "output will have uid:" << kps_uid;
             
-            r.internalValue("keypoints") = InternalParamValue(
-                boost::apply_visitor(convertKeyPoints(in_kps), in), kps_uid
-            );
+            r.internalValue("keypoints") = InternalParamValue(img->apply_visitor(convertKeyPoints(in_kps)), kps_uid);
             
         }
     

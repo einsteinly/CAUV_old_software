@@ -14,11 +14,14 @@
 
 #include "manager.h"
 
+#include <gui/plugins/fluidity/fluiditynode.h>
+
 using namespace cauv;
 using namespace cauv::gui;
 
 std::map<boost::shared_ptr<Node>, liquid::LiquidNode*> ManagedNode::m_liquidNodes;
-QGraphicsScene * ManagedNode::m_scene;
+QGraphicsScene * ManagedNode::m_scene = NULL;
+FluidityPluginInterface * ManagedNode::m_fluidity_plugin = NULL;
 
 ManagedNode::ManagedNode(liquid::LiquidNode* ln, boost::shared_ptr<Node> node){
     registerNode(ln, node);
@@ -41,3 +44,41 @@ void ManagedNode::registerNode(liquid::LiquidNode* ln, boost::shared_ptr<Node> n
 void ManagedNode::setScene(QGraphicsScene *scene){
     m_scene = scene;
 }
+
+
+
+namespace cauv{
+namespace gui{
+
+template<>
+LiquidFluidityNode * ManagedNode::getLiquidNodeFor<LiquidFluidityNode, FluidityNode>(boost::shared_ptr<FluidityNode> fnode, bool relayout)
+{
+    boost::shared_ptr<Node> node = boost::static_pointer_cast<Node>(fnode);
+    LiquidFluidityNode * liquidNode;
+    liquid::LiquidNode * ln = m_liquidNodes[node];
+    if(!ln){
+        if(!m_scene){
+            error() << "ManagedNode must have a scene set before calling getLiquidNodeFor(...)";
+            return NULL;
+        }
+        if(!m_fluidity_plugin){
+            error() << "ManagedNode must have a fluidity plugin set before calling getLiquidNodeFor(FluidityNode ...)";
+            return NULL;
+        }
+        debug() << "getLiquidNodeFor" << node->nodePath() << "creating new node";
+        liquidNode = m_fluidity_plugin->newLiquidNodeFor(fnode);
+        m_scene->addItem(liquidNode);
+    } else {
+        debug() << "getLiquidNodeFor" << node->nodePath() << "returning existing node";
+        liquidNode = static_cast<LiquidFluidityNode*>(ln);
+    }
+
+    if(relayout)
+        liquid::LayoutItems::updateLayout(m_scene);
+
+    return liquidNode;
+}
+
+
+} // namespace gui
+} // namespace cauv

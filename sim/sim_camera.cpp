@@ -35,6 +35,10 @@ SimCamera::SimCamera (osg::Node *track_node,
     fixed_manip->setTranslation(translation);
     viewer->setCameraManipulator(fixed_manip.get());
     viewer->setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
+    camera->setInheritanceMask(
+          osg::CullSettings::ALL_VARIABLES &
+          ~osg::CullSettings::CULL_MASK);
+    camera->setCullMask(node_mask);
 }
 
 void SimCamera::setup(osg::Node *root) {

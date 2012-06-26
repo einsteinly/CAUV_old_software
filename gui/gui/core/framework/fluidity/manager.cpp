@@ -371,7 +371,7 @@ void Manager::onStatus(StatusMessage_ptr m){
             if(m->status() & cauv::NodeStatus::Bad)
                 i->left->status(liquid::LiquidNode::NotOK, "Could Not Execute");
             else
-                i->left->status(liquid::LiquidNode::OK, m->throughput(), m->frequency());
+                i->left->status(liquid::LiquidNode::OK, m->throughput(), m->frequency(), m->timeTaken(), m->timeRatio());
         }
     }else{
         error() << "no such node:" << m->nodeId();

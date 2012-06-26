@@ -22,6 +22,7 @@
 #include <limits>
 #include <numeric>
 
+#include <boost/version.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/ref.hpp>

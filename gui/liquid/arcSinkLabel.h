@@ -43,11 +43,14 @@ class ArcSinkLabel: public QGraphicsWidget,
                            QWidget *widget = 0);
 
         // Safe access to the layout:
-        QGraphicsLinearLayout* vLayout() const;
+        //QGraphicsLinearLayout* vLayout() const;
+        QGraphicsLinearLayout* hLayout() const;
 
     protected:
         liquid::ArcSink* m_arc_sink;
         QGraphicsProxyWidget* m_text;
+
+        QGraphicsLinearLayout* m_hlayout;
 };
 
 } // namespace liquid

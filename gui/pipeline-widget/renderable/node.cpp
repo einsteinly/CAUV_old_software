@@ -229,6 +229,15 @@ struct makePVPairHelper< const floatXY >
         return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
     }
 };
+template<>
+struct makePVPairHelper< const LocationSequence >
+{
+    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const LocationSequence&, bool) {
+        std::stringstream ss;
+        ss << "unsupported :(";
+        return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
+    }
+};
 
 struct PVPairVisitor: public boost::static_visitor< boost::shared_ptr<PVPairEditableBase> >
 {

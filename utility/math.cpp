@@ -13,6 +13,7 @@
  */
 
 #include "math.h"
+#include <cmath> // for floor
 
 template<>
 double cauv::mod(double const& d, double const& base)

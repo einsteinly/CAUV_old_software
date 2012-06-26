@@ -40,17 +40,14 @@ namespace cauv {
             virtual ~AiNode();
         };
 
-
         class AiDropHandler : public DropHandlerInterface<QGraphicsItem * > {
         public:
-            AiDropHandler(boost::shared_ptr<NodeItemModel> model,
-            boost::weak_ptr<CauvNode> cauv_node);
+            AiDropHandler(boost::shared_ptr<NodeItemModel> model);
             virtual bool accepts(boost::shared_ptr<Node> const& node);
             virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node);
 
         protected:
             boost::shared_ptr<NodeItemModel> m_model;
-            boost::weak_ptr<CauvNode> m_cauv_node;
         };
 
     } // namespace gui

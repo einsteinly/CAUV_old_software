@@ -84,6 +84,12 @@ class ProxyWidget: public QGraphicsProxyWidget{
             }else{
                 QGraphicsProxyWidget::paint(painter, option, widget);
             }
+            
+            //#ifdef CAUV_DEBUG_DRAW_LAYOUT
+            painter->setPen(QPen(QColor(120,10,100,64)));
+            painter->setBrush(Qt::NoBrush);
+            painter->drawRect(boundingRect());
+            //#endif // def CAUV_DEBUG_DRAW_LAYOUT 
         }
 
         // for completely different reasons make sure that geometry() is an

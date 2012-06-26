@@ -20,6 +20,8 @@
 #include <QQueue>
 #include <QTimer>
 
+#include <boost/shared_ptr.hpp>
+
 #include <debug/cauv_debug.h>
 
 #include <gui/core/model/utils/sampler.h>

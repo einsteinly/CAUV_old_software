@@ -62,11 +62,11 @@ void FNodeInput::setCollapsed(bool state){
 }
 
 void FNodeInput::addWidget(QGraphicsWidget* w){
-    vLayout()->addItem(w);
+    hLayout()->addItem(w);
 }
 
 void FNodeInput::removeWidget(QGraphicsWidget* w){
-    vLayout()->removeItem(w);
+    hLayout()->removeItem(w);
 }
 
 bool FNodeInput::willAcceptConnection(liquid::ArcSourceDelegate* from_source){
@@ -182,11 +182,15 @@ FNodeParamInput::FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode*
       m_model_node(),
       m_view(NULL),
       m_view_proxy(NULL){
+    // don't want a label:
+    removeWidget(m_text);
+    m_text->deleteLater();
+    m_text = NULL;
 }
 FNodeParamInput::~FNodeParamInput(){
     // if it isn't in the layout, then need to delete the view proxy
-    for(int i = 0; i < vLayout()->count(); i++)
-        if(vLayout()->itemAt(i) == m_view_proxy)
+    for(int i = 0; i < hLayout()->count(); i++)
+        if(hLayout()->itemAt(i) == m_view_proxy)
             return;
     m_view_proxy->deleteLater();
 }
@@ -218,7 +222,7 @@ void FNodeParamInput::setCollapsed(bool collapsed){
     }
     // update the layout here before returning to caller (so everything is
     // up-to-date)
-    vLayout()->activate();
+    hLayout()->activate();
 }
 
 void FNodeParamInput::setEditable(bool editable){
@@ -276,9 +280,12 @@ void FNodeParamInput::initView(){
     m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_view->setMinimumSize(QSize(60, height_hint));
-    m_view->setMaximumSize(QSize(1200, height_hint));
+    m_view->setMaximumSize(QSize(1200, 600));
     m_view->setModel(m_model);
-    m_view->setColumnWidth(0,80);
+    m_view->setColumnWidth(0,120);
+    //m_view->setRootIndex(m_model->index(0, 0));
+    //m_view->resizeColumnToContents(0);
+    m_view->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);    
     // !!! TODO: height hint?
     //m_view->resizeRowsToContents();
     m_view->setAutoFillBackground(false);

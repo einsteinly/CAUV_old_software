@@ -110,6 +110,16 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
             }
         }
 
+        template <class T> size_t countChildrenOfType() const {
+            size_t n = 0;
+            foreach (boost::shared_ptr<Node> const& child, getChildren()) {
+                if (dynamic_cast<T *>(child.get())) {
+                    ++n;
+                }
+            }
+            return n;
+        }
+
         template <class T> const std::vector<boost::shared_ptr<T> > getChildrenOfType() const {
             std::vector<boost::shared_ptr<T> > output;
 
