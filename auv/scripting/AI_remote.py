@@ -173,7 +173,9 @@ if __name__=='__main__':
     m.addFunction('Listen to state', listen_state, 'Listen to ai state messages', {})
     m.addFunction('Stop listening to state', stop_listen_state, 'Stop listening to ai state messages', {})
     m.addFunction('Resend data', resend_data, '', {})
-    m.addFunction('shell', shell, '', {})
+    m.addFunction('Shell', shell, '', {})
+    m.addFunction('Pause all', pause_all, '', {})
+    m.addFunction('Resume all', resume_all, '', {})
     
     t = menu('Task menu', '')
     t.addFunction('Add Task', add_task, '', {})

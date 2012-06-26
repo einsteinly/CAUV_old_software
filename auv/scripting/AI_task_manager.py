@@ -153,7 +153,7 @@ class taskManager(aiProcess):
         self.set_condition_options(msg.conditionId, BoostMapToDict(msg.conditionOptions))
     @event.event_func
     def onScriptControlMessage(self, msg):
-        command = msg.command
+        command = msg.command.name
         task_id = msg.taskId
         if command in ('Stop','Restart'):
             if task_id == self.current_task.id:
@@ -179,6 +179,7 @@ class taskManager(aiProcess):
             self.all_paused = True
             self.stop_all_scripts()
         elif command == 'ResumeAll':
+            debug('Resumed')
             self.all_paused = False
 
     @event.event_func
@@ -404,7 +405,7 @@ class taskManager(aiProcess):
 
     def start_script(self, task):
         if self.all_paused:
-            pass
+            return
         #start the new script
         self.ai.auv_control.signal(task.id)
         info('Starting script: %s  (Task %s)' %(task.options.script_name, task.id))

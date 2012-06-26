@@ -98,8 +98,8 @@ void SimSonar::tick(double timestamp) {
                     ImageEncodingType::RAW_uint8_1,
                     bearings,
                     0,
-                    far,
-                    far / (float)resolution,
+                    range,
+                    range / (float)resolution,
                     cauv::now()
                 )
             );
