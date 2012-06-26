@@ -337,8 +337,7 @@ class fakeAUV(messaging.MessageObserver):
             except ZeroDivisionError:
                 bearing = 90 if x>0 else 270
             debug('Heading on a %f degree bearing, direction vector %s' %(bearing,str(vector_to)))
-            if abs(self.current_bearing-bearing):
-                self.prop(0)
+            self.prop(0)
             self.bearingAndWait(bearing)
             #go forward
             self.prop(speed)
