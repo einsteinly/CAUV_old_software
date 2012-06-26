@@ -8,6 +8,7 @@ set (
     radialMenu.cpp
     radialSegment.cpp
     radialMenuItem.cpp
+    labelPath.cpp
     style.cpp
 )
 
@@ -20,6 +21,7 @@ set (
     radialMenu.h
     radialSegment.h
     radialMenuItem.h
+    labelPath.h
 )
 
 set (

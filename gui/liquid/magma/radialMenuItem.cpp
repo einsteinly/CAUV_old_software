@@ -23,7 +23,7 @@ RadialMenuItem::RadialMenuItem(QModelIndex const& index,
                                RadialSegment * segment,
                                Qt::WindowFlags f
         ):
-    QLabel(segment, f),
+    LabelPath(segment, f),
     m_index(index),
     m_segment(segment) {
     init();
@@ -34,15 +34,16 @@ RadialMenuItem::RadialMenuItem(QModelIndex const& index,
                                const QString& text,
                                Qt::WindowFlags f
         ):
-    QLabel(text, segment, f),
+    LabelPath(text, segment, f),
     m_index(index),
     m_segment(segment) {
     init();
 }
 
 void RadialMenuItem::init(){
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     this->setMouseTracking(true);
-    m_hoverTimer.setInterval(100);
+    m_hoverTimer.setInterval(200);
     m_hoverTimer.setSingleShot(true);
     m_hoverTimer.connect(&m_hoverTimer, SIGNAL(timeout()), this, SIGNAL(itemHovered()));
 }
@@ -69,8 +70,22 @@ RadialSegment * RadialMenuItem::segment() const {
 
 void RadialMenuItem::setAngle(float angle){
     m_angle = angle;
+    resize(sizeHint());
 }
 
 float RadialMenuItem::getAngle() const{
     return m_angle;
+}
+
+QSize RadialMenuItem::sizeHint() const {
+    QSize rectangularSize = fontMetrics().size(Qt::TextSingleLine, text());
+    //qDebug() << "size of raw text " << rectangularSize;
+    QTransform transform;
+    transform.translate(rectangularSize.width()/2, rectangularSize.height()/2);
+    transform = transform.rotate(m_angle);
+    //qDebug() << "rotated by " << m_angle;
+    QRect rotatedRect = transform.mapRect(
+                QRect(0,0,rectangularSize.width(),rectangularSize.height()));
+    //qDebug() << "rotated rect " << rotatedRect;
+    return rotatedRect.size();
 }

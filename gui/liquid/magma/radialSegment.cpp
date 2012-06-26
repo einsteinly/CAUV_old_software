@@ -41,7 +41,7 @@ public:
         m_shimmerIn->setEasingCurve(QEasingCurve::InSine);
 
         m_shimmerOut->setStartValue(target->property(property).toFloat() -
-                                 m_amplitude.toFloat());
+                                    m_amplitude.toFloat());
         m_shimmerOut->setEndValue(target->property(property));
         m_shimmerOut->setDuration(duration);
         m_shimmerOut->setEasingCurve(QEasingCurve::OutSine);
@@ -133,7 +133,7 @@ void RadialSegment::itemSelected(){
 
 void RadialSegment::setRadius(float r){
     m_radius = r;
-    resize(sizeHint());
+    resize(sizeHint()*2);
     Q_EMIT sizeChanged(size());
     relayoutItems();
     update();
@@ -186,10 +186,27 @@ void RadialSegment::relayoutItems(){
         //debug() << itemAngle << m_rotation << m_angle;
 
         item->setAngle(itemAngle);
-        int x = sin(itemAngle*M_PI/180) * (m_radius);
-        int y = cos(itemAngle*M_PI/180) * (m_radius);
+        int x = sin(itemAngle*M_PI/180) * (m_radius - (m_style.width/2));
+        int y = cos(itemAngle*M_PI/180) * (m_radius - (m_style.width/2));
         item->move(x + (width()/2) - (item->width()/2),
                    y + (height()/2) - (item->height()/2));
+
+
+        // set up the path for the text to follow
+        QPainterPath path;
+        QRectF textElipse = innerElipse().adjusted(
+                    -m_style.width/2, -m_style.width/2,
+                    m_style.width/2, m_style.width/2);
+//        textElipse = textElipse.translated(50,-20);
+        textElipse = textElipse.translated(rect().center() - item->pos());
+        qDebug() << "center" << rect().center();
+        //path = path.translated(QPoint(100,100));
+        qDebug() << "text elipse" << textElipse;
+        path.arcMoveTo(textElipse,m_rotation + (anglePerItem * count));
+        path.arcTo(textElipse, m_rotation + (anglePerItem * count), anglePerItem);
+        item->setPath(path);
+
+
         count++;
     }
 }
@@ -226,49 +243,53 @@ void RadialSegment::mouseMoveEvent(QMouseEvent *event)
         move(event->globalPos() - dragPosition);
         event->accept();
     }
+}
 
+QRectF RadialSegment::innerElipse() {
+    return QRectF(-m_radius    + m_style.width,
+                  -m_radius    + m_style.width,
+                  (2*m_radius) - (2*m_style.width),
+                  (2*m_radius) - (2*m_style.width));
+}
+
+QRectF RadialSegment::outerElipse() {
+    return QRectF(-m_radius, -m_radius,
+                  (2*m_radius), (2*m_radius));
+}
+
+QPainterPath RadialSegment::backgroundPath(){
+    QPainterPath path;
+
+    path.arcMoveTo(innerElipse(), m_rotation);
+    path.arcTo(outerElipse(), m_rotation, m_angle);
+    path.arcTo(innerElipse(), m_rotation + m_angle, - m_angle);
+    path.closeSubpath();
+
+    return path;
 }
 
 void RadialSegment::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
-    QPainterPath path;
     painter.setRenderHint(QPainter::Antialiasing);
 
     //painter.fillRect(this->rect(), Qt::green);
 
+
+    painter.translate(width() / 2, height() / 2);
     painter.setPen(m_style.pen);
     painter.setBrush(m_style.brush);
     painter.setFont(m_style.tick.font);
 
-    //float scale = 1.0;
-    //painter.scale( 1.0/scale, 1.0/scale);
-    painter.translate(width() / 2, height() / 2);
-
-    float scaledRadius = (m_radius); // -2 means we don't draw over
-                                     // the edges of the mask which
-                                     // causes aliasing artifacts
-
-    QRectF outerElipse = QRectF(
-                -scaledRadius, -scaledRadius,
-                (2*scaledRadius), (2*scaledRadius));
-
-    QRectF innerElipse = QRectF(
-                -scaledRadius    + m_style.width,
-                -scaledRadius    + m_style.width,
-                (2*scaledRadius) - (2*m_style.width),
-                (2*scaledRadius) - (2*m_style.width));
-
-    //painter.drawEllipse(outerElipse);
-   // painter.setPen(Qt::magenta);
-   // painter.drawEllipse(innerElipse);
-
-    path.arcMoveTo(innerElipse, m_rotation);
-    path.arcTo(outerElipse, m_rotation, m_angle);
-    path.arcTo(innerElipse, m_rotation + m_angle, - m_angle);
-    path.closeSubpath();
-
+    QPainterPath path = backgroundPath();
     painter.drawPath(path);
+
+
+    painter.setPen(QPen(Qt::green, 5));
+
+    foreach(RadialMenuItem * item, m_items){
+        //painter.drawPath(item->getPath());
+    }
 
 }
 

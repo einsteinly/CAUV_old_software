@@ -17,12 +17,14 @@
 
 #include <QtGui>
 
+#include "labelPath.h"
+
 namespace liquid {
 namespace magma {
 
 class RadialSegment;
 
-class RadialMenuItem : public QLabel {
+class RadialMenuItem : public LabelPath {
     Q_OBJECT
 
 public:
@@ -45,6 +47,9 @@ public:
     RadialSegment * segment() const;
     void setAngle(float angle);
     float getAngle() const;
+
+    QSize sizeHint() const;
+
 
 Q_SIGNALS:
     void itemHovered();

@@ -62,6 +62,10 @@ protected:
     void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *event);
 
+    QRectF innerElipse();
+    QRectF outerElipse();
+    QPainterPath backgroundPath();
+
     RadialSegmentStyle const& m_style;
     float m_radius;
     float m_rotation;
