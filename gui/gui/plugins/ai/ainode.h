@@ -40,7 +40,6 @@ namespace cauv {
             virtual ~AiNode();
         };
 
-
         class AiDropHandler : public DropHandlerInterface<QGraphicsItem * > {
         public:
             AiDropHandler(boost::shared_ptr<NodeItemModel> model);

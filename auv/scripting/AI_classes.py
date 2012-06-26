@@ -301,6 +301,45 @@ class fakeAUV(messaging.MessageObserver):
                 return True
         return False
         
+    def headToLocation(target_lla, depth_enabled = False, error = 0.5, speed = 128, checking_interval = 0.5, timeout = None):
+        vector_to = self.lla.differenceInMetresTo(target_lla)
+        if depth_enabled:
+            self.depth(self.current_depth+self.lla.altitude-target_lla.altitude)
+        if timeout:
+            end_time = time.time() + timeout
+        while True:
+            if max(abs(vector_to.north),abs(vector_to.east))>error:
+                self.prop(0)
+                return True
+            elif timeout:
+                if end_time < time.time():
+                    self.prop(0)
+                    return False
+            #rotate to vector
+            #       ^N   /
+            #       |   /
+            #       |__/
+            #       |b/
+            #_______|/_________________>E
+            #       |
+            #       |
+            #       |
+            try:
+                #mod 180 to make sure in range 0, 180
+                bearing = degrees(atan(vector_to.east/vector_to.north))%180
+                #if we want to head west, need to add 180 degrees to bearing
+                if vector_to.east<0:
+                    bearing+=180
+            except ZeroDivisionError:
+                bearing = 90 if x>0 else 270
+            debug('Heading on a %f degree bearing, direction vector %s' %(bearing,str(vector_to)))
+            self.prop(0)
+            self.bearingAndWait(bearing)
+            #go forward
+            self.prop(speed)
+            time.sleep(checking_interval)
+            vector_to = self.lla.differenceInMetresTo(target_lla)
+        
     def __getattr__(self, attr):
         debug('FakeAUV: returning dynamic override for attr=%s' % str(attr), 3)
         return fakeAUVfunction(self.script, attr)

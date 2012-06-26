@@ -39,7 +39,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-
+GENERATE_SIMPLE_NODE(NewPipelineNode)
 
 class FluidityDropHandler: public DropHandlerInterface<QGraphicsItem*> {
 public:
@@ -48,7 +48,8 @@ public:
     }
 
     virtual bool accepts(boost::shared_ptr<Node> const& node){
-        return (node->type == nodeType<FluidityNode>());
+        return (node->type == nodeType<FluidityNode>() ||
+                node->type == nodeType<NewPipelineNode>());
     }
 
     virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node){
@@ -57,6 +58,13 @@ public:
                 boost::static_pointer_cast<FluidityNode>(node)
             );
             return n; 
+        }
+        if (node->type == nodeType<NewPipelineNode>()) {
+            size_t nPipelines = node->countChildrenOfType<FluidityNode>();
+
+            return ManagedNode::getLiquidNodeFor<LiquidFluidityNode>(
+                node->findOrCreate<FluidityNode>(MakeString() << "default/pipeline" << (nPipelines + 1))
+            );
         }
         return NULL;
     }
@@ -75,12 +83,12 @@ const QString FluidityPlugin::name() const{
 }
 
 void FluidityPlugin::initialise(){
-    //foreach(boost::shared_ptr<Vehicle> vehicle, VehicleRegistry::instance()->getVehicles()){
-    //    debug() << "setup Fluidity plugin for" << vehicle;
-    //    ...
-    //}
-    //connect(VehicleRegistry::instance().get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
-    //       this, SLOT(setupVehicle(boost::shared_ptr<Node>)));
+    foreach(boost::shared_ptr<Vehicle> vehicle, VehicleRegistry::instance()->getVehicles()){
+        debug() << "setup Fluidity plugin for" << vehicle;
+        setupVehicle(vehicle);
+    }
+    connect(VehicleRegistry::instance().get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+           this, SLOT(setupVehicle(boost::shared_ptr<Node>)));
 
     m_actions->scene->registerDropHandler(boost::make_shared<FluidityDropHandler>(m_actions->root));
 
@@ -88,6 +96,16 @@ void FluidityPlugin::initialise(){
         theCauvNode() = m_actions->node;
     else
         throw std::runtime_error("only one FluidityPlugin may be initialised");
+}
+
+void FluidityPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
+    try {
+        boost::shared_ptr<Vehicle> vehicle = vnode->to<Vehicle>();
+        boost::shared_ptr<NewPipelineNode> newpipeline = vehicle->findOrCreate<NewPipelineNode>("new pipeline");
+
+    } catch(std::runtime_error& e) {
+        error() << "FluidityPlugin::setupVehicle: Expecting Vehicle Node" << e.what();
+    }
 }
 
 cauv::gui::LiquidFluidityNode* FluidityPlugin::newLiquidNodeFor(boost::shared_ptr<FluidityNode> node){

@@ -165,7 +165,7 @@ class follow_cam(aiTask):
         
 class default(aiTask):
     class options(taskOptions):
-        script_name = 'spiral'
+        script_name = 'location_search'
         priority = 0
         detectors_enabled_while_running = True
     conditions = [
