@@ -26,6 +26,7 @@ class aiStateListener(messaging.MessageObserver):
     def __init__(self, node):
         messaging.MessageObserver.__init__(self)
         self.node = node
+        self.node.join('guiai')
         self.node.addObserver(self)
     def onTaskStateMessage(self, m):
         print m

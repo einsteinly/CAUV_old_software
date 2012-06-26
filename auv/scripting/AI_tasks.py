@@ -162,9 +162,18 @@ class follow_cam(aiTask):
         (c['stateCondition'], {'state': True}),
         ]
         
-class default(aiTask):
+class location_search(aiTask):
     class options(taskOptions):
         script_name = 'location_search'
+        priority = 0
+        detectors_enabled_while_running = True
+    conditions = [
+        (c['stateCondition'], {'state': True}),
+        ]
+        
+class default(aiTask):
+    class options(taskOptions):
+        script_name = 'spiral'
         priority = 0
         detectors_enabled_while_running = True
     conditions = [
