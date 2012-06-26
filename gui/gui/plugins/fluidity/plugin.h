@@ -49,7 +49,8 @@ class FluidityPlugin: public QObject,
         // FluidityPluginInterface
         LiquidFluidityNode* newLiquidNodeFor(boost::shared_ptr<FluidityNode> node);
 
-    //public Q_SLOTS:
+    public Q_SLOTS:
+        void setupVehicle(boost::shared_ptr<Node> node);
 
     protected:
 

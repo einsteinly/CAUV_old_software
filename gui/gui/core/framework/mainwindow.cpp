@@ -221,7 +221,7 @@ void CauvMainWindow::onRun()
     m_actions->scene = boost::make_shared<NodeScene>();
     m_actions->view->setScene(m_actions->scene.get());
     m_actions->view->centerOn(0,0);
-    m_actions->view->setContextMenuPolicy(Qt::CustomContextMenu);
+    // m_actions->view->setContextMenuPolicy(Qt::CustomContextMenu);
     // Set the viewport to use OpenGl here. Nested Gl viewports don't work
     m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
