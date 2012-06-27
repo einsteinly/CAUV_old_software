@@ -207,8 +207,6 @@ namespace {
             }
 
             std::vector<cv::Point2i> maxima = findLocalMaxima<1>(accum, threshold);
-
-            std::vector<Line> lines;
             std::transform(maxima.begin(), maxima.end(), std::back_inserter(lines), boost::bind(houghToLine, _1, rho, theta, m.cols, m.rows));
 
             return lines;
