@@ -78,6 +78,7 @@ class KMeansNode: public Node{
         boost::uniform_smallint<> bytedist;
         boost::variate_generator<boost::mt19937&, boost::uniform_smallint<> > randbyte;
 
+        // Don't be surprised, this one does one iteration, but keeps the result between frames
         void doWork(in_image_map_t& inputs, out_map_t& r){
 
             cv::Mat img = inputs["image"]->mat();
@@ -132,10 +133,10 @@ class KMeansNode: public Node{
             int y = 0, x = 0, ch = 0;
             int rows = img.rows, cols = img.cols;
             const int elem_size = img.elemSize();
-            const int row_size = cols * elem_size;
+            const int row_size = img.step[0];
             unsigned char *img_rp, *img_cp, *img_bp;
 
-            cv::Mat clusteridsMat(rows, cols, CV_8UC1);
+            cv::Mat_<unsigned char> clusteridsMat(rows, cols);
 
             // Clear val sums and sizes (val sum for single pass mean calculation)
             for (size_t i = 0; i < m_clusters.size(); i++) {
@@ -265,4 +266,4 @@ class KMeansNode: public Node{
 } // namespace imgproc
 } // namespace cauv
 
-#endif // ndef __GAUSSIAN_BLUR_NODE_H__
+#endif // ndef __KMEANS_NODE_H__
