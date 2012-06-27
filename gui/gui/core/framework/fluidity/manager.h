@@ -66,6 +66,10 @@ class Manager: public QObject,
         
         // a shared pointer to this must be held when this is called!
         void init();
+        
+        // deletion is normally managed by shared pointers, but teardown
+        // ensures that this is removed as an observer
+        void teardown();
 
         fnode_ptr lookup(node_id_t const& id);
 

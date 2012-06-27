@@ -109,7 +109,7 @@ void FluidityPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
 }
 
 cauv::gui::LiquidFluidityNode* FluidityPlugin::newLiquidNodeFor(boost::shared_ptr<FluidityNode> node){
-    return new LiquidFluidityNode(node);
+    return new LiquidFluidityNode(node, m_actions->window);
 }
 
 

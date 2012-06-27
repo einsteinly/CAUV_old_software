@@ -18,6 +18,7 @@
 #include <QGraphicsRectItem>
 #include <QAction>
 #include <QTimer>
+#include <QGLWidget>
 
 #include <boost/make_shared.hpp>
 
@@ -60,7 +61,7 @@ FView::FView(boost::shared_ptr<CauvNode> node,
       m_scenerect_update_timer(NULL),
       m_mode(TopLevel){
 
-    initMenu();
+    //initMenu();
 
     NodeScene *s = new NodeScene(this, false); // !!! false = don't set global model node scene
 
@@ -90,6 +91,7 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     s->addItem(b);
     b->setZValue(1000);
     m_overlay_items.push_back(std::make_pair(QPoint(-64, -40), b));
+    connect(b, SIGNAL(pressed()), this, SIGNAL(closeRequested()));
 
     b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"));
     s->addItem(b);
@@ -145,12 +147,26 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     */
 }
 
+FView::~FView(){
+    m_manager->teardown();
+    m_manager.reset();
+}
+
+
 void FView::_initInMode(Mode const& mode){
     m_mode = mode;
 
     typedef std::pair<QPoint, QGraphicsWidget*> pt_widget_pair_t;
     
     if(mode == TopLevel){
+        setViewport(new QGLWidget);
+        setRenderHints(
+            QPainter::Antialiasing |
+            QPainter::HighQualityAntialiasing |
+            QPainter::TextAntialiasing |
+            QPainter::SmoothPixmapTransform
+        );
+
         setMinimumSize(800, 600);
         foreach(pt_widget_pair_t const& oi, m_overlay_items){
             oi.second->show();
@@ -164,7 +180,15 @@ void FView::_initInMode(Mode const& mode){
         setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
         m_scenerect_update_timer->stop();
 
+        initMenu();
     }else{
+        setViewport(0);
+        setRenderHints(
+            QPainter::Antialiasing |
+            QPainter::TextAntialiasing |
+            QPainter::NonCosmeticDefaultPen
+        );
+
         setMinimumSize(80, 60);
         foreach(pt_widget_pair_t const& oi, m_overlay_items){
             oi.second->hide();
@@ -176,6 +200,8 @@ void FView::_initInMode(Mode const& mode){
         setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
         m_scenerect_update_timer->setInterval(1000);
         m_scenerect_update_timer->start();
+
+        initMenu();
     }
 
 }

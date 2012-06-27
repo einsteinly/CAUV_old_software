@@ -54,7 +54,49 @@
 using namespace cauv;
 using namespace cauv::gui;
 
+// !!! will move stack widget stuff elsewhere
 
+StackWidget::StackWidget(QWidget* parent)
+    : QWidget(parent),
+      m_title(NULL),
+      m_stack_widget(NULL),
+      m_stack(){
+    
+    m_title = new QLabel(this);
+    m_stack_widget = new QStackedWidget(this);
+
+    QVBoxLayout* layout = new QVBoxLayout;
+
+    layout->addWidget(m_title);
+    layout->addWidget(m_stack_widget);
+
+    setLayout(layout);
+}
+
+void StackWidget::push(QString name, QWidget* widget){
+    m_stack.push(QPair<QString,QWidget*>(name, widget));
+    m_stack_widget->addWidget(widget);
+    m_stack_widget->setCurrentWidget(widget);
+    updateTitle();
+}
+
+void StackWidget::pop(){
+    QPair<QString,QWidget*> popped = m_stack.pop();
+    m_stack_widget->removeWidget(popped.second);
+    updateTitle();
+}
+
+void StackWidget::updateTitle(){
+    QString text;
+    
+    for(int i = 0; i < m_stack.size(); i++){
+        text.append(m_stack[i].first);
+        if(i != m_stack.size() - 1)
+            text.append(" )) ");
+    }
+
+    m_title->setText(text);
+}
 
 
 class GroupDropHandler : public DropHandlerInterface<QGraphicsItem * > {
@@ -158,7 +200,8 @@ CauvMainWindow::CauvMainWindow(QApplication * app) :
         CauvNode("CauvGui"),
         m_application(app),
         m_actions(boost::make_shared<GuiActions>()),
-        ui(new Ui::MainWindow) {
+        ui(new Ui::MainWindow),
+        m_view_stack(NULL){
 
     ui->setupUi(this);
 
@@ -175,6 +218,9 @@ CauvMainWindow::~CauvMainWindow(){
     delete ui;
 }
 
+StackWidget* CauvMainWindow::viewStack(){
+    return m_view_stack;
+}
 
 void CauvMainWindow::closeEvent(QCloseEvent* e){
     QSettings settings("CAUV", "Cambridge AUV");
@@ -215,8 +261,13 @@ void CauvMainWindow::onRun()
     ui->streamsDock->setWidget(m_actions->nodes);
     // And the main window
     m_actions->window = shared_from_this();
-    // The main view onto the scene
-    this->setCentralWidget(m_actions->view = new liquid::LiquidView());
+    m_actions->view = new liquid::LiquidView();
+    // The main view onto the front scene
+    m_view_stack = new StackWidget();
+    this->setCentralWidget(m_view_stack);
+
+    m_view_stack->push(QString(""), m_actions->view);
+    
     // And ofcourse the scene itself
     m_actions->scene = boost::make_shared<NodeScene>();
     m_actions->view->setScene(m_actions->scene.get());

@@ -127,6 +127,10 @@ void Manager::init(){
     requestRefresh();
 }
 
+void Manager::teardown(){
+    m_cauv_node->removeMessageObserver(shared_from_this());
+}
+
 fnode_ptr Manager::lookup(node_id_t const& id){
     node_id_map_t::right_const_iterator i = m_nodes.find(id);
     if(i != m_nodes.right().end())
