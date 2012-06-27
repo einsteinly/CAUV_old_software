@@ -92,7 +92,7 @@ namespace {
 
     struct HoughLinesVisitor : public boost::static_visitor< std::vector<Line> > {
         
-        HoughLinesVisitor (bool probabilistic, int rho, float theta, int threshold, int min_ll, int max_lg, int srn, int stn)
+        HoughLinesVisitor (bool probabilistic, float rho, float theta, int threshold, int min_ll, int max_lg, int srn, int stn)
             : probabilistic(probabilistic), rho(rho), theta(theta), threshold(threshold), min_ll(min_ll), max_lg(max_lg), srn(srn), stn(stn)
         {}
 
@@ -220,7 +220,7 @@ namespace {
         }
 
         bool probabilistic;
-        int rho;
+        float rho;
         float theta;
         int threshold;
         int min_ll, max_lg;
@@ -234,7 +234,7 @@ void cauv::imgproc::HoughLinesNode::doWork(in_image_map_t& inputs, out_map_t& r)
     image_ptr_t img = inputs[Image_In_Name];
     
     const bool probabilistic = param<bool>("probabilistic");
-    const int rho = param<int>("rho");
+    const float rho = param<float>("rho");
     const float theta = param<float>("theta");
     const int threshold = param<int>("threshold");
     const int min_ll = param<int>("minLineLength");
