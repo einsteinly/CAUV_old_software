@@ -46,7 +46,7 @@ class HoughLinesNode: public Node{
             
             // parameters:
             registerParamID<bool>("probabilistic", true);
-            registerParamID<int>("rho", 1);
+            registerParamID<float>("rho", 1.0);
             registerParamID<float>("theta", M_PI/180);
             registerParamID<int>("threshold", 80);
             // probabilistic only:
