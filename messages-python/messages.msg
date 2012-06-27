@@ -293,6 +293,7 @@ struct Line
     eq centre : floatXY;
     eq angle : float;
     eq length : float;
+    eq width : float;
 }
 struct Circle
 {

@@ -190,16 +190,16 @@ class KMeansNode: public Node{
                     for(y = 0, img_rp = img.data; y < rows; y++, img_rp += row_size)
                         for(x = 0, img_cp = img_rp; x < cols; x++, img_cp += elem_size)
                         {
-                            cluster& cl = m_clusters[clusteridsMat.at<unsigned char>(y,x)];
-                            if(cl.size < 2)
+                            cluster& other_cl = m_clusters[clusteridsMat.at<unsigned char>(y,x)];
+                            if(other_cl.size < 2)
                             {
-                                break;
+                                continue;
                             }
                             
                             unsigned int sqdist = 0;
                             for(ch = 0, img_bp = img_cp; ch < m_channels; ch++, img_bp++)
                             {
-                                sqdist += (*img_bp - cl.centre[ch]) * (*img_bp - cl.centre[ch]);
+                                sqdist += (*img_bp - other_cl.centre[ch]) * (*img_bp - other_cl.centre[ch]);
                             }
                             
                             if (sqdist > farthest_point_sqdist) {
@@ -217,7 +217,7 @@ class KMeansNode: public Node{
                     
                     farthest_point_cl.size--;
                     cl.size++;
-                    for(ch = 0, img_bp = img.data + y * row_size + x * elem_size; ch < m_channels; ch++, img_bp++)
+                    for(ch = 0, img_bp = img.data + farthest_point_y * row_size + farthest_point_x * elem_size; ch < m_channels; ch++, img_bp++)
                     {
                         farthest_point_cl.valsum[ch] -= *img_bp;
                         cl.valsum[ch] += *img_bp;
