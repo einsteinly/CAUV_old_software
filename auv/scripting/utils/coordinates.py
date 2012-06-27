@@ -75,6 +75,8 @@ class LLACoord:
     @classmethod
     def fromWGS84(cls, wgs84):
         return cls(wgs84.latitude, wgs84.longitude, wgs84.altitude)
+    def toWGS84(self):
+        return messaging.WGS84Coord(self.latitude, self.longitude, self.altitude)
     def __add__(self, ned):
         # add NorthEastDepth coord (a cartesian vector) 'ned' to the current latitude/longitude
         if isinstance(ned, NorthEastDepthCoord):

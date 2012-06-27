@@ -38,13 +38,15 @@ class auvControl(aiProcess):
         self.auv.depth_disabled = False
 
         self.sonar = sonar.Sonar(self.node)
-        self.active_tasks = {}
+        self.active_tasks = {} #task_id: priority
+        self.paused_tasks = []
         self.default_task = None
-        self.waiting_for_control = {}
+        self.waiting_for_control = {} #task_id: (priority, timeout)
         self.current_task = None
-        self.enabled = threading.Event()
+        self.enabled = threading.Event() #stops the auv at the sending commands level
         if not opts.disable_control:
             self.enabled.set()
+        self.paused = False #stops the auv at script control level
 
         self.depth_limit = None
         self.signal_msgs = Queue.Queue(5)
@@ -88,9 +90,9 @@ class auvControl(aiProcess):
     def control_timeout(self, process, time_out_at):
         if process in self.waiting_for_control and \
            self.waiting_for_control[process][1] == time_out_at:
-            getattr(self.ai, self.waiting_for_control[process][0])._set_paused()
-            getattr(self.ai, self.waiting_for_control[process][0]).control_timed_out()
-            del self.waiting_for_control[process]
+            getattr(self.ai, process)._set_paused()
+            getattr(self.ai, process).control_timed_out()
+            self.waiting_for_control.pop(process)
         self.reevaluate()
 
     @external_function
@@ -118,6 +120,30 @@ class auvControl(aiProcess):
         self.waiting_for_control.pop(task_id, None)
         #need to tell script its been paused, else if it wants control in the future it will think it already has it.
         getattr(self.ai, task_id)._set_paused()
+        self.reevaluate()
+
+    @external_function
+    @event.event_func
+    def pause(self):
+        self.paused = True
+        self.reevaluate()
+        
+    @external_function
+    @event.event_func
+    def resume(self):
+        self.paused = False
+        self.reevaluate()
+        
+    @external_function
+    @event.event_func
+    def pause_script(self, task_id):
+        self.paused_tasks.append(task_id)
+        self.reevaluate()
+        
+    @external_function
+    @event.event_func
+    def resume_script(self, task_id):
+        self.paused_tasks.remove(task_id)
         self.reevaluate()
             
     #GENERAL FUNCTIONS (that could be called from anywhere)
@@ -236,10 +262,14 @@ class auvControl(aiProcess):
         
     def reevaluate(self):
         #find highest priority
-        try:
-            highest_priority_task = max(self.waiting_for_control.iteritems(), key=lambda x: x[1][0])[0]
-        except ValueError:
-            #list is empty
+        if not self.paused:
+            try:
+                highest_priority_task = max({task_id:y for task_id, y in self.waiting_for_control.iteritems() if not task_id in self.paused_tasks}.iteritems(),
+                                            key=lambda x: x[1][0])[0]
+            except ValueError:
+                #list is empty
+                highest_priority_task = None
+        else:
             highest_priority_task = None
         if self.current_task == highest_priority_task:
             #no change, so don't do anything
