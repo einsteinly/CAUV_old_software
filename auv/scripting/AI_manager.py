@@ -75,7 +75,7 @@ p.add_argument('-r','--restore',      action='store_true',      help="try and re
 p.add_argument('-m','--mission',      default='mission',        help='which mission script to run')
 #currently not implemented/not implemented properly
 #p.add_argument('--disable-gui',       action='store_true',      help="disable/ignore gui output nodes")
-#p.add_argument('--disable-control',   action='store_true',      help="stop AI script from controlling the sub")
+p.add_argument('--disable-control',   action='store_true',      help="stop AI script from controlling the sub")
 #p.add_argument('--reset-pls',         action='store_true',      help="reset pipelines to those stored in /pipelines")
 #p.add_argument('--freeze-pls',        action='store_true',      help="ignore changes to the pipeline")
 opts = parser.parse_args()

@@ -110,7 +110,7 @@ class script(aiScript):
                 #             |
                 #             |
                 #             |
-                width = abs(-cos(corrected_angle)*(m.lines[1].x-m.lines[0].x)-sin(corrected_angle)*(m.lines[1].x-m.lines[0].y)) 
+                width = abs(-cos(corrected_angle)*(m.lines[1].centre.x-m.lines[0].centre.x)-sin(corrected_angle)*(m.lines[1].centre.x-m.lines[0].centre.y)) 
                 debug('follow pipe: estimated pipe width: %g' % width)
                 
                 # update the PID controller to get the required change in target depth
@@ -126,7 +126,7 @@ class script(aiScript):
             
                 
             # set the flags that show if we're above the pipe
-            if self.centred.is_set() and self.aligned.is_set():# and self.depthed.is_set(): #TODO: fix this bit
+            if self.centred.is_set() and self.aligned.is_set(): #and self.depthed.is_set():
                 self.ready.set()
                 debug('ready over pipeline')
                 self.log('Pipeline follower managed to align itself over the pipe.')
@@ -147,8 +147,9 @@ class script(aiScript):
         
         info('Centre error: %f' %(m.x - 0.5))
         if abs(m.x) == 0:
-            warning('centre at 0')
+            warning('centre at 0, ignoring')
             self.centred.clear()
+            return
         strafe = int(self.strafeControl.update(m.x - 0.5))
         if strafe < -127:
             strafe = -127
@@ -180,7 +181,7 @@ class script(aiScript):
         while not condition.is_set():
             self.auv.prop(0)
             # check we're still good to go, giving a little time to re-align the 
-            # pipe if needed
+            # pipe if neededx
             info("Re-aligning with pipe...")
             self.ready.wait(self.options.lost_timeout)
             if not self.ready.is_set():
@@ -239,7 +240,7 @@ class script(aiScript):
             self.auv.bearing((self.auv.getBearing()-180)%360)
         
         self.drop_pl(follow_pipe_file)
-        self.log('Finished follwoing the pipe.')
+        self.log('Finished following the pipe.')
         info('Finished pipe following')
         return 'SUCCESS'
 
