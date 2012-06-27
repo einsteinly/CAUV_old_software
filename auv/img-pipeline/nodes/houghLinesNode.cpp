@@ -66,8 +66,8 @@ namespace {
     std::vector<cv::Point2i> findLocalMaxima(cv::Mat_<T>& mat, const T& threshold)
     {
         std::vector<cv::Point2i> block_maxima;
-        for (int bi = 0, bimax = (mat.rows+n) / (n+1); bi < bimax; bi+=n+1)
-            for (int bj = 0, bjmax = (mat.cols+n) / (n+1); bj < bjmax; bj+=n+1)
+        for (int bi = 0, bimax = mat.rows; bi < bimax; bi+=n+1)
+            for (int bj = 0, bjmax = mat.cols; bj < bjmax; bj+=n+1)
             {
                 int mi = bi, mj = bj;
                 T& m = mat(bi,bj);
@@ -115,7 +115,7 @@ namespace {
                 float rhoMax = boost::math::hypot(m.rows, m.cols);
 
                 int numrho = std::ceil(rhoMax/rho);
-                int numangle = std::ceil(3*M_PI/theta);
+                int numangle = std::ceil(3*M_PI_2/theta);
 
                 cv::AutoBuffer<int> accum_buf;
                 accum_buf.allocate(numangle * numrho);
@@ -131,7 +131,7 @@ namespace {
                 }
 
                 if (!m.isContinuous())
-                    throw cauv::imgproc::parameter_error("Mattrix needs to be continuous");
+                    throw cauv::imgproc::parameter_error("Matrix needs to be continuous");
 
                 uint8_t* pData = m.datastart;
                 for (int y = 0, yend = m.rows; y < yend; ++y) {
@@ -143,7 +143,7 @@ namespace {
                             while (n < numangle && (r = round( x * anglecos[n] + y * anglesin[n] )) < 0) {
                                 ++n;
                             }
-                            while (n < numangle && (r = round( x * anglecos[n] + y * anglesin[n] )) > 0) {
+                            while (n < numangle && (r = round( x * anglecos[n] + y * anglesin[n] )) >= 0) {
                                 if (r < numrho)
                                     ++accum(r,n);
                                 ++n;
@@ -153,7 +153,7 @@ namespace {
                     }
                 }
 
-                std::vector<cv::Point2i> maxima = findLocalMaxima<1>(accum, threshold);
+                std::vector<cv::Point2i> maxima = findLocalMaxima<2>(accum, threshold);
                 std::transform(maxima.begin(), maxima.end(), std::back_inserter(lines), boost::bind(houghToLine, _1, rho, theta, m.cols, m.rows));
             }
             
@@ -166,7 +166,7 @@ namespace {
             float rhoMax = pm.ranges->back() * 2 * M_SQRT2;
 
             int numrho = std::ceil(rhoMax/rho);
-            int numangle = std::ceil(3*M_PI/theta);
+            int numangle = std::ceil(3*M_PI_2/theta);
 
             cv::AutoBuffer<int> accum_buf;
             accum_buf.allocate(numangle * numrho);
@@ -182,7 +182,7 @@ namespace {
             }
 
             if (!m.isContinuous())
-                throw cauv::imgproc::parameter_error("Mattrix needs to be continuous");
+                throw cauv::imgproc::parameter_error("Matrix needs to be continuous");
 
             uint8_t* pData = m.datastart;
             for (int i = 0, iend = m.rows; i < iend; ++i) {
