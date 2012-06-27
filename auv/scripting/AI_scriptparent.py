@@ -47,8 +47,8 @@ except AttributeError:
     state_class = aiScriptState
 
 #create class instaces, and run
+script = script_class(args.task, options_class(args.options), state_class(args.state))
 try:
-    script = script_class(args.task, options_class(args.options), state_class(args.state))
     #start receiving messages
     script._register()
     result = script.run()

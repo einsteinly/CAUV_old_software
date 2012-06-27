@@ -266,6 +266,7 @@ class Model(messaging.MessageObserver):
 
     def clear(self):
         '''Remove all nodes from the pipeline.'''
+        debug('Clearing pipeline %s' %(self.pipeline_name))
         self.send(messaging.ClearPipelineMessage(self.pipeline_name))
 
     def save(self, picklefname, timeout=3.0):
@@ -339,6 +340,7 @@ class Model(messaging.MessageObserver):
     def set(self, state, timeout=3.0, clear=True):
         '''Set the state of the image pipeline based on 'state'.'''
         #NOTE PLEASE MAKE SURE ANY CHANGES ARE REFLECTED IN AI_PIPELINE_MANAGER (since it overides this method)
+        debug("Setting pipeline %s." %(self.pipeline_name))
         if clear: self.clear()
         id_map = {}
         node_map = {}

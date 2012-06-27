@@ -335,7 +335,7 @@ class fakeAUV(messaging.MessageObserver):
                 if vector_to.east<0:
                     bearing+=180
             except ZeroDivisionError:
-                bearing = 90 if x>0 else 270
+                bearing = 90 if vector_to.east>0 else 270
             debug('Heading on a %f degree bearing, direction vector %s' %(bearing,str(vector_to)))
             self.prop(0)
             self.bearingAndWait(bearing)
@@ -434,7 +434,7 @@ class aiScript(aiProcess):
             setattr(self.options, option_name, option_value)
             self.optionChanged(option_name)
         else:
-            info('Changed the value of a static option while the script was running. Script will not see change until script restart.')
+            info('Changed the value of a static option %s while the script was running. Script will not see change until script restart.' %option_name)
     @external_function
     def set_options(self, options):
         for key, val in options.items():
@@ -530,6 +530,7 @@ class aiDetector(messaging.MessageObserver):
         self.node = node
         self.node.addObserver(self)
         self.detected = False
+        self._detected_past = False
     def request_pl(self, name):
         self._pipelines.append(name)
     def drop_pl(self, name):

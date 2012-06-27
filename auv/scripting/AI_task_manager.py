@@ -340,6 +340,7 @@ class taskManager(aiProcess):
         task.set_options(task_options)
         #not only need to change in task, need to try and change in running script
         task.set_script_options(script_options)
+        debug(task_id+str(self.current_task))
         if (self.current_task and task_id == self.current_task.id) or task_id in self.additional_tasks:
             getattr(self.ai, str(task_id)).set_options(script_options)
         #need to tell task which conditions to use
@@ -387,7 +388,8 @@ class taskManager(aiProcess):
         #make sure additional task isnt blocking other tasks from doing stuff, and doesn't have any leftover pipelines
         self.ai.auv_control.remove_additional_task_id(task_id)
         self.ai.pl_manager.drop_task_pls(task_id)
-        script = self.additional_tasks.pop(task_id)[1]
+        task, script = self.additional_tasks.pop(task_id)
+        self.gui_update_task(task)
         if script:
             try:
                 script.kill()
@@ -396,8 +398,12 @@ class taskManager(aiProcess):
         info('Stopping additional script for task %s' %task_id)
 
     def stop_current_script(self):
+        #mark task not active
+        if self.current_task:
+            self.current_task.active = False
+            self.ai.pl_manager.drop_task_pls(self.current_task.id)
+            self.gui_update_task(self.current_task)
         self.ai.auv_control.set_current_task_id(None, 0)
-        self.ai.pl_manager.drop_task_pls(self.current_task.id)
         if self.running_script:
             try:
                 self.running_script.kill()
@@ -425,8 +431,6 @@ class taskManager(aiProcess):
                                    cPickle.dumps(task.persist_state)])
         if task.options.solo:
             if self.current_task:
-                #mark last task not active, current task active
-                self.current_task.active = False
                 self.stop_current_script()
             self.running_script = script
             self.ai.auv_control.set_current_task_id(task.id, task.options.priority)
@@ -465,12 +469,16 @@ class taskManager(aiProcess):
         if self.running_script:
             if self.running_script.poll():
                 self.running_script = None
-                self.current_task = None
                 self.current_priority = -1
+                self.active = False
+                self.gui_update_task(self.current_task)
+                self.current_task = None
         dead_scripts = []
         for task_id, (task, script) in self.additional_tasks.iteritems():
             if script.poll():
                 dead_scripts.append(task_id)
+                task.active = False
+                self.gui_update_task(task)
         for task_id in dead_scripts:
             self.additional_tasks.pop(task_id)
         if not self.running_script: #must recheck as set in above if
