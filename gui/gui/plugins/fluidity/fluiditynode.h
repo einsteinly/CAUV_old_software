@@ -52,7 +52,11 @@ public:
     liquid::AbstractArcSource * source(){ return m_source; }
 
 public Q_SLOTS:
+    void beginMaximise();
+    void zoomIn(int percent);
     void maximise();
+
+    void zoomOut(int percent);    
     void unMaximise();
 
 protected:
@@ -61,6 +65,8 @@ protected:
     f::FView* m_view;
     liquid::ArcSource * m_source;
     boost::weak_ptr<CauvMainWindow> m_in_window;
+    QRectF m_orginal_view_rect;
+    QRectF m_zoomed_view_rect;
 };
 
 } // namespace gui

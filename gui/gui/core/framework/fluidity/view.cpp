@@ -159,12 +159,12 @@ void FView::_initInMode(Mode const& mode){
     typedef std::pair<QPoint, QGraphicsWidget*> pt_widget_pair_t;
     
     if(mode == TopLevel){
-        setViewport(new QGLWidget);
+        setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
         setRenderHints(
             QPainter::Antialiasing |
             QPainter::HighQualityAntialiasing |
-            QPainter::TextAntialiasing |
-            QPainter::SmoothPixmapTransform
+            QPainter::TextAntialiasing //|
+            //QPainter::SmoothPixmapTransform
         );
 
         setMinimumSize(800, 600);
