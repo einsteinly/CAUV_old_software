@@ -121,7 +121,7 @@ void AiMessageObserver::onConditionTypesMessage(ConditionTypesMessage_ptr m){
 }
 
 void AiMessageObserver::onConditionStateMessage(ConditionStateMessage_ptr m){
-
+    debug(3) << "onConditionStateMessage" << *m;
     boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
     boost::shared_ptr<AiConditionNode> condition = conditions->findOrCreate<AiConditionNode>(m->conditionId());

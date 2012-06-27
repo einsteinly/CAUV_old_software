@@ -92,7 +92,8 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
 }
 
 LiquidFluidityNode::~LiquidFluidityNode(){
-    
+    debug() << "~LiquidFluidityNode()";
+    unRegisterNode(this);    
 }
 
 void LiquidFluidityNode::beginMaximise(){
@@ -130,7 +131,6 @@ void LiquidFluidityNode::maximise(){
         m_contents->setWidget(NULL);
         in_window->viewStack()->push(QString::fromStdString(m_node->nodeName()), m_view);
         m_view->setMode(f::FView::TopLevel);
-        //m_view->resetTransform();
         const float scale = std::sqrt(scene()->views()[0]->transform().determinant());
         m_view->scale(scale, scale);
         m_view->centerOn(m_contents->mapToScene(m_contents->boundingRect()).boundingRect().center());

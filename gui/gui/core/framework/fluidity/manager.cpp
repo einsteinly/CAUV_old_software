@@ -108,6 +108,7 @@ Manager::Manager(NodeScene *scene, CauvNode *node, std::string const& pipeline_n
 }
 
 Manager::~Manager(){
+    debug() << "~Manager()";
     delete m_layout_soon_timer;
 }
 

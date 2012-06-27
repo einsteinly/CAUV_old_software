@@ -148,6 +148,7 @@ FView::FView(boost::shared_ptr<CauvNode> node,
 }
 
 FView::~FView(){
+    debug() << "~FView()";
     m_manager->teardown();
     m_manager.reset();
 }
