@@ -24,6 +24,7 @@
 #include "blobNode.h"
 #include "drawCirclesNode.h"
 #include "broadcastCirclesNode.h"
+#include "relabelClustersNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -52,6 +53,7 @@ DEFINE_NFR(SobelNode, NodeType::Sobel);
 DEFINE_NFR(BlobNode, NodeType::Blob);
 DEFINE_NFR(DrawCirclesNode, NodeType::DrawCircles);
 DEFINE_NFR(BroadcastCirclesNode, NodeType::BroadcastCircles);
+DEFINE_NFR(RelabelClustersNode, NodeType::RelabelClusters);
 
 } // namespace imgproc
 } // namespace cauv
