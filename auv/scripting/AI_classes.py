@@ -1,6 +1,7 @@
 import cauv.messaging as messaging
 import cauv.node
 from cauv.debug import debug, warning, error, info
+from math import atan, degrees
 
 import threading
 import cPickle
@@ -301,14 +302,17 @@ class fakeAUV(messaging.MessageObserver):
                 return True
         return False
         
-    def headToLocation(target_lla, depth_enabled = False, error = 0.5, speed = 128, checking_interval = 0.5, timeout = None):
-        vector_to = self.lla.differenceInMetresTo(target_lla)
+    def headToLocation(self, target_lla, depth_enabled = False, error = 0.5, speed = 127, checking_interval = 0.5, timeout = None):
+        if self.lla:
+            vector_to = self.lla.differenceInMetresTo(target_lla)
+        else:
+            raise CommunicationError('No location data received yet.')
         if depth_enabled:
             self.depth(self.current_depth+self.lla.altitude-target_lla.altitude)
         if timeout:
             end_time = time.time() + timeout
         while True:
-            if max(abs(vector_to.north),abs(vector_to.east))>error:
+            if max(abs(vector_to.north),abs(vector_to.east))<error:
                 self.prop(0)
                 return True
             elif timeout:

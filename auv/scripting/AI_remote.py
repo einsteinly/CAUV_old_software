@@ -26,6 +26,7 @@ class aiStateListener(messaging.MessageObserver):
     def __init__(self, node):
         messaging.MessageObserver.__init__(self)
         self.node = node
+        self.node.join('guiai')
         self.node.addObserver(self)
     def onTaskStateMessage(self, m):
         print m
@@ -112,6 +113,10 @@ def pause_script(ainode):
     task_id = str(raw_input('Enter task id: '))
     ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Pause))
     
+def resume_script(ainode):
+    task_id = str(raw_input('Enter task id: '))
+    ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Resume))
+    
 def pause_all(ainode):
     ainode.node.send(messaging.ScriptControlMessage("",messaging.ScriptCommand.PauseAll))
     
@@ -172,7 +177,9 @@ if __name__=='__main__':
     m.addFunction('Listen to state', listen_state, 'Listen to ai state messages', {})
     m.addFunction('Stop listening to state', stop_listen_state, 'Stop listening to ai state messages', {})
     m.addFunction('Resend data', resend_data, '', {})
-    m.addFunction('shell', shell, '', {})
+    m.addFunction('Shell', shell, '', {})
+    m.addFunction('Pause all', pause_all, '', {})
+    m.addFunction('Resume all', resume_all, '', {})
     
     t = menu('Task menu', '')
     t.addFunction('Add Task', add_task, '', {})
@@ -191,6 +198,7 @@ if __name__=='__main__':
     s.addFunction('Start Script', start_script, '', {})
     s.addFunction('Restart Script', restart_script, '', {})
     s.addFunction('Pause Script', pause_script, '', {})
+    s.addFunction('Resume Script', resume_script, '', {})
     
     m.addMenu(t)
     m.addMenu(c)

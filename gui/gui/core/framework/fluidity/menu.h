@@ -249,8 +249,10 @@ class Menu: public QMenu{
                     // We've found it! Set everything to be active, and escape
                     typedef std::pair<Menu*, QAction*> stack_pair_t;
                     foreach(stack_pair_t p, action_stack) {
-                        debug(3) << p.first->title().toStdString() << "::setActiveAction" << p.second->text().toStdString();
-                        p.first->setActiveAction(p.second);
+                        if (p.first->activeAction() != p.second) {
+                            debug(3) << p.first->title().toStdString() << "::setActiveAction" << p.second->text().toStdString();
+                            p.first->setActiveAction(p.second);
+                        }
                     }
                     setActiveAction(a);
                     return a;

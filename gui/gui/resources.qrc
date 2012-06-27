@@ -13,6 +13,9 @@
         <file>resources/icons/x_button.hover.png</file>
         <file>resources/icons/x_button.pressed.png</file>
         <file>resources/icons/x_button.png</file>
+        <file>resources/icons/maximise_button.hover.png</file>
+        <file>resources/icons/maximise_button.pressed.png</file>
+        <file>resources/icons/maximise_button.png</file>
         <file>resources/stylesheet.qss</file>
     </qresource>
 </RCC>

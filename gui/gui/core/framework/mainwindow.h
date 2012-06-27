@@ -35,6 +35,23 @@ namespace gui {
 class CauvInterfacePlugin;
 struct GuiActions;
 
+class StackWidget: public QWidget{
+    Q_OBJECT
+    public:
+        StackWidget(QWidget* parent = 0);
+
+    public Q_SLOTS:
+        void push(QString name, QWidget* widget);
+        void pop();
+    
+    private:
+        void updateTitle();
+
+        QLabel* m_title; // replace with something snazzier...
+        QStackedWidget* m_stack_widget;
+
+        QStack<QPair<QString, QWidget*> > m_stack;
+};
 
 class CauvMainWindow : public QMainWindow, public CauvNode, public boost::enable_shared_from_this<CauvMainWindow> {
     Q_OBJECT
@@ -42,6 +59,8 @@ class CauvMainWindow : public QMainWindow, public CauvNode, public boost::enable
 public:
     CauvMainWindow(QApplication * app);
     virtual ~CauvMainWindow();
+
+    StackWidget* viewStack();
 
 public Q_SLOTS:
     int send(boost::shared_ptr<const Message>message);
@@ -63,6 +82,7 @@ private:
     Ui::MainWindow * ui;
     int findPlugins(const QDir& dir, int subdirs = 0);
 
+    StackWidget* m_view_stack;
 };
 
 } //namespace gui

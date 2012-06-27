@@ -41,9 +41,16 @@ class FView: public liquid::LiquidView{
         FView(boost::shared_ptr<CauvNode> node,
               std::string const& pipeline_name,
               QWidget *parent = NULL);
+
+        ~FView();
         
         enum Mode {TopLevel, Internal};
         void setMode(Mode const& mode);
+
+        boost::shared_ptr<CauvNode> node(){ return m_cauv_node; }
+
+        Q_SIGNALS:
+        void closeRequested();
 
     protected:
         // QWidget

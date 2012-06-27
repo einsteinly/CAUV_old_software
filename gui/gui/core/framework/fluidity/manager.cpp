@@ -108,6 +108,7 @@ Manager::Manager(NodeScene *scene, CauvNode *node, std::string const& pipeline_n
 }
 
 Manager::~Manager(){
+    debug() << "~Manager()";
     delete m_layout_soon_timer;
 }
 
@@ -125,6 +126,10 @@ void Manager::init(){
     m_cauv_node->subMessage(GuiImageMessage());
     m_cauv_node->subMessage(StatusMessage());
     requestRefresh();
+}
+
+void Manager::teardown(){
+    m_cauv_node->removeMessageObserver(shared_from_this());
 }
 
 fnode_ptr Manager::lookup(node_id_t const& id){

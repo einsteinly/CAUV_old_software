@@ -32,6 +32,7 @@ class aiTask(object):
         self.conditions = {}
         self.persist_state = {}
         self.active = False
+        self.paused = False
     def load_script_options(self):
         if self.options.script_name:
             self.script_options=__import__('script_library.'+self.options.script_name, fromlist=['scriptOptions']).scriptOptions()
@@ -163,9 +164,18 @@ class follow_cam(aiTask):
         (c['stateCondition'], {'state': True}),
         ]
         
-class default(aiTask):
+class location_search(aiTask):
     class options(taskOptions):
         script_name = 'location_search'
+        priority = 0
+        detectors_enabled_while_running = True
+    conditions = [
+        (c['stateCondition'], {'state': True}),
+        ]
+        
+class default(aiTask):
+    class options(taskOptions):
+        script_name = 'spiral'
         priority = 0
         detectors_enabled_while_running = True
     conditions = [
