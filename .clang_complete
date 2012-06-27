@@ -8,3 +8,4 @@
 -I /usr/include/qt4/QtDesigner
 -I /usr/include/qt4/QtGui
 -I /usr/include/qt4/QtCore
+-I ../debug/

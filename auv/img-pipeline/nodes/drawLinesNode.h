@@ -20,6 +20,8 @@
 #include <string>
 #include <cmath>
 
+#include <boost/math/special_functions/fpclassify.hpp>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
@@ -78,18 +80,27 @@ class DrawLinesNode: public Node{
 
                 const float width = img.cols;
                 const float height = img.rows;
-                float maxlen = width*width + height*height;
                 foreach(const Line& line, lines)
                 {
-                    float sa = std::sin(line.angle);
                     float ca = std::cos(line.angle);
+                    float sa = std::sin(line.angle);
                     cv::Point2f c(line.centre.x * width, line.centre.y * height);
                     cv::Point2f dir(ca,sa);
-                    float l = std::min(line.length * width, maxlen);
 
-                    cv::line(out_mat,
-                             c - l/2 * dir, c + l/2 * dir,
-                             cv::Scalar(0, 0, 255), 3, 8);
+                    using boost::math::isinf;
+                    if (isinf(line.length))
+                    {
+                        float t1 = -c.x/dir.x;
+                        float t2 = (width - c.x)/dir.x;
+                        cv::line(out_mat, c + t1*dir, c + t2*dir,
+                                 cv::Scalar(0, 0, 255), 1, CV_AA);
+                    } else {
+                        float l = line.length * width;
+
+                        cv::line(out_mat,
+                                 c - l/2 * dir, c + l/2 * dir,
+                                 cv::Scalar(0, 0, 255), 1, CV_AA);
+                    }
                 }
                 
                 r[Image_Out_Copied_Name] = boost::make_shared<Image>(out_mat);
@@ -99,34 +110,6 @@ class DrawLinesNode: public Node{
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
 
-        }
-
-    private:
-        static cv::Vec4i rThetaLineToSegment(cv::Vec2f const& l, cv::Size const& s){
-            cv::Vec4i r;
-            float rho = l[0];
-            float theta = l[1];
-            double a = std::cos(theta);
-            double b = std::sin(theta);
-            if(std::fabs(a) < 0.001)
-            {
-                r[0] = r[2] = cvRound(rho);
-                r[1] = 0;
-                r[3] = s.height;
-            }else if(std::fabs(b) < 0.001)
-            {
-                r[1] = r[3] = cvRound(rho);
-                r[0] = 0;
-                r[3] = s.width;
-            }
-            else
-            {
-                r[0] = 0;
-                r[1] = cvRound(rho/b);
-                r[2] = cvRound(rho/a);
-                r[3] = 0;
-            }
-            return r;
         }
 
     // Register this node type

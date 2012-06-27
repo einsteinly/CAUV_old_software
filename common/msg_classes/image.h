@@ -44,6 +44,11 @@ struct NonUniformPolarMat{
     boost::shared_ptr< std::vector<float> > bearings; // in radians please!
 
     NonUniformPolarMat clone() const;
+
+    cv::Point2f xyAt(int r, int phi) const;
+    cv::Point2f xyAt(int r, int phi, float& range, float& bearing) const;
+    cv::Point2f xyAt(float r, float phi) const;
+    cv::Point2f xyAt(float r, float phi, float& range, float& bearing) const;
 };
 
 struct PyramidMat{
