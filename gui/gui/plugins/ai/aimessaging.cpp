@@ -105,22 +105,33 @@ void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
 
 void AiMessageObserver::onTaskTypesMessage(TaskTypesMessage_ptr m){
     debug() << "onTaskTypesMessage" << *m;
+
+    boost::shared_ptr<GroupingNode> creation = m_parent->findOrCreate<GroupingNode>("creation");
+    boost::shared_ptr<GroupingNode> tasks = creation->findOrCreate<GroupingNode>("ai-tasks");
+
     foreach (std::string const& name, m->typeNames()){
         AiTaskNode::addType(name);
+        tasks->findOrCreate<NewAiTaskNode>(name);
     }
 }
 
 void AiMessageObserver::onConditionTypesMessage(ConditionTypesMessage_ptr m){
+
+    debug() << "onConditionTypes" << *m;
+
     typedef std::map<std::string, std::vector<std::string> > str_liststr_map_t;
 
+    boost::shared_ptr<GroupingNode> creation = m_parent->findOrCreate<GroupingNode>("creation");
+    boost::shared_ptr<GroupingNode> conditions = creation->findOrCreate<GroupingNode>("ai-conditions");
+
     foreach (str_liststr_map_t::value_type const& i, m->conditionTypes()){
-        foreach(std::string const& str, i.second){
-            AiConditionNode::addType(str);
-        }
+        AiConditionNode::addType(i.first);
+        conditions->findOrCreate<NewAiConditionNode>(i.first);
     }
 }
 
 void AiMessageObserver::onConditionStateMessage(ConditionStateMessage_ptr m){
+    debug() << "onConditionStateMessage" << *m;
 
     boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");

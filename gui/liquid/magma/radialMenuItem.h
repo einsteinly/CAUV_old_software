@@ -45,10 +45,6 @@ public:
     void mouseReleaseEvent(QMouseEvent *ev);
     QModelIndex index() const;
     RadialSegment * segment() const;
-    void setAngle(float angle);
-    float getAngle() const;
-
-    QSize sizeHint() const;
 
 
 Q_SIGNALS:
@@ -58,7 +54,6 @@ Q_SIGNALS:
 protected:
     const QModelIndex m_index;
     RadialSegment * m_segment;
-    float m_angle;
     QTimer m_hoverTimer;
 };
 

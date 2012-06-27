@@ -57,20 +57,23 @@ std::string Node::nodePath() const {
 }
 
 void Node::addChild(boost::shared_ptr<Node> const& child){
-    if(boost::shared_ptr<Node> parent = child->m_parent.lock())
     {
-        std::stringstream str;
-        str << "Node already has a parent: " << parent->nodeName();
-        throw std::runtime_error(str.str());
+        lock_t l(m_childrenLock);
+
+        if(boost::shared_ptr<Node> parent = child->m_parent.lock())
+        {
+            std::stringstream str;
+            str << "Node already has a parent: " << parent->nodeName();
+            throw std::runtime_error(str.str());
+        }
+
+        child->m_parent = boost::weak_ptr<Node>(shared_from_this());
+        m_children.push_back(child);
+        m_id_map[child->nodeId()] = child;
+        // also add the pretty name as a key to this node
+        // as this is used for reverse lookups (i.e. prop -> MotorID::Prop)
+        m_id_map[child->nodeName()] = child;
     }
-
-    child->m_parent = boost::weak_ptr<Node>(shared_from_this());
-    m_children.push_back(child);
-    m_id_map[child->nodeId()] = child;
-    // also add the pretty name as a key to this node
-    // as this is used for reverse lookups (i.e. prop -> MotorID::Prop)
-    m_id_map[child->nodeName()] = child;
-
     // make sure all the objects belong to the thread of the root item
     // children get created in many threads (e.g. the messaging thread)
     // and these threads don't have event loops so signals won't work
@@ -86,7 +89,6 @@ void Node::addChild(boost::shared_ptr<Node> const& child){
 
 
 bool Node::removeChild(boost::shared_ptr<Node> const& child){
-
     //check it's actually a child of this node
     try {
         find<Node>(child->nodeId());
@@ -94,18 +96,21 @@ bool Node::removeChild(boost::shared_ptr<Node> const& child){
         return false;
     }
 
-    // clear parent from child
-    child->m_parent.reset();
-    m_children.erase(std::find(m_children.begin(), m_children.end(), child));
-    m_id_map.erase(child->nodeId());
-    m_id_map.erase(child->nodeName());
+    Q_EMIT nodeRemoved(child);
+    Q_EMIT structureChanged();
 
     // disconnect propagation signals
     child->disconnect(child.get(), SIGNAL(onBranchChanged()), this, SIGNAL(onBranchChanged()));
     child->disconnect(child.get(), SIGNAL(structureChanged()), this, SIGNAL(structureChanged()));
 
-    Q_EMIT nodeRemoved(child);
-    Q_EMIT structureChanged();
+    {
+        lock_t l(m_childrenLock);
+        // clear parent from child
+        child->m_parent.reset();
+        m_children.erase(std::find(m_children.begin(), m_children.end(), child));
+        m_id_map.erase(child->nodeId());
+        m_id_map.erase(child->nodeName());
+    }
 
     return true;
 }
@@ -115,6 +120,7 @@ bool Node::removeChild(nid_t const& childId){
 }
 
 const Node::children_list_t Node::getChildren() const {
+    lock_t l(m_childrenLock);
     return m_children;
 }
 
@@ -143,6 +149,7 @@ boost::shared_ptr<Node> Node::getParent() {
 }
 
 int Node::row() const{
+    lock_t l(m_childrenLock);
     // work out the row of the parent with respect to its siblings
     boost::shared_ptr<const Node> parent = m_parent.lock();
     if(!parent) return 0; // root node
@@ -156,4 +163,30 @@ int Node::row() const{
 
 int Node::columnCount() const{
     return 1;
+}
+
+void Node::update(QVariant const& value){
+    //if(m_value.userType() != value.userType()) {
+    //    error() << "Node::update() Type mismatch in Node variant:" << nodePath();
+    //}
+    m_value = value;
+    Q_EMIT onUpdate(value);
+    Q_EMIT onUpdate();
+    debug(8) << nodePath() << "updated to " << value.toString().toStdString() << "type:" << value.typeName();
+}
+
+bool Node::set(QVariant const& value){
+    //if(m_value.userType() != value.userType()) {
+    //    error() << "Node::set() Type mismatch in Node variant:" << nodePath();
+    // }
+    debug(2) << nodePath() << "set to" << value.toString().toStdString() << "type:" << value.typeName();
+    update(value);
+    Q_EMIT onSet(value);
+    Q_EMIT onSet();
+    Q_EMIT onBranchChanged();
+    return true;
+}
+
+const QVariant Node::get() const{
+    return m_value;
 }

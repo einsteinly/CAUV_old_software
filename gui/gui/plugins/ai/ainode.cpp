@@ -22,8 +22,25 @@
 
 #include <generated/types/GuiaiGroup.h>
 
+#include <QtGui>
+
 using namespace cauv;
 using namespace cauv::gui;
+
+
+struct LoadingIcon : public QGraphicsTextItem {
+    LoadingIcon() : QGraphicsTextItem("Adding..."),
+        m_animation(this, "opacity")
+    {
+        m_animation.setStartValue(1.0);
+        m_animation.setEndValue(0.0);
+        m_animation.setDuration(300);
+        m_animation.start();
+        m_animation.connect(&m_animation, SIGNAL(finished()), this, SLOT(deleteLater()));
+    }
+protected:
+    QPropertyAnimation m_animation;
+};
 
 
 AiNode::AiNode(QGraphicsItem *parent) :
@@ -36,29 +53,41 @@ AiNode::~AiNode(){
 }
 
 
-AiDropHandler::AiDropHandler(boost::shared_ptr<NodeItemModel> model)
-    : m_model(model){
+AiDropHandler::AiDropHandler(boost::shared_ptr<NodeItemModel> model, boost::weak_ptr<CauvNode> node)
+    : m_model(model), m_node(node){
 }
 
 bool AiDropHandler::accepts(boost::shared_ptr<Node> const& node){
     return (node->type == nodeType<AiMissionNode>() ||
+            node->type == nodeType<NewAiTaskNode>() ||
             node->type == nodeType<AiTaskNode>() ||
+            node->type == nodeType<NewAiConditionNode>() ||
             node->type == nodeType<AiConditionNode>());
 }
 
 QGraphicsItem * AiDropHandler::handle(boost::shared_ptr<Node> const& node) {
+
+    if (node->type == nodeType<NewAiTaskNode>()) {
+        if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
+            cauvNode->send(boost::make_shared<AddTaskMessage>(boost::get<std::string>(node->nodeId())));
+        }
+
+        boost::shared_ptr<Vehicle> vehicle = node->getClosestParentOfType<Vehicle>();
+        boost::shared_ptr<GroupingNode> ai = vehicle->findOrCreate<GroupingNode>("ai");
+        boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
+        boost::shared_ptr<AiTaskNode> task = tasks->findOrCreate<AiTaskNode>(node->nodeId());
+
+        return new LoadingIcon();
+    }
+
     if (node->type == nodeType<AiTaskNode>()) {
-        LiquidTaskNode * n = ManagedNode::getLiquidNodeFor<LiquidTaskNode>(
+        return ManagedNode::getLiquidNodeFor<LiquidTaskNode>(
                     boost::static_pointer_cast<AiTaskNode>(node));
-        n->setSize(QSizeF(300,300));
-        return n;
     }
 
     if (node->type == nodeType<AiConditionNode>()) {
-        LiquidConditionNode * n = ManagedNode::getLiquidNodeFor<LiquidConditionNode>(
+        return ManagedNode::getLiquidNodeFor<LiquidConditionNode>(
                     boost::static_pointer_cast<AiConditionNode>(node));
-        n->setSize(QSizeF(300,300));
-        return n;
     }
 
     return new AiNode();

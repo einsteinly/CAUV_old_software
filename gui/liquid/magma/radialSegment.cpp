@@ -133,7 +133,7 @@ void RadialSegment::itemSelected(){
 
 void RadialSegment::setRadius(float r){
     m_radius = r;
-    resize(sizeHint()*2);
+    resize(sizeHint());
     Q_EMIT sizeChanged(size());
     relayoutItems();
     update();
@@ -177,19 +177,37 @@ void RadialSegment::relayoutItems(){
     // paint system needs to be told, so update the angle it reads
     m_angle = totalAngle;
 
+    // workout sizing
     float anglePerItem = m_angle / numItems;
+    float textRadius = m_radius - (m_style.width/2);
+    float itemWidth = (anglePerItem / 360.0) * (M_PI * 2 * textRadius);
+
+
+    info() << "anglePerItem" << anglePerItem << "itemWidth" << itemWidth;
+
     int count = 0;
     foreach(RadialMenuItem * item, m_items){
         // Qt's 0 degrees is east
         float itemAngle = m_rotation + (anglePerItem * count) + (anglePerItem/2) + 90;
 
-        //debug() << itemAngle << m_rotation << m_angle;
+        item->resize(itemWidth, 15);
 
-        item->setAngle(itemAngle);
-        int x = sin(itemAngle*M_PI/180) * (m_radius - (m_style.width/2));
-        int y = cos(itemAngle*M_PI/180) * (m_radius - (m_style.width/2));
+        item->setRotation(itemAngle);
+        item->setTextWidth(itemWidth);
+        int x = sin(itemAngle*M_PI/180) * textRadius;
+        int y = cos(itemAngle*M_PI/180) * textRadius;
         item->move(x + (width()/2) - (item->width()/2),
                    y + (height()/2) - (item->height()/2));
+
+
+        /*
+
+        //debug() << itemAngle << m_rotation << m_angle;
+
+
+        item->resize((anglePerItem / 360.0) * (M_PI * 2 * textRadius),item->height());
+
+
 
 
         // set up the path for the text to follow
@@ -202,10 +220,10 @@ void RadialSegment::relayoutItems(){
         qDebug() << "center" << rect().center();
         //path = path.translated(QPoint(100,100));
         qDebug() << "text elipse" << textElipse;
-        path.arcMoveTo(textElipse,m_rotation + (anglePerItem * count));
-        path.arcTo(textElipse, m_rotation + (anglePerItem * count), anglePerItem);
+        path.arcMoveTo(textElipse, m_rotation + 90 - (anglePerItem * count));
+        path.arcTo(textElipse, m_rotation + 90 - (anglePerItem * count), 10);
         item->setPath(path);
-
+*/
 
         count++;
     }
@@ -273,8 +291,10 @@ void RadialSegment::paintEvent(QPaintEvent *)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    //painter.fillRect(this->rect(), Qt::green);
+    if(MAGMA_DEBUG_LAYOUT)
+        painter.fillRect(rect(), QColor(0,255,0, 125));
 
+    painter.setBrush(Qt::red);
 
     painter.translate(width() / 2, height() / 2);
     painter.setPen(m_style.pen);
@@ -283,14 +303,6 @@ void RadialSegment::paintEvent(QPaintEvent *)
 
     QPainterPath path = backgroundPath();
     painter.drawPath(path);
-
-
-    painter.setPen(QPen(Qt::green, 5));
-
-    foreach(RadialMenuItem * item, m_items){
-        //painter.drawPath(item->getPath());
-    }
-
 }
 
 QRegion RadialSegment::recomputeMask(){

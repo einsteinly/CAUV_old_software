@@ -35,61 +35,62 @@ LabelPath::LabelPath(const QString& text,
 
 }
 
-QSize LabelPath::sizeHint() const{
-    return QSize();
-}
-
 void LabelPath::paintEvent(QPaintEvent *){
     QPainter painter(this);
+    painter.save();
+
     painter.setRenderHint(QPainter::Antialiasing);
 
-    painter.fillRect(rect(), Qt::red);
+    if(MAGMA_DEBUG_LAYOUT)
+        painter.fillRect(rect(), QColor(255,0,0,125));
 
-    //painter.setPen(QPen(Qt::blue,5));
+    float rotation = (int)m_rotation % 360;
 
-    painter.drawPath(m_path);
+    rotation = (rotation > 270) ? rotation - 180 : rotation;
+    rotation = (rotation <= 90) ? rotation : rotation + 180;
 
-    int drawWidth = width() / 100;
+    painter.translate(width()/2, height()/2);
+    painter.rotate(-rotation);
 
-    QFont font = painter.font();
-    QPen pen = painter.pen();
-    font.setPixelSize(drawWidth*2);
-    painter.setFont(font);
+    qreal scale = (qreal)fontMetrics().width(text())/(qreal)getTextWidth();
+    painter.scale(1.0/scale, 1.0/scale);
 
-    qreal totalWidth = fontMetrics().width(text());
+    float textHeight = fontMetrics().height() * scale;
+    float textWidth = getTextWidth() * scale;
+    QRect textRect(-textWidth/2, -textHeight/2, textWidth, textHeight);
 
-    for ( int i = 0; i < text().size(); i++ ) {
+    if(MAGMA_DEBUG_LAYOUT)
+        painter.fillRect(textRect, QColor(0,0,255,125));
 
-        QString s = text();
-        s.truncate(i);
-        qreal partialWidth = fontMetrics().width(s);
-        qreal percent = partialWidth / totalWidth;
+    painter.drawText(textRect, text(), QTextOption(Qt::AlignCenter));
 
-        info() << percent;
-
-        QPointF point = m_path.pointAtPercent(percent);
-        qreal angle = m_path.angleAtPercent(percent);   // Clockwise is negative
-
-        //qDebug() << "point" << point;
-        //qDebug() << "angle" << angle;
-
-        painter.save();
-        // Move the virtual origin to the point on the curve
-        painter.translate(point);
-        // Rotate to match the angle of the curve
-        // Clockwise is positive so we negate the angle from above
-        painter.rotate(-angle);
-        // Draw a line width above the origin to move the text above the line
-        // and let Qt do the transformations
-        painter.drawText(QPoint(0, -pen.width()),QString(text()[i]));
-        painter.restore();
-    }
+    painter.restore();
 }
 
-void LabelPath::setPath(QPainterPath path){
-    m_path = path;
+void LabelPath::setRotation(float rot){
+    m_rotation = rot;
+    resize(sizeHint());
 }
 
-QPainterPath LabelPath::getPath() const{
-    return m_path;
+float LabelPath::getRotation() const{
+    return m_rotation;
+}
+
+void LabelPath::setTextWidth(float width){
+    m_textWidth = width;
+    resize(sizeHint());
+}
+
+float LabelPath::getTextWidth() const{
+    return m_textWidth;
+}
+
+QSize LabelPath::sizeHint() const {
+    QTransform transform;
+    // rotate around centre
+    transform.translate(getTextWidth()/2, fontMetrics().height()/2);
+    transform = transform.rotate(m_rotation);
+    QRect rotatedRect = transform.mapRect(
+                QRect(0,0,getTextWidth(),fontMetrics().height()));
+    return rotatedRect.size();
 }

@@ -36,6 +36,7 @@ class FluidityNode;
 
 
 GENERATE_SIMPLE_NODE(AiMissionNode)
+GENERATE_SIMPLE_NODE(NewAiTaskNode)
 
 class AiTaskNode : public BooleanNode {
     public:

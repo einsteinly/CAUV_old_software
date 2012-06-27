@@ -1,5 +1,13 @@
 project (magma)
 
+option(MAGMA_DEBUG_LAYOUT "Draw layout debugging helpers" OFF)
+
+if (MAGMA_DEBUG_LAYOUT)
+    add_definitions(-DMAGMA_DEBUG_LAYOUT=true)
+else()
+    add_definitions(-DMAGMA_DEBUG_LAYOUT=false)
+endif()
+
 # for generated files (mainly moc'd stuff)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 

@@ -162,7 +162,8 @@ QModelIndex NodeItemModel::index(int row, int column, const QModelIndex &parent)
     else parentNode = nodeFromIndex(parent);
 
     try {
-        boost::shared_ptr<Node> childNode = parentNode->getChildren().at(row);
+        std::vector<boost::shared_ptr<Node> > children = parentNode->getChildren();
+        boost::shared_ptr<Node> childNode = children.at(row);
         return createIndex(row, column, childNode.get());
     } catch (std::out_of_range){
         return QModelIndex();

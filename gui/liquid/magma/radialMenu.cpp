@@ -173,8 +173,8 @@ RadialSegment * RadialMenu::newRadialSegmentFor(QModelIndex index,
     }
 
     if (parent) {
-        info() << "set parent angle!" << parent->getAngle();
-        segment->setRotation(parent->getAngle() - (segment->getAngle()/2) -90);
+        info() << "set parent angle!" << parent->getRotation();
+        segment->setRotation(parent->getRotation() - (segment->getAngle()/2) -90);
     }
     else {
         info() << "parent not set, can't set anlge";

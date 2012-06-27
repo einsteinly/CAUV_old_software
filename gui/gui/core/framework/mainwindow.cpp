@@ -39,6 +39,7 @@
 
 #include "model/model.h"
 #include "model/registry.h"
+#include "model/nodes/groupingnode.h"
 
 #include "framework/nodescene.h"
 #include "framework/nodepicker.h"
@@ -221,7 +222,7 @@ void CauvMainWindow::onRun()
     m_actions->scene = boost::make_shared<NodeScene>();
     m_actions->view->setScene(m_actions->scene.get());
     m_actions->view->centerOn(0,0);
-    // m_actions->view->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_actions->view->setContextMenuPolicy(Qt::CustomContextMenu);
     // Set the viewport to use OpenGl here. Nested Gl viewports don't work
     m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
@@ -256,7 +257,7 @@ void CauvMainWindow::onRun()
     show();
     
     // There was a mutiny against the radial menu...
-    //connect(m_actions->view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(createRadialMenu(QPoint)));
+    connect(m_actions->view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(createRadialMenu(QPoint)));
 
     m_application->exec();
 
@@ -313,7 +314,11 @@ void CauvMainWindow::createRadialMenu(QPoint point){
     debug() << "radial menu creation!";
     liquid::magma::RadialMenu * menu = new liquid::magma::RadialMenu(liquid::magma::Default_RadialMenuStyle());
     menu->setModel(m_actions->root.get());
-    menu->setRootIndex(m_actions->root->indexFromNode(VehicleRegistry::instance()->find<Vehicle>("redherring")));
+
+    // this needs some thought. re herring should REALLY not be hardcoded in here
+    menu->setRootIndex(m_actions->root->indexFromNode(
+                           VehicleRegistry::instance()->find<Vehicle>("redherring")->
+                           findOrCreate<GroupingNode>("creation")));
     menu->show();
     QRect geo = menu->geometry();
     menu->setGeometry(QRect(sc.x()-geo.width()/2, sc.y()-geo.height()/2, geo.height(), geo.width()));

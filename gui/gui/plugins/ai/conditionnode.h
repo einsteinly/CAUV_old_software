@@ -30,6 +30,8 @@
 namespace cauv {
 namespace gui {
 
+GENERATE_SIMPLE_NODE(NewAiConditionNode)
+
 class AiConditionNode : public Node {
     public:
         AiConditionNode(const nid_t id);

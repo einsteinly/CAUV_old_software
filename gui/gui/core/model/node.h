@@ -160,31 +160,9 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
 
     public Q_SLOTS:
 
-        virtual void update(QVariant const& value){
-            if(m_value.userType() != value.userType()) {
-                error() << "Node::update() Type mismatch in Node variant:" << nodePath();
-            }
-            m_value = value;
-            Q_EMIT onUpdate(value);
-            Q_EMIT onUpdate();
-            debug(8) << nodePath() << "updated to " << value.toString().toStdString() << "type:" << value.typeName();
-        }
-
-        virtual bool set(QVariant const& value){
-            if(m_value.userType() != value.userType()) {
-                error() << "Node::set() Type mismatch in Node variant:" << nodePath();
-            }
-            debug(2) << nodePath() << "set to" << value.toString().toStdString() << "type:" << value.typeName();
-            update(value);
-            Q_EMIT onSet(value);
-            Q_EMIT onSet();
-            Q_EMIT onBranchChanged();
-            return true;
-        }
-
-        virtual const QVariant get() const{
-            return m_value;
-        }
+        virtual void update(QVariant const& value);
+        virtual bool set(QVariant const& value);
+        virtual const QVariant get() const;
 
     Q_SIGNALS:
         // strctural signals
@@ -212,6 +190,7 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
         typedef boost::mutex mutex_t;
         typedef boost::unique_lock<mutex_t> lock_t;
         mutex_t m_creationLock;
+        mutable mutex_t m_childrenLock;
 };
 
 

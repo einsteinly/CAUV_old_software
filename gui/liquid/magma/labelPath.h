@@ -23,7 +23,7 @@ namespace magma {
 class LabelPath : public QLabel
 {
     Q_OBJECT
-    Q_PROPERTY(QPainterPath path READ getPath WRITE setPath)
+    //Q_PROPERTY(QPainterPath path READ getPath WRITE setPath)
 
 public:
     LabelPath(QWidget * parent = 0,
@@ -36,14 +36,18 @@ public:
             );
     QSize sizeHint() const;
 
-    void setPath(QPainterPath path);
-    QPainterPath getPath() const;
+    void setRotation(float rotation);
+    float getRotation() const;
+
+    void setTextWidth(float width);
+    float getTextWidth() const;
 
 protected:
 
     void paintEvent(QPaintEvent *);
 
-    QPainterPath m_path;
+    float m_rotation;
+    float m_textWidth;
 };
 
 } // namespace magma

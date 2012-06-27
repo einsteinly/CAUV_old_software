@@ -101,7 +101,8 @@ void FluidityPlugin::initialise(){
 void FluidityPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
     try {
         boost::shared_ptr<Vehicle> vehicle = vnode->to<Vehicle>();
-        boost::shared_ptr<NewPipelineNode> newpipeline = vehicle->findOrCreate<NewPipelineNode>("new pipeline");
+        boost::shared_ptr<GroupingNode> creation = vehicle->findOrCreate<GroupingNode>("creation");
+        boost::shared_ptr<NewPipelineNode> newpipeline = creation->findOrCreate<NewPipelineNode>("pipeline");
 
     } catch(std::runtime_error& e) {
         error() << "FluidityPlugin::setupVehicle: Expecting Vehicle Node" << e.what();

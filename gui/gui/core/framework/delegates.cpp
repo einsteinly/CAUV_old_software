@@ -151,7 +151,9 @@ void DefaultNodeDelegate::paint(QPainter *painter,
 
         QString name = QString::fromStdString(node->nodeName());
         painter->setPen(Qt::black);
-        painter->drawText(title, name, QTextOption(Qt::AlignVCenter));
+        QTextOption to(Qt::AlignVCenter);
+        to.setWrapMode(QTextOption::NoWrap);
+        painter->drawText(title, name, to);
 
         try {
             boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);

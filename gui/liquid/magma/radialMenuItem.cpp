@@ -67,25 +67,3 @@ QModelIndex RadialMenuItem::index() const {
 RadialSegment * RadialMenuItem::segment() const {
     return m_segment;
 }
-
-void RadialMenuItem::setAngle(float angle){
-    m_angle = angle;
-    resize(sizeHint());
-}
-
-float RadialMenuItem::getAngle() const{
-    return m_angle;
-}
-
-QSize RadialMenuItem::sizeHint() const {
-    QSize rectangularSize = fontMetrics().size(Qt::TextSingleLine, text());
-    //qDebug() << "size of raw text " << rectangularSize;
-    QTransform transform;
-    transform.translate(rectangularSize.width()/2, rectangularSize.height()/2);
-    transform = transform.rotate(m_angle);
-    //qDebug() << "rotated by " << m_angle;
-    QRect rotatedRect = transform.mapRect(
-                QRect(0,0,rectangularSize.width(),rectangularSize.height()));
-    //qDebug() << "rotated rect " << rotatedRect;
-    return rotatedRect.size();
-}
