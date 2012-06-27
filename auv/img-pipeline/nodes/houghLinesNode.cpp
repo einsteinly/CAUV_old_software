@@ -27,7 +27,7 @@ namespace {
         float t = hough_result.y * theta;
         floatXY centre(r * std::cos(t - M_PI_2) / width, r * std::sin(t - M_PI_2) / height);
 
-        return Line(centre, (t > M_PI ? t - M_PI : t), std::numeric_limits<float>::infinity());
+        return Line(centre, (t > M_PI ? t - M_PI : t), std::numeric_limits<float>::infinity(), 0);
     }
     Line segmentToLine(const cv::Vec4i& segment, float width, float height)
     {
@@ -207,6 +207,8 @@ namespace {
             }
 
             std::vector<cv::Point2i> maxima = findLocalMaxima<1>(accum, threshold);
+
+            std::vector<Line> lines;
             std::transform(maxima.begin(), maxima.end(), std::back_inserter(lines), boost::bind(houghToLine, _1, rho, theta, m.cols, m.rows));
 
             return lines;

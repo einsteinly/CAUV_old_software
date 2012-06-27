@@ -134,7 +134,7 @@ class MergeSimilarLinesNode: public Node{
                     }
                 }
 
-            Line l(floatXY(newCentre[0],newCentre[1]), newAngle, newLength);
+            Line l(floatXY(newCentre[0],newCentre[1]), newAngle, newLength, 0);
 
             //Eigen::Vector2f c = lineIntersection(line1, line2);
 
