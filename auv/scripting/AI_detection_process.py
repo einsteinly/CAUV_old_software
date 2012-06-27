@@ -96,7 +96,6 @@ class detectionControl(aiProcess):
     def process_detectors(self):
         for detector_id, detector in self.running_detectors.iteritems():
             #since each processing could take a while, and disabling needs to be pretty fast, check here
-            has_detected = detector.detected
             if not self.enable_flag.is_set():
                 break
             try:
@@ -104,16 +103,21 @@ class detectionControl(aiProcess):
             except Exception:
                 error('Exception while running %s.' %(detector_id,))
                 error(traceback.format_exc().encode('ascii','ignore'))
-            if detector.detected != has_detected:
+            if detector.detected != detector._detected_past:
                 self.ai.task_manager.on_detector_state_change(detector_id, detector.detected)
+                detector._detected_past = detector.detected
             self.node.send(messaging.ConditionStateMessage(detector_id, detector.options.get_options_as_params(),
                            detector.get_debug_values(), detector._pipelines))
 
+    @event.repeat_event(5, True)
+    def force_reeval(self):
+        self.detectors_changed()
+                           
     def detectors_changed(self):
         pipelines = []
         for detector in self.running_detectors.values():
             pipelines.extend(detector._pipelines)
-            debug("{}".format(detector._pipelines))
+            debug("{}".format(detector._pipelines), 3)
         self.ai.pl_manager.set_detector_pls(pipelines)
         self.ai.task_manager.on_list_of_detectors(self.running_detectors.keys())
 

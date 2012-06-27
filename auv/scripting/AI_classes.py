@@ -530,6 +530,7 @@ class aiDetector(messaging.MessageObserver):
         self.node = node
         self.node.addObserver(self)
         self.detected = False
+        self._detected_past = False
     def request_pl(self, name):
         self._pipelines.append(name)
     def drop_pl(self, name):

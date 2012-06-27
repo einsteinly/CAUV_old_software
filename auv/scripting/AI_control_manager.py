@@ -258,7 +258,8 @@ class auvControl(aiProcess):
             if self._control_state['prop'][0][0]>value: #_control_state[function][args/kwargs]
                 self.auv.prop(value)
         except KeyError:
-            self.auv.prop(0)
+            #self.auv.prop(0)
+            pass
         
     def reevaluate(self):
         #find highest priority

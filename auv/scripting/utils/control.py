@@ -27,7 +27,7 @@ class PIDController(Controller):
         else:
             self.derr_window = d_window
         self.err_clamp = err_clamp
-        if abs(sum(d_window)) < 1e-30:
+        if abs(sum(self.derr_window)) < 1e-30:
             raise Exception('Bad Window')
         self.Kp = Kp
         self.Ki = Ki
