@@ -222,6 +222,8 @@ NodeTreeView::NodeTreeView(QWidget *) {
     this->setAutoFillBackground(false);
 
     connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(toggleExpanded(QModelIndex)));
+    connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(resizeToFit()));
+    connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(resizeToFit()));
 
     this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 }
@@ -252,18 +254,51 @@ void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
     }
 }
 
-QSize NodeTreeView::sizeHint() const {
-    if(!rootIndex().isValid()) return QSize();
 
-    int rows = model()->rowCount(rootIndex());
-    int height = 0;
-    int width = 0;
+void NodeTreeView::resizeToFit() {
+    info() << "resizing to fit";
+    qDebug() << "sizeHint = " <<sizeHint();
+    updateGeometry();
+    //resize(sizeHint());
+}
+
+QSize NodeTreeView::sizeHint() const {
+    QSize hint = sizeHint(rootIndex());
+    if(!rootIsDecorated()) {
+        QStyleOptionViewItem option;
+        option.initFrom(this);
+        QSize size = m_delegateMap->sizeHint(option, rootIndex());
+        return QSize(hint.width(), hint.height() - size.height());
+    }
+    return hint;
+}
+
+
+QSize NodeTreeView::sizeHint(QModelIndex index) const {
+    static int depth = 0;
+
+    info() << "depth = " << depth;
+
+    if(!index.isValid()) return QSize();
+
+    int rows = model()->rowCount(index);
+    debug() << "rows = " << rows;
+
     QStyleOptionViewItem option;
     option.initFrom(this);
+    QSize size = m_delegateMap->sizeHint(option, index);
+    int height = size.height();
+    int width = size.width();
+
     for(int i = 0; i < rows; i++){
-        QSize s = m_delegateMap->sizeHint(option, rootIndex().child(i, 0));
-        height += s.height();
-        width = std::max(width, s.width());
+
+        //if(isExpanded(index.child)) {
+            depth++;
+            QSize rowSize = sizeHint(index.child(i, 0));
+            depth--;
+            height += rowSize.height();
+            width = std::max(width, rowSize.width());
+        //} else debug() << "item not expanded";
     }
 
     return QSize(width, height);

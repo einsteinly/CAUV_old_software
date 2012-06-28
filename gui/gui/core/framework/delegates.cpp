@@ -14,9 +14,7 @@
 
 #include "delegates.h"
 
-#include <QItemEditorCreator>
-#include <QPainter>
-#include <QApplication>
+#include <QtGui>
 
 #include <algorithm>
 
@@ -289,6 +287,9 @@ void NumericDelegate::commit() {
 
 void NumericDelegate::setEditorData(QWidget *editor,
                                     const QModelIndex &index) const{
+    // don't allow updates while editing
+    if(editor->property("data-initialised").toBool()) return;
+    editor->setProperty("data-initialised", true);
 
     QStyledItemDelegate::setEditorData(editor, index);
 
@@ -300,7 +301,6 @@ void NumericDelegate::setEditorData(QWidget *editor,
             neutral->setMaximum(node->getMax().toInt());
             neutral->setWrapping(node->getWraps());
             neutral->setNeutral(node->getNeutral().toInt());
-            neutral->setValue(node->asNumber().toInt());
             neutral->setInverted(node->isInverted());
         }
 
@@ -310,7 +310,6 @@ void NumericDelegate::setEditorData(QWidget *editor,
             neutral->setWrapping(node->getWraps());
             neutral->setNeutral(node->getNeutral().toDouble());
             neutral->setDecimals(node->getPrecision());
-            neutral->setValue(node->asNumber().toDouble());
             neutral->setInverted(node->isInverted());
         }
     }
@@ -318,7 +317,8 @@ void NumericDelegate::setEditorData(QWidget *editor,
 
 
 
-BooleanDelegate::BooleanDelegate(QObject * parent) : ShortDelegate(parent) {
+BooleanDelegate::BooleanDelegate(QObject * parent) :
+    ShortDelegate(parent) {
     QItemEditorFactory * factory = new QItemEditorFactory();
     setItemEditorFactory(factory);
     factory->registerEditor(QVariant::Bool, new QItemEditorCreator<OnOffSlider>("checked"));

@@ -91,6 +91,7 @@ public:
     NodeTreeView(QWidget * parent = 0);
     virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
     QSize sizeHint() const;
+    QSize sizeHint(QModelIndex index) const;
 
 public Q_SLOTS:
     void registerDelegate(node_type nodeType,
@@ -102,6 +103,7 @@ private Q_SLOTS:
     bool applyFilters(boost::shared_ptr<Node> const&);
     void toggleExpanded(QModelIndex const&);
     void mouseReleaseEvent(QMouseEvent *event);
+    void resizeToFit();
 
 Q_SIGNALS:
     void onKeyPressed(QKeyEvent *event);

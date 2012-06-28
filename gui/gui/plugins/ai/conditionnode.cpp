@@ -44,9 +44,10 @@ AiConditionNode::AiConditionNode(const nid_t id) : Node(id, nodeType<AiCondition
 }
 
 boost::shared_ptr<Node> AiConditionNode::setDebug(std::string name, ParamValue value){
+    boost::shared_ptr<GroupingNode> debug = findOrCreate<GroupingNode>("debug");
     if (!m_debug[name]) {
         m_debug[name] = paramValueToNode(nid_t(name), value);
-        addChild(m_debug[name]);
+        debug->addChild(m_debug[name]);
     }
     m_debug[name]->update(variantToQVariant(value));
     return m_debug[name];
@@ -62,9 +63,10 @@ std::map<std::string, boost::shared_ptr<Node> > AiConditionNode::getDebugValues(
 }
 
 boost::shared_ptr<Node> AiConditionNode::setOption(std::string name, ParamValue value){
+    boost::shared_ptr<GroupingNode> options = findOrCreate<GroupingNode>("options");
     if (!m_options[name]) {
         m_options[name] = paramValueToNode(nid_t(name), value);
-        addChild(m_options[name]);
+        options->addChild(m_options[name]);
     }
     m_options[name]->update(variantToQVariant(value));
     return m_options[name];
