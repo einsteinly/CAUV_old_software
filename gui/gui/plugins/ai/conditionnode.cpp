@@ -136,3 +136,7 @@ void LiquidConditionNode::buildContents(){
 liquid::AbstractArcSource *LiquidConditionNode::source(){
     return m_source;
 }
+
+std::string LiquidConditionNode::conditionId() const{
+    return boost::get<std::string>(m_node->nodeId());
+}

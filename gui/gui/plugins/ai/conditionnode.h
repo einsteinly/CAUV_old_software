@@ -61,6 +61,7 @@ public:
     virtual ~LiquidConditionNode();
     void buildContents();
     liquid::AbstractArcSource * source();
+    std::string conditionId() const;
 
 protected:
     boost::shared_ptr<AiConditionNode> m_node;

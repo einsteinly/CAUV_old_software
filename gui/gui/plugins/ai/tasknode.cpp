@@ -213,3 +213,7 @@ void LiquidTaskNode::buildContents(){
     proxy->setWidget(view);
     addItem(proxy);
 }
+
+std::string LiquidTaskNode::taskId() const{
+    return boost::get<std::string>(m_node->nodeId());
+}

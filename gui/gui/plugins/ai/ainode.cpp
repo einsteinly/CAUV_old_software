@@ -71,24 +71,45 @@ QGraphicsItem * AiDropHandler::handle(boost::shared_ptr<Node> const& node) {
         if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
             cauvNode->send(boost::make_shared<AddTaskMessage>(boost::get<std::string>(node->nodeId())));
         }
+        return new LoadingIcon();
+    }
 
-        boost::shared_ptr<Vehicle> vehicle = node->getClosestParentOfType<Vehicle>();
-        boost::shared_ptr<GroupingNode> ai = vehicle->findOrCreate<GroupingNode>("ai");
-        boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
-        boost::shared_ptr<AiTaskNode> task = tasks->findOrCreate<AiTaskNode>(node->nodeId());
-
+    if (node->type == nodeType<NewAiConditionNode>()) {
+        if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
+            cauvNode->send(boost::make_shared<AddConditionMessage>(boost::get<std::string>(node->nodeId())));
+        }
         return new LoadingIcon();
     }
 
     if (node->type == nodeType<AiTaskNode>()) {
-        return ManagedNode::getLiquidNodeFor<LiquidTaskNode>(
+        LiquidTaskNode* liquidNode = ManagedNode::getLiquidNodeFor<LiquidTaskNode>(
                     boost::static_pointer_cast<AiTaskNode>(node));
+        node->connect(liquidNode, SIGNAL(closed(LiquidNode*)), this, SLOT(nodeClosed(LiquidNode*)));
+        return liquidNode;
     }
 
     if (node->type == nodeType<AiConditionNode>()) {
-        return ManagedNode::getLiquidNodeFor<LiquidConditionNode>(
+        LiquidConditionNode* liquidNode = ManagedNode::getLiquidNodeFor<LiquidConditionNode>(
                     boost::static_pointer_cast<AiConditionNode>(node));
+        node->connect(liquidNode, SIGNAL(closed(LiquidNode*)), this, SLOT(nodeClosed(LiquidNode*)));
+        return liquidNode;
     }
 
     return new AiNode();
+}
+
+
+void AiDropHandler::nodeClosed(liquid::LiquidNode * node) {
+    if(LiquidTaskNode * task = dynamic_cast<LiquidTaskNode*>(node)){
+        if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
+            cauvNode->send(boost::make_shared<RemoveTaskMessage>(
+                               task->taskId()));
+        }
+    }
+    if(LiquidConditionNode * cond = dynamic_cast<LiquidConditionNode*>(node)){
+        if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
+            cauvNode->send(boost::make_shared<RemoveConditionMessage>(
+                               cond->conditionId()));
+        }
+    }
 }

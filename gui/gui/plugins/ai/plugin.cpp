@@ -17,7 +17,8 @@
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <QTreeView>
+#include <QtGui>
+#include <liquid/view.h>
 
 #include <common/cauv_node.h>
 
@@ -123,6 +124,13 @@ void AiPlugin::setupTask(boost::shared_ptr<Node> node){
                     SetTaskStateMessage> >(node->to<AiTaskNode>())
                     );
         m_filter->addNode(node);
+        qDebug() << "mouse position" << QCursor::pos();
+        qDebug() << "mouse position in view" << m_actions->view->mapFromGlobal(QCursor::pos());
+        qDebug() << "mouse position in scene" << m_actions->view->mapToScene(m_actions->view->mapFromGlobal(QCursor::pos()));
+        m_actions->scene->onNodeDroppedAt(node, m_actions->view->mapToScene(
+                                                m_actions->view->mapFromGlobal(
+                                                  QCursor::pos()
+                                                  )));
     } catch(std::runtime_error& e) {
         error() << "AiPlugin::setupTask: Expecting AiTaskNode" << e.what();
 
@@ -135,7 +143,12 @@ void AiPlugin::setupCondition(boost::shared_ptr<Node> node){
                     boost::make_shared<MessageGenerator<AiConditionNode,
                     SetConditionStateMessage> >(node->to<AiConditionNode>())
                     );
+        m_actions->scene->onNodeDroppedAt(node, m_actions->view->mapToScene(
+                                                m_actions->view->mapFromGlobal(
+                                                  QCursor::pos()
+                                                  )));
         m_filter->addNode(node);
+
     } catch(std::runtime_error& e) {
         error() << "AiPlugin::setupCondition: Expecting AiTaskNode" << e.what();
 

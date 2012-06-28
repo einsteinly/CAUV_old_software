@@ -95,6 +95,7 @@ public:
     LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem *parent = 0);
     virtual ~LiquidTaskNode();
     void buildContents();
+    std::string taskId() const;
 
 public Q_SLOTS:
     void highlightRunningStatus(QVariant status);

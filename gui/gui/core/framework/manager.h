@@ -49,14 +49,14 @@ public:
             }
             debug() << "getLiquidNodeFor" << node->nodePath() << "creating new node";
             liquidNode = new T(node);
-            m_scene->addItem(liquidNode);
+            //m_scene->addItem(liquidNode);
         } else {
             debug() << "getLiquidNodeFor" << node->nodePath() << "returning existing node";
             liquidNode = static_cast<T*>(ln);
         }
 
-        if(relayout)
-            liquid::LayoutItems::updateLayout(m_scene);
+        //if(relayout)
+        //    liquid::LayoutItems::updateLayout(m_scene);
 
         return liquidNode;
     }
