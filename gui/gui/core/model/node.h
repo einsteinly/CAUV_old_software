@@ -15,8 +15,7 @@
 #ifndef __CAUV_GUI_NODES_H__
 #define __CAUV_GUI_NODES_H__
 
-#include <QObject>
-#include <QVariant>
+#include <QtGui>
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
@@ -26,13 +25,11 @@
 #include <boost/unordered_map.hpp>
 
 #include <vector>
-#include <stdexcept>
-#include <typeinfo>
-#include <map>
 
 #include <debug/cauv_debug.h>
 
 #include <gui/core/model/variants.h>
+#include <gui/core/model/nodeType.h>
 
 
 #define GENERATE_SIMPLE_NODE(X) \
@@ -44,22 +41,6 @@
 
 namespace cauv {
 namespace gui {
-
-typedef int node_type;
-
-struct node_types {
-    static node_type count;
-    static std::map<std::string, node_type> typeMap;
-};
-
-template<class T> node_type nodeType(){
-    node_types types;
-    try {
-        return types.typeMap.at(typeid(T).name());
-    } catch (std::out_of_range) {
-        return types.typeMap[typeid(T).name()] = types.count++;
-    }
-}
 
 class Node : public QObject, public boost::enable_shared_from_this<Node> {
     Q_OBJECT
@@ -207,16 +188,6 @@ std::basic_ostream<char_T, traits>& operator<<(
 
     return os;
 }
-
-
-struct NodeFilterInterface {
-    // return false to filter out an item (and its children) from the list
-    virtual bool filter(boost::shared_ptr<Node> const& node) = 0;
-
-    // should be implmented as a signal by subclasses
-    virtual void filterChanged() = 0;
-};
-
 
 template<class X>
 struct TypedNodeStore {

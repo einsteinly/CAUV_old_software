@@ -15,12 +15,7 @@
 #ifndef __CAUV_NODESCENE_H__
 #define __CAUV_NODESCENE_H__
 
-#include <QGraphicsScene>
-#include <QGraphicsSceneDragDropEvent>
-#include <QGraphicsItem>
-#include <QWidget>
-#include <QGraphicsProxyWidget>
-#include <QGraphicsLineItem>
+#include <QtGui>
 
 #include <gui/core/nodedragging.h>
 
@@ -56,12 +51,8 @@ class NodeScene : public QGraphicsScene, public NodeDropListener {
 public:
     typedef DropHandlerInterface<QGraphicsItem *> drop_handler_t;
     typedef boost::shared_ptr<drop_handler_t> drop_handler_ptr;
-    
-    // !!! FIXME: dont_set_global_scene is a bit of a hack: this fixes the
-    // problem with nested scenes overwriting the scene in ManagedNode: to
-    // properly support nested scenes, the ManagedNode::m_scene should be tied
-    // to the root node of the model, or something similar
-    NodeScene(QObject * parent = NULL, bool dont_set_global_scene=false);
+
+    NodeScene(QObject * parent = NULL);
     virtual ~NodeScene();
 
     // drop handlers

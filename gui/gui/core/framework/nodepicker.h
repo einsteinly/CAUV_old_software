@@ -15,11 +15,12 @@
 #ifndef __CAUV_NODEPICKER_H__
 #define __CAUV_NODEPICKER_H__
 
-#include <QTreeView>
-#include <QKeyEvent>
+#include <QtGui>
 
-#include <gui/core/model/node.h>
-#include <gui/core/framework/delegates.h>
+#include <boost/shared_ptr.hpp>
+
+#include <gui/core/model/nodeFilterInterface.h>
+#include <gui/core/model/nodeType.h>
 
 namespace Ui {
 class NodePicker;
@@ -28,9 +29,10 @@ class NodePicker;
 namespace cauv {
 namespace gui {
 
-class NodeTreeItemBase;
 class NodeItemModel;
-class NumericDelegate;
+class NodeDelegate;
+class DefaultNodeDelegate;
+class Node;
 
 /**
 * Node filtering by entering a part of the path

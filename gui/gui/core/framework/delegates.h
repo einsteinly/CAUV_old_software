@@ -15,15 +15,16 @@
 #ifndef __CAUV_DELEGATES_H__
 #define __CAUV_DELEGATES_H__
 
-#include <QObject>
-#include <QStyledItemDelegate>
+#include <QtGui>
 
-#include <gui/core/model/node.h>
+#include <gui/core/model/nodeType.h>
+
+#include <boost/shared_ptr.hpp>
 
 namespace cauv {
 namespace gui {
 
-
+class Node;
 class NodeTreeView;
 
 

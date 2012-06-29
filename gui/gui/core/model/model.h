@@ -15,20 +15,15 @@
 #ifndef __CAUV_GUI_MODEL_H__
 #define __CAUV_GUI_MODEL_H__
 
-#include <QAbstractItemModel>
-#include <QMimeData>
-#include <QModelIndex>
+#include <QtGui>
 
-#include <gui/core/model/node.h>
-#include <gui/core/model/nodes/vehiclenode.h>
-#include <gui/core/model/nodes/numericnode.h>
-
-#include <generated/types/message.h>
+#include <boost/shared_ptr.hpp>
 
 namespace cauv {
 namespace gui {
 
 class NodeItemModel;
+class Node;
 
 class NodeUpdateModelNotfication : public QObject {
     Q_OBJECT

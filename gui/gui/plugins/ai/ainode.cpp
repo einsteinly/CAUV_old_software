@@ -22,6 +22,8 @@
 
 #include <generated/types/GuiaiGroup.h>
 
+#include <common/cauv_node.h>
+
 #include <QtGui>
 
 using namespace cauv;

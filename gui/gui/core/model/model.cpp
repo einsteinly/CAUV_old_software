@@ -14,9 +14,10 @@
 
 #include "model.h"
 
-#include <QUrl>
+#include <QtGui>
 
 #include "node.h"
+#include "nodes/vehiclenode.h"
 
 using namespace cauv;
 using namespace cauv::gui;

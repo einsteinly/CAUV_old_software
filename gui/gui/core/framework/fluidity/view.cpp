@@ -63,7 +63,7 @@ FView::FView(boost::shared_ptr<CauvNode> node,
 
     //initMenu();
 
-    NodeScene *s = new NodeScene(this, false); // !!! false = don't set global model node scene
+    NodeScene *s = new NodeScene(this);
 
     // !!! is this really what we want to do?
     // items aren't added or removed a lot, just updated

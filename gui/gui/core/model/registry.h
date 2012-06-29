@@ -15,17 +15,18 @@
 #ifndef REGISTRY_H
 #define REGISTRY_H
 
-#include <QObject>
-#include <QUrl>
+#include <QtGui>
 
 #include <boost/shared_ptr.hpp>
 
-#include "nodes/groupingnode.h"
-
-#include "model.h"
-
+#include <gui/core/model/nodes/groupingnode.h>
+#include <gui/core/model/nodes/vehiclenode.h>
 
 namespace cauv {
+
+    class Message;
+    class MessageObserver;
+
     namespace gui {
 
         class VehicleRegistry : public GroupingNode

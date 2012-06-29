@@ -26,6 +26,7 @@
 
 #include <gui/core/framework/nodescene.h>
 #include <gui/core/framework/nodepicker.h>
+#include <gui/core/framework/delegates.h>
 #include <gui/core/model/registry.h>
 
 #include <generated/types/GuiaiGroup.h>

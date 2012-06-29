@@ -68,7 +68,7 @@ void VanishingLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem 
 }
 
 
-NodeScene::NodeScene(QObject * parent, bool dont_set_global_scene) : QGraphicsScene(parent)
+NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
 {
     int sceneSize = 8000;
 
@@ -114,9 +114,6 @@ NodeScene::NodeScene(QObject * parent, bool dont_set_global_scene) : QGraphicsSc
             }
         }
     }
-    
-    if(!dont_set_global_scene)
-        ManagedNode::setScene(this);
 }
 
 NodeScene::~NodeScene(){

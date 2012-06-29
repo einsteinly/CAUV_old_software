@@ -23,6 +23,7 @@
 #include <liquid/proxyWidget.h>
 
 #include <gui/core/model/model.h>
+#include <gui/core/model/node.h>
 #include <gui/core/framework/manager.h>
 #include <gui/core/framework/mainwindow.h>
 

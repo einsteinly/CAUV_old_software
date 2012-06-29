@@ -222,8 +222,8 @@ NodeTreeView::NodeTreeView(QWidget *) {
     this->setAutoFillBackground(false);
 
     connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(toggleExpanded(QModelIndex)));
-    connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(resizeToFit()));
-    connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(resizeToFit()));
+    //connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(resizeToFit()));
+    //connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(resizeToFit()));
 
     this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 }
@@ -258,8 +258,7 @@ void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
 void NodeTreeView::resizeToFit() {
     info() << "resizing to fit";
     qDebug() << "sizeHint = " <<sizeHint();
-    updateGeometry();
-    //resize(sizeHint());
+    resize(sizeHint());
 }
 
 QSize NodeTreeView::sizeHint() const {

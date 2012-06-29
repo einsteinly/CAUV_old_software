@@ -180,7 +180,7 @@ void LiquidTaskNode::buildContents(){
 
     // incoming dependencies
     foreach(boost::shared_ptr<AiConditionNode> const& condition, m_node->getConditions()){
-        LiquidConditionNode * conditionNode = ManagedNode::getLiquidNodeFor<LiquidConditionNode>(condition, false);
+        LiquidConditionNode * conditionNode = ManagedNode::getLiquidNodeFor<LiquidConditionNode>(condition);
         //conditionNode->setPos(pos().x()-(conditionNode->size().width() + 30), pos().y());
         liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
                                                       new liquid::RejectingConnectionSink());
@@ -192,7 +192,7 @@ void LiquidTaskNode::buildContents(){
     }
 
     foreach(boost::shared_ptr<FluidityNode> const& pipeline, m_node->getPipelines()){
-        LiquidFluidityNode * pipelineNode = ManagedNode::getLiquidNodeFor<LiquidFluidityNode>(pipeline, false);
+        LiquidFluidityNode * pipelineNode = ManagedNode::getLiquidNodeFor<LiquidFluidityNode>(pipeline);
         liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
                                                       new liquid::RejectingConnectionSink());
         liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,

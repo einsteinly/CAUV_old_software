@@ -18,8 +18,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
-#include <QEvent>
-#include <QGraphicsRectItem>
+#include <QtGui>
 
 namespace cauv {
     namespace gui {

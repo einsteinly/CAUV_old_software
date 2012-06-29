@@ -29,6 +29,7 @@
 
 #include <gui/core/framework/elements/style.h>
 #include <gui/core/model/model.h>
+#include <gui/core/model/nodes/groupingnode.h>
 #include <gui/core/framework/nodepicker.h>
 
 #include <gui/plugins/ai/conditionnode.h>
