@@ -36,7 +36,7 @@ class script(aiScript):
         self.messages.put(m.points)
         
     def run(self):
-        while (time.time()-start_time>0 or not self.options.use_time) and \
+        while (time.time()-self.start_time>0 or not self.options.use_time) and \
               (self.mean_distance_closest>self.options.reverse_to_distance or not self.options.use_distance):
             try:
                 cols = map(lambda x: x.y, self.messages.get(block=True, timeout=0.5))
