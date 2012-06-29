@@ -104,9 +104,9 @@ const QRect DefaultNodeDelegate::titleRect(const QStyleOptionViewItem& option,
     // and enough space for the text
     QFontMetrics fm(m_font);
     int titleHeight = fm.height();
-    int titleWidth = fm.width(QString::fromStdString(node->nodeName()));
+    int titleWidth = fm.width(QString::fromStdString(node->nodeName()), -1, Qt::TextSingleLine);
 
-    return QRect(out.x(), out.y(), titleWidth, titleHeight+2);
+    return QRect(out.x(), out.y(), titleWidth, titleHeight);
 }
 
 const QRect DefaultNodeDelegate::childRect(const QStyleOptionViewItem& option,

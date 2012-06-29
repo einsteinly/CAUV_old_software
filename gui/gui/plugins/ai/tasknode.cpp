@@ -20,6 +20,7 @@
 #include <debug/cauv_debug.h>
 
 #include <gui/core/model/paramvalues.h>
+#include <gui/core/model/nodes/groupingnode.h>
 
 #include <liquid/arcSink.h>
 #include <liquid/arc.h>
@@ -77,14 +78,14 @@ std::set<boost::shared_ptr<FluidityNode> > AiTaskNode::getPipelines(){
 boost::shared_ptr<Node> AiTaskNode::setDebug(std::string name, ParamValue value){
     if (!m_debug[name]) {
         m_debug[name] = paramValueToNode(nid_t(name), value);
-        addChild(m_debug[name]);
+        findOrCreate<GroupingNode>("debug")->addChild(m_debug[name]);
     }
     m_debug[name]->update(variantToQVariant(value));
     return m_debug[name];
 }
 
 void AiTaskNode::removeDebug(std::string name){
-    this->removeChild(nid_t(name));
+    findOrCreate<GroupingNode>("debug")->removeChild(nid_t(name));
     m_debug.erase(name);
 }
 
@@ -95,14 +96,14 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getDebugValues(){
 boost::shared_ptr<Node> AiTaskNode::setStaticOption(std::string name, ParamValue value){
     if (!m_staticOptions[name]) {
         m_staticOptions[name] = paramValueToNode(nid_t(name), value);
-        addChild(m_staticOptions[name]);
+        findOrCreate<GroupingNode>("options")->addChild(m_staticOptions[name]);
     }
     m_staticOptions[name]->update(variantToQVariant(value));
     return m_staticOptions[name];
 }
 
 void AiTaskNode::removeStaticOption(std::string name){
-    this->removeChild(nid_t(name));
+    findOrCreate<GroupingNode>("options")->removeChild(nid_t(name));
     m_staticOptions.erase(name);
 }
 
@@ -113,7 +114,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getStaticOptions(){
 boost::shared_ptr<Node> AiTaskNode::setDynamicOption(std::string name, ParamValue value){
     if (!m_dynamicOptions[name]) {
         m_dynamicOptions[name] = paramValueToNode(nid_t(name), value);
-        addChild(m_dynamicOptions[name]);
+        findOrCreate<GroupingNode>("options")->addChild(m_dynamicOptions[name]);
     }
     m_dynamicOptions[name]->update(variantToQVariant(value));
     return m_dynamicOptions[name];
@@ -131,14 +132,14 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getDynamicOptions(){
 boost::shared_ptr<Node> AiTaskNode::setTaskOption(std::string name, ParamValue value){
     if (!m_taskOptions[name]) {
         m_taskOptions[name] = paramValueToNode(nid_t(name), value);
-        addChild(m_taskOptions[name]);
+        findOrCreate<GroupingNode>("options")->addChild(m_taskOptions[name]);
     }
     m_taskOptions[name]->update(variantToQVariant(value));
     return m_taskOptions[name];
 }
 
 void AiTaskNode::removeTaskOption(std::string name){
-    this->removeChild(nid_t(name));
+    findOrCreate<GroupingNode>("options")->removeChild(nid_t(name));
     m_taskOptions.erase(name);
 }
 
