@@ -23,6 +23,7 @@
 
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/model/nodes/groupingnode.h>
+#include <gui/core/model/nodes/vehiclenode.h>
 #include <utility/foreach.h>
 
 using namespace cauv;
