@@ -1,7 +1,5 @@
 project (AUV)
 
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${AUV_BINARY_DIR}/bin")
-
 find_package (OpenCV REQUIRED)
 find_package (Eigen REQUIRED)
 include_directories (${Eigen_INCLUDE_DIRS})
