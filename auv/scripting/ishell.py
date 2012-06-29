@@ -13,11 +13,15 @@ gemini = cauv.sonar.Gemini(node)
 pl = pipeline.Model(node)
 
 
-import IPython
-if [int(v) for v in IPython.__version__.split('.')] < [0,11]:
-    from IPython.Shell import IPShellEmbed as InteractiveShellEmbed #pylint:disable=E0611
+# FIXME Obvious.
+try:
+    ipython_version_is_jameses_shitty_one = [int(v) for v in IPython.__version__.split('.')] < [0,11]
+except:
+    ipython_version_is_jameses_shitty_one = False
+if ipython_version_is_jameses_shitty_one:
+    from IPython.Shell import IPShellEmbed as InteractiveShellEmbed #pylint: disable=E0611
 else:
-    from IPython.frontend.terminal.embed import InteractiveShellEmbed #pylint:disable=E0611
+    from IPython.frontend.terminal.embed import InteractiveShellEmbed #pylint: disable=E0611
 
 s = InteractiveShellEmbed()
 s()

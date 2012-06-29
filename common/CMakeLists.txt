@@ -1,4 +1,4 @@
-option(CAUV_ZEROMQ_MESSAGING "use zeromq for messaging instead of spread" OFF)
+option(CAUV_ZEROMQ_MESSAGING "use zeromq for messaging instead of spread" ON)
 if(CAUV_ZEROMQ_MESSAGING)
     add_subdirectory(zeromq)
     add_definitions(-DZEROMQ_MESSAGING)

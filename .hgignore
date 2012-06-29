@@ -27,6 +27,7 @@ tags
 *.chil
 .DS_Store
 .clang_complete
+Makefile
 auv/python-module/cauvinterface.so
 auv/python-module/cauvinterfaced.so
 auv/scripting/unknown.log
