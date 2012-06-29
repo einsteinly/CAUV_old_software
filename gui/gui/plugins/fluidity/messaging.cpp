@@ -17,6 +17,9 @@
 
 #include <gui/core/model/nodes/groupingnode.h>
 
+#include <gui/plugins/ai/tasknode.h>
+#include <gui/plugins/ai/conditionnode.h>
+
 using namespace cauv;
 using namespace cauv::gui;
 
@@ -56,3 +59,31 @@ void FluidityMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
         }
     }
 }
+
+void FluidityMessageObserver::onConditionStateMessage(ConditionStateMessage_ptr m){
+        debug() << "FluidityMessageObserver::onScriptStateMessage" << *m;
+    
+    boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
+    boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
+    boost::shared_ptr<AiConditionNode> condition = conditions->findOrCreate<AiConditionNode>(m->conditionId());
+
+    boost::shared_ptr<GroupingNode> pipelines = ai->findOrCreate<GroupingNode>("pipelines");
+    foreach(std::string const& id, m->pipelineIds()){
+        QString full_pipeline_name = QString::fromStdString(id);
+        QStringList basename_subname = full_pipeline_name.split('/');
+        if(basename_subname.size() == 1){
+            // no sub-name
+            condition->addPipeline(pipelines->findOrCreate<FluidityNode>(id));
+        } else if(basename_subname.size() == 2){
+            boost::shared_ptr<GroupingNode> pipeline_group = pipelines->findOrCreate<GroupingNode>(
+                std::string(basename_subname[0].toUtf8().data())
+            );
+            condition->addPipeline(pipeline_group->findOrCreate<FluidityNode>(
+                std::string(basename_subname[1].toUtf8().data())
+            ));
+        } else {
+            error() << "invalid pipeline ID:" << id;
+        }
+    }
+}
+

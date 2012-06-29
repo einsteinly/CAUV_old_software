@@ -30,11 +30,16 @@
 namespace cauv {
 namespace gui {
 
+// !!! inter-plugin dependence
+class FluidityNode;
+
 GENERATE_SIMPLE_NODE(NewAiConditionNode)
 
 class AiConditionNode : public Node {
     public:
-        AiConditionNode(const nid_t id);
+        // !!! inter-plugin dependence
+        AiConditionNode(const nid_t id) : Node(id, nodeType<AiConditionNode>()){
+        }
 
         boost::shared_ptr<Node> setDebug(std::string name, ParamValue value);
         void removeDebug(std::string name);
@@ -46,10 +51,21 @@ class AiConditionNode : public Node {
 
         static void addType(std::string type);
         static std::set<std::string> getTypes();
+        
+        void addPipeline(boost::shared_ptr<FluidityNode> pipe){
+            m_pipelines.insert(pipe);
+        }
+        void removePipeline(boost::shared_ptr<FluidityNode> pipe){
+            m_pipelines.erase(std::find(m_pipelines.begin(), m_pipelines.end(), pipe));
+        }
+        std::set<boost::shared_ptr<FluidityNode> > getPipelines(){
+            return m_pipelines;
+        }
 
     protected:
         std::map<std::string, boost::shared_ptr<Node> > m_debug;
         std::map<std::string, boost::shared_ptr<Node> > m_options;
+        std::set<boost::shared_ptr<FluidityNode> > m_pipelines;        
 
         static std::set<std::string> m_types;
 };

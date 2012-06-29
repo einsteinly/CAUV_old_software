@@ -272,7 +272,8 @@ void LiquidNode::updateLayout(){
 }
 
 void LiquidNode::setSizeFromContents(){
-    debug(6) << "LiquidNode::setSizeFromContents(" << m_contentWidget->size() << ")";
+    debug() << "LiquidNode::setSizeFromContents(" << m_contentWidget->size()
+    << "(hint:" <<  m_contentWidget->size() << "))";
 
     const float header_height = m_style.header.height + m_style.bl_radius/2;
     const double header_min_width = m_header->minimumWidth();

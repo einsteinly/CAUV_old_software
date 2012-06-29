@@ -40,9 +40,9 @@ using namespace cauv::gui;
 
 std::set<std::string> AiConditionNode::m_types;
 
-
-AiConditionNode::AiConditionNode(const nid_t id) : Node(id, nodeType<AiConditionNode>()){
-}
+// !!! inter-plugin dependence, need this to be inline
+//AiConditionNode::AiConditionNode(const nid_t id) : Node(id, nodeType<AiConditionNode>()){
+//}
 
 boost::shared_ptr<Node> AiConditionNode::setDebug(std::string name, ParamValue value){
     boost::shared_ptr<GroupingNode> debug = findOrCreate<GroupingNode>("debug");
