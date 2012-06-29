@@ -19,8 +19,10 @@
 #include <stdint.h>
 #include <sys/time.h>
 
-#include "daemon_util.h"
-#include "zeromq_addresses.h"
+#include <common/zeromq/zeromq_addresses.h>
+
+#include <utility/daemon.h>
+#include <utility/files.h>
 
 typedef std::set<uint32_t> subscriptions_t;
 typedef std::map<uint32_t,std::pair <unsigned int, unsigned long int> > stats_t;

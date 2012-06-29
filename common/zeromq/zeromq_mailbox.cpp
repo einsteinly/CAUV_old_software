@@ -1,6 +1,5 @@
 #include "zeromq_mailbox.h"
 #include "zeromq_addresses.h"
-#include "daemon_util.h"
 
 #include <unistd.h>
 #include <dirent.h>
@@ -11,15 +10,17 @@
 #include <sstream>
 #include <algorithm>
 
+#include <boost/make_shared.hpp>
+#include <boost/thread/locks.hpp>
+
 #include <debug/cauv_debug.h>
 #include <utility/time.h>
+#include <utility/files.h>
 
 #include <generated/types/message.h>
 #include <generated/types/MembershipChangedMessage.h>
 #include <generated/types/DaemonConnectedMessage.h>
 #include <generated/groupmap.h>
-#include <boost/make_shared.hpp>
-#include <boost/thread/locks.hpp>
 
 namespace cauv {
 

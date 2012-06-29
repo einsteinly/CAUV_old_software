@@ -88,6 +88,7 @@ class WatchProcess:
                 info("found PID {} for process {}".format(self.pid, self.p.name))
         if self.pid is None and self.restart:
             self.pid = utils.multitasking.spawnDaemon(self.exec_proc)
+            info("Started {} with pid {}".format(self.p.name, self.pid))
 
     def kill(self, sig):
         if self.pid is None:
