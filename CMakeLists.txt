@@ -20,6 +20,8 @@ set (CMAKE_USER_MAKE_RULES_OVERRIDE_CXX ${CMAKE_SOURCE_DIR}/cmake/override_cxx.c
 
 project (CAUV)
 
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CAUV_BINARY_DIR}/bin")
+
 # set paths for package search scripts
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CAUV_SOURCE_DIR}/cmake/")
 
@@ -115,4 +117,5 @@ add_subdirectory (gui)
 add_subdirectory (utility)
 add_subdirectory (debug)
 add_subdirectory (sim)
+add_subdirectory (heimdall)
 

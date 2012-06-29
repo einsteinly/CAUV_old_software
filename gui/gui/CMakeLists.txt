@@ -12,9 +12,6 @@ else()
     # using both Qt slots and Boost signals so need no keywords
     add_definitions(-DQT_NO_KEYWORDS)
 
-    # build plugins
-    add_subdirectory(plugins)
-
     # for <gui/core/...>
     include_directories (${gui_SOURCE_DIR})
 
@@ -69,5 +66,8 @@ else()
         ${QT_LIBRARIES}
     )
     depends_on_messages(guicpp)
+
+    # build plugins
+    add_subdirectory(plugins)
 
 endif()
