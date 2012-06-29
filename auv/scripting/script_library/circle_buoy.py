@@ -30,6 +30,7 @@ class scriptOptions(aiScriptOptions):
     Depth_Control_kPID = (0.08, 0, 0) # (Kp, Ki, Kd)
     Depth_DError_Window = expWindow(5, 0.6)
     Depth_Error_Clamp = 200
+    TotalRightAnglesToTurn = 4
     
     Pipeline_File = 'detect_buoy_sim'
 
@@ -198,13 +199,14 @@ class script(aiScript):
     def run(self):
         self.request_pl(self.options.Pipeline_File)
         start_bearing = self.auv.getBearing()
-        entered_quarters = [False, False, False, False]
+        total_right_angles_turned = 0
         exit_status = 'SUCCESS'
         info('Waiting for circles...')
         try:
-            while False in entered_quarters:
+            last_bearing = self.auv.current_bearing
+            while total_right_angles_turned < self.options.TotalRightAnglesToTurn:
                 self.auv.strafe(self.__strafe_speed)
-                time.sleep(3)
+                time.sleep(1)
                 time_since_seen = 0
                 if self.time_last_seen is not None:
                     time_since_seen = time.time() - self.time_last_seen
@@ -217,18 +219,11 @@ class script(aiScript):
                     if time_since_seen > self.options.Give_Up_Seconds_Between_Sights:
                         self.log('Buoy Circling: lost sight of the buoy!')
                         raise Exception('lost the buoy: giving up!')
-                if self.auv.getBearing() > -180 and self.auv.getBearing() < -90:
-                    entered_quarters[3] = True
-                if self.auv.getBearing() > -90 and self.auv.getBearing() < 0:
-                    entered_quarters[2] = True
-                if self.auv.getBearing() > 0 and self.auv.getBearing() < 90:
-                    entered_quarters[0] = True
-                if self.auv.getBearing() > 90 and self.auv.getBearing() < 180:
-                    entered_quarters[1] = True
-                if self.auv.getBearing() > 180 and self.auv.getBearing() < 270:
-                    entered_quarters[2] = True
-                if self.auv.getBearing() > 270 and self.auv.getBearing() < 360:
-                    entered_quarters[3] = True
+                #note travelling left, so turning clockwise ie bearing increasing
+                bearing_diff = self.auv.current_bearing - last_bearing if self.auv.current_bearing > last_bearing else last_bearing - self.auv.current_bearing
+                if min(bearing_diff, 360-bearing_diff) > 90: #assume we don't turn to fast
+                    last_bearing = (last_bearing+90)%360
+                    total_right_angles_turned += 1
             self.log('Buoy Circling: completed successfully')
         except:
             exit_status = 'FAIL'

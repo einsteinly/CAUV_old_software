@@ -9,7 +9,6 @@ class ColourDetector:
         self.max_frac = 1.0
         self.tzero = time.time()
         self.histogram_messages = {}
-        self.histogram_messages_lock = threading.Lock()
         self.bins = list(bins)
         if bin_num is not None:
             self.bins.append(bin_num)
@@ -37,37 +36,25 @@ class ColourDetector:
             return 0
 
     def cullOldSightings(self, cull_before_time):
-        def cull(d):
-            to_remove = []
-            for t in d:
-                if t < cull_before_time:
-                    to_remove.append(t)
-            for t in to_remove:
-                del d[t]
-        self.histogram_messages_lock.acquire()
-        cull(self.histogram_messages)
-        self.histogram_messages_lock.release()
+        to_remove = []
+        for t in self.histogram_messages.keys(): #call keys to get a list that wont chnage if something is added
+            if t < cull_before_time:
+                to_remove.append(t)
+        for t in to_remove:
+            del self.histogram_messages[t]
 
     def update(self, histogram_msg):
-        t = self.relativeTime()
-        self.histogram_messages_lock.acquire()
-        while t in self.histogram_messages:
-            # twiddle twiddle
-            t = incFloat(t)
-        self.histogram_messages[t] = histogram_msg
-        self.histogram_messages_lock.release()
+        self.histogram_messages[self.relativeTime()] = histogram_msg
 
     def frac(self):
         # return mean colour fraction (for information only)
         r = 0
-        self.histogram_messages_lock.acquire()
-        for t, m in self.histogram_messages.items():
+        for t, m in self.histogram_messages.items(): #call items to get an unchangin list
             frac = 0
             for b in self.bins:
                 frac += m.bins[b]
             r += frac
         n = len(self.histogram_messages)
-        self.histogram_messages_lock.release()
         if n > 0:
             r /= n
         return r
@@ -76,14 +63,13 @@ class ColourDetector:
         tnow = self.relativeTime()
         self.cullOldSightings(tnow - self.sightings_period)
         sightings = []
-        self.histogram_messages_lock.acquire()
-        numcolours = len(self.histogram_messages.items())
+        numcolours = 0
         for t, m in self.histogram_messages.items():
             frac = 0
             for b in self.bins:
                 frac += m.bins[b]
             sightings.append(self.colourFracConfidence(frac))
-        self.histogram_messages_lock.release()
+            numcolours += 1
         if numcolours:
             colour_confidence = sum(sightings) / numcolours
         else:

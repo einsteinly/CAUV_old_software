@@ -80,24 +80,14 @@ class BearingRangeToXYNode: public Node{
                 r.reserve(m_polar_keypoints.size());
                 if(a.bearings->size() == 0 || a.ranges->size() == 0)
                     throw parameter_error("invalid polar image: no metadata");
-                debug(4) << "bearingRangeToXY: range" << a.ranges->at(0) << "--" << a.ranges->back();
+                debug(4) << "bearingRangeToXY: range" << a.ranges->front() << "--" << a.ranges->back();
                 foreach(KeyPoint const& k, m_polar_keypoints){
-                    float bearing_idx = k.pt.x;
-                    float range_idx = k.pt.y;
-                    // TODO: interpolate?
-                    int bearing_idx_r = clamp(0, std::floor(0.5+bearing_idx), a.bearings->size()-1);
-                    int range_idx_r = clamp(0, std::floor(0.5+range_idx), a.ranges->size()-1);
-                    float bearing = a.bearings->at(bearing_idx_r);
-                    float range = a.ranges->at(range_idx_r);
-                    float range_scale = range / *(a.ranges->rbegin());
-                    // x increases along the zero-bearing axis, y decreases
-                    // with increasing bearing in the first quadrant
-                    // (mathematical angles)
-                    // the bearings are in radians (see SonarInputNode)
-                    floatXY xy(range*cos(bearing), -range*sin(bearing));
+                    float range, bearing;
+                    cv::Point2f xy = a.xyAt(k.pt.x, k.pt.y, range, bearing);
+                    float range_scale = range / a.ranges->back();
                     // TODO: convert angle
                     r.push_back(KeyPoint(
-                        xy, k.size*range_scale, 0, k.response, k.octave, k.class_id
+                        floatXY(xy.x,xy.y), k.size*range_scale, 0, k.response, k.octave, k.class_id
                     ));
                 }
                 return r;

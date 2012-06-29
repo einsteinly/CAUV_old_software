@@ -9,9 +9,6 @@ else()
     # the shared classes in the GUI, used by plugins
     add_subdirectory(core)
 
-    # and the plugins to extend the frameworks capabilities
-    add_subdirectory(plugins)
-
     # for <gui/core/...>
     include_directories (${guis_SOURCE_DIR})
 
@@ -60,5 +57,8 @@ else()
         ${QT_LIBRARIES}
     )
     depends_on_messages(gui)
+
+    # build plugins
+    add_subdirectory(plugins)
 
 endif()

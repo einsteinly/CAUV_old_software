@@ -161,7 +161,7 @@ class pipelineManager(aiProcess):
             except Exception:
                 error('Error saving pipeline %s' %(reqname))
                 error(traceback.format_exc().encode('ascii','ignore'))
-            pl.clear()
+            #pl.clear()
         #4
         for reqname in to_add:
             pl = cauv.pipeline.Model(self.node, 'ai/'+reqname)

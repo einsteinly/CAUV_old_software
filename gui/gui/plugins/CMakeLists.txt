@@ -9,6 +9,9 @@ option(CAUV_GUI_GAMEPAD "True if the GUI should support game controllers" ON)
 include_directories (${guis_SOURCE_DIR})
 include_directories (${AUV_SOURCE_DIR})
 
+get_property (gui_RUNTIME_OUTPUT_DIRECTORY TARGET gui PROPERTY RUNTIME_OUTPUT_DIRECTORY)
+SET(LIBRARY_OUTPUT_PATH ${gui_RUNTIME_OUTPUT_DIRECTORY}/plugins)
+
 function (cauv_install_plugin TARGET)
     install (TARGETS ${TARGET} LIBRARY DESTINATION bin/cauv/${CMAKE_BUILD_TYPE}/plugins )
 endfunction()

@@ -30,7 +30,7 @@ class detectorOptions(aiDetectorOptions):
     Circles_Weight   =  1.6 #
 
 class detector(aiDetector):
-    debug_values = ['process_c']
+    debug_values = []
     def __init__(self, node, opts):
         aiDetector.__init__(self, node, opts)
         self.circles_messages = {}   # map time received : message

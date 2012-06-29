@@ -78,6 +78,7 @@ class KMeansNode: public Node{
         boost::uniform_smallint<> bytedist;
         boost::variate_generator<boost::mt19937&, boost::uniform_smallint<> > randbyte;
 
+        // Don't be surprised, this one does one iteration, but keeps the result between frames
         void doWork(in_image_map_t& inputs, out_map_t& r){
 
             cv::Mat img = inputs["image"]->mat();
@@ -132,10 +133,10 @@ class KMeansNode: public Node{
             int y = 0, x = 0, ch = 0;
             int rows = img.rows, cols = img.cols;
             const int elem_size = img.elemSize();
-            const int row_size = cols * elem_size;
+            const int row_size = img.step[0];
             unsigned char *img_rp, *img_cp, *img_bp;
 
-            cv::Mat clusteridsMat(rows, cols, CV_8UC1);
+            cv::Mat_<unsigned char> clusteridsMat(rows, cols);
 
             // Clear val sums and sizes (val sum for single pass mean calculation)
             for (size_t i = 0; i < m_clusters.size(); i++) {
@@ -189,16 +190,16 @@ class KMeansNode: public Node{
                     for(y = 0, img_rp = img.data; y < rows; y++, img_rp += row_size)
                         for(x = 0, img_cp = img_rp; x < cols; x++, img_cp += elem_size)
                         {
-                            cluster& cl = m_clusters[clusteridsMat.at<unsigned char>(y,x)];
-                            if(cl.size < 2)
+                            cluster& other_cl = m_clusters[clusteridsMat.at<unsigned char>(y,x)];
+                            if(other_cl.size < 2)
                             {
-                                break;
+                                continue;
                             }
                             
                             unsigned int sqdist = 0;
                             for(ch = 0, img_bp = img_cp; ch < m_channels; ch++, img_bp++)
                             {
-                                sqdist += (*img_bp - cl.centre[ch]) * (*img_bp - cl.centre[ch]);
+                                sqdist += (*img_bp - other_cl.centre[ch]) * (*img_bp - other_cl.centre[ch]);
                             }
                             
                             if (sqdist > farthest_point_sqdist) {
@@ -216,7 +217,7 @@ class KMeansNode: public Node{
                     
                     farthest_point_cl.size--;
                     cl.size++;
-                    for(ch = 0, img_bp = img.data + y * row_size + x * elem_size; ch < m_channels; ch++, img_bp++)
+                    for(ch = 0, img_bp = img.data + farthest_point_y * row_size + farthest_point_x * elem_size; ch < m_channels; ch++, img_bp++)
                     {
                         farthest_point_cl.valsum[ch] -= *img_bp;
                         cl.valsum[ch] += *img_bp;
@@ -265,4 +266,4 @@ class KMeansNode: public Node{
 } // namespace imgproc
 } // namespace cauv
 
-#endif // ndef __GAUSSIAN_BLUR_NODE_H__
+#endif // ndef __KMEANS_NODE_H__

@@ -44,11 +44,8 @@ processes = [
                          set()),
 ]
 
-class AImanager(aiProcess):
+class AImanager(object):
     def __init__(self, opts):
-        #not using super here for the moment, since it has issues resulting from not everything calling super
-        #TODO either make super work (and understand how/why it works and document) or remove super from all parts.
-        aiProcess.__init__(self, "manager")
         self.processes = []
         for process, pass_args in processes:
             if process.name in opts['disable']:
@@ -60,9 +57,6 @@ class AImanager(aiProcess):
                                       for x in opts if x in pass_args))
             self.processes.append(process)
         self.watcher = watch.Watcher(self.processes, detach=True)
-        
-        #start receiving messages
-        self._register()
 
     #Overrides EventLoop definition, so no event loop used in this class
     def run(self):
@@ -85,4 +79,3 @@ try:
     ai.run()
 finally:
     ai.watcher.kill(2) #SIGINT, AKA ^C
-    ai.node.stop()

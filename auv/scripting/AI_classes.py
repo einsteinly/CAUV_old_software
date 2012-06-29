@@ -335,7 +335,7 @@ class fakeAUV(messaging.MessageObserver):
                 if vector_to.east<0:
                     bearing+=180
             except ZeroDivisionError:
-                bearing = 90 if x>0 else 270
+                bearing = 90 if vector_to.east>0 else 270
             debug('Heading on a %f degree bearing, direction vector %s' %(bearing,str(vector_to)))
             self.prop(0)
             self.bearingAndWait(bearing)
@@ -398,7 +398,6 @@ class aiScript(aiProcess):
         aiProcess.__init__(self, task_name)
         self.die_flag = threading.Event() #for any subthreads
         self.exit_confirmed = threading.Event()
-        self.in_control = threading.Event()
         self.pl_confirmed = threading.Event()
         self._requested_pls = []
         self.task_name = task_name
@@ -434,7 +433,7 @@ class aiScript(aiProcess):
             setattr(self.options, option_name, option_value)
             self.optionChanged(option_name)
         else:
-            info('Changed the value of a static option while the script was running. Script will not see change until script restart.')
+            info('Changed the value of a static option %s while the script was running. Script will not see change until script restart.' %option_name)
     @external_function
     def set_options(self, options):
         for key, val in options.items():
@@ -445,33 +444,9 @@ class aiScript(aiProcess):
     @external_function
     def _set_position(self, llacoord):
         self.auv.lla = llacoord
-    def request_control(self, timeout=None):
-        self.ai.auv_control.request_control(timeout)
-    def request_control_and_wait(self, wait_timeout=5, control_timeout=None):
-        self.ai.auv_control.request_control(control_timeout)
-        return self.in_control.wait(wait_timeout)
-    def drop_control(self):
-        self.ai.auv_control.drop_control()
     @external_function
     def depthOverridden(self):
-        warning('%s tried to set a depth but was overridden and has no method to deal with this.' %(self.task_name,))
-    #note that _ functions are called by auv control, to make sure things like waiting for control are dealt with properly
-    def set_paused(self):
-        warning('AUV control by %s was paused, but this script has no method to deal with this event' %(self.task_name,))
-    def set_unpaused(self):
-        warning('AUV control by %s was unpaused, but this script has no method to deal with this event' %(self.task_name,))
-    @external_function
-    def _set_paused(self):
-        self.in_control.clear()
-        self.set_paused()
-    @external_function
-    def _set_unpaused(self):
-        self.in_control.set()
-        self.set_unpaused()
-    @external_function
-    def control_timed_out(self):
-        warning('AUV control by %s timed out, but this script has no method to deal with this event' %(self.task_name,))
-    #debug value reporting etc
+        warning('%s tried to set a depth but was overridden and has no method to deal with this.' %(self.task_name,))#debug value reporting etc
     def report_status(self):
         debug = {}
         error_attrs = []
@@ -530,6 +505,7 @@ class aiDetector(messaging.MessageObserver):
         self.node = node
         self.node.addObserver(self)
         self.detected = False
+        self._detected_past = False
     def request_pl(self, name):
         self._pipelines.append(name)
     def drop_pl(self, name):

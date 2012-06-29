@@ -93,6 +93,12 @@ class MergeSimilarLinesNode: public Node{
             Eigen::Vector2f v2(std::cos(line2.angle), std::sin(line2.angle));
             float l1 = line1.length;
             float l2 = line2.length;
+            bool is_infinite = boost::math::isinf(l1) || boost::math::isinf(l1);
+            if (is_infinite) {
+                l1 = 1;
+                l2 = 1;
+            }
+
             float t1 = angle(line1.angle);
             float t2 = angle(line2.angle);
 
@@ -117,7 +123,7 @@ class MergeSimilarLinesNode: public Node{
             for (int i = 0; i < 4; ++i)
                 for(int j = i+1; j < 4; ++j)
                 {
-                    float length = (endPoints[i] - endPoints[j]).dot(v);
+                    float length = is_infinite ? std::numeric_limits<float>::infinity() : (endPoints[i] - endPoints[j]).dot(v);
                     if (length > newLength) {
                         newLength = length;
                         
@@ -128,7 +134,7 @@ class MergeSimilarLinesNode: public Node{
                     }
                 }
 
-            Line l(floatXY(newCentre[0],newCentre[1]), newAngle, newLength);
+            Line l(floatXY(newCentre[0],newCentre[1]), newAngle, newLength, 0);
 
             //Eigen::Vector2f c = lineIntersection(line1, line2);
 
@@ -148,7 +154,10 @@ class MergeSimilarLinesNode: public Node{
         float centreErr(Line const& line1, Line const& line2) {
             float line1d = pointLineDistance(line2.centre, line1);
             float line2d = pointLineDistance(line1.centre, line2);
-            return (line1d*line1.length+line2d*line1.length)/(line1.length + line2.length);
+            if (boost::math::isinf(line1.length) || boost::math::isinf(line2.length))
+                return (line1d*line2d)/2;
+            else
+                return (line1d*line1.length+line2d*line1.length)/(line1.length + line2.length);
         }
         float angleErr(Line const& line1, Line const& line2) {
             return angleErr(line1.angle, line2.angle);

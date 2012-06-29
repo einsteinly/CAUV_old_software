@@ -48,9 +48,7 @@ class aiCondition(object):
     def get_debug_values(self):
         #warning('Debug values not implemented in condition %s' %str(self.__class__))
         return {}
-    @staticmethod
-    def get_pipeline_names():
-        warning('Pipeline dependancies not implemented in condition')
+    def get_pipeline_ids(self):
         return []
             
 class stateCondition(aiCondition):
@@ -146,8 +144,7 @@ class detectorCondition(aiCondition):
         aiCondition.set_options(self, options)
         self.task_manager.set_detector_options(self.id, self.options.get_options())
     def on_state_set(self, state):
-        if state != self.state:
-            self.state = state
+        self.state = state
     def register(self, task_manager):
         aiCondition.register(self, task_manager)
         #We need to tell the task manager to setup the detector, and redirect messages to this condition

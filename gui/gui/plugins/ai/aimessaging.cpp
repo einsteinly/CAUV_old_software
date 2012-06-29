@@ -119,14 +119,14 @@ void AiMessageObserver::onConditionTypesMessage(ConditionTypesMessage_ptr m){
 
     //debug() << "onConditionTypes" << *m;
 
-    typedef std::map<std::string, std::vector<std::string> > str_liststr_map_t;
+    typedef std::vector<std::string> str_list;
 
     boost::shared_ptr<GroupingNode> creation = m_parent->findOrCreate<GroupingNode>("creation");
     boost::shared_ptr<GroupingNode> conditions = creation->findOrCreate<GroupingNode>("ai-conditions");
 
-    foreach (str_liststr_map_t::value_type const& i, m->conditionTypes()){
-        AiConditionNode::addType(i.first);
-        conditions->findOrCreate<NewAiConditionNode>(i.first);
+    foreach (std::string const& name, m->conditionTypes()){
+        AiConditionNode::addType(name);
+        conditions->findOrCreate<NewAiConditionNode>(name);
     }
 }
 

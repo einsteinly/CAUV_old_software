@@ -266,6 +266,7 @@ class Model(messaging.MessageObserver):
 
     def clear(self):
         '''Remove all nodes from the pipeline.'''
+        debug('Clearing pipeline %s' %(self.pipeline_name))
         self.send(messaging.ClearPipelineMessage(self.pipeline_name))
 
     def save(self, picklefname, timeout=3.0):
@@ -278,20 +279,20 @@ class Model(messaging.MessageObserver):
         '''Load the pipeline from 'picklefname', this will clear any existing pipeline.'''
         with open(picklefname, 'rb') as inf:
             #saved = pickle.load(inf)
-            saved = FilterUnpickler(file).load()
+            saved = FilterUnpickler(inf).load()
             self.set(saved, timeout)
     
     @staticmethod
-    def loadFile(file):
+    def loadFile(inf):
         '''Load a pipeline file from disk, and return its contents. This does not manipulate the image pipeline.'''
         #saved = pickle.load(inf)
-        saved = FilterUnpickler(file).load()
+        saved = FilterUnpickler(inf).load()
         return saved
     
     # !!! TODO: this should probably be a classmethod
-    def dumpFile(self, file, state):
+    def dumpFile(self, outf, state):
         '''Save a passed pipeline state to a file. This does not manipulate the image pipeline.'''
-        pickle.dump(file, state)
+        pickle.dump(outf, state)
 
     def get(self, timeout=3.0):
         '''Grab the state from the image pipeline, save it and return it.'''
@@ -339,6 +340,7 @@ class Model(messaging.MessageObserver):
     def set(self, state, timeout=3.0, clear=True):
         '''Set the state of the image pipeline based on 'state'.'''
         #NOTE PLEASE MAKE SURE ANY CHANGES ARE REFLECTED IN AI_PIPELINE_MANAGER (since it overides this method)
+        debug("Setting pipeline %s." %(self.pipeline_name))
         if clear: self.clear()
         id_map = {}
         node_map = {}

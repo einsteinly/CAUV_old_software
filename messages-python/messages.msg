@@ -105,6 +105,7 @@ enum NodeType : int8 {
     BearingRangeCrop,
     DrawCircles,
     BroadcastCircles,
+    RelabelClusters,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -141,9 +142,8 @@ enum InputSchedType : int8 {
 enum ScriptCommand : int8 {
     Start,
     Stop,
-    Restart,
-    Pause,
-    Resume,
+    Reset,
+    ResetAndRestart,
     PauseAll,
     ResumeAll,
 }
@@ -292,6 +292,7 @@ struct Line
     eq centre : floatXY;
     eq angle : float;
     eq length : float;
+    eq width : float;
 }
 struct Circle
 {
@@ -998,7 +999,7 @@ group guiai
     }
     message ConditionTypes : 214
     {
-        conditionTypes : map<string, list<string>>;
+        conditionTypes : list<string>;
     }
     message RequestAIState : 215
     {

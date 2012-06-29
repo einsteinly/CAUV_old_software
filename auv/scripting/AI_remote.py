@@ -6,7 +6,13 @@ from AI_classes import aiProcess
 
 import cPickle
 import IPython
-if [int(v) for v in IPython.__version__.split('.')] < [0,11]:
+
+# FIXME Obvious.
+try:
+    ipython_version_is_jameses_shitty_one = [int(v) for v in IPython.__version__.split('.')] < [0,11]
+except:
+    ipython_version_is_jameses_shitty_one = False
+if ipython_version_is_jameses_shitty_one:
     from IPython.Shell import IPShellEmbed as InteractiveShellEmbed #pylint: disable=E0611
 else:
     from IPython.frontend.terminal.embed import InteractiveShellEmbed #pylint: disable=E0611
@@ -105,17 +111,9 @@ def start_script(ainode):
     task_id = str(raw_input('Enter task id: '))
     ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Start))
     
-def restart_script(ainode):
+def reset_script(ainode):
     task_id = str(raw_input('Enter task id: '))
-    ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Restart))
-    
-def pause_script(ainode):
-    task_id = str(raw_input('Enter task id: '))
-    ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Pause))
-    
-def resume_script(ainode):
-    task_id = str(raw_input('Enter task id: '))
-    ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Resume))
+    ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Reset))
     
 def pause_all(ainode):
     ainode.node.send(messaging.ScriptControlMessage("",messaging.ScriptCommand.PauseAll))
@@ -196,9 +194,7 @@ if __name__=='__main__':
     s = menu('Script menu', '')
     s.addFunction('Stop Script', stop_script, '', {})
     s.addFunction('Start Script', start_script, '', {})
-    s.addFunction('Restart Script', restart_script, '', {})
-    s.addFunction('Pause Script', pause_script, '', {})
-    s.addFunction('Resume Script', resume_script, '', {})
+    s.addFunction('Reset Script', reset_script, '', {})
     
     m.addMenu(t)
     m.addMenu(c)

@@ -25,6 +25,7 @@
 #include <debug/cauv_debug.h>
 #include <utility/serialisation.h>
 #include <utility/foreach.h>
+#include <utility/rounding.h>
 #include <generated/types/TimeStamp.h>
 #include <generated/types/UID.h>
 
@@ -36,6 +37,29 @@ cauv::NonUniformPolarMat cauv::NonUniformPolarMat::clone() const{
     r.ranges = boost::make_shared< std::vector<float> >(*ranges);
     r.bearings = boost::make_shared< std::vector<float> >(*bearings);
     return r;
+}
+cv::Point2f cauv::NonUniformPolarMat::xyAt(float r, float phi) const {
+    float range, bearing;
+    return xyAt(r,phi,range,bearing);
+}
+cv::Point2f cauv::NonUniformPolarMat::xyAt(float r, float phi, float& range, float& bearing) const {
+    int r_r = clamp(0, std::floor(0.5+r), ranges->size()-1);
+    int phi_r = clamp(0, std::floor(0.5+phi), bearings->size()-1);
+    // TODO: interpolate?
+    return xyAt(r_r, phi_r, range, bearing);
+}
+cv::Point2f cauv::NonUniformPolarMat::xyAt(int r, int phi) const {
+    float range, bearing;
+    return xyAt(r,phi,range,bearing);
+}
+cv::Point2f cauv::NonUniformPolarMat::xyAt(int r, int phi, float& range, float& bearing) const {
+    range = ranges->at(r);
+    bearing = bearings->at(phi);
+    // x increases along the zero-bearing axis, y decreases
+    // with increasing bearing in the first quadrant
+    // (mathematical angles)
+    // the bearings are in radians (see SonarInputNode)
+    return cv::Point2f(range*cos(bearing), -range*sin(bearing));
 }
 
 cauv::PyramidMat cauv::PyramidMat::clone() const{
