@@ -155,44 +155,29 @@ class taskManager(aiProcess):
         self.set_condition_options(msg.conditionId, BoostMapToDict(msg.conditionOptions))
     @event.event_func
     def onScriptControlMessage(self, msg):
-        pass #awaiting rewrite to make scripts single
-        """
         command = msg.command.name
         task_id = msg.taskId
         if command in ('Stop','Restart'):
             if task_id == self.current_task.id:
                 #stop main script
-                self.stop_current_script()
-            elif task_id in self.additional_tasks:
-                self.stop_script(task_id)
+                self.stop_script()
             else:
                 warning('Tried to remove non-existant task %s' %(task_id))
-        if command == 'Restart':
+        if command == 'Reset':
             self.tasks[task_id].persist_state = {}
-        if command in ('Start', 'Restart'):
+        if command == 'Start':
             try:
                 task = self.tasks[task_id]
             except KeyError:
                 warning('Tried to start non-existant task %s' %(task_id))
             self.start_script(task)
-        elif command == 'Pause':
-            if task_id in self.tasks:
-                self.tasks[task_id].paused = True
-                if self.tasks[task_id].active:
-                    self.ai.auv_control.pause_script(task_id)
-        elif command == 'Resume':
-            if task_id in self.tasks:
-                self.tasks[task_id].paused = False
-                if self.tasks[task_id].active:
-                    self.ai.auv_control.resume_script(task_id)
         elif command == 'PauseAll':
             self.all_paused = True
-            self.ai.auv_control.pause()
+            self.ai.auv_control.disable()
         elif command == 'ResumeAll':
             debug('Resumed')
             self.all_paused = False
-            self.ai.auv_control.resume()
-        """
+            self.ai.auv_control.enable()
 
     @event.event_func
     def onRequestAIStateMessage(self, msg):
@@ -403,7 +388,7 @@ class taskManager(aiProcess):
         info('Stopping Script')
 
     def start_script(self, task):
-        if self.all_paused or task.paused:
+        if self.all_paused:
             return
         #start the new script
         self.ai.auv_control.signal(task.id)
@@ -475,7 +460,7 @@ class taskManager(aiProcess):
     def die(self):
         try:
             #kill any child scripts (since not managed by AI_manager, so may get left around)
-            self.stop_all_scripts()
+            self.running_script.kill()
         except Exception as error:
             debug(error.message)
         aiProcess.die(self)

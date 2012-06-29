@@ -111,17 +111,9 @@ def start_script(ainode):
     task_id = str(raw_input('Enter task id: '))
     ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Start))
     
-def restart_script(ainode):
+def reset_script(ainode):
     task_id = str(raw_input('Enter task id: '))
-    ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Restart))
-    
-def pause_script(ainode):
-    task_id = str(raw_input('Enter task id: '))
-    ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Pause))
-    
-def resume_script(ainode):
-    task_id = str(raw_input('Enter task id: '))
-    ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Resume))
+    ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Reset))
     
 def pause_all(ainode):
     ainode.node.send(messaging.ScriptControlMessage("",messaging.ScriptCommand.PauseAll))
@@ -202,9 +194,7 @@ if __name__=='__main__':
     s = menu('Script menu', '')
     s.addFunction('Stop Script', stop_script, '', {})
     s.addFunction('Start Script', start_script, '', {})
-    s.addFunction('Restart Script', restart_script, '', {})
-    s.addFunction('Pause Script', pause_script, '', {})
-    s.addFunction('Resume Script', resume_script, '', {})
+    s.addFunction('Reset Script', reset_script, '', {})
     
     m.addMenu(t)
     m.addMenu(c)

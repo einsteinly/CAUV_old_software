@@ -144,8 +144,6 @@ enum ScriptCommand : int8 {
     Stop,
     Reset,
     ResetAndRestart,
-    Pause,
-    Resume,
     PauseAll,
     ResumeAll,
 }

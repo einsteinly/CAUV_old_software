@@ -35,12 +35,13 @@ class auvControl(aiProcess):
     def __init__(self, opts):
         aiProcess.__init__(self, 'auv_control')
         self.auv = slightlyModifiedAUV(self.node)
+        self.sonar = sonar.Sonar(self.node)
         self.auv.depth_disabled = False
+        
+        self.control_state = {}
 
         self.current_task = None
         self.enabled = threading.Event() #stops the auv at the sending commands level
-        if not opts.disable_control:
-            self.enabled.set()
 
         self.depth_limit = None
         self.signal_msgs = Queue.Queue(5)
@@ -59,6 +60,8 @@ class auvControl(aiProcess):
             if self.current_task == task_id:
                 debug('Will call %s(*args, **kwargs)' % (getattr(self.auv, command)), 5)
                 getattr(self.auv, command)(*args, **kwargs)
+                if command == 'prop':
+                    self.control_state['prop'] = args[0]
             else:
                 warning('Script %s tried to move auv, but only script %s should be working')
         else:
@@ -84,6 +87,7 @@ class auvControl(aiProcess):
         if self.auv.bearing != None:
             self.auv.bearing(self.auv.current_bearing)
         self.auv.pitch(0)
+        self.control_state = {}
 
     @external_function
     def lights_off(self):
@@ -126,8 +130,8 @@ class auvControl(aiProcess):
     @external_function
     @event.event_func
     def set_current_task_id(self, task_id):
-        #if currently in control, need to stop
         self.current_task = task_id
+        self.control_state = {}
         
     #OBSTACLE AVOIDANCE COMMANDS
     @external_function
@@ -144,7 +148,7 @@ class auvControl(aiProcess):
     def limit_prop(self, value):
         self.auv.prop_limit = value
         try:
-            if self._control_state['prop'][0][0]>value: #_control_state[function][args/kwargs]
+            if self.control_state['prop']>value: #_control_state[function][args/kwargs]
                 self.auv.prop(value)
         except KeyError:
             #self.auv.prop(0)
@@ -156,8 +160,8 @@ class auvControl(aiProcess):
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
-    p.add_argument('-d', '--disable_control', dest='disable_control', default=False,
-                 action='store_true', help="stop AI script from controlling the sub")
+    #p.add_argument('-d', '--disable_control', dest='disable_control', default=False,
+    #action='store_true', help="stop AI script from controlling the sub")
     opts, args = p.parse_known_args()
     ac = auvControl(opts)
     try:
