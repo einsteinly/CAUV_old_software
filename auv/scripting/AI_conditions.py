@@ -48,6 +48,8 @@ class aiCondition(object):
     def get_debug_values(self):
         #warning('Debug values not implemented in condition %s' %str(self.__class__))
         return {}
+    def get_pipeline_ids(self):
+        return []
             
 class stateCondition(aiCondition):
     """
