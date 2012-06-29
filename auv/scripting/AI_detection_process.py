@@ -48,7 +48,7 @@ class detectionControl(aiProcess):
             self.running_detectors[detector_id] = self.modules[detector_file].detector(self.node, opts)
         except Exception:
             error('Could not initialise detector %s.' %(detector_file,))
-            traceback.print_exc()
+            error(traceback.format_exc().encode('ascii', 'ignore'))
             return
         info("Started detector class, id %s, %s." %(detector_file, detector_id))
         self.detectors_changed()

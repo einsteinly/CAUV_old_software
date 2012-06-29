@@ -232,18 +232,20 @@ class taskManager(aiProcess):
                 if self.tasks[task_id].options.crash_count >= self.tasks[task_id].options.crash_limit:
                     self.remove_task(task_id)
                     warning('%s had too many unhandled exceptions, so has been removed from task list.' %(task_id,))
+                    return
                 self.log('Task %s failed after an exception in the script.' %(task_id, ))
             except KeyError:
                 warning('Unrecognised task %s crashed' %(task_id,))
-            self.tasks[task_id].options.last_called = time.time()
         elif status == 'SUCCESS':
             self.log('Task %s suceeded, no longer trying to complete this task.' %(task_id, ))
             self.remove_task(task_id)
             info('%s has finished succesfully, so is being removed from active tasks.' %(task_id,))
+            return
         else:
             info('%s sent exit message %s' %(task_id, status))
-            self.log('Task %s failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].options.frequency_limit))
-            self.tasks[task_id].options.last_called = time.time()
+        self.log('Task %s failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].options.frequency_limit))
+        self.tasks[task_id].options.last_called = time.time()
+        self.stop_script()
         getattr(self.ai,str(task_id)).confirm_exit()
 
     @external_function
@@ -379,7 +381,7 @@ class taskManager(aiProcess):
             self.current_task.active = False
             self.ai.pl_manager.drop_task_pls(self.current_task.id)
             self.gui_update_task(self.current_task)
-        self.ai.auv_control.set_current_task_id(None, 0)
+        self.ai.auv_control.set_current_task_id(None)
         if self.running_script:
             try:
                 self.running_script.kill()
@@ -391,7 +393,7 @@ class taskManager(aiProcess):
         if self.all_paused:
             return
         #start the new script
-        self.ai.auv_control.signal(task.id)
+        #self.ai.auv_control.signal(task.id)
         info('Starting script: %s  (Task %s)' %(task.options.script_name, task.id))
         # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
         script = subprocess.Popen(['python2.7','./AI_scriptparent.py', str(task.id),
@@ -408,7 +410,7 @@ class taskManager(aiProcess):
         self.running_script = script
         self.current_task = task
         #inform auv control that script is running
-        self.ai.auv_control.set_current_task_id(task.id, task.options.priority)
+        self.ai.auv_control.set_current_task_id(task.id)
         #set priority
         self.current_priority = task.options.running_priority
         self.current_task.active = True
