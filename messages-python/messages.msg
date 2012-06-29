@@ -142,7 +142,8 @@ enum InputSchedType : int8 {
 enum ScriptCommand : int8 {
     Start,
     Stop,
-    Restart,
+    Reset,
+    ResetAndRestart,
     Pause,
     Resume,
     PauseAll,
@@ -1000,7 +1001,7 @@ group guiai
     }
     message ConditionTypes : 214
     {
-        conditionTypes : map<string, list<string>>;
+        conditionTypes : list<string>;
     }
     message RequestAIState : 215
     {

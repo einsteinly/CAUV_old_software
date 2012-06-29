@@ -212,10 +212,8 @@ class taskManager(aiProcess):
 
     def gui_send_all(self):
         #send type info
-        self.node.send(messaging.TaskTypesMessage(list(task_classes.keys())))
-        self.node.send(messaging.ConditionTypesMessage(
-            {condition_name: condition.get_pipeline_names() for 
-                condition_name, condition in condition_classes.iteritems()}))
+        self.node.send(messaging.TaskTypesMessage(task_classes.keys()))
+        self.node.send(messaging.ConditionTypesMessage(condition_classes.keys()))
 
         #send conditions (first, since tasks depend on conditions)
         for condition in self.conditions.itervalues():
