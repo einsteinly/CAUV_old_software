@@ -29,7 +29,8 @@ def zmq_daemon_pid(ipc_dir = None, vehicle_name = None):
     def get_pid():
         ctrl = utils.zmqfuncs.DaemonControl(vehicle_name, ipc_dir)
         try:
-            return(ctrl.run_cmd("PID")["pid"])
+            pid = ctrl.run_cmd("PID")["pid"]
+            return pid;
         except utils.zmqfuncs.Timeout:
             return None
     return get_pid
