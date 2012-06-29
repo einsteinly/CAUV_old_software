@@ -20,7 +20,6 @@
 #include <generated/types/GuiaiGroup.h>
 
 #include <gui/plugins/ai/conditionnode.h>
-#include <gui/plugins/ai/tasknode.h>
 
 namespace cauv {
 namespace gui {
@@ -30,6 +29,7 @@ class FluidityMessageObserver: public MessageObserver{
         FluidityMessageObserver(boost::shared_ptr< Node > parent);
         virtual ~FluidityMessageObserver();
         virtual void onScriptStateMessage(ScriptStateMessage_ptr m);
+        virtual void onConditionStateMessage(ConditionStateMessage_ptr m);
     protected:
         boost::shared_ptr<Node> m_parent;
 };
