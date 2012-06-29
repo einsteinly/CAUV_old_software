@@ -19,6 +19,8 @@ add_library(utility
     ratelimit.cpp
     random.cpp
     coordinates.cpp
+    daemon.cpp
+    files.cpp
 )
 
 if(CAUV_BUILD_TESTS)

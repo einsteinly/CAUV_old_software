@@ -87,19 +87,21 @@ class DrawLinesNode: public Node{
                     cv::Point2f c(line.centre.x * width, line.centre.y * height);
                     cv::Point2f dir(ca,sa);
 
+                    int width = line.width == 0 ? 1 : round(line.width * width);
+
                     using boost::math::isinf;
                     if (isinf(line.length))
                     {
                         float t1 = -c.x/dir.x;
                         float t2 = (width - c.x)/dir.x;
                         cv::line(out_mat, c + t1*dir, c + t2*dir,
-                                 cv::Scalar(0, 0, 255), 1, CV_AA);
+                                 cv::Scalar(0, 0, 255), width, CV_AA);
                     } else {
                         float l = line.length * width;
 
                         cv::line(out_mat,
                                  c - l/2 * dir, c + l/2 * dir,
-                                 cv::Scalar(0, 0, 255), 1, CV_AA);
+                                 cv::Scalar(0, 0, 255), width, CV_AA);
                     }
                 }
                 
