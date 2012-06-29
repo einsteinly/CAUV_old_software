@@ -117,4 +117,5 @@ add_subdirectory (gui)
 add_subdirectory (utility)
 add_subdirectory (debug)
 add_subdirectory (sim)
+add_subdirectory (heimdall)
 
