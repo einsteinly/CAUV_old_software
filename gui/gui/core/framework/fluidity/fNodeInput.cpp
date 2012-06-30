@@ -276,6 +276,7 @@ void FNodeParamInput::initView(){
     const int height_hint = 25;
 
     m_view = new NodeTreeView();
+    m_view->setIndentation(0);
     m_view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(true));
     m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
