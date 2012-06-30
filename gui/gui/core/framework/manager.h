@@ -18,63 +18,50 @@
 #include <map>
 #include <stdexcept>
 
+#include <boost/shared_ptr.hpp>
+
 #include <debug/cauv_debug.h>
 #include <liquid/node.h>
-
-#include <gui/core/cauvfluidityplugin.h>
 
 namespace cauv {
 namespace gui {
 
-class FluidityNode;
-class LiquidFluidityNode;
 class Node;
 
-// !!! FIXME (SOON), ManagedNode stuff needs to be associated with something
-// (the root node? the scene? a plugin? core?) rather than static global ---
-// this breaks with nested scenes (or would do if it weren't for a NodeScene
-// hack), and will break when used in multiple plugins
-class ManagedNode {
+template <class T>
+class Manager{
 public:
-    template<class T, class S>
-    static T * getLiquidNodeFor(boost::shared_ptr<S> node){
-        T * liquidNode;
-        liquid::LiquidNode * ln = m_liquidNodes[node];
-        if(!ln){
-            debug() << "getLiquidNodeFor" << node->nodePath() << "creating new node";
-            liquidNode = new T(node);
-        } else {
-            debug() << "getLiquidNodeFor" << node->nodePath() << "returning existing node";
-            liquidNode = static_cast<T*>(ln);
-        }
-        return liquidNode;
+    Manager<T>(boost::shared_ptr<Node> node, T* item){
+        m_mapping[node] = item;
     }
-    
-    //template<>
-    //static LiquidFluidityNode * getLiquidNodeFor(boost::shared_ptr<FluidityNode> node, bool relayout = true);
 
-    static void setFluidityPlugin(FluidityPluginInterface * plugin){
-        if(m_fluidity_plugin) {
-            throw std::runtime_error("fluidity plugin may only be set once");
+    static T * liquidNode(boost::shared_ptr<Node> node){
+        if(m_mapping.find(node) != m_mapping.end())
+            return m_mapping[node];
+        else return NULL;
+    }
+
+    typedef std::map<boost::shared_ptr<Node>, T*> t_map;
+
+    void unregister(boost::shared_ptr<Node> const& node){
+        unregister(m_mapping[node]);
+    }
+
+    void unregister(T* ln){
+        typename Manager<T>::t_map::iterator iter;
+        for (iter = m_mapping.begin(); iter != m_mapping.end(); ++iter) {
+            if(iter->second == ln) {
+                m_mapping.erase(iter);
+            }
         }
-        m_fluidity_plugin = plugin;
     }
 
 protected:
-    ManagedNode(liquid::LiquidNode* ln, boost::shared_ptr<Node> node);
-    static void unRegisterNode(liquid::LiquidNode *ln);
-
-private:
-    static void registerNode(liquid::LiquidNode* ln, boost::shared_ptr<Node> node);
-    typedef std::map<boost::shared_ptr<Node>, liquid::LiquidNode*> t_map;
-    static t_map m_liquidNodes;
-    static FluidityPluginInterface * m_fluidity_plugin;
+    static t_map m_mapping;
 };
 
-
-template<>
-LiquidFluidityNode * ManagedNode::getLiquidNodeFor<LiquidFluidityNode, FluidityNode>(boost::shared_ptr<FluidityNode> fnode);
-
+template<class T>
+std::map<boost::shared_ptr<Node>, T*> Manager<T>::m_mapping;
 
 } // namespace gui
 } // namespace cauv

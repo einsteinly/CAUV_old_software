@@ -176,7 +176,7 @@ void NodeItemModel::connectUpdater(boost::shared_ptr<Node> node){
     foreach (boost::shared_ptr<Node> const & child, node->getChildren()){
         connectUpdater(child);
     }
-    connect(node.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(connectUpdater(boost::shared_ptr<Node>)));
+    connect(node.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)), this, SLOT(connectUpdater(boost::shared_ptr<Node>)));
 }
 
 boost::shared_ptr<Node> NodeItemModel::rootNode(){

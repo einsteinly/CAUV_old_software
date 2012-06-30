@@ -43,8 +43,10 @@ GENERATE_SIMPLE_NODE(NewPipelineNode)
 
 class FluidityDropHandler: public DropHandlerInterface<QGraphicsItem*> {
 public:
-    FluidityDropHandler(boost::shared_ptr<NodeItemModel> model)
-        : m_model(model){
+    FluidityDropHandler(boost::shared_ptr<NodeItemModel> model,
+                        boost::weak_ptr<CauvMainWindow> window)
+        : m_model(model),
+          m_window(window){
     }
 
     virtual bool accepts(boost::shared_ptr<Node> const& node){
@@ -54,16 +56,27 @@ public:
 
     virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node){
         if(node->type == nodeType<FluidityNode>()){
-            LiquidFluidityNode * n = ManagedNode::getLiquidNodeFor<LiquidFluidityNode>(
-                boost::static_pointer_cast<FluidityNode>(node)
-            );
-            return n; 
+            if(LiquidFluidityNode * n = LiquidFluidityNode::liquidNode(
+                boost::static_pointer_cast<FluidityNode>(node))){
+                return n;
+            } else {
+                return new LiquidFluidityNode(
+                    boost::static_pointer_cast<FluidityNode>(node),
+                            m_window
+                );
+            }
         }
         if (node->type == nodeType<NewPipelineNode>()) {
             size_t nPipelines = node->countChildrenOfType<FluidityNode>();
 
-            return ManagedNode::getLiquidNodeFor<LiquidFluidityNode>(
-                node->findOrCreate<FluidityNode>(MakeString() << "default/pipeline" << (nPipelines + 1))
+            boost::shared_ptr<FluidityNode> fnode =
+                    node->findOrCreate<FluidityNode>(
+                        MakeString() << "default/pipeline" << (nPipelines + 1)
+                    );
+
+            return new LiquidFluidityNode(
+                        boost::static_pointer_cast<FluidityNode>(fnode),
+                        m_window
             );
         }
         return NULL;
@@ -71,6 +84,7 @@ public:
 
 protected:
     boost::shared_ptr<NodeItemModel> m_model;
+    boost::weak_ptr<CauvMainWindow> m_window;
 };
 
 
@@ -83,14 +97,18 @@ const QString FluidityPlugin::name() const{
 }
 
 void FluidityPlugin::initialise(){
+
     foreach(boost::shared_ptr<Vehicle> vehicle, VehicleRegistry::instance()->getVehicles()){
         debug() << "setup Fluidity plugin for" << vehicle;
         setupVehicle(vehicle);
     }
-    connect(VehicleRegistry::instance().get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+
+    connect(VehicleRegistry::instance().get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
            this, SLOT(setupVehicle(boost::shared_ptr<Node>)));
 
-    m_actions->scene->registerDropHandler(boost::make_shared<FluidityDropHandler>(m_actions->root));
+    m_actions->scene->registerDropHandler(
+                boost::make_shared<FluidityDropHandler>(m_actions->root, m_actions->window)
+                );
 
     if(!(theCauvNode().lock()))
         theCauvNode() = m_actions->node;
@@ -103,21 +121,14 @@ void FluidityPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
         boost::shared_ptr<Vehicle> vehicle = vnode->to<Vehicle>();
         boost::shared_ptr<GroupingNode> creation = vehicle->findOrCreate<GroupingNode>("creation");
         boost::shared_ptr<NewPipelineNode> newpipeline = creation->findOrCreate<NewPipelineNode>("pipeline");
-
     } catch(std::runtime_error& e) {
         error() << "FluidityPlugin::setupVehicle: Expecting Vehicle Node" << e.what();
     }
 }
 
-cauv::gui::LiquidFluidityNode* FluidityPlugin::newLiquidNodeFor(boost::shared_ptr<FluidityNode> node){
-    return new LiquidFluidityNode(node, m_actions->window);
-}
-
-
 boost::weak_ptr<CauvNode>& FluidityPlugin::theCauvNode(){
     static boost::weak_ptr<CauvNode> the_cauv_node;
     return the_cauv_node;
 }
-
 
 Q_EXPORT_PLUGIN2(cauv_fluidityplugin, FluidityPlugin)

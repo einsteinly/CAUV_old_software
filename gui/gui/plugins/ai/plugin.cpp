@@ -40,6 +40,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
+
 AiPlugin::AiPlugin() : m_filter(boost::make_shared<NodeChildrenExclusionFilter>()){
 }
 
@@ -53,7 +54,7 @@ void AiPlugin::initialise(){
         debug() << "setup AI plugin for" << vehicle;
         setupVehicle(vehicle);
     }
-    connect(VehicleRegistry::instance().get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+    connect(VehicleRegistry::instance().get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
            this, SLOT(setupVehicle(boost::shared_ptr<Node>)));
 
     boost::shared_ptr<CauvNode> node = m_actions->node.lock();
@@ -68,6 +69,10 @@ void AiPlugin::initialise(){
         //!!! maybe on membership change?
         node->send(boost::make_shared<RequestAIStateMessage>());
     } else error() << "AiPlugin failed to lock cauv node";
+
+    ReloadAiFilter * reload = new ReloadAiFilter();
+    m_actions->view->installEventFilter(reload);
+    connect(reload, SIGNAL(reloadAiRequest()), this, SLOT(reloadAi()));
 
     m_actions->scene->registerDropHandler(boost::make_shared<AiDropHandler>(m_actions->root, m_actions->node));
 
@@ -120,18 +125,16 @@ void AiPlugin::initialise(){
 
 void AiPlugin::setupTask(boost::shared_ptr<Node> node){
     try {
-        node->getClosestParentOfType<Vehicle>()->attachGenerator(
-                    boost::make_shared<MessageGenerator<AiTaskNode,
-                    SetTaskStateMessage> >(node->to<AiTaskNode>())
-                    );
-        m_filter->addNode(node);
-        qDebug() << "mouse position" << QCursor::pos();
-        qDebug() << "mouse position in view" << m_actions->view->mapFromGlobal(QCursor::pos());
-        qDebug() << "mouse position in scene" << m_actions->view->mapToScene(m_actions->view->mapFromGlobal(QCursor::pos()));
-        m_actions->scene->onNodeDroppedAt(node, m_actions->view->mapToScene(
-                                                m_actions->view->mapFromGlobal(
-                                                  QCursor::pos()
-                                                  )));
+        //node->getClosestParentOfType<Vehicle>()->attachGenerator(
+        //            boost::make_shared<MessageGenerator<AiTaskNode,
+        //            SetTaskStateMessage> >(node->to<AiTaskNode>())
+        //            );
+        //m_filter->addNode(node);
+        m_actions->scene->addItem(new LiquidTaskNode(node->to<AiTaskNode>()));
+        //m_actions->scene->onNodeDroppedAt(node, m_actions->view->mapToScene(
+        //                                        m_actions->view->mapFromGlobal(
+        //                                          QCursor::pos()
+        //                                          )));
     } catch(std::runtime_error& e) {
         error() << "AiPlugin::setupTask: Expecting AiTaskNode" << e.what();
 
@@ -140,15 +143,16 @@ void AiPlugin::setupTask(boost::shared_ptr<Node> node){
 
 void AiPlugin::setupCondition(boost::shared_ptr<Node> node){
     try {
-        node->getClosestParentOfType<Vehicle>()->attachGenerator(
-                    boost::make_shared<MessageGenerator<AiConditionNode,
-                    SetConditionStateMessage> >(node->to<AiConditionNode>())
-                    );
-        m_actions->scene->onNodeDroppedAt(node, m_actions->view->mapToScene(
-                                                m_actions->view->mapFromGlobal(
-                                                  QCursor::pos()
-                                                  )));
-        m_filter->addNode(node);
+        //node->getClosestParentOfType<Vehicle>()->attachGenerator(
+        //            boost::make_shared<MessageGenerator<AiConditionNode,
+        //            SetConditionStateMessage> >(node->to<AiConditionNode>())
+        //            );
+        m_actions->scene->addItem(new LiquidConditionNode(node->to<AiConditionNode>()));
+        //m_actions->scene->onNodeDroppedAt(node, m_actions->view->mapToScene(
+        //                                        m_actions->view->mapFromGlobal(
+        //                                          QCursor::pos()
+        //                                          )));
+        //m_filter->addNode(node);
 
     } catch(std::runtime_error& e) {
         error() << "AiPlugin::setupCondition: Expecting AiTaskNode" << e.what();
@@ -164,9 +168,9 @@ void AiPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
         boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
         boost::shared_ptr<GroupingNode> pipelines = ai->findOrCreate<GroupingNode>("pipelines");
 
-        connect(tasks.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+        connect(tasks.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
                 this, SLOT(setupTask(boost::shared_ptr<Node>)));
-        connect(conditions.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+        connect(conditions.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
                 this, SLOT(setupCondition(boost::shared_ptr<Node>)));
 
         boost::shared_ptr<CauvNode> node = m_actions->node.lock();
@@ -177,6 +181,31 @@ void AiPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
 
     } catch(std::runtime_error& e) {
         error() << "AiPlugin::setupVehicle: Expecting Vehicle Node" << e.what();
+    }
+}
+
+void AiPlugin::reloadAi(){
+
+    foreach(boost::shared_ptr<Vehicle> const& vehicle, VehicleRegistry::instance()->getVehicles()){
+        try {
+            boost::shared_ptr<GroupingNode> ai = vehicle->find<GroupingNode>("ai");
+            boost::shared_ptr<GroupingNode> conditions = ai->find<GroupingNode>("conditions");
+            foreach(boost::shared_ptr<AiConditionNode> const& node,
+                    conditions->getChildrenOfType<AiConditionNode>()){
+                conditions->removeChild(node->nodeId());
+            }
+            boost::shared_ptr<GroupingNode> tasks = ai->find<GroupingNode>("tasks");
+            foreach(boost::shared_ptr<AiTaskNode> const& node,
+                    tasks->getChildrenOfType<AiTaskNode>()){
+                tasks->removeChild(node->nodeId());
+            }
+        } catch (std::out_of_range){
+            info() << "no ai node on vehicle";
+        }
+    }
+
+    if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()) {
+        cauvNode->send(boost::make_shared<RequestAIStateMessage>());
     }
 }
 

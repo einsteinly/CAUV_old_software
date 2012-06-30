@@ -111,7 +111,7 @@ void AiMessageObserver::onTaskTypesMessage(TaskTypesMessage_ptr m){
 
     foreach (std::string const& name, m->typeNames()){
         AiTaskNode::addType(name);
-        tasks->findOrCreate<NewAiTaskNode>(name);
+        tasks->findOrCreate<AiTaskTypeNode>(name);
     }
 }
 
@@ -126,7 +126,7 @@ void AiMessageObserver::onConditionTypesMessage(ConditionTypesMessage_ptr m){
 
     foreach (std::string const& name, m->conditionTypes()){
         AiConditionNode::addType(name);
-        conditions->findOrCreate<NewAiConditionNode>(name);
+        conditions->findOrCreate<AiConditionTypeNode>(name);
     }
 }
 

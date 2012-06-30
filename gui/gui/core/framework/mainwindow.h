@@ -65,6 +65,7 @@ public:
 public Q_SLOTS:
     int send(boost::shared_ptr<const Message>message);
     void registerObserver(boost::shared_ptr<MessageObserver>observer);
+    void unregisterObserver(boost::shared_ptr<MessageObserver>observer);
     void createRadialMenu(QPoint point);
     void radialItemSelected(QModelIndex index);
 

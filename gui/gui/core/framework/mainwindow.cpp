@@ -35,7 +35,6 @@
 #include <liquid/water/dataSeries.h>
 
 #include "cauvplugins.h"
-#include "cauvfluidityplugin.h"
 
 #include "model/model.h"
 #include "model/registry.h"
@@ -245,8 +244,10 @@ void CauvMainWindow::onRun()
 
     // data model and network access
     boost::shared_ptr<VehicleRegistry> registry = VehicleRegistry::instance();
-    connect(registry.get(), SIGNAL(observerGenerated(boost::shared_ptr<MessageObserver>)),
+    connect(registry.get(), SIGNAL(observerAttached(boost::shared_ptr<MessageObserver>)),
             this, SLOT(registerObserver(boost::shared_ptr<MessageObserver>)));
+    connect(registry.get(), SIGNAL(observerDetached(boost::shared_ptr<MessageObserver>)),
+            this, SLOT(unregisterObserver(boost::shared_ptr<MessageObserver>)));
     connect(registry.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
             this, SLOT(send(boost::shared_ptr<const Message>)));
     m_actions->root = boost::make_shared<NodeItemModel>(VehicleRegistry::instance());
@@ -327,6 +328,11 @@ void CauvMainWindow::registerObserver(boost::shared_ptr<MessageObserver> observe
     CauvNode::addMessageObserver(observer);
 }
 
+void CauvMainWindow::unregisterObserver(boost::shared_ptr<MessageObserver> observer){
+    info() << "MessageObserver unregistered";
+    CauvNode::removeMessageObserver(observer);
+}
+
 int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
 {
     debug(3) << "Looking for plugins in:"<< dir.absolutePath().toStdString();
@@ -366,7 +372,7 @@ void CauvMainWindow::createRadialMenu(QPoint point){
     liquid::magma::RadialMenu * menu = new liquid::magma::RadialMenu(liquid::magma::Default_RadialMenuStyle());
     menu->setModel(m_actions->root.get());
 
-    // this needs some thought. re herring should REALLY not be hardcoded in here
+    // this needs some thought. redherring should REALLY not be hardcoded in here
     menu->setRootIndex(m_actions->root->indexFromNode(
                            VehicleRegistry::instance()->find<Vehicle>("redherring")->
                            findOrCreate<GroupingNode>("creation")));
@@ -386,11 +392,6 @@ CauvInterfacePlugin * CauvMainWindow::loadPlugin(QObject *plugin){
     CauvInterfacePlugin * basicPlugin = qobject_cast<CauvInterfacePlugin*>(plugin);
     if(basicPlugin) {
         basicPlugin->initialise(m_actions);
-    }
-    
-    FluidityPluginInterface * fluidityPlugin = qobject_cast<FluidityPluginInterface*>(plugin);
-    if(fluidityPlugin) {
-        ManagedNode::setFluidityPlugin(fluidityPlugin);
     }
 
     return basicPlugin;

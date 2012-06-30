@@ -36,7 +36,7 @@ class FluidityNode;
 
 
 GENERATE_SIMPLE_NODE(AiMissionNode)
-GENERATE_SIMPLE_NODE(NewAiTaskNode)
+GENERATE_SIMPLE_NODE(AiTaskTypeNode)
 
 class AiTaskNode : public BooleanNode {
     public:
@@ -44,6 +44,10 @@ class AiTaskNode : public BooleanNode {
         // !!! inter-plugin dependence, need this to be inline
         AiTaskNode(const nid_t id) : BooleanNode(id){
             type = nodeType<AiTaskNode>();
+        }
+
+        virtual ~AiTaskNode(){
+            info() << "~AiTaskNode()";
         }
 
         void addCondition(boost::shared_ptr<AiConditionNode> condition);
@@ -88,7 +92,7 @@ class AiTaskNode : public BooleanNode {
 
 };
 
-class LiquidTaskNode : public liquid::LiquidNode, public liquid::ArcSourceDelegate, public ManagedNode
+class LiquidTaskNode : public liquid::LiquidNode, public liquid::ArcSourceDelegate, public Manager<LiquidTaskNode>//, public ManagedNode
 {
     Q_OBJECT
 public:
