@@ -125,10 +125,10 @@ void AiPlugin::initialise(){
 
 void AiPlugin::setupTask(boost::shared_ptr<Node> node){
     try {
-        //node->getClosestParentOfType<Vehicle>()->attachGenerator(
-        //            boost::make_shared<MessageGenerator<AiTaskNode,
-        //            SetTaskStateMessage> >(node->to<AiTaskNode>())
-        //            );
+        node->getClosestParentOfType<Vehicle>()->attachGenerator(
+                    boost::make_shared<MessageGenerator<AiTaskNode,
+                    SetTaskStateMessage> >(node->to<AiTaskNode>())
+                    );
         //m_filter->addNode(node);
         m_actions->scene->addItem(new LiquidTaskNode(node->to<AiTaskNode>()));
         //m_actions->scene->onNodeDroppedAt(node, m_actions->view->mapToScene(
@@ -143,10 +143,10 @@ void AiPlugin::setupTask(boost::shared_ptr<Node> node){
 
 void AiPlugin::setupCondition(boost::shared_ptr<Node> node){
     try {
-        //node->getClosestParentOfType<Vehicle>()->attachGenerator(
-        //            boost::make_shared<MessageGenerator<AiConditionNode,
-        //            SetConditionStateMessage> >(node->to<AiConditionNode>())
-        //            );
+        node->getClosestParentOfType<Vehicle>()->attachGenerator(
+                    boost::make_shared<MessageGenerator<AiConditionNode,
+                    SetConditionStateMessage> >(node->to<AiConditionNode>())
+                    );
         m_actions->scene->addItem(new LiquidConditionNode(node->to<AiConditionNode>()));
         //m_actions->scene->onNodeDroppedAt(node, m_actions->view->mapToScene(
         //                                        m_actions->view->mapFromGlobal(

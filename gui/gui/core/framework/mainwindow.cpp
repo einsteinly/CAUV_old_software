@@ -115,7 +115,7 @@ public:
         liquid::LiquidNode * ln = new liquid::LiquidNode(AI_Node_Style());
         ln->header()->setTitle(QString::fromStdString(node->nodeName()));
         ln->header()->setInfo(QString::fromStdString(node->nodePath()));
-        NodeTreeView * view = new NodeTreeView();
+        NodeTreeView * view = new NodeTreeView(true);
         view->setModel(m_model.get());
         view->setRootIndex(m_model->indexFromNode(node));
         QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();

@@ -90,10 +90,11 @@ public Q_SLOTS:
 class NodeTreeView : public QTreeView {
     Q_OBJECT
 public:
-    NodeTreeView(QWidget * parent = 0);
+    NodeTreeView(bool fixedSize = false, QWidget * parent = 0);
     virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
     QSize sizeHint() const;
     QSize sizeHint(QModelIndex index) const;
+    void setModel(QAbstractItemModel *model);
 
 public Q_SLOTS:
     void registerDelegate(node_type nodeType,

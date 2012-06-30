@@ -117,7 +117,7 @@ void LiquidConditionNode::buildContents(){
     // the item view
     header()->setTitle(QString::fromStdString(m_node->nodeName()));
     header()->setInfo(QString::fromStdString(m_node->nodePath()));
-    NodeTreeView * view = new NodeTreeView();
+    NodeTreeView * view = new NodeTreeView(true);
     m_model = boost::make_shared<NodeItemModel>(m_node);
     view->setModel(m_model.get());
     view->setRootIndex(m_model->indexFromNode(m_node));
