@@ -40,7 +40,7 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
                                        boost::weak_ptr<CauvMainWindow> in_window,
                                        QGraphicsItem *parent)
     : liquid::LiquidNode(AI_Node_Style(), parent),
-      ManagedNode(this, node),
+      Manager<LiquidFluidityNode>(node, this),
       m_node(node),
       m_contents(NULL),
       m_view(NULL),
@@ -93,7 +93,7 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
 
 LiquidFluidityNode::~LiquidFluidityNode(){
     debug() << "~LiquidFluidityNode()";
-    unRegisterNode(this);    
+    unregister(this);
 }
 
 void LiquidFluidityNode::beginMaximise(){

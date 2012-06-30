@@ -32,7 +32,7 @@ Node::Node(nid_t const& id, node_type t) :
 }
 
 Node::~Node(){
-    debug(2) << "~NodeBase" << nodeName();
+    debug(2) << "~Node" << nodeName();
 }
 
 std::string Node::nodeName() const {
@@ -79,11 +79,18 @@ void Node::addChild(boost::shared_ptr<Node> const& child){
     // and these threads don't have event loops so signals won't work
     child->moveToThread(this->thread());
 
-    // propagate changes upwards
+    // propagate some changes upwards
     child->connect(child.get(), SIGNAL(onBranchChanged()), this, SIGNAL(onBranchChanged()));
     child->connect(child.get(), SIGNAL(structureChanged()), this, SIGNAL(structureChanged()));
 
-    Q_EMIT nodeAdded(child);
+    // propagate add/removes downwards
+    connect(this, SIGNAL(detachedFrom(boost::shared_ptr<Node>)),
+            child.get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)));
+    connect(this, SIGNAL(attachedTo(boost::shared_ptr<Node>)),
+            child.get(), SIGNAL(attachedTo(boost::shared_ptr<Node>)));
+
+    Q_EMIT childAdded(child);
+    Q_EMIT child->attachedTo(shared_from_this());
     Q_EMIT structureChanged();
 }
 
@@ -96,12 +103,19 @@ bool Node::removeChild(boost::shared_ptr<Node> const& child){
         return false;
     }
 
-    Q_EMIT nodeRemoved(child);
+    Q_EMIT childRemoved(child);
+    Q_EMIT child->detachedFrom(shared_from_this());
     Q_EMIT structureChanged();
 
     // disconnect propagation signals
     child->disconnect(child.get(), SIGNAL(onBranchChanged()), this, SIGNAL(onBranchChanged()));
     child->disconnect(child.get(), SIGNAL(structureChanged()), this, SIGNAL(structureChanged()));
+
+    // propagate removes downwards
+    child->disconnect(this, SIGNAL(detachedFrom(boost::shared_ptr<Node>)),
+                     child.get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)));
+    child->disconnect(this, SIGNAL(attachedTo(boost::shared_ptr<Node>)),
+                     child.get(), SIGNAL(attachedTo(boost::shared_ptr<Node>)));
 
     {
         lock_t l(m_childrenLock);

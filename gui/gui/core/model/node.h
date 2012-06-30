@@ -138,7 +138,6 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
             }
         }
 
-
     public Q_SLOTS:
 
         virtual void update(QVariant const& value);
@@ -147,8 +146,10 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
 
     Q_SIGNALS:
         // strctural signals
-        void nodeAdded(boost::shared_ptr<Node> node);
-        void nodeRemoved(boost::shared_ptr<Node> node);
+        void childAdded(boost::shared_ptr<Node>);
+        void childRemoved(boost::shared_ptr<Node>);
+        void detachedFrom(boost::shared_ptr<Node>);
+        void attachedTo(boost::shared_ptr<Node>);
         void structureChanged();
         // data change signals
         void onBranchChanged();

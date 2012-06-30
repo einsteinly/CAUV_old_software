@@ -55,7 +55,7 @@ RedHerring::RedHerring(std::string name) : Vehicle(name) {
 void RedHerring::initialise() {
     // set up motors
     boost::shared_ptr<GroupingNode> motors = findOrCreate<GroupingNode>("motors");
-    //connect(motors.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(setupMotor(boost::shared_ptr<Node>)));
+    //connect(motors.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)), this, SLOT(setupMotor(boost::shared_ptr<Node>)));
     setupMotor(motors->findOrCreate<MotorNode>(MotorID::HBow));
     setupMotor(motors->findOrCreate<MotorNode>(MotorID::HStern));
     setupMotor(motors->findOrCreate<MotorNode>(MotorID::Prop));
@@ -70,7 +70,7 @@ void RedHerring::initialise() {
 
     // telemetry
     boost::shared_ptr<GroupingNode> telemetry = findOrCreate<GroupingNode>("telemetry");
-    attachObserver(boost::make_shared<MessageHandler<GroupingNode, TelemetryMessage> >(telemetry));
+    attachObserver(telemetry, boost::make_shared<MessageHandler<GroupingNode, TelemetryMessage> >(telemetry));
     telemetry->findOrCreate<NumericNode<float> >("yaw")->setMin(0);
     telemetry->findOrCreate<NumericNode<float> >("yaw")->setMax(360);
     telemetry->findOrCreate<NumericNode<float> >("yaw")->setWraps(true);
@@ -82,11 +82,11 @@ void RedHerring::initialise() {
     telemetry->findOrCreate<NumericNode<float> >("roll")->setWraps(true);
     telemetry->findOrCreate<NumericNode<float> >("depth");
     boost::shared_ptr<GroupingNode> pressure = telemetry->findOrCreate<GroupingNode>("pressure");
-    attachObserver(boost::make_shared<MessageHandler<GroupingNode, PressureMessage> >(pressure));
+    attachObserver(pressure, boost::make_shared<MessageHandler<GroupingNode, PressureMessage> >(pressure));
     boost::shared_ptr<GroupingNode> power = telemetry->findOrCreate<GroupingNode>("power");
-    attachObserver(boost::make_shared<MessageHandler<GroupingNode, BatteryUseMessage> >(power));
+    attachObserver(power, boost::make_shared<MessageHandler<GroupingNode, BatteryUseMessage> >(power));
     boost::shared_ptr<GroupingNode> processes = telemetry->findOrCreate<GroupingNode>("processes");
-    attachObserver(boost::make_shared<MessageHandler<GroupingNode, ProcessStatusMessage> >(processes));
+    attachObserver(processes, boost::make_shared<MessageHandler<GroupingNode, ProcessStatusMessage> >(processes));
 
 
     // calibrations
@@ -95,9 +95,9 @@ void RedHerring::initialise() {
 
     // images
     boost::shared_ptr<GroupingNode> imaging = findOrCreate<GroupingNode>("imaging");
-    connect(imaging.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+    connect(imaging.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
             this, SLOT(setupImager(boost::shared_ptr<Node>)));
-    attachObserver(boost::make_shared<NodeGenerator<ImageNode, ImageMessage> >(imaging));
+    attachObserver(imaging, boost::make_shared<NodeGenerator<ImageNode, ImageMessage> >(imaging));
 
     // debug
     boost::shared_ptr<NumericNode<int> > debug = findOrCreate<GroupingNode>("debug")->findOrCreate<NumericNode<int> >("level");
@@ -118,7 +118,7 @@ void RedHerring::setupAutopilot(boost::shared_ptr<AutopilotNode> node){
     target->setMutable(true);
     node->setMutable(true);
 
-    attachObserver(boost::make_shared<MessageHandler<AutopilotNode,
+    attachObserver(autopilot, boost::make_shared<MessageHandler<AutopilotNode,
                    ControllerStateMessage> > (autopilot));
 
     // target params
@@ -168,7 +168,7 @@ void RedHerring::setupImager(boost::shared_ptr<Node> node){
         } catch (std::runtime_error) {}
 
         boost::shared_ptr<ImageNode> imager = node->to<ImageNode>();
-        attachObserver(boost::make_shared<MessageHandler<ImageNode, ImageMessage> >(imager));
+        attachObserver(imager, boost::make_shared<MessageHandler<ImageNode, ImageMessage> >(imager));
     } catch (std::runtime_error ex){
         error() << "Node should be an ImageNode" << ex.what();
     }

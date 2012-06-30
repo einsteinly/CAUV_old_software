@@ -14,57 +14,5 @@
 
 #include "manager.h"
 
-#include <gui/plugins/fluidity/fluiditynode.h>
-
 using namespace cauv;
 using namespace cauv::gui;
-
-std::map<boost::shared_ptr<Node>, liquid::LiquidNode*> ManagedNode::m_liquidNodes;
-FluidityPluginInterface * ManagedNode::m_fluidity_plugin = NULL;
-
-ManagedNode::ManagedNode(liquid::LiquidNode* ln, boost::shared_ptr<Node> node){
-    registerNode(ln, node);
-}
-
-void ManagedNode::unRegisterNode(liquid::LiquidNode * ln){
-    if(ln){
-        foreach (t_map::value_type i, m_liquidNodes){
-            if(i.second == ln) {
-                m_liquidNodes.erase(i.first);
-            }
-        }
-    }
-}
-
-void ManagedNode::registerNode(liquid::LiquidNode* ln, boost::shared_ptr<Node> node){
-    m_liquidNodes[node] = ln;
-}
-
-
-namespace cauv{
-namespace gui{
-
-template<>
-LiquidFluidityNode * ManagedNode::getLiquidNodeFor<LiquidFluidityNode, FluidityNode>(boost::shared_ptr<FluidityNode> fnode)
-{
-    boost::shared_ptr<Node> node = boost::static_pointer_cast<Node>(fnode);
-    LiquidFluidityNode * liquidNode;
-    liquid::LiquidNode * ln = m_liquidNodes[node];
-    if(!ln){
-        if(!m_fluidity_plugin){
-            error() << "ManagedNode must have a fluidity plugin set before calling getLiquidNodeFor(FluidityNode ...)";
-            return NULL;
-        }
-        debug() << "getLiquidNodeFor" << node->nodePath() << "creating new node";
-        liquidNode = m_fluidity_plugin->newLiquidNodeFor(fnode);
-    } else {
-        debug() << "getLiquidNodeFor" << node->nodePath() << "returning existing node";
-        liquidNode = static_cast<LiquidFluidityNode*>(ln);
-    }
-
-    return liquidNode;
-}
-
-
-} // namespace gui
-} // namespace cauv

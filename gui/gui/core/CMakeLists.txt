@@ -69,7 +69,6 @@ set ( GUI_CORE_UIS
 
 set ( GUI_CORE_H
     nodedragging.h
-    cauvfluidityplugin.h
 
     widgets/videoscreen.h
     widgets/neutralspinbox.h

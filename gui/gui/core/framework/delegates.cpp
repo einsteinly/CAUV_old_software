@@ -183,7 +183,8 @@ QSize DefaultNodeDelegate::sizeHint(const QStyleOptionViewItem &option,
     try {
         boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);
         QSize s = delegate->sizeHint(option, index);
-        s.setWidth(std::max(titleRect(option, index).width(), s.width()));
+        if(!delegate->providesTitle(option, index))
+            s.setWidth(titleRect(option, index).width() + s.width());
         return s;
     } catch (std::out_of_range){
         return QSize(0,25);
@@ -358,4 +359,9 @@ QWidget * BooleanDelegate::createEditor(QWidget *parent,
 
 void BooleanDelegate::commit() {
     emit commitData(static_cast<QWidget *>(sender()));
+}
+
+QSize BooleanDelegate::sizeHint(const QStyleOptionViewItem &,
+                             const QModelIndex &) const{
+    return QSize(40, 25);
 }

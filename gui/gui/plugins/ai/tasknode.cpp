@@ -158,15 +158,19 @@ std::set<std::string> AiTaskNode::getTypes(){
 
 
 LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem * parent) :
-    liquid::LiquidNode(AI_Node_Style(), parent), ManagedNode(this, node), m_node(node)
+    liquid::LiquidNode(AI_Node_Style(), parent),
+    Manager<LiquidTaskNode>(node, this),
+    m_node(node)
 {
     buildContents();
     node->connect(node.get(), SIGNAL(onUpdate(QVariant)), this, SLOT(highlightRunningStatus(QVariant)));
     highlightRunningStatus(node->get());
+    node->connect(node.get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)), this, SLOT(deleteLater()));
 }
 
 LiquidTaskNode::~LiquidTaskNode() {
-    unRegisterNode(this);
+    info() << "~LiquidTaskNode()";
+    unregister(this);
 }
 
 void LiquidTaskNode::highlightRunningStatus(QVariant status){
@@ -180,8 +184,9 @@ void LiquidTaskNode::highlightRunningStatus(QVariant status){
 void LiquidTaskNode::buildContents(){
 
     // incoming dependencies
+    /*
     foreach(boost::shared_ptr<AiConditionNode> const& condition, m_node->getConditions()){
-        LiquidConditionNode * conditionNode = ManagedNode::getLiquidNodeFor<LiquidConditionNode>(condition);
+        LiquidConditionNode * conditionNode = LiquidConditionNode::liquidNode(condition);
         //conditionNode->setPos(pos().x()-(conditionNode->size().width() + 30), pos().y());
         liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
                                                       new liquid::RejectingConnectionSink());
@@ -193,7 +198,7 @@ void LiquidTaskNode::buildContents(){
     }
 
     foreach(boost::shared_ptr<FluidityNode> const& pipeline, m_node->getPipelines()){
-        LiquidFluidityNode * pipelineNode = ManagedNode::getLiquidNodeFor<LiquidFluidityNode>(pipeline);
+        LiquidFluidityNode * pipelineNode = LiquidFluidityNode::liquidNode(pipeline);
         liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
                                                       new liquid::RejectingConnectionSink());
         liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,
@@ -202,14 +207,14 @@ void LiquidTaskNode::buildContents(){
         this->addItem(label);
         pipelineNode->source()->arc()->addTo(label->sink());
     }
-
+*/
     // the item view
     header()->setTitle(QString::fromStdString(m_node->nodeName()));
     header()->setInfo(QString::fromStdString(m_node->nodePath()));
     NodeTreeView * view = new NodeTreeView();
-    NodeItemModel *model = new NodeItemModel(m_node);
-    view->setModel(model);
-    view->setRootIndex(model->indexFromNode(m_node));
+    m_model = boost::make_shared<NodeItemModel>(m_node);
+    view->setModel(m_model.get());
+    view->setRootIndex(m_model->indexFromNode(m_node));
     QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
     proxy->setWidget(view);
     addItem(proxy);

@@ -95,15 +95,21 @@ std::set<std::string> AiConditionNode::getTypes(){
 
 
 
-LiquidConditionNode::LiquidConditionNode(boost::shared_ptr<AiConditionNode> node, QGraphicsItem * parent) :
-    liquid::LiquidNode(AI_Node_Style(), parent), ManagedNode(this, node), m_node(node),
+LiquidConditionNode::LiquidConditionNode(
+        boost::shared_ptr<AiConditionNode> node,
+        QGraphicsItem * parent) :
+    liquid::LiquidNode(AI_Node_Style(), parent),
+    Manager<LiquidConditionNode>(node, this),
+    m_node(node),
     m_source(new liquid::ArcSource(this, new liquid::Arc(Param_Arc_Style())))
 {
     buildContents();
+    node->connect(node.get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)), this, SLOT(deleteLater()));
 }
 
 LiquidConditionNode::~LiquidConditionNode() {
-    unRegisterNode(this);
+    info() << "~LiquidConditionNode()";
+    unregister(this);
 }
 
 void LiquidConditionNode::buildContents(){
@@ -113,9 +119,9 @@ void LiquidConditionNode::buildContents(){
     header()->setTitle(QString::fromStdString(m_node->nodeName()));
     header()->setInfo(QString::fromStdString(m_node->nodePath()));
     NodeTreeView * view = new NodeTreeView();
-    NodeItemModel *model = new NodeItemModel(m_node);
-    view->setModel(model);
-    view->setRootIndex(model->indexFromNode(m_node));
+    m_model = boost::make_shared<NodeItemModel>(m_node);
+    view->setModel(m_model.get());
+    view->setRootIndex(m_model->indexFromNode(m_node));
     QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
     proxy->setWidget(view);
     addItem(proxy);

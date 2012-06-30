@@ -33,12 +33,16 @@ namespace gui {
 // !!! inter-plugin dependence
 class FluidityNode;
 
-GENERATE_SIMPLE_NODE(NewAiConditionNode)
+GENERATE_SIMPLE_NODE(AiConditionTypeNode)
 
 class AiConditionNode : public Node {
     public:
         // !!! inter-plugin dependence
         AiConditionNode(const nid_t id) : Node(id, nodeType<AiConditionNode>()){
+        }
+
+        virtual ~AiConditionNode(){
+            info() << "deleted condtion node";
         }
 
         boost::shared_ptr<Node> setDebug(std::string name, ParamValue value);
@@ -70,7 +74,10 @@ class AiConditionNode : public Node {
         static std::set<std::string> m_types;
 };
 
-class LiquidConditionNode : public liquid::LiquidNode, public liquid::ArcSourceDelegate, public ManagedNode
+class LiquidConditionNode :
+        public liquid::LiquidNode,
+        public liquid::ArcSourceDelegate,
+        public Manager<LiquidConditionNode>
 {
 public:
     LiquidConditionNode(boost::shared_ptr<AiConditionNode> node, QGraphicsItem *parent = 0);
@@ -82,6 +89,7 @@ public:
 protected:
     boost::shared_ptr<AiConditionNode> m_node;
     liquid::ArcSource * m_source;
+    boost::shared_ptr<NodeItemModel> m_model;
 };
 
 

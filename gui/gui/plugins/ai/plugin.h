@@ -39,11 +39,33 @@ namespace cauv {
             void setupTask(boost::shared_ptr<Node> node);
             void setupCondition(boost::shared_ptr<Node> node);
             void setupVehicle(boost::shared_ptr<Node> node);
+            void reloadAi();
 
         protected:
             boost::shared_ptr<NodeChildrenExclusionFilter> m_filter;
 
         };
+
+
+        class ReloadAiFilter : public QObject {
+            Q_OBJECT
+        public:
+            virtual bool eventFilter(QObject *, QEvent *event){
+                if (event->type() == QEvent::KeyPress) {
+                    QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+                    if (keyEvent->key() == Qt::Key_R) {
+                        Q_EMIT reloadAiRequest();
+                        return true;
+                    } else
+                        return false;
+                }
+                return false;
+            }
+
+        Q_SIGNALS:
+            void reloadAiRequest();
+        };
+
 
     } // namespace gui
 } // namespace cauv

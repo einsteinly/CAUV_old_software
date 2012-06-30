@@ -41,7 +41,7 @@ GENERATE_SIMPLE_NODE(FluidityNode)
 
 class LiquidFluidityNode: public liquid::LiquidNode,
                           public liquid::ArcSourceDelegate,
-                          public ManagedNode
+                          public Manager<LiquidFluidityNode>
 {
     Q_OBJECT
 public:

@@ -290,17 +290,16 @@ QSize NodeTreeView::sizeHint(QModelIndex index) const {
     int width = size.width();
 
     for(int i = 0; i < rows; i++){
-
-        //if(isExpanded(index.child)) {
+        if(index == rootIndex() || isExpanded(index)) {
             depth++;
             QSize rowSize = sizeHint(index.child(i, 0));
             depth--;
             height += rowSize.height();
             width = std::max(width, rowSize.width());
-        //} else debug() << "item not expanded";
+        } else debug() << "item not expanded";
     }
 
-    return QSize(width, height);
+    return QSize(width + this->indentation(), height);
 }
 
 void NodeTreeView::toggleExpanded(QModelIndex const& index){

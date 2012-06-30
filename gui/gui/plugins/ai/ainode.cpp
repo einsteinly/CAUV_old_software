@@ -61,22 +61,22 @@ AiDropHandler::AiDropHandler(boost::shared_ptr<NodeItemModel> model, boost::weak
 
 bool AiDropHandler::accepts(boost::shared_ptr<Node> const& node){
     return (node->type == nodeType<AiMissionNode>() ||
-            node->type == nodeType<NewAiTaskNode>() ||
+            node->type == nodeType<AiTaskTypeNode>() ||
             node->type == nodeType<AiTaskNode>() ||
-            node->type == nodeType<NewAiConditionNode>() ||
+            node->type == nodeType<AiConditionTypeNode>() ||
             node->type == nodeType<AiConditionNode>());
 }
 
 QGraphicsItem * AiDropHandler::handle(boost::shared_ptr<Node> const& node) {
 
-    if (node->type == nodeType<NewAiTaskNode>()) {
+    if (node->type == nodeType<AiTaskTypeNode>()) {
         if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
             cauvNode->send(boost::make_shared<AddTaskMessage>(boost::get<std::string>(node->nodeId())));
         }
         return new LoadingIcon();
     }
 
-    if (node->type == nodeType<NewAiConditionNode>()) {
+    if (node->type == nodeType<AiConditionTypeNode>()) {
         if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
             cauvNode->send(boost::make_shared<AddConditionMessage>(boost::get<std::string>(node->nodeId())));
         }
@@ -84,14 +84,14 @@ QGraphicsItem * AiDropHandler::handle(boost::shared_ptr<Node> const& node) {
     }
 
     if (node->type == nodeType<AiTaskNode>()) {
-        LiquidTaskNode* liquidNode = ManagedNode::getLiquidNodeFor<LiquidTaskNode>(
+        LiquidTaskNode* liquidNode = LiquidTaskNode::liquidNode(
                     boost::static_pointer_cast<AiTaskNode>(node));
         node->connect(liquidNode, SIGNAL(closed(LiquidNode*)), this, SLOT(nodeClosed(LiquidNode*)));
         return liquidNode;
     }
 
     if (node->type == nodeType<AiConditionNode>()) {
-        LiquidConditionNode* liquidNode = ManagedNode::getLiquidNodeFor<LiquidConditionNode>(
+        LiquidConditionNode* liquidNode = LiquidConditionNode::liquidNode(
                     boost::static_pointer_cast<AiConditionNode>(node));
         node->connect(liquidNode, SIGNAL(closed(LiquidNode*)), this, SLOT(nodeClosed(LiquidNode*)));
         return liquidNode;

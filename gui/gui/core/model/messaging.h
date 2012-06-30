@@ -60,23 +60,38 @@ class Node;
 class BaseMessageGenerator : public QObject {
     Q_OBJECT
 public:
-    BaseMessageGenerator(boost::shared_ptr<Node> node){
+    BaseMessageGenerator(boost::shared_ptr<Node> node) : m_baseNode(node){
         debug(5) << "BaseMessageGenerator()";
         node->connect(node.get(), SIGNAL(onBranchChanged()), this, SLOT(generateMessage()));
+        this->moveToThread(node->thread());
     }
+    ~BaseMessageGenerator(){
+        info() << "~BaseMessageGenerator()";
+    }
+
     virtual boost::shared_ptr<const Message> generate() = 0;
+    boost::shared_ptr<Node> node() {
+        return m_baseNode;
+    }
+
 public Q_SLOTS:
     void generateMessage(){
         Q_EMIT messageGenerated(generate());
     }
 Q_SIGNALS:
     void messageGenerated(boost::shared_ptr<const Message>);
+
+protected:
+    boost::shared_ptr<Node> m_baseNode;
 };
 
 template<class NodeType, class MessageType>
 struct MessageGenerator : public BaseMessageGenerator, public TypedNodeStore<NodeType> {
 public:
     MessageGenerator(boost::shared_ptr<NodeType> node) : BaseMessageGenerator(node), TypedNodeStore<NodeType>(node)  {}
+    ~MessageGenerator() {
+        info() << "~MessageGenerator()";
+    }
 };
 
 #define MESSAGE_GENERATOR(X, Y) \

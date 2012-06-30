@@ -16,7 +16,6 @@
 #define __CAUV_FUIDITY_PLUGIN_H__
 
 #include <gui/core/cauvbasicplugin.h>
-#include <gui/core/cauvfluidityplugin.h>
 #include <gui/core/model/node.h>
 
 #include <QObject>
@@ -34,32 +33,25 @@ class NodeChildrenExclusionFilter;
  * (It would be possible to relax this constraint a little)
  */
 class FluidityPlugin: public QObject,
-                      public CauvBasicPlugin,
-                      public FluidityPluginInterface
+                      public CauvBasicPlugin
 {
     Q_OBJECT
     Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
-    Q_INTERFACES(cauv::gui::FluidityPluginInterface)
 
     public:
         FluidityPlugin();
         virtual const QString name() const;
         virtual void initialise();
-        
-        // FluidityPluginInterface
-        LiquidFluidityNode* newLiquidNodeFor(boost::shared_ptr<FluidityNode> node);
 
     public Q_SLOTS:
         void setupVehicle(boost::shared_ptr<Node> node);
 
-    protected:
-
     private:
         friend class LiquidFluidityNode;
-        
+
         // this is set by the first instance of a FluidityPlugin to be initialised.
         static boost::weak_ptr<CauvNode>& theCauvNode();
-        
+
 };
 
 } // namespace gui

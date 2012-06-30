@@ -149,9 +149,9 @@ void LiquidView::keyPressEvent(QKeyEvent *event){
     // OverKey, but better
     QGraphicsView::keyPressEvent(event);
     if(!event->isAccepted()){
-        event->accept();
         switch(event->key()){
             case Qt::Key_L:
+                event->accept();
                 LayoutItems::updateLayout(scene());
                 break;
             default:
