@@ -108,12 +108,11 @@ LiquidConditionNode::LiquidConditionNode(
 }
 
 LiquidConditionNode::~LiquidConditionNode() {
-    info() << "~LiquidConditionNode()";
+    debug(2) << "~LiquidConditionNode()";
     unregister(this);
 }
 
 void LiquidConditionNode::buildContents(){
-
 
     // the item view
     header()->setTitle(QString::fromStdString(m_node->nodeName()));

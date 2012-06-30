@@ -42,7 +42,7 @@ class AiConditionNode : public Node {
         }
 
         virtual ~AiConditionNode(){
-            info() << "deleted condtion node";
+            info() << "~AiConditionNode()";
         }
 
         boost::shared_ptr<Node> setDebug(std::string name, ParamValue value);

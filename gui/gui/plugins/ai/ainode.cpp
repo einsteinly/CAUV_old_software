@@ -30,21 +30,6 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-struct LoadingIcon : public QGraphicsTextItem {
-    LoadingIcon() : QGraphicsTextItem("Adding..."),
-        m_animation(this, "opacity")
-    {
-        m_animation.setStartValue(1.0);
-        m_animation.setEndValue(0.0);
-        m_animation.setDuration(300);
-        m_animation.start();
-        m_animation.connect(&m_animation, SIGNAL(finished()), this, SLOT(deleteLater()));
-    }
-protected:
-    QPropertyAnimation m_animation;
-};
-
-
 AiNode::AiNode(QGraphicsItem *parent) :
         liquid::LiquidNode(AI_Node_Style(), parent)
 {
@@ -73,14 +58,14 @@ QGraphicsItem * AiDropHandler::handle(boost::shared_ptr<Node> const& node) {
         if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
             cauvNode->send(boost::make_shared<AddTaskMessage>(boost::get<std::string>(node->nodeId())));
         }
-        return new LoadingIcon();
+        return NULL;
     }
 
     if (node->type == nodeType<AiConditionTypeNode>()) {
         if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
             cauvNode->send(boost::make_shared<AddConditionMessage>(boost::get<std::string>(node->nodeId())));
         }
-        return new LoadingIcon();
+        return NULL;
     }
 
     if (node->type == nodeType<AiTaskNode>()) {
