@@ -226,6 +226,7 @@ class taskManager(aiProcess):
     @event.event_priority(-1)
     @event.event_func
     def on_script_exit(self, task_id, status):
+        getattr(self.ai,str(task_id)).confirm_exit()
         if status == 'ERROR':
             try:
                 self.tasks[task_id].options.crash_count += 1
@@ -246,7 +247,6 @@ class taskManager(aiProcess):
         self.log('Task %s failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].options.frequency_limit))
         self.tasks[task_id].options.last_called = time.time()
         self.stop_script()
-        getattr(self.ai,str(task_id)).confirm_exit()
 
     @external_function
     @event.event_func
@@ -381,6 +381,8 @@ class taskManager(aiProcess):
             self.current_task.active = False
             self.ai.pl_manager.drop_task_pls(self.current_task.id)
             self.gui_update_task(self.current_task)
+            self.current_task = None
+            self.current_priority = -1
         self.ai.auv_control.set_current_task_id(None)
         if self.running_script:
             try:
