@@ -80,6 +80,7 @@ class detectionControl(aiProcess):
 
     @external_function
     def disable(self):
+        info("Disabling detectors")
         self.enable_flag.clear()
         for detector in self.running_detectors.values():
             detector.die()

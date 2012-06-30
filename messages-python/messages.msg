@@ -143,9 +143,11 @@ enum ScriptCommand : int8 {
     Start,
     Stop,
     Reset,
-    ResetAndRestart,
+}
+enum AICommand : int8 {
     PauseAll,
     ResumeAll,
+    Save,
 }
 enum SensorUIDBase : int32 {
     None = 0,
@@ -1008,6 +1010,10 @@ group guiai
     {
         taskId : string;
         command : ScriptCommand;
+    }
+    message AIControl : 217
+    {
+        command : AICommand;
     }
 }
 
