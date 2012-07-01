@@ -68,7 +68,7 @@ p = parser.add_argument_group(title="Arguments passed to subprocesses")
 p.add_argument('-d','--donotdetach',      action='store_false', default=True,     help="do not detach subprocess outputs")
 p.add_argument('-r','--restore',      action='store_true',      help="try and resume from last saved state")
 p.add_argument('-m','--mission_name',      default='mission',        help='which mission script to run')
-p.add_argument('-f', '--mission_save', dest='mission_save', default='', action='store', help="load saved state")
+p.add_argument('-f', '--mission_save', dest='mission_save', action='store', help="load saved state")
 #currently not implemented/not implemented properly
 #p.add_argument('--disable-gui',       action='store_true',      help="disable/ignore gui output nodes")
 #p.add_argument('--disable-control',   action='store_true',      help="stop AI script from controlling the sub")

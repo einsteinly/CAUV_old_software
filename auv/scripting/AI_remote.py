@@ -40,6 +40,8 @@ class aiStateListener(messaging.MessageObserver):
         print m
     def onConditionStateMessage(self, m):
         print m
+    def onSetConditionStateMessage(self, m):
+        print m
     def onTaskRemovedMessage(self, m):
         print m
     def onConditionRemovedMessage(self, m):
