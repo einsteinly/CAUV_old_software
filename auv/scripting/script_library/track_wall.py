@@ -16,12 +16,13 @@ class InsufficientDataError(ValueError):
 
 class scriptOptions(aiScriptOptions):
     strafeSpeed = 60 #controls strafe speed, int [-127, 127]
-    wallDistancekP = -500
+    wallDistancekP = -1000
     depth = 0 #depth in metres
-    runTime = -300 #run time in seconds
+    runTime = -500 #run time in seconds
     #doPropLimit = 20 #controls prop limit for dist adjustment, int [-127, 127]
     forward_angle = math.pi/6
     change_difference = 0.01
+    maximum_bearing_change = 5
     target_distance = 0.1
     angles_to_avg = 5
     
@@ -61,9 +62,11 @@ class script(aiScript):
         angle = math.degrees(angle)
         angle2 = math.degrees(angle2)
         debug('Data is %f, %f, %f, %f' %(angle,distance,angle2,distance2))
-        if angled_line and distance-distance2 > self.options.change_difference:
+        if angled_line and (distance-0.5)/math.cos(self.options.forward_angle)-(distance2-0.5) > self.options.change_difference:
             debug('Detected wall in direction of travel, turning to wall')
-            self.auv.bearing(self.auv.current_bearing+angle2-90-degrees(self.options.forward_angle))
+            self.auv.strafe(0)
+            next_angle = max(-self.options.maximum_bearing_change, angle2-90-math.degrees(self.options.forward_angle))
+            self.auv.bearing(self.auv.current_bearing+next_angle)
         else:
             self.auv.bearing(self.auv.current_bearing+angle-90)
         speed = (0.5+self.options.target_distance-distance)*self.options.wallDistancekP
@@ -116,6 +119,7 @@ class script(aiScript):
                 new_line = msg.Line(msg.floatXY(centre_x, centre_y), line.angle-rotate_angle, line.length, 0)
                 lines2.append(new_line)
             lines = lines2
+        self.node.send(msg.LinesMessage('out1'+str(bool(rotate_angle)),lines))
         lines_in_front = []
         top_least = None
         top_least_p_length = 0
@@ -155,6 +159,7 @@ class script(aiScript):
                     bottom_most = line
                     bottom_most_p_length = p_length
         if lines_in_front:
+            self.node.send(msg.LinesMessage('out2'+str(bool(rotate_angle)),lines_in_front))
             debug('Taking average of lines directly in front.')
             angle = 0
             distance = 0
@@ -188,6 +193,10 @@ class script(aiScript):
             bottom_point = (bottom_most.centre.x-bottom_most.length/2*math.cos(bottom_most.angle),
                             bottom_most.centre.y-bottom_most.length/2*math.sin(bottom_most.angle))
             angle = math.atan2(bottom_point[1]-top_point[1], bottom_point[0]-top_point[0])
+            self.node.send(msg.LinesMessage('out2'+str(bool(rotate_angle)),[msg.Line(msg.floatXY((top_point[0]+bottom_point[0])/2,(top_point[1]+bottom_point[1])/2),
+                                                             angle,
+                                                             math.sqrt((top_point[0]-bottom_point[0])**2+(top_point[1]-bottom_point[1])**2),
+                                                             0)]))
             # 
             #    \
             #______\
@@ -203,5 +212,5 @@ class script(aiScript):
         
     def run(self):
         while True:
-            #self.auv.strafe(self.options.strafeSpeed)
-            time.sleep(10)
+            self.auv.strafe(self.options.strafeSpeed)
+            time.sleep(1)

@@ -45,7 +45,7 @@ class ReceiveLinesNode: public InputNode{
             subMessage(LinesMessage());
             
             // one output:
-            registerOutputID("image_out");
+            registerOutputID("lines", std::vector<Line>());
             
             // one parameter: the source camera
             registerParamID<std::string>("name", "unnamed lines",
@@ -59,13 +59,8 @@ class ReceiveLinesNode: public InputNode{
                    << "\n\tdropped" <<  dropped; 
         }
 
-        /**
-         * if this image is from the right source:
-         *   take a copy of the image message pointer: store it, and
-         *   if m_output_demanded, queue this node for execution
-         */
         void onLinesMessage(boost::shared_ptr<const LinesMessage> m){
-            debug(4) << "Input node received an image";
+            debug(4) << "ReceiveLines node received a lines message";
             std::string name = param<std::string>("name");
             if(!boost::equal(m->name(), name)) {
                 return;
