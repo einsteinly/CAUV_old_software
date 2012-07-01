@@ -144,6 +144,20 @@ protected Q_SLOTS:
 };
 
 
+class ColourDelegate : public ShortDelegate {
+    Q_OBJECT
+public:
+    ColourDelegate(QObject *parent=0);
+
+    void paint(QPainter *painter,
+               const QStyleOptionViewItem &option,
+               const QModelIndex &index) const;
+
+    void setEditorData(QWidget *editor,
+                       const QModelIndex &index) const;
+};
+
+
 } // namespace gui
 } // namespace cauv
 

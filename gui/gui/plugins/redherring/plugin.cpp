@@ -22,6 +22,7 @@
 #include <debug/cauv_debug.h>
 
 #include <gui/core/model/registry.h>
+#include <gui/core/model/nodes/colournode.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -88,6 +89,10 @@ void RedHerring::initialise() {
     boost::shared_ptr<GroupingNode> processes = telemetry->findOrCreate<GroupingNode>("processes");
     attachObserver(processes, boost::make_shared<MessageHandler<GroupingNode, ProcessStatusMessage> >(processes));
 
+
+
+    boost::shared_ptr<ColourNode> colour = findOrCreate<ColourNode>("colour");
+    colour->setMutable(true);
 
     // calibrations
     boost::shared_ptr<GroupingNode> calibration = telemetry->findOrCreate<GroupingNode>("calibration");

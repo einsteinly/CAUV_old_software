@@ -30,31 +30,12 @@ namespace cauv {
                 m_value = QVariant::fromValue<QColor>(Qt::black);
             }
 
-        protected:
-            QColor colourToQColour(Colour const& colour) const{
-                /*switch(colour.colourType()){
-                    case RGBA:
-                    case RGB:
-                    return QColor::fromRgbF(colour.red(), colour.green(). colour.blue(), colour.alpha());
-
-                    case Grayscale:
-                    return QColor(qGray(qRgba(colour.red(), colour.green(). colour.blue(), colour.alpha())));
-                default:
-                    warning() << "ColourNode::colourToQColour() - Unknown colour format";*/
-                    return Qt::black;
-                //}
-            }
 
         public Q_SLOTS:
             virtual void update(QColor const& value){
                 Node::update(QVariant::fromValue<QColor>(value));
             }
-
-            virtual void update(Colour const& value){
-                Node::update(QVariant::fromValue<QColor>(colourToQColour(value)));
-            }
         };
-
     } //namespace gui
 } // namespace cauv
 

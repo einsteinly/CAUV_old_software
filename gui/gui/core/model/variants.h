@@ -30,31 +30,7 @@
 #include <generated/types/MotorID.h>
 #include <generated/types/Controller.h>
 #include <generated/types/CameraID.h>
-//#include <generated/types/Colour.h>
-
-enum ColourType {
-    RGB, RGBA,
-    Grayscale
-};
-
-struct Colour {
-    Colour(){}
-
-    Colour(float, float, float, float){
-    }
-
-    ColourType colourType() const {
-        return RGBA;
-    }
-
-    float red() const { return 1;}
-    float green() const { return 1;}
-    float blue() const { return 1;}
-    float alpha() const { return 1;}
-};
-
-#include <QMetaType>
-Q_DECLARE_METATYPE(Colour)
+#include <common/msg_classes/colour.h>
 
 #include <sstream>
 
@@ -65,6 +41,31 @@ using namespace std::rel_ops;
 namespace cauv {
     namespace gui {
 
+        struct TypedQColor : public QColor {
+        public:
+            TypedQColor():
+                QColor(){
+            }
+
+            TypedQColor(const QColor &color):
+                QColor(color){
+            }
+
+            virtual ColourType::e colorType() const {
+                return m_type;
+            }
+
+            virtual void setColorType(ColourType::e t) {
+                m_type = t;
+            }
+
+            ColourType::e m_type;
+        };
+
+        Colour qColorToColour(TypedQColor colour);
+
+        TypedQColor colorToQColour(Colour const& colour);
+
         //
         // helper functions to convert between boost variants and QVariants
         // boost::variant to QVariant
@@ -73,6 +74,10 @@ namespace cauv {
 
             QVariant operator()( std::string const& str ) const {
                 return QString::fromStdString( str );
+            }
+
+            QVariant operator()( Colour const& colour ) const {
+                return QVariant(colorToQColour( colour ));
             }
 
             template <typename T>
@@ -119,11 +124,6 @@ namespace cauv {
             if(qv.userType() == qMetaTypeId<QString>()){
                 // QStrings get converted to std::strings on the way out:
                 return T_Variant(qv.value<QString>().toStdString());
-            } else if(qv.userType() == qMetaTypeId<QColor>()){
-                // QColors get converted to Color on the way out:
-                QColor colour = qv.value<QColor>();
-                Colour cauvColour(colour.redF(), colour.greenF(), colour.blueF(), colour.alphaF());
-                return T_Variant(cauvColour);
             } else {
                 return qVariantToVariant_helper<T_Variant,typename T_Variant::types>( qv );
             }

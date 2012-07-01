@@ -25,6 +25,7 @@
 #include <gui/core/model/variants.h>
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/model/nodes/stringnode.h>
+#include <gui/core/model/nodes/colournode.h>
 #include <gui/core/model/model.h>
 #include <gui/core/framework/nodepicker.h>
 #include <gui/core/framework/delegates.h>
@@ -144,9 +145,14 @@ struct MakeModelNode: boost::static_visitor<boost::shared_ptr<cauv::gui::Node> >
         debug(7) << "MakeModelNode: bool";    
         return boost::make_shared< cauv::gui::BooleanNode >(cauv::gui::nid_t(id));
     }
-    
+
+    boost::shared_ptr<cauv::gui::Node> operator()(Colour const&) const{
+        debug(7) << "MakeModelNode: Colour";
+        return boost::make_shared< cauv::gui::ColourNode >(cauv::gui::nid_t(id));
+    }
+
     boost::shared_ptr<cauv::gui::Node> operator()(int32_t const&) const{
-        debug(7) << "MakeModelNode: int";    
+        debug(7) << "MakeModelNode: int";
         return boost::make_shared< cauv::gui::NumericNode<int32_t> >(cauv::gui::nid_t(id));
     }
 

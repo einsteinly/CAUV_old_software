@@ -291,6 +291,11 @@ void CauvMainWindow::onRun()
     this->joinGroup("control");
 
 
+    QItemEditorFactory * factory = new QItemEditorFactory();
+    factory->registerEditor(QVariant::Color, new QItemEditorCreator<QColorDialog>("currentColor"));
+    QItemEditorFactory::setDefaultFactory(factory);
+
+
     // Load external plugins (this includes things like gamepad support)
     // static plugins first
     foreach (QObject *plugin, QPluginLoader::staticInstances())

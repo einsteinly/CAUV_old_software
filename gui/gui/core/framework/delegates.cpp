@@ -21,6 +21,7 @@
 #include "model/nodes/numericnode.h"
 #include "model/nodes/stringnode.h"
 #include "model/nodes/groupingnode.h"
+#include "model/nodes/colournode.h"
 
 #include "widgets/neutralspinbox.h"
 #include "widgets/onoff.h"
@@ -39,6 +40,7 @@ DefaultNodeDelegate::DefaultNodeDelegate(QObject *):
     registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>());
     registerDelegate(nodeType<StringNode>(), boost::make_shared<TallDelegate>());
     registerDelegate(nodeType<GroupingNode>(), boost::make_shared<ShortDelegate>());
+    registerDelegate(nodeType<ColourNode>(), boost::make_shared<ColourDelegate>());
 }
 
 void DefaultNodeDelegate::registerDelegate(node_type nodeType,
@@ -366,4 +368,50 @@ void BooleanDelegate::commit() {
 QSize BooleanDelegate::sizeHint(const QStyleOptionViewItem &,
                              const QModelIndex &) const{
     return QSize(65, 25);
+}
+
+
+
+
+
+
+ColourDelegate::ColourDelegate(QObject * parent) :
+    ShortDelegate(parent) {
+}
+
+
+void ColourDelegate::paint(QPainter *painter,
+                            const QStyleOptionViewItem &option,
+                            const QModelIndex &index) const
+{
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing);
+    QColor colour = index.model()->data(index, Qt::EditRole).value<QColor>();
+    painter->setBrush(colour);
+    painter->setPen(QPen(QColor(150,150,150), 2));
+    QRect rect = option.rect.adjusted(0,2,0,-2);
+    painter->drawEllipse(QRect(rect.x(), rect.y(),
+                               rect.height()-2, rect.height()-2));
+    painter->setPen(Qt::black);
+    QString text("%1 %2 %3");
+    text = text.arg(QString::number(colour.redF(), 'f', 2)).
+                arg(QString::number(colour.greenF(), 'f', 2)).
+                arg(QString::number(colour.blueF(), 'f', 2));
+    rect = option.rect.adjusted(rect.height()+2,0,0,0);
+    painter->drawText(rect, text, QTextOption(Qt::AlignVCenter));
+    painter->restore();
+}
+
+void ColourDelegate::setEditorData(QWidget *editor,
+                                    const QModelIndex &index) const{
+    // don't allow updates while editing
+    if(editor->property("data-initialised").toBool()) return;
+    editor->setProperty("data-initialised", true);
+
+    QStyledItemDelegate::setEditorData(editor, index);
+
+    QColor colour = index.model()->data(index, Qt::EditRole).value<QColor>();
+
+    QColorDialog * dialog = static_cast<QColorDialog *>(editor);
+    dialog->setCurrentColor(colour);
 }

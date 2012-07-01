@@ -85,6 +85,7 @@ set ( GUI_CORE_H
     model/nodes/vehiclenode.h
     model/nodes/autopilotnode.h
     model/nodes/sonarnode.h
+    model/nodes/colournode.h
     model/messaging.h
     model/utils/sampler.h
 

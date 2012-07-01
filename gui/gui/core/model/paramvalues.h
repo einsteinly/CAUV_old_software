@@ -42,7 +42,7 @@ Q_DECLARE_METATYPE(cauv::DynamicEnum)
 Q_DECLARE_METATYPE(std::vector<cauv::floatXY>)
 Q_DECLARE_METATYPE(std::vector<cauv::Ellipse>)
 Q_DECLARE_METATYPE(cauv::LocationSequence)
-//Q_DECLARE_METATYPE(cauv::Colour)
+Q_DECLARE_METATYPE(cauv::Colour)
 
 namespace cauv {
     namespace gui {
@@ -64,7 +64,7 @@ namespace cauv {
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(std::string & ) const;
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand ) const;
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & ) const;
-    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & ) const;
+    //template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & ) const;
 
     template <class T>
     boost::shared_ptr<Node> paramValueToNode(nid_t id, T boostVariant){
