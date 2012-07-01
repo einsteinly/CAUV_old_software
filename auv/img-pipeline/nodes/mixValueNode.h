@@ -19,7 +19,11 @@
 #include <vector>
 #include <string>
 
+#include <boost/bind.hpp>
+
 #include <opencv2/core/core.hpp>
+
+#include <common/msg_classes/colour.h>
 
 #include "../node.h"
 
@@ -44,45 +48,42 @@ class MixValueNode: public Node{
             registerOutputID("image (not copied)");
             
             // parameters:
-            registerParamID<float>("image fac", 1);
-            registerParamID<float>("mix fac", 1);
-            registerParamID<int>("ch1", 0);
-            registerParamID<int>("ch2", 0);
-            registerParamID<int>("ch3", 0);
+            registerParamID<float>("image fac", 1, "Image value factor");
+            registerParamID<float>("value fac", 1, "Mixing value factor");
+            registerParamID<Colour>("value", Colour::fromRGB(0,0,0), "Colour to mix in");
         }
 
     protected:
+        template<typename T>
+        static void mix(float a, cv::Mat& m, float b, const Colour& colour)
+        {
+            int nchannels = m.channels();
+            if ((nchannels == 3 && colour.type != ColourType::RGB && colour.type != ColourType::BGR)
+                || (nchannels == 4 && colour.type != ColourType::ARGB && colour.type != ColourType::BGRA)
+                || (nchannels == 1 && colour.type != ColourType::Grey))
+                throw parameter_error("wrong colour type");
+
+            // Iterate over all pixels...
+            for (cv::MatIterator_<T> it = m.begin<T>(),
+                                     itend = m.end<T>();
+                 it != itend; ++it) {
+                // .. and all channels per pixel
+                for (int c = 0; c < nchannels; ++c, ++it)
+                    *it = round(a* (*it) + b*255.0f*colour.values[c]); 
+            }
+        }
 
         void doWork(in_image_map_t& inputs, out_map_t& r){
 
-            cv::Mat img = inputs["image"]->mat();
+            image_ptr_t img = inputs["image"];
             
             float img_f = param<float>("image fac");
-            float mix_f = param<float>("mix fac");
-            int mix[3] = {
-                param<int>("ch1"),
-                param<int>("ch2"),
-                param<int>("ch3")
-            };
+            float value_f = param<float>("value fac");
+            Colour value =  param<Colour>("value");
             
-            if(!img.isContinuous())
-                throw(parameter_error("image must be continuous"));
-            if(img.depth() != CV_8U)
-                throw(parameter_error("image must be unsigned bytes"));
-            if(img.channels() > 3)
-                throw(parameter_error("image must be <= 3-channel"));            
-
-            const int elem_size = img.elemSize();
-            const int row_size = img.step;
-            unsigned char *img_rp, *img_cp, *img_bp;
-            int row, col, ch;
-
-            for(row = 0, img_rp = img.data; row < img.rows; row++, img_rp += row_size)
-                for(col = 0, img_cp = img_rp; col < img.cols; col++, img_cp += elem_size)
-                    for(ch = 0, img_bp = img_cp; ch < img.channels(); ch++, img_bp++)
-                        *img_bp = clamp_cast<unsigned char>(0, (*img_bp * img_f) + (mix[ch] * mix_f) + 0.5f, 255);
+            img->apply(boost::bind(mix<unsigned char>, img_f, _1, value_f, value));
             
-            r["image (not copied)"] = boost::make_shared<Image>(img);
+            r["image (not copied)"] = img;
             
         }
     

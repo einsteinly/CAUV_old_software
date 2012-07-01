@@ -19,9 +19,12 @@
 #include <vector>
 #include <string>
 
+#include <boost/bind.hpp>
+
 #include <opencv2/core/core.hpp>
 
 #include <utility/rounding.h>
+#include <common/msg_classes/colour.h>
 
 #include "../node.h"
 
@@ -46,45 +49,29 @@ class LevelsNode: public Node{
             registerOutputID("image (not copied)");
             
             // parameters:
-            registerParamID<BoundedFloat>("white level", BoundedFloat(255, 0, 255, BoundedFloatType::Clamps));
-            registerParamID<BoundedFloat>("black level", BoundedFloat(0, 0, 255, BoundedFloatType::Clamps));
+            registerParamID<Colour>("white level", Colour::fromGrey(1.0));
+            registerParamID<Colour>("black level", Colour::fromGrey(0.0));
         }
 
     protected:
-        struct applyLevels: boost::static_visitor<void>{
-            applyLevels(float white, float black) : m_white(white), m_black(black){}
-            void operator()(cv::Mat a) const{
-                float scale = 1;
-                if(m_black != m_white)
-                    scale = 255.0f / (m_white - m_black);
-                a = (a - m_black) * scale;
+        static void doLevels(cv::Mat& a, float black, float white) {
+            if (black < white) {
+                float scale = 1.0f / (white - black);
+                a = (a - 255.0f*black) * scale;
             }
-            void operator()(NonUniformPolarMat a) const{
-                float scale = 1;
-                if(m_black != m_white)
-                    scale = 255.0f / (m_white - m_black);
-                a.mat = (a.mat - m_black) * scale;
-            }
-            void operator()(PyramidMat a) const{
-                float scale = 1;
-                if(m_black != m_white)
-                    scale = 255.0f / (m_white - m_black);
-                foreach(cv::Mat m, a.levels)
-                    m = (m - m_black) * scale;
-            }
-            int m_white;
-            int m_black;
-        };
+            else
+                a = cv::Mat(a.size(), a.type(), 255.0f*black);
+        }
         void doWork(in_image_map_t& inputs, out_map_t& r){
 
-            augmented_mat_t img = inputs["image"]->augmentedMat();
+            image_ptr_t img = inputs["image"];
             
-            float white_level = param<BoundedFloat>("white level");
-            float black_level = param<BoundedFloat>("black level");
+            float white_level = param<Colour>("white level").grey();
+            float black_level = param<Colour>("black level").grey();
             
-            boost::apply_visitor(applyLevels(white_level, black_level), img);
+            img->apply(boost::bind(doLevels, _1, white_level, black_level));
             
-            r["image (not copied)"] = boost::make_shared<Image>(img);
+            r["image (not copied)"] = img;
             
         }
 
