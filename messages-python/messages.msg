@@ -160,6 +160,13 @@ enum SensorUIDBase : int32 {
     Multiple = 0x70, // multiple sources is just 0x70 (no reserved range)
     File =     0x100,   // files are 0x100 += ?: range[0x100--0xFFF]
 }
+enum ColourType : int8 {
+    RGB,
+    BGR,
+    ARGB,
+    BGRA,
+    Grey,
+}
 
 struct floatYPR
 {
@@ -199,6 +206,11 @@ struct LatLongAlt
     eq latitude : double;  // degrees north
     eq longitude : double; // degrees east
     eq altitude : float;   // metres up
+}
+struct ColourBase
+{
+    eq cmp type : ColourType;
+    eq cmp values : float[4];
 }
 struct NodeInput
 {
@@ -386,6 +398,7 @@ class BaseImage : <common/msg_classes/base_image.h> fmt_ver 1
 BoundedFloatBase subclass BoundedFloat : <common/msg_classes/bounded_float.h>
 LatLongAlt subclass WGS84Coord : <common/msg_classes/wgs84_coord.h>
 floatXYZ subclass NorthEastDepth : <common/msg_classes/north_east_depth.h>
+ColourBase subclass Colour : <common/msg_classes/colour.h>
 
 enum SequenceType : int8 {
     Points, Path, Area

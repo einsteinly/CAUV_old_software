@@ -18,9 +18,6 @@
 
 \#include "message.h"
 
-\#include <vector>
-\#include <list>
-\#include <map>
 \#include <boost/shared_ptr.hpp>
 \#include <utility/streamops.h>
 
