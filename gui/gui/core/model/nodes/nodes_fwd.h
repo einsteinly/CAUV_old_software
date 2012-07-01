@@ -22,6 +22,7 @@ namespace cauv {
         class MotorNode;
         class GroupingNode;
         class ImageNode;
+        class ColourNode;
         class NumericNodeBase;
         class SonarNode;
         class StringNode;

@@ -333,10 +333,6 @@ void NodeTreeView::keyPressEvent(QKeyEvent *event){
     QTreeView::keyPressEvent(event);
 }
 
-void NodeTreeView::resizeEvent(QResizeEvent *event){
-    info() << "NodeTree resized!";
-}
-
 void NodeTreeView::applyFilters(){
     debug(8) << "applyFilters()";
     applyFilters(model()->index(0,0,QModelIndex()));

@@ -99,8 +99,6 @@ public:
     QSize sizeHint(QModelIndex index) const;
     void setModel(QAbstractItemModel *model);
 
-    void resizeEvent(QResizeEvent *event);
-
 public Q_SLOTS:
     void registerDelegate(node_type nodeType,
                           boost::shared_ptr<NodeDelegate> delegate);

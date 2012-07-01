@@ -17,8 +17,11 @@
 using namespace cauv;
 using namespace cauv::gui;
 
+#include <QColor>
+
 #include "nodes/numericnode.h"
 #include "nodes/stringnode.h"
+#include "nodes/colournode.h"
 
 
 ParamValueToNode::ParamValueToNode(const nid_t id) :
@@ -56,6 +59,13 @@ template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand)
 template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & operand) const
 {
     boost::shared_ptr<NumericNode<BoundedFloat> > node = boost::make_shared<NumericNode<BoundedFloat> >(m_id);
+    node->update(operand);
+    return node;
+}
+
+template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & operand) const
+{
+    boost::shared_ptr<ColourNode> node = boost::make_shared<ColourNode>(m_id);
     node->update(operand);
     return node;
 }
