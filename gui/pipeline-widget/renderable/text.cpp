@@ -19,7 +19,8 @@ const static unsigned char Sans_Font_Data[] = {
 #include <LiberationSans-Regular.h>
 };
 
-using namespace cauv::pw;
+using namespace cauv::gui;
+using namespace cauv::gui::pw;
 
 Text::Text(container_ptr_t c, std::string const& text, std::string const& font, int pt)
     : Renderable(c), std::string(text), m_bbox(),

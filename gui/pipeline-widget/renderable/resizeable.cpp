@@ -20,11 +20,11 @@
 
 #include "../container.h"
 
-using namespace cauv::pw;
+using namespace cauv::gui::pw;
 
-const static BBox Handle_Size(-12, 0, 0, 12);
+const static cauv::gui::BBox Handle_Size(-12, 0, 0, 12);
 
-Resizeable::Resizeable(container_ptr_t c, BBox const& s, BBox const& min, BBox
+Resizeable::Resizeable(container_ptr_t c, cauv::gui::BBox const& s, cauv::gui::BBox const& min, cauv::gui::BBox
                        const& max, double const& fixed_aspect)
     : Renderable(c), m_bbox(s), m_click_offset(), m_resizing(false),
       m_min_bbox(min), m_max_bbox(max), m_aspect(fixed_aspect){
@@ -55,7 +55,7 @@ void Resizeable::mouseMoveEvent(MouseEvent const& event){
 
 bool Resizeable::mousePressEvent(MouseEvent const& event){
     debug(2) << "Resizeable::mousePressEvent(" << event.pos << ")";
-    Point blc = Point(m_bbox.max.x, m_bbox.min.y);
+    cauv::gui::Point blc = cauv::gui::Point(m_bbox.max.x, m_bbox.min.y);
     if((Handle_Size + blc).contains(event.pos)){
         m_click_offset = event.pos - blc;
         m_resizing = true;
@@ -68,22 +68,22 @@ void Resizeable::mouseReleaseEvent(MouseEvent const&){
     m_resizing = false;
 }
 
-BBox Resizeable::bbox(){
+cauv::gui::BBox Resizeable::bbox(){
     return m_bbox;
 }
 
 void Resizeable::drawHandle(){
     glLineWidth(1);
-    glColor(Colour(1, 0.5));
+    glColor(cauv::gui::Colour(1, 0.5));
     glTranslatef(0, 0, 0.1);
-    const Point bl(m_bbox.max.x, m_bbox.min.y);
+    const cauv::gui::Point bl(m_bbox.max.x, m_bbox.min.y);
     const int bars = 3;
     const int i_inc = Handle_Size.w() / bars;
     const int j_inc = Handle_Size.h() / bars;
     glBegin(GL_LINES);
     for(int i=i_inc, j=j_inc; i<=Handle_Size.w() && j<=Handle_Size.h(); i+=i_inc, j+=j_inc){
-        glVertex(bl + Point(-i, 1));
-        glVertex(bl + Point(-1, j));
+        glVertex(bl + cauv::gui::Point(-i, 1));
+        glVertex(bl + cauv::gui::Point(-1, j));
     }
     glEnd();
 }

@@ -22,7 +22,7 @@
 #include "renderable.h"
 #include "util.h"
 
-using namespace cauv::pw;
+using namespace cauv::gui::pw;
 
 MouseEvent::MouseEvent(QMouseEvent* qm, PipelineWidget const& p)
     : pos((qm->x() - p.width()/2) / p.m_pixels_per_unit - p.m_win_centre.x,

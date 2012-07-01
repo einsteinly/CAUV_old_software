@@ -23,6 +23,7 @@
 #include <boost/shared_ptr.hpp>
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 namespace drawtype_e{
@@ -89,6 +90,7 @@ typedef boost::shared_ptr<OverKey> overlay_ptr_t;
 } // namespace ok
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __PW_TYPES_H__

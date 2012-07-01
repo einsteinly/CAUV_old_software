@@ -19,7 +19,7 @@
 #include <debug/cauv_debug.h>
 #include "nodeIO.h"
 
-using namespace cauv::pw;
+using namespace cauv::gui::pw;
 
 Arc::Arc(container_ptr_t c, renderable_wkptr_t src, renderable_wkptr_t dst)
     : Renderable(c), m_src(src), m_dst(dst), m_hanging(false){
@@ -54,7 +54,7 @@ void Arc::draw(drawtype_e::e flags){
     // TODO: what level should arcs be drawn at?
     glTranslatef(0, 0, 0.05);
 
-    glColor(Colour(1.0, 0.5));
+    glColor(cauv::gui::Colour(1.0, 0.5));
     glLineWidth(1);
     glBegin(GL_LINE_STRIP);
     
@@ -63,9 +63,9 @@ void Arc::draw(drawtype_e::e flags){
     bool src_in =  !!boost::dynamic_pointer_cast<NodeInputBlob>(src);
     bool dst_out = !!boost::dynamic_pointer_cast<NodeOutputBlob>(dst);
     
-    Point sp = src->topLevelPos();
-    Point dp = dst->topLevelPos();
-    Point delta(fabs(sp.x-dp.x)/5 + 20, 0);
+    cauv::gui::Point sp = src->topLevelPos();
+    cauv::gui::Point dp = dst->topLevelPos();
+    cauv::gui::Point delta(fabs(sp.x-dp.x)/5 + 20, 0);
     
     if(src_out && dst_in)      glBezier(sp, sp + delta, dp - delta, dp);
     else if(src_in && dst_out) glBezier(sp, sp - delta, dp + delta, dp);

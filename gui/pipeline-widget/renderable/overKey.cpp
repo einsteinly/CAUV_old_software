@@ -17,8 +17,8 @@
 #include "../util.h"
 #include "text.h"
 
-using namespace cauv::pw;
-using namespace cauv::pw::ok;
+using namespace cauv::gui::pw;
+using namespace cauv::gui::pw::ok;
 
 // Behaviour Defining Constants:
 const static float Typing_Max_Delta = 0.3;
@@ -33,18 +33,18 @@ const static float Key_H = 48;
 const static float Key_P = 3;
 const static float BG_Border = 32;
 
-const static Colour OK_BG_Colour(0, 0.8);
-const static Colour Key_BG_Colours[keystate_e::num_values] = {
-    Colour(1, 0.3), // released
-    Colour(1, 0.9)  // pressed
+const static cauv::gui::Colour OK_BG_Colour(0, 0.8);
+const static cauv::gui::Colour Key_BG_Colours[keystate_e::num_values] = {
+    cauv::gui::Colour(1, 0.3), // released
+    cauv::gui::Colour(1, 0.9)  // pressed
 };
-const static Colour Key_Text_Colours[keystate_e::num_values] = {
-    Colour(0.1, 0.6),
-    Colour(0.1, 1.0)
+const static cauv::gui::Colour Key_Text_Colours[keystate_e::num_values] = {
+    cauv::gui::Colour(0.1, 0.6),
+    cauv::gui::Colour(0.1, 1.0)
 };
-const static Colour Key_Decal_Colours[keystate_e::num_values] = {
-    Colour(0, 0.9),
-    Colour(0, 1.0)
+const static cauv::gui::Colour Key_Decal_Colours[keystate_e::num_values] = {
+    cauv::gui::Colour(0, 0.9),
+    cauv::gui::Colour(0, 1.0)
 };
 
 Action::f_t Action::null_f = Action::f_t();
@@ -71,10 +71,10 @@ void Action::onRelease() const{
         on_release_f();
 }
 
-void Action::drawDecal(BBox const& area){
+void Action::drawDecal(cauv::gui::BBox const& area){
     if(m_decal){
         float scale = 1.0f;
-        BBox const& db = m_decal->bbox();
+        cauv::gui::BBox const& db = m_decal->bbox();
         if(db.area()){
             if(area.w() / db.w() < scale)
                 scale = area.w() / db.w();
@@ -91,7 +91,7 @@ void Action::drawDecal(BBox const& area){
 }
 
 
-Key::Key(container_ptr_t c, keycode_t const& kc1, keycode_t const& kc2, BBox const& size,
+Key::Key(container_ptr_t c, keycode_t const& kc1, keycode_t const& kc2, cauv::gui::BBox const& size,
          textmap_t const& text)
     : Renderable(c), m_state(keystate_e::released), m_keycodes(), m_text(text), m_box(size){
 
@@ -99,7 +99,7 @@ Key::Key(container_ptr_t c, keycode_t const& kc1, keycode_t const& kc2, BBox con
     if(kc2) m_keycodes.push_back(kc2);
 }
 
-Key::Key(container_ptr_t c, keycode_t const& kc1, keycode_t const& kc2, BBox const& size,
+Key::Key(container_ptr_t c, keycode_t const& kc1, keycode_t const& kc2, cauv::gui::BBox const& size,
          Qt::KeyboardModifiers m1, std::string const& t1,
          Qt::KeyboardModifiers m2, std::string const& t2,
          Qt::KeyboardModifiers m3, std::string const& t3,
@@ -123,20 +123,20 @@ Key::~Key(){
 void Key::draw(drawtype_e::e){ 
 }
 
-void Key::draw(Qt::KeyboardModifiers const& mods, Colour const& mul){
+void Key::draw(Qt::KeyboardModifiers const& mods, cauv::gui::Colour const& mul){
     glColor(Key_BG_Colours[m_state] * mul);
     glBox(m_box, m_box.h()/8, Corner_Segments);
 
     if(m_text.count(mods)){
         glTranslatef(m_text[mods]->m_pos);
-        //glColor(Colour(1, 0.2));
+        //glColor(cauv::gui::Colour(1, 0.2));
         //glBox(m_text[mods]->bbox());
         glColor(Key_Text_Colours[m_state] * mul);
         m_text[mods]->draw(drawtype_e::no_flags);
     }
 }
 
-BBox Key::bbox(){
+cauv::gui::BBox Key::bbox(){
     return m_box;
 }
 
@@ -157,7 +157,7 @@ keystate_e::e Key::state() const{
 
 void Key::centerText(){
     foreach(textmap_t::value_type v, m_text){
-        v.second->m_pos = m_pos + Point((bbox().w()/2 - v.second->bbox().w()/2) + v.second->bbox().min.x,
+        v.second->m_pos = m_pos + cauv::gui::Point((bbox().w()/2 - v.second->bbox().w()/2) + v.second->bbox().min.x,
                                         -bbox().h()/2);
         debug(9) << "text position:" << v.second->m_pos.x << v.second->m_pos.y;
     }
@@ -180,12 +180,12 @@ bool KeyBind::operator<(KeyBind const& r) const{
 class ReturnKey: public Key{
     public:
         ReturnKey(container_ptr_t c, keycode_t const& kc, keycode_t const& kc2,
-                  BBox const& top_size, float step = 2, float descend = 8)
-            : Key(c, kc, kc2, top_size | (top_size - Point(0, descend))),
+                  cauv::gui::BBox const& top_size, float step = 2, float descend = 8)
+            : Key(c, kc, kc2, top_size | (top_size - cauv::gui::Point(0, descend))),
               m_top(top_size), m_step(step), m_descend(descend){
         }
         
-        virtual void draw(Qt::KeyboardModifiers const& /*mods*/, Colour const& mul){
+        virtual void draw(Qt::KeyboardModifiers const& /*mods*/, cauv::gui::Colour const& mul){
             glColor(Key_BG_Colours[m_state] * mul);
             /*
              *        *-------------*
@@ -201,19 +201,19 @@ class ReturnKey: public Key{
              */
             const float corner = m_top.h() / 8;
             // 1
-            glBox(BBox(m_top.min.x + m_step + corner, m_top.min.y - m_descend,
+            glBox(cauv::gui::BBox(m_top.min.x + m_step + corner, m_top.min.y - m_descend,
                        m_top.max.x - corner         , m_top.max.y));
             // 2
-            glBox(BBox(m_top.min.x + corner         , m_top.min.y,
+            glBox(cauv::gui::BBox(m_top.min.x + corner         , m_top.min.y,
                        m_top.min.x + m_step + corner, m_top.max.y));
             // 3
-            glBox(BBox(m_top.max.x - corner, m_top.min.y + corner - m_descend,
+            glBox(cauv::gui::BBox(m_top.max.x - corner, m_top.min.y + corner - m_descend,
                        m_top.max.x         , m_top.max.y - corner));
             // 4
-            glBox(BBox(m_top.min.x         , m_top.min.y + corner,
+            glBox(cauv::gui::BBox(m_top.min.x         , m_top.min.y + corner,
                        m_top.min.x + corner, m_top.max.y - corner));
             // 5
-            glBox(BBox(m_top.min.x + m_step         , m_top.min.y + corner - m_descend,
+            glBox(cauv::gui::BBox(m_top.min.x + m_step         , m_top.min.y + corner - m_descend,
                        m_top.min.x + m_step + corner, m_top.min.y));
             // A
             glTranslatef(corner, -corner, 0);
@@ -234,7 +234,7 @@ class ReturnKey: public Key{
         }
         
     private:
-        BBox m_top;
+        cauv::gui::BBox m_top;
         float m_step;
         float m_descend;
 };
@@ -250,19 +250,19 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
     Qt::KeyboardModifiers alt = Qt::AltModifier;
     Qt::KeyboardModifiers num = Qt::KeypadModifier;
     
-    const BBox b(0, -Key_H, Key_W, 0);
-    const BBox s(0, -Key_H/2, Key_W, 0);
-    const BBox esc_box(0, -Key_H/2, Key_W + Key_W/4, 0);
-    const BBox bksp_box(0, -Key_H, Key_W + Key_W/2, 0);
-    const BBox cps_box(0, -Key_H, Key_W + 3*Key_W/4, 0);
-    const BBox lshift_box(0, -Key_H, Key_W + Key_W/4, 0);
-    const BBox rshift_box(0, -Key_H, 2*Key_W + Key_W/4 + Key_P, 0);
-    const BBox fn_box = b;//(0, -Key_H, Key_W*3.0/4, 0);
-    const BBox space_box(0, -Key_H, Key_W*5 + Key_P*4, 0);
+    const cauv::gui::BBox b(0, -Key_H, Key_W, 0);
+    const cauv::gui::BBox s(0, -Key_H/2, Key_W, 0);
+    const cauv::gui::BBox esc_box(0, -Key_H/2, Key_W + Key_W/4, 0);
+    const cauv::gui::BBox bksp_box(0, -Key_H, Key_W + Key_W/2, 0);
+    const cauv::gui::BBox cps_box(0, -Key_H, Key_W + 3*Key_W/4, 0);
+    const cauv::gui::BBox lshift_box(0, -Key_H, Key_W + Key_W/4, 0);
+    const cauv::gui::BBox rshift_box(0, -Key_H, 2*Key_W + Key_W/4 + Key_P, 0);
+    const cauv::gui::BBox fn_box = b;//(0, -Key_H, Key_W*3.0/4, 0);
+    const cauv::gui::BBox space_box(0, -Key_H, Key_W*5 + Key_P*4, 0);
     const float enter_step = Key_W/4;
     const float enter_descend = Key_H + Key_P;
     
-    Point pos(0, 0);
+    cauv::gui::Point pos(0, 0);
 
     const key_ptr_t top_row[] = {
         boost::make_shared<Key>(c, Qt::Key_Escape, 0, esc_box, none, "esc"),
@@ -432,7 +432,7 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
     lk->m_pos = pos;
     pos.x += Key_W + Key_P;
     dk->m_pos = pos;
-    uk->m_pos = pos + Point(0, Key_H/2 + Key_P/2);
+    uk->m_pos = pos + cauv::gui::Point(0, Key_H/2 + Key_P/2);
     pos.x += Key_W + Key_P;
     rk->m_pos = pos;
     
@@ -457,11 +457,11 @@ OverKey::OverKey(container_ptr_t parent)
     m_bbox = _calcBbox();
 }
 
-BBox OverKey::bbox(){
+cauv::gui::BBox OverKey::bbox(){
     return m_bbox;
 }
 
-Point OverKey::referUp(Point const& p) const{
+cauv::gui::Point OverKey::referUp(cauv::gui::Point const& p) const{
     return m_context->referUp(p + m_pos);
 }
 
@@ -469,7 +469,7 @@ void OverKey::postRedraw(float delay){
     m_context->postRedraw(delay);
 }
 
-void OverKey::postMenu(menu_ptr_t m, Point const& tlp, bool p){
+void OverKey::postMenu(menu_ptr_t m, cauv::gui::Point const& tlp, bool p){
     m_context->postMenu(m, tlp, p);
 }
 
@@ -619,7 +619,7 @@ void OverKey::draw(drawtype_e::e flags){
     if(fac > 0.0f){
         debug(9) << BashColour::White << "alpha frac:" << fac;
 
-        glColor(OK_BG_Colour * Colour(1, fac));
+        glColor(OK_BG_Colour * cauv::gui::Colour(1, fac));
         glBox(bbox(), BG_Border);
         
         glTranslatef(0, 0, 0.1);
@@ -635,12 +635,12 @@ void OverKey::draw(drawtype_e::e flags){
             glPushMatrix();
             glTranslatef(k->m_pos);
             glPushMatrix();
-            k->draw(m_current_modifiers, Colour(1, fac));
+            k->draw(m_current_modifiers, cauv::gui::Colour(1, fac));
             glPopMatrix();
             foreach(keycode_t kc, k->keyCodes()){
                 KeyBind potential_kb(kc, m_current_modifiers);
                 if(m_actions.count(potential_kb)){
-                    BBox draw_area = k->bbox();
+                    cauv::gui::BBox draw_area = k->bbox();
                     draw_area *= 0.85f;
                     draw_area.max.y -= draw_area.h() * 0.45;
                     glColor(Key_Decal_Colours[k->state()]);
@@ -691,8 +691,8 @@ void OverKey::processDelayedCallbacks(){
     }
 }
 
-BBox OverKey::_calcBbox() const{
-    BBox r;
+cauv::gui::BBox OverKey::_calcBbox() const{
+    cauv::gui::BBox r;
     layout_map_t::const_iterator i;
     for(i = m_layout.begin(); i != m_layout.end(); i++)
         r |= i->second->bbox() + i->second->m_pos;

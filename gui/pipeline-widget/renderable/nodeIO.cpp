@@ -12,23 +12,23 @@
 #include "arc.h"
 #include "node.h"
 
-using namespace cauv::pw;
+using namespace cauv::gui::pw;
 
-const static Colour IO_Normal_Colour(0.2, 0.4, 0.6, 0.5);
-const static Colour Param_Normal_Colour(0.4, 0.4, 0.4, 0.5);
-const static Colour Outline_Colour_Hint(0, 0.2);
-const static Colour Mouseover_Colour_Hint(1, 0.2);
-const static Colour New_Hint(0, 1, 0, 0.4);
-const static Colour Demanded_Hint(1, 1, 0, 0.4);
-const static Colour Invalid_Hint(0.6, 0, 0, 0.6);
+const static cauv::gui::Colour IO_Normal_Colour(0.2, 0.4, 0.6, 0.5);
+const static cauv::gui::Colour Param_Normal_Colour(0.4, 0.4, 0.4, 0.5);
+const static cauv::gui::Colour Outline_Colour_Hint(0, 0.2);
+const static cauv::gui::Colour Mouseover_Colour_Hint(1, 0.2);
+const static cauv::gui::Colour New_Hint(0, 1, 0, 0.4);
+const static cauv::gui::Colour Demanded_Hint(1, 1, 0, 0.4);
+const static cauv::gui::Colour Invalid_Hint(0.6, 0, 0, 0.6);
 
-static Colour colourForParamType(int32_t param_type_id){
+static cauv::gui::Colour colourForParamType(int32_t param_type_id){
     // assign some bits to each rgb component, and apply them above a base level
     // of 1/4:
     float r = 0.25 + float((param_type_id >> 3) & 0x3) * 0.75 / 3;
     float g = 0.25 + float((param_type_id >> 0) & 0x3) * 0.75 / 3;
     float b = 0.25 + float((param_type_id >> 2) & 0x1) * 0.75;
-    return Colour(r, g, b, 0.5);
+    return cauv::gui::Colour(r, g, b, 0.5);
 }
 
 
@@ -106,12 +106,12 @@ bool NodeIOBlob::tracksMouse(){
     return true;
 }
 
-BBox NodeIOBlob::bbox(){
-    return BBox(-m_radius, -m_radius, m_radius, m_radius) |
-           (m_suppress_text? BBox() : (m_text->bbox() + m_text->m_pos));
+cauv::gui::BBox NodeIOBlob::bbox(){
+    return cauv::gui::BBox(-m_radius, -m_radius, m_radius, m_radius) |
+           (m_suppress_text? cauv::gui::BBox() : (m_text->bbox() + m_text->m_pos));
 }
 
-bool NodeIOBlob::contains(Point const& x) const{
+bool NodeIOBlob::contains(cauv::gui::Point const& x) const{
     if(x.sxx() < m_radius_squared)
         return true;
     return false;
@@ -219,11 +219,11 @@ std::string NodeOutputBlob::output() const{
 
 FloatingArcHandle::FloatingArcHandle(pw_ptr_t pw, arc_ptr_t arc)
     : Menu(pw), m_pw(pw), m_arc(arc), m_click_pos(){
-    m_click_pos = Point();
+    m_click_pos = cauv::gui::Point();
 }
 
 void FloatingArcHandle::draw(drawtype_e::e){
-    glColor(Colour(0.6, 0.7, 0.8, 0.5));
+    glColor(cauv::gui::Colour(0.6, 0.7, 0.8, 0.5));
     glTranslatef(0, 0, 0.3);
     glCircle(5.0);
     glCircleOutline(3.0);
@@ -267,7 +267,7 @@ void FloatingArcHandle::mouseGoneEvent(){
     m_arc.reset();
 }
 
-BBox FloatingArcHandle::bbox(){
-    return BBox();
+cauv::gui::BBox FloatingArcHandle::bbox(){
+    return cauv::gui::BBox();
 }
 

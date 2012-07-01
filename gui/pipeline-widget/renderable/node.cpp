@@ -22,6 +22,7 @@
 #include "buttons.h"
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 template<typename T, typename cT>
@@ -31,16 +32,17 @@ std::basic_ostream<T, cT>& operator<<(
 }
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 using namespace cauv;
-using namespace cauv::pw;
+using namespace cauv::gui::pw;
 
-const static Colour Mouseover_Colour_Hint(1, 1, 1, 0.2);
-const static Colour Normal_BG_Colour(0.7, 0.7, 0.7, 0.8);
-const static Colour Queued_Hint(0.3, 0.3, 0, 0.2);
-const static Colour Executing_Hint(0.0, 0.4, 0.1, 0.2);
-const static Colour Queue_Not_Permitted_Hint(0.4, 0, 0, 0.2);
+const static cauv::gui::Colour Mouseover_Colour_Hint(1, 1, 1, 0.2);
+const static cauv::gui::Colour Normal_BG_Colour(0.7, 0.7, 0.7, 0.8);
+const static cauv::gui::Colour Queued_Hint(0.3, 0.3, 0, 0.2);
+const static cauv::gui::Colour Executing_Hint(0.0, 0.4, 0.1, 0.2);
+const static cauv::gui::Colour Queue_Not_Permitted_Hint(0.4, 0, 0, 0.2);
 
 Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage const> m)
     : Draggable(c), m_pw(pw), m_bbox(), m_node_id(m->nodeId()),
@@ -409,7 +411,7 @@ bool Node::tracksMouse(){
     return true;
 }
 
-BBox Node::bbox(){
+cauv::gui::BBox Node::bbox(){
     return m_bbox;
 }
 
@@ -494,7 +496,7 @@ void Node::outputStatus(std::string const& output_id, int s){
         i->second->status(s);
 }
 
-Point Node::referUp(Point const& p) const{
+cauv::gui::Point Node::referUp(cauv::gui::Point const& p) const{
     return m_context->referUp(p + m_pos);
 }
 
@@ -502,7 +504,7 @@ void Node::postRedraw(float delay){
     m_context->postRedraw(delay);
 }
 
-void Node::postMenu(menu_ptr_t m, Point const& p, bool r){
+void Node::postMenu(menu_ptr_t m, cauv::gui::Point const& p, bool r){
     m_context->postMenu(m, p, r);
 }
 
@@ -553,7 +555,7 @@ void Node::refreshLayout(){
         r->m_pos.y = y_pos - roundA(r->bbox().max.y);
         r->m_pos.x = m_back.min.x - io_overhang - r->bbox().min.x;
         prev_height = roundA(r->bbox().h());
-        m_back |= r->bbox() + r->m_pos + Point(io_overhang, 0);
+        m_back |= r->bbox() + r->m_pos + cauv::gui::Point(io_overhang, 0);
     }
     if(m_inputs.size())
         y_pos -= section_lead - lead;
@@ -572,7 +574,7 @@ void Node::refreshLayout(){
         prev_height = roundA(std::max(pvp->bbox().max.y, blob->bbox().max.y) -
                              std::min(pvp->bbox().min.y, blob->bbox().min.y));
 
-        m_back |= blob->bbox() + blob->m_pos + Point(io_overhang, 0);
+        m_back |= blob->bbox() + blob->m_pos + cauv::gui::Point(io_overhang, 0);
         m_back |= pvp->bbox() + pvp->m_pos;
     }
     if(m_params.size())
@@ -601,7 +603,7 @@ void Node::refreshLayout(){
             r->m_pos.x = m_back.min.x - r->bbox().min.x;
         else
             r->m_pos.x = m_back.max.x + io_overhang - r->bbox().max.x;
-        m_back |= r->bbox() + r->m_pos - Point(io_overhang, 0);
+        m_back |= r->bbox() + r->m_pos - cauv::gui::Point(io_overhang, 0);
         prev_height = roundA(r->bbox().h());    }
 
     m_back.min.y -= border;

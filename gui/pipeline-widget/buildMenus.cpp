@@ -24,6 +24,7 @@
 #include <img-pipeline/nodeFactory.h>
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 struct SendAddNodeMessage{
@@ -65,5 +66,6 @@ boost::shared_ptr<Menu> buildAddNodeMenu(pw_ptr_t p){
 }
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 

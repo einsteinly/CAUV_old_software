@@ -35,6 +35,7 @@
 #include "../util.h"
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 // nasty solution, but TexImg objects might be destroyed in threads other than
@@ -74,14 +75,14 @@ class TexImg{
                 Textures_For_Deleting.push_back(m_tex_id);
         }
         
-        void draw(BBox const& b){
+        void draw(cauv::gui::BBox const& b){
             if(!m_tex_id && m_img)
                 _genTexture();
 
             if(m_tex_id){
                 glEnable(GL_TEXTURE_2D);
                 glBindTexture(GL_TEXTURE_2D, m_tex_id);
-                glColor(Colour(1));
+                glColor(cauv::gui::Colour(1));
                 glBegin(GL_QUADS);
                 glTexCoord2d(0.0,1.0); glVertex2d(b.min.x, b.min.y);
                 glTexCoord2d(1.0,1.0); glVertex2d(b.max.x, b.min.y);
@@ -90,7 +91,7 @@ class TexImg{
                 glEnd();
                 glDisable(GL_TEXTURE_2D);
             }else{
-                glColor(Colour(1, 0, 0, 0.5));
+                glColor(cauv::gui::Colour(1, 0, 0, 0.5));
                 glBox(b);
             }
         }
@@ -203,12 +204,13 @@ class TexImg{
 };
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
-using namespace cauv::pw;
+using namespace cauv::gui::pw;
 
 Img::Img(container_ptr_t c)
-    : Resizeable(c, BBox(0, 0, 300, 200), BBox(10, 10), BBox(1200, 800)){
+    : Resizeable(c, cauv::gui::BBox(0, 0, 300, 200), cauv::gui::BBox(10, 10), cauv::gui::BBox(1200, 800)){
 }
 
 void Img::draw(drawtype_e::e flags){
@@ -216,7 +218,7 @@ void Img::draw(drawtype_e::e flags){
     // delete any textures waiting to be deleted
     Textures_For_Deleting.deleteAndClear();
     
-    glColor(Colour(0.6, 0.05, 0.1, 0.5));
+    glColor(cauv::gui::Colour(0.6, 0.05, 0.1, 0.5));
     glBox(m_bbox);
     
     CAUV_LOCK(m_img_mutex) {
