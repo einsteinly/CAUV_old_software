@@ -20,52 +20,56 @@
 
 const static double Small_Value_D = 1e-6;
 
+namespace cauv{
+namespace gui{
 template<>
 const float ColourValueTraits<float>::min = 0.0f;
 template<>
 const float ColourValueTraits<float>::max = 1.0f;
+} //namespace gui
+} //namespace cauv
 
-void glTranslatef(Point const& p, double const& z){
+void glTranslatef(cauv::gui::Point const& p, double const& z){
     glTranslatef(p.x, p.y, z);
 }
 
-void glVertex(Point const& p){
+void glVertex(cauv::gui::Point const& p){
     glVertex2f(p.x, p.y);
 }
 
-static void _glBox(BBox const& b){
+static void _glBox(cauv::gui::BBox const& b){
     glVertex2f(b.min.x, b.max.y);
     glVertex2f(b.min.x, b.min.y);
     glVertex2f(b.max.x, b.min.y);
     glVertex2f(b.max.x, b.max.y);
 }
 
-void glBox(BBox const& b, double const& cr, unsigned corner_segs){
+void glBox(cauv::gui::BBox const& b, double const& cr, unsigned corner_segs){
     if(cr < Small_Value_D){
         glBegin(GL_QUADS);
         _glBox(b);
         glEnd();
     }else{
         glBegin(GL_QUADS);
-            _glBox(BBox(b.min + Point(cr, cr), b.max - Point(cr, cr)));
+            _glBox(cauv::gui::BBox(b.min + cauv::gui::Point(cr, cr), b.max - cauv::gui::Point(cr, cr)));
 
-            _glBox(BBox(b.min.x     , b.min.y + cr, b.min.x + cr, b.max.y - cr));
-            _glBox(BBox(b.max.x - cr, b.min.y + cr, b.max.x     , b.max.y - cr));
-            _glBox(BBox(b.min.x + cr, b.min.y     , b.max.x - cr, b.min.y + cr));
-            _glBox(BBox(b.min.x + cr, b.max.y - cr, b.max.x - cr, b.max.y     ));
+            _glBox(cauv::gui::BBox(b.min.x     , b.min.y + cr, b.min.x + cr, b.max.y - cr));
+            _glBox(cauv::gui::BBox(b.max.x - cr, b.min.y + cr, b.max.x     , b.max.y - cr));
+            _glBox(cauv::gui::BBox(b.min.x + cr, b.min.y     , b.max.x - cr, b.min.y + cr));
+            _glBox(cauv::gui::BBox(b.min.x + cr, b.max.y - cr, b.max.x - cr, b.max.y     ));
         glEnd();
         
         glPushMatrix();
-            glTranslatef(Point(b.min.x + cr, b.min.y + cr));
+            glTranslatef(cauv::gui::Point(b.min.x + cr, b.min.y + cr));
             glSegment(cr, -180, -90, corner_segs);
 
-            glTranslatef(Point(b.w() - 2*cr, 0));
+            glTranslatef(cauv::gui::Point(b.w() - 2*cr, 0));
             glSegment(cr, 90, 180, corner_segs);
             
-            glTranslatef(Point(0, b.h() - 2*cr));
+            glTranslatef(cauv::gui::Point(0, b.h() - 2*cr));
             glSegment(cr, 0, 90, corner_segs);
 
-            glTranslatef(Point(2*cr - b.w(), 0));
+            glTranslatef(cauv::gui::Point(2*cr - b.w(), 0));
             glSegment(cr, -90, 0, corner_segs);
         glPopMatrix();
     }
@@ -109,24 +113,24 @@ void glCircleOutline(double const& radius, unsigned segments){
     glArc(radius, 0, 360, segments);
 }
 
-void glVertices(std::vector<Point> const& points){
-    std::vector<Point>::const_iterator i;
+void glVertices(std::vector<cauv::gui::Point> const& points){
+    std::vector<cauv::gui::Point>::const_iterator i;
     for(i = points.begin(); i != points.end(); i++)
         glVertex(*i);
 }
 
-static std::vector<Point> linearInterp(Point const& a, Point const& b, int segments){
+static std::vector<cauv::gui::Point> linearInterp(cauv::gui::Point const& a, cauv::gui::Point const& b, int segments){
     float w = 1.0f;
     const float w_inc = 1.0f/segments;
-    std::vector<Point> r;
+    std::vector<cauv::gui::Point> r;
     for(int i = 0; i <= segments; i++, w-=w_inc)
         r.push_back(a * w + b * (1.0f - w));
     return r;
 }
 
-static std::vector<Point> linearInterp(std::vector<Point> const& a, std::vector<Point> const& b){
-    std::vector<Point> r;
-    std::vector<Point>::const_iterator i, j;
+static std::vector<cauv::gui::Point> linearInterp(std::vector<cauv::gui::Point> const& a, std::vector<cauv::gui::Point> const& b){
+    std::vector<cauv::gui::Point> r;
+    std::vector<cauv::gui::Point>::const_iterator i, j;
     float w = 1.0f;
     const float w_inc = 1.0f/(a.size()-1);
     for(i=a.begin(), j=b.begin(); i!=a.end() && j!=b.end(); i++, j++, w-=w_inc)
@@ -134,22 +138,22 @@ static std::vector<Point> linearInterp(std::vector<Point> const& a, std::vector<
     return r;
 }
 
-void glBezier(Point const& a, Point const& b, Point const& c, Point const& d, int segments){
-    std::vector<Point> ab = linearInterp(a, b, segments);
-    std::vector<Point> bc = linearInterp(b, c, segments);
-    std::vector<Point> cd = linearInterp(c, d, segments);
-    std::vector<Point> abbc = linearInterp(ab, bc);
-    std::vector<Point> bccd = linearInterp(bc, cd);
+void glBezier(cauv::gui::Point const& a, cauv::gui::Point const& b, cauv::gui::Point const& c, cauv::gui::Point const& d, int segments){
+    std::vector<cauv::gui::Point> ab = linearInterp(a, b, segments);
+    std::vector<cauv::gui::Point> bc = linearInterp(b, c, segments);
+    std::vector<cauv::gui::Point> cd = linearInterp(c, d, segments);
+    std::vector<cauv::gui::Point> abbc = linearInterp(ab, bc);
+    std::vector<cauv::gui::Point> bccd = linearInterp(bc, cd);
     glVertices(linearInterp(abbc, bccd));
 }
 
-void glBezier(Point const& a, Point const& b, Point const& c, int segments){
-    std::vector<Point> ab = linearInterp(a, b, segments);
-    std::vector<Point> bc = linearInterp(b, c, segments);
+void glBezier(cauv::gui::Point const& a, cauv::gui::Point const& b, cauv::gui::Point const& c, int segments){
+    std::vector<cauv::gui::Point> ab = linearInterp(a, b, segments);
+    std::vector<cauv::gui::Point> bc = linearInterp(b, c, segments);
     glVertices(linearInterp(ab, bc));
 }
 
-void glColor(Colour const& c){
+void glColor(cauv::gui::Colour const& c){
     glColor4fv(c.rgba);
 }
 

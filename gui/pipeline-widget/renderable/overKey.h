@@ -17,6 +17,7 @@
 #include "../container.h"
 
 namespace cauv{
+namespace gui{
 namespace pw{
 namespace ok{
 
@@ -194,6 +195,7 @@ class OverKey: public Renderable,
 
 } // namespace ok
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __OVERKEY_RENDERABLE_H__

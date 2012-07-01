@@ -23,6 +23,7 @@
 #include "pwTypes.h"
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 class Renderable{
@@ -73,6 +74,7 @@ class Renderable{
 };
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __RENDERABLE_H__

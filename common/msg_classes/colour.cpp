@@ -14,6 +14,8 @@
 
 #include "colour.h"
 
+#include <limits>
+
 float cauv::Colour::r() const {
     switch (type) {
         case ColourType::RGB:
@@ -79,3 +81,23 @@ float cauv::Colour::grey() const {
     }    
 }
 
+cauv::Colour cauv::Colour::fromRGB(float r, float g, float b) {
+    boost::array<float,4> values = {{r,g,b,0}};    
+    return cauv::Colour(ColourType::RGB, values);
+}
+cauv::Colour cauv::Colour::fromARGB(float a, float r, float g, float b) {
+    boost::array<float,4> values = {{a,r,g,b}};    
+    return cauv::Colour(ColourType::RGB, values);
+}
+cauv::Colour cauv::Colour::fromBGR(float b, float g, float r) {
+    boost::array<float,4> values = {{b,g,r,0}};    
+    return cauv::Colour(ColourType::RGB, values);
+}
+cauv::Colour cauv::Colour::fromBGRA(float b, float g, float r, float a) {
+    boost::array<float,4> values = {{b,g,r,a}};    
+    return cauv::Colour(ColourType::RGB, values);
+}
+cauv::Colour cauv::Colour::fromGrey(float grey) {
+    boost::array<float,4> values = {{grey,0,0,0}};    
+    return cauv::Colour(ColourType::RGB, values);
+}

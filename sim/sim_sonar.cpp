@@ -17,11 +17,11 @@ SimSonar::SimSonar (osg::Node *track_node,
                     osg::Vec3d axis1, float angle1,
                     osg::Vec3d axis2, float angle2,
                     osg::Vec3d axis3, float angle3,
-                    unsigned int width_, unsigned int height_,
+                    unsigned int width_,
                     CauvNode *sim_node_,
                     unsigned int max_rate) :
            sim_node(sim_node_),
-           width(width_), height(height_), resolution(300),
+           width(width_), height(width_), resolution(300),
            range(20), fovx(120), fovy(10),
            output_limit(1, max_rate),
            viewer(new osgViewer::Viewer()),
@@ -29,6 +29,7 @@ SimSonar::SimSonar (osg::Node *track_node,
            camera(viewer->getCamera()),
            fixed_manip(new cauv::FixedNodeTrackerManipulator)
 {
+    height = width*std::tan(fovy*M_PI/180)/std::tan(fovx/2*M_PI/180);
     viewer->setUpViewInWindow(0,0,width,height);
     image->allocateImage(width, height, 1, GL_DEPTH_COMPONENT, GL_FLOAT);
     image->setOrigin(osg::Image::BOTTOM_LEFT);
@@ -47,7 +48,7 @@ SimSonar::SimSonar (osg::Node *track_node,
 void SimSonar::setup(osg::Node *root) {
     viewer->setSceneData(root);
     camera->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
-    camera->setProjectionMatrixAsPerspective(fovy*2,fovx/fovy/2,0.5,range * 10); 
+    camera->setProjectionMatrixAsPerspective(fovy*2,std::tan(fovx/2*M_PI/180)/std::tan(fovy*M_PI/180),0.5,range * 10); 
     viewer->realize();
 }
 
@@ -58,12 +59,20 @@ void SimSonar::tick(double timestamp) {
         image->flipVertical();
         std::vector<uint8_t> beams(resolution * width);
         cv::Mat data = cv::Mat(height, width, CV_32F, image->data(), 0);
+        //near plane
         const float near = 0.5;
+        //far plane
         const float far = range * 10;
         std::vector<int32_t> bearings(width);
+        //     /|
+        //    / |
+        //   /  |
+        //  /   | near_width
+        // /_a__|_____ a=radians(fovx/2)
+        //  near
         float near_width = near * std::tan(fovx/2 / 360.0 * 2 * M_PI);
         for (unsigned int x = 0; x < width; x++) {
-            float bearing = std::atan2(((float)x/width - 0.5) * near_width, near);
+            float bearing = std::atan2(((float)x/width - 0.5) * 2 * near_width, near);
             bearings[x] = bearing / (2 * M_PI) * 6400 * 0x10000;
             float scale = 1/std::cos(bearing);
             for (unsigned int y = height/2; y < height; y++) {

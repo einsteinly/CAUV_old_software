@@ -20,7 +20,8 @@
 
 #include "renderable.h"
 
-using namespace cauv::pw;
+using namespace cauv::gui;
+using namespace cauv::gui::pw;
 
 renderable_ptr_t Container::pick(Point const& p){
     renderable_list_t::const_iterator i;

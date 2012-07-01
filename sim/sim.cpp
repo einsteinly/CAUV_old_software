@@ -146,7 +146,7 @@ void SimNode::onRun(void) {
               osg::Vec3d(1,0,0), M_PI/2,
               osg::Vec3d(0,0,0), 0,
               osg::Vec3d(0,0,0), 0,
-              512, 512,
+              512,
               this, CameraID::Forward,
               max_rate);
 
@@ -155,7 +155,7 @@ void SimNode::onRun(void) {
               osg::Vec3d(0,0,0), M_PI/2,
               osg::Vec3d(0,0,0), M_PI/2,
               osg::Vec3d(0,0,0), 0,
-              512, 512,
+              512,
               this, CameraID::Down,
               max_rate);
 
@@ -164,7 +164,7 @@ void SimNode::onRun(void) {
               osg::Vec3d(1,0,0), -M_PI,
               osg::Vec3d(0,0,0), 0,
               osg::Vec3d(0,0,0), 0,
-              512, 512,
+              512,
               this, CameraID::Up,
               max_rate);
 
@@ -176,7 +176,7 @@ void SimNode::onRun(void) {
                   osg::Vec3d(1,0,0), M_PI/2,
                   osg::Vec3d(0,0,0), 0,
                   osg::Vec3d(0,0,0), 0,
-                  200, 50,
+                  300,
                   this,
                   max_rate);
     }

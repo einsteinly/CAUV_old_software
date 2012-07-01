@@ -28,6 +28,7 @@ struct NodeInput;
 struct LocalNodeInput;
 struct LocalNodeOutput;
 
+namespace gui{
 namespace pw{
 
 class Node: public Draggable,
@@ -148,6 +149,7 @@ class Node: public Draggable,
 };
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __NODE_RENDERABLE_H__

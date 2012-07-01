@@ -13,13 +13,14 @@ SimCamera::SimCamera (osg::Node *track_node,
                       osg::Vec3d axis1, float angle1,
                       osg::Vec3d axis2, float angle2,
                       osg::Vec3d axis3, float angle3,
-                      unsigned int width_, unsigned int height_,
+                      unsigned int width_,
                       CauvNode *sim_node_,
                       CameraID::e id,
                       unsigned int max_rate) :
            sim_node(sim_node_),
            cam_id(id),
-           width(width_), height(height_),
+           width(width_),
+           height(width_),
            output_limit(1, max_rate),
            viewer(new osgViewer::Viewer()),
            image(new osg::Image()),
@@ -43,6 +44,7 @@ SimCamera::SimCamera (osg::Node *track_node,
 
 void SimCamera::setup(osg::Node *root) {
     viewer->setSceneData(root);
+    camera->setProjectionMatrixAsPerspective(60,1,0.5,100); 
     viewer->realize();
 }
 

@@ -18,6 +18,7 @@
 #include "../renderable.h"
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 class Draggable: public Renderable{
@@ -37,6 +38,7 @@ class Draggable: public Renderable{
 };
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __DRAGGABLE_RENDERABLE_H__

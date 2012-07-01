@@ -141,7 +141,7 @@ class track_wall(aiTask):
         script_name = 'track_wall'
         priority = 3
     conditions = [
-        (c['stateCondition'], {'state': False}),
+        (c['stateCondition'], {'state': True}),
         ]
 
 class surface(aiTask):

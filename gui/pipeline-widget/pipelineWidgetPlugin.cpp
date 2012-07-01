@@ -17,7 +17,7 @@
 
 #include <QtPlugin>
 
-using namespace cauv::pw;
+using namespace cauv::gui::pw;
 
 Q_EXPORT_PLUGIN2(customwidgetplugin, PipelineWidgetPlugin)
 

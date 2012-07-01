@@ -62,8 +62,8 @@ void PipelineListingObserver::onPipelineDiscoveryResponseMessage(PipelineDiscove
 
 
 PipelineCauvWidget::PipelineCauvWidget() :
-        m_pipeline(new pw::PipelineWidget()),
-        m_observer(boost::make_shared<pw::PipelineGuiMsgObs>(m_pipeline)),
+        m_pipeline(new gui::pw::PipelineWidget()),
+        m_observer(boost::make_shared<gui::pw::PipelineGuiMsgObs>(m_pipeline)),
         ui(new Ui::PipelineCauvWidget())
 {
     ui->setupUi(this);

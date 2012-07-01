@@ -20,10 +20,10 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    cauv::pw::PipelineWidget *w = new cauv::pw::PipelineWidget();
+    cauv::gui::pw::PipelineWidget *w = new cauv::gui::pw::PipelineWidget();
 
     // start the cauv node thread
-    boost::thread(cauv::pw::spawnPGCN, w, argc, argv),
+    boost::thread(cauv::gui::pw::spawnPGCN, w, argc, argv),
 
     w->show();
     return app.exec();
