@@ -21,6 +21,7 @@
 #include <list>
 #include <set>
 #include <utility>
+#include <boost/array.hpp>
 
 namespace std{
 
@@ -80,6 +81,19 @@ template<typename T1, typename T2, typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, std::pair<T1, T2> const& a){
     os << "{" << a.first << "," << a.second << "}";
+    return os;
+}
+
+template<typename T, typename char_T, typename traits, size_t Size>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, boost::array<T,Size> const& a){
+    os << "array[" << a.size() << "] {";
+    for(typename boost::array<T,Size>::const_iterator i = a.begin(); i != a.end();){
+        os << *i;
+        if(++i != a.end())
+            os << ", ";
+    }
+    os << "}";
     return os;
 }
 

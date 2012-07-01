@@ -21,6 +21,7 @@
 #include <string>
 #include <iomanip>
 
+#include <boost/array.hpp>
 #include <boost/cstdint.hpp>
 
 #include "serialisation-types.h"
@@ -222,6 +223,11 @@ inline void serialise(svec_ptr_cref p, std::map<S,T> const& v);
 template<typename S, typename T>
 inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, std::map<S,T>& v);
 
+template<typename T, size_t Size>
+inline void serialise(svec_ptr_cref p, boost::array<T,Size> const& CAUV_RESTRICT v);
+template<typename T, size_t Size>
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, boost::array<T,Size>& v);
+
 
 template<typename T>
 inline void serialise(svec_ptr_cref p, std::vector<T> const& CAUV_RESTRICT v){
@@ -339,6 +345,33 @@ inline std::string chil(std::map<S,T> const& V){
         if(++i != V.end())
             r << ",";
     }
+    return r << ")";
+}
+
+template<typename T, size_t Size>
+inline void serialise(svec_ptr_cref p, boost::array<T,Size> const& CAUV_RESTRICT v){
+    for(size_t i = 0; i < Size; i++)
+        serialise(p, v[i]);
+}
+
+template<typename T, size_t Size>
+inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, boost::array<T,Size>& CAUV_RESTRICT v){
+    int32_t b = i;
+    for(size_t j = 0; j < Size; j++){
+        b += deserialise(p, b, v[j]);
+    }
+    return b - i;
+}
+
+template<typename T, size_t Size>
+inline std::string chil(boost::array<T,Size> const& V){
+    mkStr r;
+    r << "(";
+    std::size_t i;
+    for(i = 0; i < Size-1; i++)
+        r << chil(V[i]) << ",";
+    if(i+1 == Size)
+        r << chil(V[i]);
     return r << ")";
 }
 
