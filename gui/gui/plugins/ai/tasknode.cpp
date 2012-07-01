@@ -174,7 +174,6 @@ LiquidTaskNode::~LiquidTaskNode() {
 }
 
 void LiquidTaskNode::highlightRunningStatus(QVariant status){
-    info() << "running status " << status.toBool();
     if(status.toBool())
         m_status_highlight->setBrush(QBrush(QColor(92,205,92)));
     else
@@ -184,9 +183,10 @@ void LiquidTaskNode::highlightRunningStatus(QVariant status){
 void LiquidTaskNode::buildContents(){
 
     // incoming dependencies
-    /*
+
     foreach(boost::shared_ptr<AiConditionNode> const& condition, m_node->getConditions()){
         LiquidConditionNode * conditionNode = LiquidConditionNode::liquidNode(condition);
+        if(!conditionNode) continue;
         //conditionNode->setPos(pos().x()-(conditionNode->size().width() + 30), pos().y());
         liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
                                                       new liquid::RejectingConnectionSink());
@@ -199,6 +199,7 @@ void LiquidTaskNode::buildContents(){
 
     foreach(boost::shared_ptr<FluidityNode> const& pipeline, m_node->getPipelines()){
         LiquidFluidityNode * pipelineNode = LiquidFluidityNode::liquidNode(pipeline);
+        if(!pipelineNode) continue;
         liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
                                                       new liquid::RejectingConnectionSink());
         liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,
@@ -207,7 +208,7 @@ void LiquidTaskNode::buildContents(){
         this->addItem(label);
         pipelineNode->source()->arc()->addTo(label->sink());
     }
-*/
+
     // the item view
     header()->setTitle(QString::fromStdString(m_node->nodeName()));
     header()->setInfo(QString::fromStdString(m_node->nodePath()));

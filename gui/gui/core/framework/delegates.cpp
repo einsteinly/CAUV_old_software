@@ -101,14 +101,14 @@ const QRect DefaultNodeDelegate::titleRect(const QStyleOptionViewItem& option,
     QRect out = option.rect;
     out.setLeft(out.left()+6);
     out.setRight(out.right() -6);
-    out.setTop(out.top()+2);
+    out.setTop(out.top()+3);
 
     // and enough space for the text
     QFontMetrics fm(m_font);
     int titleHeight = fm.height();
     int titleWidth = fm.width(QString::fromStdString(node->nodeName()), -1, Qt::TextSingleLine);
 
-    return QRect(out.x(), out.y(), titleWidth, titleHeight);
+    return QRect(out.x(), out.y(), std::max(titleWidth, 62), titleHeight);
 }
 
 const QRect DefaultNodeDelegate::childRect(const QStyleOptionViewItem& option,
@@ -173,7 +173,7 @@ int DefaultNodeDelegate::split(const QStyleOptionViewItem &option,
                 index.internalPointer())->shared_from_this();
     boost::shared_ptr<NodeDelegate> delegate = getDelegate(node);
     if (dynamic_cast<ShortDelegate*>(delegate.get()))
-        return std::max(titleRect(option, index).width(), 62);
+        return titleRect(option, index).width();
     else return 0;
 }
 
@@ -212,14 +212,14 @@ ShortDelegate::ShortDelegate(QObject * parent) : NodeDelegate(parent) {}
 
 QSize ShortDelegate::sizeHint(const QStyleOptionViewItem &,
                               const QModelIndex &) const{
-    return QSize(200, 25);
+    return QSize(150, 25);
 }
 
 TallDelegate::TallDelegate(QObject * parent) : NodeDelegate(parent) {}
 
 QSize TallDelegate::sizeHint(const QStyleOptionViewItem &,
                              const QModelIndex &) const{
-    return QSize(200, 38);
+    return QSize(150, 38);
 }
 
 
@@ -242,7 +242,7 @@ NumericDelegate::NumericDelegate(bool showTitle, QObject *parent) :
 
 bool NumericDelegate::providesTitle(const QStyleOptionViewItem &,
                                     const QModelIndex &) const{
-    return true;
+    return m_titles;
 }
 
 void NumericDelegate::paint(QPainter *painter,
@@ -365,5 +365,5 @@ void BooleanDelegate::commit() {
 
 QSize BooleanDelegate::sizeHint(const QStyleOptionViewItem &,
                              const QModelIndex &) const{
-    return QSize(60, 25);
+    return QSize(65, 25);
 }

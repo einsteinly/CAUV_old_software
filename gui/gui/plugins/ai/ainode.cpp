@@ -69,34 +69,12 @@ QGraphicsItem * AiDropHandler::handle(boost::shared_ptr<Node> const& node) {
     }
 
     if (node->type == nodeType<AiTaskNode>()) {
-        LiquidTaskNode* liquidNode = LiquidTaskNode::liquidNode(
-                    boost::static_pointer_cast<AiTaskNode>(node));
-        node->connect(liquidNode, SIGNAL(closed(LiquidNode*)), this, SLOT(nodeClosed(LiquidNode*)));
-        return liquidNode;
+        return LiquidTaskNode::liquidNode(boost::static_pointer_cast<AiTaskNode>(node));
     }
 
     if (node->type == nodeType<AiConditionNode>()) {
-        LiquidConditionNode* liquidNode = LiquidConditionNode::liquidNode(
-                    boost::static_pointer_cast<AiConditionNode>(node));
-        node->connect(liquidNode, SIGNAL(closed(LiquidNode*)), this, SLOT(nodeClosed(LiquidNode*)));
-        return liquidNode;
+        return LiquidConditionNode::liquidNode(boost::static_pointer_cast<AiConditionNode>(node));
     }
 
-    return new AiNode();
-}
-
-
-void AiDropHandler::nodeClosed(liquid::LiquidNode * node) {
-    if(LiquidTaskNode * task = dynamic_cast<LiquidTaskNode*>(node)){
-        if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
-            cauvNode->send(boost::make_shared<RemoveTaskMessage>(
-                               task->taskId()));
-        }
-    }
-    if(LiquidConditionNode * cond = dynamic_cast<LiquidConditionNode*>(node)){
-        if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
-            cauvNode->send(boost::make_shared<RemoveConditionMessage>(
-                               cond->conditionId()));
-        }
-    }
+    return NULL;
 }

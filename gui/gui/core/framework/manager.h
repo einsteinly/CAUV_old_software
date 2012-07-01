@@ -44,7 +44,8 @@ public:
     typedef std::map<boost::shared_ptr<Node>, T*> t_map;
 
     void unregister(boost::shared_ptr<Node> const& node){
-        unregister(m_mapping[node]);
+        if(m_mapping.find(node) != m_mapping.end())
+            unregister(m_mapping[node]);
     }
 
     void unregister(T* ln){

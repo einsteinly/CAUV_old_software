@@ -35,7 +35,7 @@ struct LocalNodeInput;
 
 namespace gui{
 
-class SingleNodeItemModel;
+class NodeItemModel;
 class NodeTreeView;
 class Node;
 
@@ -103,8 +103,9 @@ class FNodeParamInput: public FNodeInput{
         SubType m_subtype;
         std::set<int32_t> m_compatible_subtypes;
         
-        SingleNodeItemModel* m_model;
+        NodeItemModel* m_model;
         boost::shared_ptr<Node> m_model_node;
+        boost::shared_ptr<Node> m_model_root;
         NodeTreeView* m_view;
         QGraphicsProxyWidget* m_view_proxy;
 };

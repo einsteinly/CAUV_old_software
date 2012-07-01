@@ -33,14 +33,36 @@ using namespace std;
 using namespace cauv;
 
 
+struct Application : public QApplication{
+
+    Application(int &argc, char **argv):
+        QApplication(argc, argv){
+
+    }
+
+    bool notify(QObject * rec, QEvent * ev)
+    {
+      try
+      {
+        return QApplication::notify(rec,ev);
+      }
+      catch(std::exception & e)
+      {
+            error() << "Exception from signal / slot:" << e.what();
+            exit(1);
+      }
+      return false;
+    }
+};
+
 
 int main(int argc, char** argv)
 {
-    QApplication app(argc, argv);
+    Application app(argc, argv);
     Q_INIT_RESOURCE(resources);
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
-    QApplication::setStyle(new cauv::gui::CauvStyle());
+    Application::setStyle(new cauv::gui::CauvStyle());
 
     QFile qss(":/resources/stylesheet.qss");
     qss.open(QFile::ReadOnly);

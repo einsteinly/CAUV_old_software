@@ -75,51 +75,8 @@ void AiPlugin::initialise(){
     connect(reload, SIGNAL(reloadAiRequest()), this, SLOT(reloadAi()));
 
     m_actions->scene->registerDropHandler(boost::make_shared<AiDropHandler>(m_actions->root, m_actions->node));
-
     m_actions->nodes->registerDelegate(nodeType<AiTaskNode>(), boost::make_shared<NumericDelegate>());
-
     m_actions->nodes->registerListFilter(m_filter);
-
-        /*
-
-
-        AiNode *node = new AiNode();
-        node->addItem(new liquid::ArcSink(Image_Arc_Style(), Required_Image_Input(), new liquid::RejectingConnectionSink()));
-        node->addItem(new liquid::ArcSink(Image_Arc_Style(), Required_Image_Input(), new liquid::RejectingConnectionSink()));
-        node->addItem(new liquid::ArcSink(Image_Arc_Style(), Required_Image_Input(), new liquid::RejectingConnectionSink()));
-        QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
-        proxy->setWidget(new NodePicker(m_actions->auv));
-        node->addItem(proxy);
-        node->setResizable(true);
-        m_actions->scene->addItem(node);
-
-
-        AiNode *node1 = new AiNode();
-        QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
-        NodeTreeView * view = new NodeTreeView();
-        view->setModel(m_actions->root.get());
-        view->setDragEnabled(true);
-        view->addNumericDelegateToColumn(1);
-        proxy->setWidget(view);
-        node1->addItem(proxy);
-        node1->setResizable(true);
-        m_actions->scene->addItem(node1);
-
-
-        AiNode *node3 = new AiNode();
-        QGraphicsProxyWidget * proxy3 = new QGraphicsProxyWidget();
-        NodeTreeView * view3 = new NodeTreeView();
-        view3->setModel(m_actions->root.get());
-        view3->setDragEnabled(true);
-        view3->setRootIndex(m_actions->root->indexFromNode(VehicleRegistry::instance()->find<Node>("redherring")));
-        view3->addNumericDelegateToColumn(1);
-        proxy3->setWidget(view3);
-        node3->addItem(proxy3);
-        node3->setResizable(true);
-        m_actions->scene->addItem(node3);
-
-
-*/
 
 }
 
@@ -130,11 +87,9 @@ void AiPlugin::setupTask(boost::shared_ptr<Node> node){
                     SetTaskStateMessage> >(node->to<AiTaskNode>())
                     );
         //m_filter->addNode(node);
-        m_actions->scene->addItem(new LiquidTaskNode(node->to<AiTaskNode>()));
-        //m_actions->scene->onNodeDroppedAt(node, m_actions->view->mapToScene(
-        //                                        m_actions->view->mapFromGlobal(
-        //                                          QCursor::pos()
-        //                                          )));
+        LiquidTaskNode * liquidNode = new LiquidTaskNode(node->to<AiTaskNode>());
+        m_actions->scene->addItem(liquidNode);
+        connect(liquidNode, SIGNAL(closed(LiquidNode*)), this, SLOT(nodeClosed(LiquidNode*)));
     } catch(std::runtime_error& e) {
         error() << "AiPlugin::setupTask: Expecting AiTaskNode" << e.what();
 
@@ -147,12 +102,10 @@ void AiPlugin::setupCondition(boost::shared_ptr<Node> node){
                     boost::make_shared<MessageGenerator<AiConditionNode,
                     SetConditionStateMessage> >(node->to<AiConditionNode>())
                     );
-        m_actions->scene->addItem(new LiquidConditionNode(node->to<AiConditionNode>()));
-        //m_actions->scene->onNodeDroppedAt(node, m_actions->view->mapToScene(
-        //                                        m_actions->view->mapFromGlobal(
-        //                                          QCursor::pos()
-        //                                          )));
         //m_filter->addNode(node);
+        LiquidConditionNode * liquidNode = new LiquidConditionNode(node->to<AiConditionNode>());
+        m_actions->scene->addItem(liquidNode);
+        connect(liquidNode, SIGNAL(closed(LiquidNode*)), this, SLOT(nodeClosed(LiquidNode*)));
 
     } catch(std::runtime_error& e) {
         error() << "AiPlugin::setupCondition: Expecting AiTaskNode" << e.what();
@@ -206,6 +159,21 @@ void AiPlugin::reloadAi(){
 
     if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()) {
         cauvNode->send(boost::make_shared<RequestAIStateMessage>());
+    }
+}
+
+void AiPlugin::nodeClosed(liquid::LiquidNode * node) {
+    if(LiquidTaskNode * task = dynamic_cast<LiquidTaskNode*>(node)){
+        if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()){
+            cauvNode->send(boost::make_shared<RemoveTaskMessage>(
+                               task->taskId()));
+        }
+    }
+    if(LiquidConditionNode * cond = dynamic_cast<LiquidConditionNode*>(node)){
+        if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()){
+            cauvNode->send(boost::make_shared<RemoveConditionMessage>(
+                               cond->conditionId()));
+        }
     }
 }
 

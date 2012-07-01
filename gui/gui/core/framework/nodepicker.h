@@ -18,6 +18,7 @@
 #include <QtGui>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include <gui/core/model/nodeFilterInterface.h>
 #include <gui/core/model/nodeType.h>
@@ -64,13 +65,13 @@ public:
 
 public Q_SLOTS:
     virtual bool filter(boost::shared_ptr<Node> const& node);
-    void addNode(boost::shared_ptr<Node> node);
+    void addNode(boost::weak_ptr<Node> node);
 
 Q_SIGNALS:
     void filterChanged();
 
 protected:
-    std::vector<boost::shared_ptr<Node> > m_nodes;
+    std::vector<boost::weak_ptr<Node> > m_nodes;
 };
 
 
@@ -90,15 +91,20 @@ public Q_SLOTS:
 class NodeTreeView : public QTreeView {
     Q_OBJECT
 public:
-    NodeTreeView(bool fixedSize = false, QWidget * parent = 0);
+    NodeTreeView(QWidget * parent = 0);
+    NodeTreeView(bool fixedSize, QWidget * parent = 0);
+    void init();
     virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
     QSize sizeHint() const;
     QSize sizeHint(QModelIndex index) const;
     void setModel(QAbstractItemModel *model);
 
+    void resizeEvent(QResizeEvent *event);
+
 public Q_SLOTS:
     void registerDelegate(node_type nodeType,
                           boost::shared_ptr<NodeDelegate> delegate);
+    void sizeToFit();
 
 private Q_SLOTS:
     void applyFilters();
@@ -106,7 +112,6 @@ private Q_SLOTS:
     bool applyFilters(boost::shared_ptr<Node> const&);
     void toggleExpanded(QModelIndex const&);
     void mouseReleaseEvent(QMouseEvent *event);
-    void resizeToFit();
 
 Q_SIGNALS:
     void onKeyPressed(QKeyEvent *event);
@@ -115,6 +120,7 @@ protected:
     std::vector<boost::shared_ptr<NodeFilterInterface> > m_filters;
     void keyPressEvent(QKeyEvent *event);
     boost::shared_ptr<DefaultNodeDelegate> m_delegateMap;
+    bool m_fixedSize;
 };
 
 

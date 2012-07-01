@@ -277,6 +277,7 @@ void CauvMainWindow::onRun()
     m_actions->view->setContextMenuPolicy(Qt::CustomContextMenu);
     // Set the viewport to use OpenGl here. Nested Gl viewports don't work
     m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
+    m_actions->view->setFocus();
 
     m_actions->scene->registerDropHandler(boost::make_shared<GroupDropHandler>(m_actions->root));
     m_actions->scene->registerDropHandler(boost::make_shared<GraphingDropHandler>(m_actions->root));

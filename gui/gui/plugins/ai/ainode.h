@@ -47,11 +47,6 @@ namespace cauv {
             virtual bool accepts(boost::shared_ptr<Node> const& node);
             virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node);
 
-        private:
-            typedef liquid::LiquidNode LiquidNode;
-        protected Q_SLOTS:
-            void nodeClosed(LiquidNode*);
-
         protected:
             boost::shared_ptr<NodeItemModel> m_model;
             boost::weak_ptr<CauvNode> m_node;

@@ -20,6 +20,8 @@
 
 #include <QObject>
 
+#include <liquid/node.h>
+
 namespace cauv {
     namespace gui {
 
@@ -35,11 +37,13 @@ namespace cauv {
             virtual const QString name() const;
             virtual void initialise();
 
+            typedef liquid::LiquidNode LiquidNode;
         public Q_SLOTS:
             void setupTask(boost::shared_ptr<Node> node);
             void setupCondition(boost::shared_ptr<Node> node);
             void setupVehicle(boost::shared_ptr<Node> node);
             void reloadAi();
+            void nodeClosed(LiquidNode * node);
 
         protected:
             boost::shared_ptr<NodeChildrenExclusionFilter> m_filter;

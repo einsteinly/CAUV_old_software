@@ -102,13 +102,15 @@ NodeExclusionFilter::NodeExclusionFilter(QObject *parent) : QObject(parent){
 }
 
 bool NodeExclusionFilter::filter(boost::shared_ptr<Node> const& node){
-    foreach(boost::shared_ptr<Node> n, m_nodes){
-        if(n.get() == node.get()) return false;
+    foreach(boost::weak_ptr<Node> const& n, m_nodes){
+        if(boost::shared_ptr<Node> nSharedPtr = n.lock()) {
+            if(nSharedPtr.get() == node.get()) return false;
+        }
     }
     return true;
 }
 
-void NodeExclusionFilter::addNode(boost::shared_ptr<Node> node){
+void NodeExclusionFilter::addNode(boost::weak_ptr<Node> node){
     m_nodes.push_back(node);
     Q_EMIT filterChanged();
 }
@@ -117,8 +119,10 @@ NodeChildrenExclusionFilter::NodeChildrenExclusionFilter(QObject *parent) : Node
 }
 
 bool NodeChildrenExclusionFilter::filter(boost::shared_ptr<Node> const& node){
-    foreach(boost::shared_ptr<Node> n, m_nodes){
-        if(n.get() == node->getParent().get()) return false;
+    foreach(boost::weak_ptr<Node> const& n, m_nodes){
+        if(boost::shared_ptr<Node> nSharedPtr = n.lock()) {
+            if(nSharedPtr.get() == node->getParent().get()) return false;
+        }
     }
     return true;
 }
@@ -190,23 +194,26 @@ NodePicker::~NodePicker(){
 }
 
 
+NodeTreeView::NodeTreeView(QWidget *) :
+    m_fixedSize(false)
+{
+    init();
+}
 
-NodeTreeView::NodeTreeView(bool fixedSize, QWidget *) {
+NodeTreeView::NodeTreeView(bool fixedSize, QWidget *) :
+    m_fixedSize(fixedSize) {
+    init();
+}
+
+void NodeTreeView::init() {
     header()->hide();
-    setColumnWidth(0, 200);
-    setIndentation(15);
     setSelectionBehavior(QAbstractItemView::SelectRows);
-    setAllColumnsShowFocus(true);
-    setAnimated(true);
+    //setAnimated(true);
     setSelectionMode(QAbstractItemView::SingleSelection);
     setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    setEditTriggers(QAbstractItemView::EditKeyPressed
-                    //QAbstractItemView::DoubleClicked |
-                    //QAbstractItemView::CurrentChanged |
-                    //QAbstractItemView::SelectedClicked
-                    );
+    setEditTriggers(QAbstractItemView::EditKeyPressed);
 
-    setRootIsDecorated( true );
+    setRootIsDecorated(false);
     setDragEnabled(true);
     setDropIndicatorShown(true);
     setAcceptDrops(false);
@@ -215,23 +222,37 @@ NodeTreeView::NodeTreeView(bool fixedSize, QWidget *) {
     setItemDelegateForColumn(0, m_delegateMap.get());
 
     QPalette p = this->palette();
+    p.setColor(QPalette::Highlight, QColor(0,0,0,0));
     p.setColor(QPalette::Background, QColor(0,0,0,0));
-    //this->setPalette(p);
+    p.setColor(QPalette::HighlightedText, QColor(0,0,0,255));
+    this->setPalette(p);
     this->viewport()->setPalette(p);
-    //this->setBackgroundRole(QPalette::Background);
-    //this->viewport()->setBackgroundRole(QPalette::Background);
-    this->setSelectionMode(QAbstractItemView::NoSelection);
+    this->setBackgroundRole(QPalette::Background);
+    this->viewport()->setBackgroundRole(QPalette::Background);
     this->setFrameShape(QFrame::NoFrame);
     this->setAutoFillBackground(false);
+    this->setMinimumSize(0, 0);
+    this->viewport()->setMinimumSize(0,0);
     setIndentation(3);
 
     connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(toggleExpanded(QModelIndex)));
 
-    if(fixedSize){
-        connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(resizeToFit()));
-        connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(resizeToFit()));
+    if(m_fixedSize){
+        connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(sizeToFit()));
+        connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(sizeToFit()));
         this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        this->viewport()->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
+}
+
+void NodeTreeView::sizeToFit(){
+    //resize(sizeHint());
+    info() << "sizing to fit";
+    //updateGeometry();
+    adjustSize();
+    //updateGeometries();
 }
 
 void NodeTreeView::registerDelegate(node_type nodeType, boost::shared_ptr<NodeDelegate> delegate){
@@ -240,14 +261,12 @@ void NodeTreeView::registerDelegate(node_type nodeType, boost::shared_ptr<NodeDe
 
 void NodeTreeView::setModel(QAbstractItemModel *model){
     QTreeView::setModel(model);
-    resizeToFit();
+    sizeToFit();
 }
 
 void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
-    info() << "NodeTreeView::mouseReleaseEvent";
     QModelIndex index = indexAt(event->pos());
     if(!index.isValid()) {
-        info() << "NodeTreeView::mouseReleaseEvent - invalid index";
         return;
     }
     if(state() != QAbstractItemView::DraggingState &&
@@ -265,48 +284,41 @@ void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
 }
 
 
-void NodeTreeView::resizeToFit() {
-    info() << "resizing to fit";
-    qDebug() << "sizeHint = " <<sizeHint();
-    resize(sizeHint());
-}
-
 QSize NodeTreeView::sizeHint() const {
-    QSize hint = sizeHint(rootIndex());
-    if(!rootIsDecorated()) {
-        QStyleOptionViewItem option;
-        option.initFrom(this);
-        QSize size = m_delegateMap->sizeHint(option, rootIndex());
-        return QSize(hint.width(), hint.height() - size.height());
+    QModelIndex root = rootIndex();
+    int height = 0;
+    int width = 0;
+
+    for(int i = 0; i < model()->rowCount(root); i++){
+        QSize rowSize = sizeHint(root.child(i, 0));
+        height += rowSize.height();
+        width = std::max(width, rowSize.width());
     }
-    return hint;
+
+    qDebug() << "computed size hint = " << QSize(width, height);
+
+    return QSize(width, height);
 }
 
 
 QSize NodeTreeView::sizeHint(QModelIndex index) const {
-    static int depth = 0;
-
-    info() << "depth = " << depth;
-
-    if(!index.isValid()) return QSize();
+    if(!index.isValid()){
+        return QSize(0, 0);
+    }
 
     int rows = model()->rowCount(index);
-    debug() << "rows = " << rows;
-
     QStyleOptionViewItem option;
     option.initFrom(this);
     QSize size = m_delegateMap->sizeHint(option, index);
     int height = size.height();
     int width = size.width();
 
-    for(int i = 0; i < rows; i++){
-        if(index == rootIndex() || isExpanded(index)) {
-            depth++;
+    if(index == rootIndex() || isExpanded(index)) {
+        for(int i = 0; i < rows; i++){
             QSize rowSize = sizeHint(index.child(i, 0));
-            depth--;
             height += rowSize.height();
             width = std::max(width, rowSize.width());
-        } else debug() << "item not expanded";
+        }
     }
 
     return QSize(width + this->indentation(), height);
@@ -319,6 +331,10 @@ void NodeTreeView::toggleExpanded(QModelIndex const& index){
 void NodeTreeView::keyPressEvent(QKeyEvent *event){
     Q_EMIT onKeyPressed(event);
     QTreeView::keyPressEvent(event);
+}
+
+void NodeTreeView::resizeEvent(QResizeEvent *event){
+    info() << "NodeTree resized!";
 }
 
 void NodeTreeView::applyFilters(){

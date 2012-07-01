@@ -25,7 +25,7 @@
 #include <gui/core/model/variants.h>
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/model/nodes/stringnode.h>
-#include <gui/core/model/singleItemModel.h>
+#include <gui/core/model/model.h>
 #include <gui/core/framework/nodepicker.h>
 #include <gui/core/framework/delegates.h>
 
@@ -199,13 +199,16 @@ OutputType::e FNodeParamInput::ioType() const{
     return OutputType::Parameter;
 }
 
-SubType FNodeParamInput::subType() const{ return m_subtype;
+SubType FNodeParamInput::subType() const{
+    return m_subtype;
 }
 
 void FNodeParamInput::setValue(ParamValue const& v){
     if(!m_model){
         m_model_node = makeModelNodeForInput(id(), v);
-        m_model = new SingleNodeItemModel(m_model_node);
+        m_model_root = boost::make_shared<Node>("root", nodeType<Node>());
+        m_model_root->addChild(m_model_node);
+        m_model = new NodeItemModel(m_model_root);
         connect(m_model_node.get(), SIGNAL(onSet(QVariant)), this, SLOT(modelValueChanged(QVariant)));
         initView();
     }
@@ -272,21 +275,21 @@ liquid::CutoutStyle const& FNodeParamInput::cutoutStyleForSchedType(InputSchedTy
 
 void FNodeParamInput::initView(){
     assert(m_model);
-    
-    const int height_hint = 25;
 
     m_view = new NodeTreeView(true);
     m_view->setIndentation(0);
-    m_view->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(true));
-    m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_view->setMinimumSize(QSize(60, height_hint));
-    m_view->setMaximumSize(QSize(1200, 600));
+    m_view->setRootIsDecorated(false);
+    //m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    //m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    //m_view->setMinimumSize(QSize(60, height_hint));
+    //m_view->setMaximumSize(QSize(1200, 600));
     m_view->setModel(m_model);
-    m_view->setColumnWidth(0,120);
+    m_view->updateGeometry();
+    m_view->setRootIndex(m_model->indexFromNode(m_model_root));
+    qDebug() << "size hint = " << m_view->sizeHint();
     //m_view->setRootIndex(m_model->index(0, 0));
     //m_view->resizeColumnToContents(0);
-    m_view->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);    
+    //m_view->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     // !!! TODO: height hint?
     //m_view->resizeRowsToContents();
     m_view->setAutoFillBackground(false);
