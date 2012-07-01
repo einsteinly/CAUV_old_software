@@ -106,6 +106,9 @@ enum NodeType : int8 {
     DrawCircles,
     BroadcastCircles,
     RelabelClusters,
+    FitGaussian,
+    MultiplyAccumulate,
+    ReceiveLines,
 }
 enum NodeStatus : int8 {
     None = 0,

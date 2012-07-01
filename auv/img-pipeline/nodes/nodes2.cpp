@@ -25,6 +25,9 @@
 #include "drawCirclesNode.h"
 #include "broadcastCirclesNode.h"
 #include "relabelClustersNode.h"
+#include "fitGaussianNode.h"
+#include "multiplyAccumulateNode.h"
+#include "receiveLinesNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -54,6 +57,9 @@ DEFINE_NFR(BlobNode, NodeType::Blob);
 DEFINE_NFR(DrawCirclesNode, NodeType::DrawCircles);
 DEFINE_NFR(BroadcastCirclesNode, NodeType::BroadcastCircles);
 DEFINE_NFR(RelabelClustersNode, NodeType::RelabelClusters);
+DEFINE_NFR(FitGaussianNode, NodeType::FitGaussian);
+DEFINE_NFR(MultiplyAccumulateNode, NodeType::MultiplyAccumulate);
+DEFINE_NFR(ReceiveLinesNode, NodeType::ReceiveLines);
 
 } // namespace imgproc
 } // namespace cauv
