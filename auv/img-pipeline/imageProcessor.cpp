@@ -42,6 +42,13 @@ void ImageProcessor::start(std::string const& name){
     m_name = name;
 }
 
+void ImageProcessor::onLinesMessage(LinesMessage_ptr m){
+    lock_t l(m_nodes_lock);
+    std::set<input_node_ptr_t>::iterator i;    
+    for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
+        (*i)->onLinesMessage(m);
+}
+
 void ImageProcessor::onImageMessage(ImageMessage_ptr m){
     lock_t l(m_nodes_lock);
     std::set<input_node_ptr_t>::iterator i;    
