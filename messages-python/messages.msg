@@ -424,6 +424,7 @@ variant ParamValue
     list<floatXY>,
     list<Ellipse>,
     LocationSequence,
+    Colour,
 }
 
 //these are zmq messaging specific

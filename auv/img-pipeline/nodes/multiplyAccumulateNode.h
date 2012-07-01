@@ -12,6 +12,8 @@
 #include "../nodeFactory.h"
 #include "../pipelineTypes.h"
 
+#include <common/msg_classes/colour.h>
+
 namespace cauv{
 namespace imgproc{
 
@@ -30,16 +32,18 @@ class MultiplyAccumulateNode : public Node{
             registerOutputID("image (not copied)");
 
             registerParamID<float>("b", 0, "Multiplier");
-            registerParamID<std::vector<float> >("value", std::vector<float>(), "Value to multiply/accumulate");
+            registerParamID<Colour>("colour", Colour(), "Colour to multiply/accumulate");
         }
 
     protected:
         template<typename T>
-        static void fma(cv::Mat& m, float b, const std::vector<float>& value)
+        static void fma(cv::Mat& m, float b, const Colour& colour)
         {
             int nchannels = m.channels();
-            if (nchannels > (int)value.size())
-                throw parameter_error("not enough channel values");
+            if ((nchannels == 3 && colour.type != ColourType::RGB && colour.type != ColourType::BGR)
+                || (nchannels == 4 && colour.type != ColourType::ARGB && colour.type != ColourType::BGRA)
+                || (nchannels == 1 && colour.type != ColourType::Grey))
+                throw parameter_error("wrong colour type");
 
             // Iterate over all pixels...
             for (cv::MatIterator_<T> it = m.begin<T>(),
@@ -47,14 +51,14 @@ class MultiplyAccumulateNode : public Node{
                  it != itend; ++it) {
                 // .. and all channels per pixel
                 for (int c = 0; c < nchannels; ++c, ++it)
-                    *it = round(*it + b*value[c]); 
+                    *it = round(*it + b*colour.values[c]); 
             }
         }
 
         void doWork(in_image_map_t& inputs, out_map_t& r){
             image_ptr_t img = inputs["image"];
 
-            img->apply(boost::bind(fma<unsigned char>, _1, param<float>("b"), param<std::vector<float> >("value")));
+            img->apply(boost::bind(fma<unsigned char>, _1, param<float>("b"), param<Colour>("colour")));
 
             r["image (not copied)"] = img;
         }
