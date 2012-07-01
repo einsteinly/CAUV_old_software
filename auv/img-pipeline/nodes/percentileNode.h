@@ -77,8 +77,8 @@ class PercentileNode: public Node{
                 int dims[3] = {img.rows, img.cols, channels};
                 size_t steps[2] = {img.step[0], img.step[1]};
                 cv::Mat imgWithChannels(3, dims, CV_8U, img.data, steps);
-                cv::MatConstIterator_<uint8_t> it = imgWithChannels.begin<unsigned char>(),
-                                               end = imgWithChannels.end<unsigned char>();
+                //cv::MatConstIterator_<uint8_t> it = imgWithChannels.begin<unsigned char>(),
+                //                               end = imgWithChannels.end<unsigned char>();
                 // FIXME: opencv bug? iterator version is broken for me on
                 // single channel images (begin+1 == end)
                 /*while(it != end) {

@@ -160,6 +160,17 @@ class VariantType(Expr):
     def add_to_hash(self, hash):
         self.variant.add_to_hash(hash)
 
+class ArrayType(Expr):
+    def __init__(self, valType, size):
+        self.valType = valType
+        self.size = size
+    def __repr__(self):
+        return "%s[%d]" % (self.valType, self.size)
+    def add_to_hash(self, hash):
+        hash.update("array")
+        self.valType.add_to_hash(hash)
+        hash.update(str(self.size))
+
 class ListType(Expr):
     def __init__(self, valType):
         self.valType = valType
@@ -484,6 +495,10 @@ def p_type_list(p):
 def p_type_map(p):
     "type : MAP '<' type ',' type '>'"
     p[0] = MapType(p[3], p[5])
+
+def p_type_array(p):
+    "type : type '[' INT ']'"
+    p[0] = ArrayType(p[1], p[3])
 
 
 

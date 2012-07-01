@@ -78,30 +78,39 @@ class DrawLinesNode: public Node{
                     error() << "WTF kind of image has" << img.channels() << "channels?";
                 }
 
-                const float width = img.cols;
-                const float height = img.rows;
+                const float img_width = img.cols;
+                const float img_height = img.rows;
                 foreach(const Line& line, lines)
                 {
                     float ca = std::cos(line.angle);
                     float sa = std::sin(line.angle);
-                    cv::Point2f c(line.centre.x * width, line.centre.y * height);
-                    cv::Point2f dir(ca,sa);
+                    cv::Point2f c(line.centre.x * img_width, line.centre.y * img_height); //centre
+                    cv::Point2f dir(ca,sa); //direction
 
-                    int width = line.width == 0 ? 1 : round(line.width * width);
+                    int line_width = line.width == 0 ? 1 : round(line.width * img_width);
+                    //     /      /
+                    //    /      /
+                    //   /      /lr
+                    //  /      /
+                    // /      /c
+                    //       /
+                    //      /ll
+                    //     /
+                    ////////////////////////////
 
                     using boost::math::isinf;
                     if (isinf(line.length))
                     {
-                        float t1 = -c.x/dir.x;
-                        float t2 = (width - c.x)/dir.x;
-                        cv::line(out_mat, c + t1*dir, c + t2*dir,
-                                 cv::Scalar(0, 0, 255), width, CV_AA);
+                        float ll = c.x/dir.x;
+                        float lr = (img_width - c.x)/dir.x;
+                        cv::line(out_mat, c - ll*dir, c + lr*dir,
+                                 cv::Scalar(0, 0, 255), line_width, CV_AA);
                     } else {
-                        float l = line.length * width;
+                        float l = line.length * img_width;
 
                         cv::line(out_mat,
                                  c - l/2 * dir, c + l/2 * dir,
-                                 cv::Scalar(0, 0, 255), width, CV_AA);
+                                 cv::Scalar(0, 0, 255), line_width, CV_AA);
                     }
                 }
                 

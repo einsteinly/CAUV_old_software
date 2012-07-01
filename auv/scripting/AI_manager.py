@@ -38,7 +38,7 @@ processes = [
                          {'disable_control'}),
     (wf.Process('task_manager',      '{SDIR}',  wf.node_pid('ai_task_manager'),  wf.restart(3),  None,
                     ["python2.7 {SDIR}/AI_task_manager.py"]),
-                         {'mission', 'restore'}),
+                         {'mission_name', 'restore', 'mission_save'}),
     (wf.Process('location',          '{SDIR}',  wf.node_pid('ai_location'),          wf.restart(3),  None,
                     ["python2.7 {SDIR}/AI_location.py"]),
                          set()),
@@ -56,7 +56,7 @@ class AImanager(object):
                                       ('--' + x if opts[x] else '')
                                       for x in opts if x in pass_args))
             self.processes.append(process)
-        self.watcher = watch.Watcher(self.processes, detach=True)
+        self.watcher = watch.Watcher(self.processes, detach=opts['donotdetach'])
 
     #Overrides EventLoop definition, so no event loop used in this class
     def run(self):
@@ -65,8 +65,10 @@ class AImanager(object):
 parser = argparse.ArgumentParser(description="Manage a group of AI processes")
 parser.add_argument('--disable', action='append', default=[], help="disable process by name")
 p = parser.add_argument_group(title="Arguments passed to subprocesses")
+p.add_argument('-d','--donotdetach',      action='store_false', default=True,     help="do not detach subprocess outputs")
 p.add_argument('-r','--restore',      action='store_true',      help="try and resume from last saved state")
-p.add_argument('-m','--mission',      default='mission',        help='which mission script to run')
+p.add_argument('-m','--mission_name',      default='mission',        help='which mission script to run')
+p.add_argument('-f', '--mission_save', dest='mission_save', default='', action='store', help="load saved state")
 #currently not implemented/not implemented properly
 #p.add_argument('--disable-gui',       action='store_true',      help="disable/ignore gui output nodes")
 #p.add_argument('--disable-control',   action='store_true',      help="stop AI script from controlling the sub")
