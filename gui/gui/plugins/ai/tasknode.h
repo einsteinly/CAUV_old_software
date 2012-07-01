@@ -92,7 +92,10 @@ class AiTaskNode : public BooleanNode {
 
 };
 
-class LiquidTaskNode : public liquid::LiquidNode, public liquid::ArcSourceDelegate, public Manager<LiquidTaskNode>//, public ManagedNode
+class LiquidTaskNode :
+        public liquid::LiquidNode,
+        public liquid::ArcSourceDelegate,
+        public Manager<LiquidTaskNode>
 {
     Q_OBJECT
 public:

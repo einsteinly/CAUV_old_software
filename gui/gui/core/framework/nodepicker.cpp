@@ -135,6 +135,8 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     ui->view->setAcceptDrops(false);
     ui->filter->installEventFilter(new EscapeFilter());
     ui->view->setModel(root.get());
+    ui->view->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+    ui->view->setIndentation(10);
 
     QHBoxLayout * layout = new QHBoxLayout(ui->filter);
     QPushButton * button = new QPushButton("X");
@@ -189,7 +191,7 @@ NodePicker::~NodePicker(){
 
 
 
-NodeTreeView::NodeTreeView(QWidget *) {
+NodeTreeView::NodeTreeView(bool fixedSize, QWidget *) {
     header()->hide();
     setColumnWidth(0, 200);
     setIndentation(15);
@@ -214,24 +216,32 @@ NodeTreeView::NodeTreeView(QWidget *) {
 
     QPalette p = this->palette();
     p.setColor(QPalette::Background, QColor(0,0,0,0));
-    this->setPalette(p);
+    //this->setPalette(p);
     this->viewport()->setPalette(p);
-    this->setBackgroundRole(QPalette::Background);
-    this->viewport()->setBackgroundRole(QPalette::Background);
+    //this->setBackgroundRole(QPalette::Background);
+    //this->viewport()->setBackgroundRole(QPalette::Background);
+    this->setSelectionMode(QAbstractItemView::NoSelection);
     this->setFrameShape(QFrame::NoFrame);
     this->setAutoFillBackground(false);
+    setIndentation(3);
 
     connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(toggleExpanded(QModelIndex)));
-    //connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(resizeToFit()));
-    //connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(resizeToFit()));
 
-    this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+    if(fixedSize){
+        connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(resizeToFit()));
+        connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(resizeToFit()));
+        this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    }
 }
 
 void NodeTreeView::registerDelegate(node_type nodeType, boost::shared_ptr<NodeDelegate> delegate){
     m_delegateMap->registerDelegate(nodeType, delegate);
 }
 
+void NodeTreeView::setModel(QAbstractItemModel *model){
+    QTreeView::setModel(model);
+    resizeToFit();
+}
 
 void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
     info() << "NodeTreeView::mouseReleaseEvent";

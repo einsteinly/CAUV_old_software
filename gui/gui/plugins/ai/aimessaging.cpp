@@ -57,8 +57,6 @@ AiMessageObserver::~AiMessageObserver() {
 }
 
 void AiMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
-    //debug() << "AiMessageObserver::onScriptStateMessage" << *m;
-
     boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
     boost::shared_ptr<AiTaskNode> task = tasks->findOrCreate<AiTaskNode>(m->taskId());
@@ -76,8 +74,6 @@ void AiMessageObserver::onTaskRemovedMessage(TaskRemovedMessage_ptr m){
 }
 
 void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
-    //debug() << "AiMessageObserver::onTaskStateMessage" << *m;
-
     boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
     boost::shared_ptr<AiTaskNode> task = tasks->findOrCreate<AiTaskNode>(m->taskId());
@@ -104,8 +100,6 @@ void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
 }
 
 void AiMessageObserver::onTaskTypesMessage(TaskTypesMessage_ptr m){
-    //debug() << "onTaskTypesMessage" << *m;
-
     boost::shared_ptr<GroupingNode> creation = m_parent->findOrCreate<GroupingNode>("creation");
     boost::shared_ptr<GroupingNode> tasks = creation->findOrCreate<GroupingNode>("ai-tasks");
 
@@ -116,9 +110,6 @@ void AiMessageObserver::onTaskTypesMessage(TaskTypesMessage_ptr m){
 }
 
 void AiMessageObserver::onConditionTypesMessage(ConditionTypesMessage_ptr m){
-
-    //debug() << "onConditionTypes" << *m;
-
     typedef std::vector<std::string> str_list;
 
     boost::shared_ptr<GroupingNode> creation = m_parent->findOrCreate<GroupingNode>("creation");
@@ -131,8 +122,6 @@ void AiMessageObserver::onConditionTypesMessage(ConditionTypesMessage_ptr m){
 }
 
 void AiMessageObserver::onConditionStateMessage(ConditionStateMessage_ptr m){
-    //debug() << "onConditionStateMessage" << *m;
-
     boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
     boost::shared_ptr<AiConditionNode> condition = conditions->findOrCreate<AiConditionNode>(m->conditionId());

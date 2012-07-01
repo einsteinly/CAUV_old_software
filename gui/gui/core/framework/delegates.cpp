@@ -33,6 +33,8 @@ using namespace cauv::gui;
 DefaultNodeDelegate::DefaultNodeDelegate(QObject *):
     m_font("Verdana", 12, 1){
 
+    m_font.setPixelSize(12);
+
     registerDelegate(nodeType<BooleanNode>(), boost::make_shared<BooleanDelegate>());
     registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>());
     registerDelegate(nodeType<StringNode>(), boost::make_shared<TallDelegate>());
@@ -363,5 +365,5 @@ void BooleanDelegate::commit() {
 
 QSize BooleanDelegate::sizeHint(const QStyleOptionViewItem &,
                              const QModelIndex &) const{
-    return QSize(40, 25);
+    return QSize(60, 25);
 }
