@@ -46,9 +46,11 @@ class FileInputNode: public AsynchronousNode{
             
             // one output:
             registerOutputID("image");
+            registerOutputID("fps", 30.0f);
             
             // one parameter: the filename
             registerParamID<std::string>("filename", "default.jpg");
+            registerParamID<bool>("loop", true);
         }
 
         virtual void paramChanged(input_id const& p){
@@ -56,14 +58,15 @@ class FileInputNode: public AsynchronousNode{
             if(p == input_id("filename")){
                 lock_t l(m_dir_mutex);
                 std::string fname = param<std::string>("filename");
+                closeVideo();
                 if(boost::filesystem::is_directory(fname)){
                     m_is_directory = true;
-                    closeVideo();
+                    m_fps = 30;
+                    m_iter = boost::filesystem::directory_iterator();
                 }else{
                     m_is_directory = false;
                     openVideo(fname);
                 }
-                m_iter = boost::filesystem::directory_iterator();
                 setAllowQueue();
             }else{
                 warning() << "unknown parameter" << p << "set";
@@ -75,52 +78,82 @@ class FileInputNode: public AsynchronousNode{
             debug(4) << "fileInputNode::doWork";
         
             std::string fname = param<std::string>("filename");
+            bool loop = param<bool>("loop");
             cv::Mat image;
 
-            if(!m_is_directory){
+            {
                 lock_t cl(m_capture_lock);
-                if(!m_capture.isOpened()){
-                    clearAllowQueue();
-                }else{
+
+                if(m_capture.isOpened()) {
                     m_capture >> image;
-                    if(image.empty()){
-                        debug() << "video stream seems to have finished";
-                        closeVideo();
-                        clearAllowQueue();
+                }
+            }
+                
+            if (image.empty()) {
+                if (!m_is_directory)
+                {
+                    // Reopen file if looping current video
+                    if (loop) {
+                        debug(2) << "Looping video" << fname;
+                        if (openVideo(fname))
+                            m_capture >> image;
                     }
                 }
-            }else{
-                lock_t l(m_dir_mutex);
-                const boost::filesystem::directory_iterator end;
-                if(m_iter == end)
-                    m_iter = boost::filesystem::directory_iterator(fname);
-                // continue until the directory is exhausted, or an image is
-                // successfully loaded
-                for(; m_iter != end; m_iter++){
-                    debug(4)  << "considering path:" << m_iter->path().native();
-                    if(!boost::filesystem::is_directory(m_iter->status())) {
-                        image = cv::imread(m_iter->path().native());
-                        if (!image.empty())
-                        {
-                            m_iter++;
-                            break;
+                else {
+                    lock_t l(m_dir_mutex);
+                    const boost::filesystem::directory_iterator end;
+                   
+                    int loops = 0;
+                    // Try remaining paths
+                    for(; m_iter != end || loop; m_iter++) {
+                        // Loop if needed
+                        if (loop && m_iter == end) {
+                            debug(2) << "Looping directory" << fname;
+                            m_iter = boost::filesystem::directory_iterator(fname);
+                            loops++;
+                        }
+
+                        debug(4)  << "considering path:" << m_iter->path().native();
+                        if(!boost::filesystem::is_directory(m_iter->status())) {
+                            if (openVideo(m_iter->path().native())) {
+                                debug(2) << "Playing" << m_iter->path().native();
+                                m_capture >> image;
+                                if (!image.empty())
+                                {
+                                    m_iter++;
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
-                if(image.empty())
-                    warning() << "no images in directory" << fname;
-                // NB: allowQueue not cleared
+            
+                
+                // Worst case, image still empty
+                if(image.empty()) {
+                    if (m_frame_num > 0)
+                        debug() << "Video stream finished after" << m_frame_num << "frames";
+                    else
+                        error() << "Video stream" << fname << "failed to open";
+                    closeVideo();
+                    clearAllowQueue();
+                }
+                else {
+                    m_frame_num++;
+                }
             }
-            if(image.empty() || image.rows == 0 || image.cols == 0)
-                throw user_attention_error("invalid image:" + fname);
+            
             r.internalValue("image") = boost::make_shared<Image>(image, now(), mkUID(SensorUIDBase::File + m_instance_num, ++m_seq));
+            r["fps"] = (float)m_fps;
         }
 
         bool openVideo(std::string const& fname){
             lock_t l(m_capture_lock);
-            if(m_capture.open(fname))
+            if(m_capture.open(fname)) {
+                m_frame_num = 0;
+                m_fps = m_capture.get(CV_CAP_PROP_FPS);
                 return true;
-            else
+            } else
                 m_capture.release();
             return false;
         }
@@ -147,6 +180,8 @@ class FileInputNode: public AsynchronousNode{
 
         cv::VideoCapture m_capture;
         boost::recursive_mutex m_capture_lock;
+        int m_frame_num;
+        double m_fps;
 
         uint64_t m_seq;
         uint32_t m_instance_num;
