@@ -31,9 +31,11 @@ namespace Ui {
 
 namespace cauv {
 
+    namespace gui {
     namespace pw {
         class PipelineWidget;
         class PipelineGuiMsgObs;
+    }
     }
 
 
@@ -75,8 +77,8 @@ namespace cauv {
         void clearPipelines();
 
     protected:
-        pw::PipelineWidget * m_pipeline;
-        boost::shared_ptr< pw::PipelineGuiMsgObs> m_observer;
+        gui::pw::PipelineWidget * m_pipeline;
+        boost::shared_ptr< gui::pw::PipelineGuiMsgObs> m_observer;
 
     private:
         Ui::PipelineCauvWidget * ui;

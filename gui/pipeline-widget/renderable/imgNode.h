@@ -23,6 +23,7 @@
 #include <common/msg_classes/image.h>
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 class TexImg;
@@ -49,6 +50,7 @@ class ImgNode: public Node{
 };
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __IMGNODE_RENDERABLE_H__

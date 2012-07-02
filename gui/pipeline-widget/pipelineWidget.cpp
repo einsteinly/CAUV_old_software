@@ -44,6 +44,7 @@
 
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 // CAVEAT VIATOR: compare actual *arcs* by pointer, reverse arc compares equal
@@ -54,9 +55,11 @@ bool operator==(arc_ptr_t a, arc_ptr_t b){
 }
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv;
 
-using namespace cauv::pw;
+using namespace cauv::gui;
+using namespace cauv::gui::pw;
 
 PipelineWidget::PipelineWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),

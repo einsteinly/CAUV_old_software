@@ -15,7 +15,7 @@
 #include "draggable.h"
 #include "../container.h"
 
-using namespace cauv::pw;
+using namespace cauv::gui::pw;
 
 Draggable::Draggable(container_ptr_t c)
     : Renderable(c), m_click_pos(),

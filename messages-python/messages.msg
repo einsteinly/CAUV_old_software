@@ -107,7 +107,6 @@ enum NodeType : int8 {
     BroadcastCircles,
     RelabelClusters,
     FitGaussian,
-    MultiplyAccumulate,
     ReceiveLines,
 }
 enum NodeStatus : int8 {
@@ -424,6 +423,7 @@ variant ParamValue
     list<floatXY>,
     list<Ellipse>,
     LocationSequence,
+    Colour,
 }
 
 //these are zmq messaging specific
