@@ -62,11 +62,10 @@ template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & 
     node->update(operand);
     return node;
 }
-/*
+
 template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & operand) const
 {
     boost::shared_ptr<ColourNode> node = boost::make_shared<ColourNode>(m_id);
     node->update(colorToQColour(operand));
     return node;
 }
-*/
