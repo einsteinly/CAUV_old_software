@@ -49,8 +49,8 @@ class LevelsNode: public Node{
             registerOutputID("image (not copied)");
             
             // parameters:
-            registerParamID<Colour>("white level", Colour::fromGrey(1.0));
             registerParamID<Colour>("black level", Colour::fromGrey(0.0));
+            registerParamID<Colour>("white level", Colour::fromGrey(1.0));
         }
 
     protected:
@@ -66,10 +66,10 @@ class LevelsNode: public Node{
 
             image_ptr_t img = inputs["image"];
             
-            float white_level = param<Colour>("white level").grey();
             float black_level = param<Colour>("black level").grey();
+            float white_level = param<Colour>("white level").grey();
             
-            img->apply(boost::bind(doLevels, _1, white_level, black_level));
+            img->apply(boost::bind(doLevels, _1, black_level, white_level));
             
             r["image (not copied)"] = img;
             

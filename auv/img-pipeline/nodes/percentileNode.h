@@ -70,38 +70,15 @@ class PercentileNode: public Node{
 
             std::vector< std::vector<uint32_t> > value_histogram(channels, std::vector<uint32_t>(256, 0));
             
-            int dims[3] = {img.rows, img.cols, channels};
-            size_t steps[2] = {img.step[0], img.step[1]};
-            cv::Mat imgWithChannels(3, dims, CV_8U, img.data, steps);
-            //cv::MatConstIterator_<uint8_t> it = imgWithChannels.begin<unsigned char>(),
-            //                               end = imgWithChannels.end<unsigned char>();
-            // FIXME: opencv bug? iterator version is broken for me on
-            // single channel images (begin+1 == end)
-            /*while(it != end) {
-                for(int ch = 0; ch < channels; ch++) {
+            for (cv::MatConstIterator_<uint8_t> it = img.begin<unsigned char>(),
+                                                end = img.end<unsigned char>();
+                 it != end;) {
+                for(int ch = 0; ch < channels; ++ch, ++it) {
                     value_histogram[ch][*it]++;
                 }
-                it++;
-            }*/
-            switch(channels){
-                case 1:
-                    for(int row = 0; row < img.rows; row++)
-                        for(int col = 0; col < img.cols; col++)
-                            value_histogram[0][img.at<uint8_t>(row,col)]++;
-                    break;
-
-                case 3:
-                    for(int row = 0; row < img.rows; row++)
-                        for(int col = 0; col < img.cols; col++)
-                            for(int ch = 0; ch < channels; ch++)
-                                value_histogram[ch][img.at<cv::Vec3b>(row,col)[ch]]++;
-                    break;
-
-                default:
-                    assert(0); // not possible, we checked earlier
             }
 
-            std::vector<int> channel_results;
+            std::vector<float> channel_results;
             for(int ch = 0; ch < channels; ch++){
                 int running_total = 0;
                 int i;
@@ -111,12 +88,12 @@ class PercentileNode: public Node{
                     
                     running_total += value_histogram[ch][i];
                     if(running_total >= pct_pixel){
-                        channel_results.push_back(i);
+                        channel_results.push_back(i/255.0f);
                         break;
                     }
                 }
                 if(i == 256)
-                    channel_results.push_back(255);
+                    channel_results.push_back(1.0f);
             }
             assert(channel_results.size() == uint32_t(channels));
 

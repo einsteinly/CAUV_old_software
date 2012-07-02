@@ -96,7 +96,7 @@ void emitContainers(){
 
     #end for
 
-    // STL Maps: TODO: unambiguous names!
+    // STL Maps: Names are unambiguous (RPN)
     #for $kt, $vt in $requiredMapTypes
     #set $mapn = $CPPContainerTypeName(kt) + $CPPContainerTypeName(vt) + "Map"
     #set $mapt = "std::map< " + $toCPPType(kt) +", "+ $toCPPType(vt) +" >"    
@@ -113,7 +113,22 @@ void emitContainers(){
         .def(bp::self_ns::repr(bp::self_ns::self))
     ;
     from_python_dict<$mapt, variable_capacity_map_policy>();
-    
+
+    #end for
+
+    // Arrays
+    #for $t,$s in $requiredArrayTypes
+    #set $arrayt = "boost::array<" + $toCPPType(t) + "," + str(s) + ">"
+    #set $arrayn = $CPPContainerTypeName(t) + str(s) + "Array"
+    // $arrayn
+    bp::class_< $arrayt >("$arrayn")
+        .def("__init__", bp::make_constructor(makeContainer< $arrayt >))
+        .def_pickle(Pickler< ${arrayt} >())
+        .def(bp::self_ns::str(bp::self_ns::self))
+        .def(bp::self_ns::repr(bp::self_ns::self))
+    ;
+    from_python_sequence<$arrayt, fixed_size_policy>();
+
     #end for
 }
 

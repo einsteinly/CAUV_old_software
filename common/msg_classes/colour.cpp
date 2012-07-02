@@ -23,10 +23,11 @@ float cauv::Colour::r() const {
         case ColourType::ARGB:
         case ColourType::BGR:
         case ColourType::BGRA:
-            return values[3];
+            return values[2];
         case ColourType::Grey:
-        default:
             return values[0];
+        default:
+            return std::numeric_limits<float>::quiet_NaN();
     }
 }
 float cauv::Colour::g() const {
@@ -38,8 +39,9 @@ float cauv::Colour::g() const {
         case ColourType::BGRA:
             return values[1];
         case ColourType::Grey:
-        default:
             return values[0];
+        default:
+            return std::numeric_limits<float>::quiet_NaN();
     }
 }
 float cauv::Colour::b() const {
@@ -51,8 +53,9 @@ float cauv::Colour::b() const {
         case ColourType::BGRA:
             return values[0];
         case ColourType::Grey:
-        default:
             return values[0];
+        default:
+            return std::numeric_limits<float>::quiet_NaN();
     }
 }
 float cauv::Colour::a() const {
@@ -64,8 +67,9 @@ float cauv::Colour::a() const {
         case ColourType::RGB:
         case ColourType::BGR:
         case ColourType::Grey:
-        default:
             return 1;
+        default:
+            return std::numeric_limits<float>::quiet_NaN();
     }
 }
 float cauv::Colour::grey() const {
@@ -76,8 +80,9 @@ float cauv::Colour::grey() const {
         case ColourType::ARGB:
         case ColourType::RGB:
         case ColourType::BGR:
-        default:
             return 0.2989 * r() + 0.5870 * g() + 0.1140 * b();
+        default:
+            return std::numeric_limits<float>::quiet_NaN();
     }
 }
 
@@ -100,4 +105,67 @@ cauv::Colour cauv::Colour::fromBGRA(float b, float g, float r, float a) {
 cauv::Colour cauv::Colour::fromGrey(float grey) {
     boost::array<float,4> values = {{grey,grey,grey,1}};
     return cauv::Colour(ColourType::Grey, values);
+}
+        
+cauv::Colour& cauv::Colour::operator+= (const cauv::Colour& that) {
+    boost::array<float,4>::iterator thisit, thisend;
+    boost::array<float,4>::const_iterator thatit;
+    
+    for (thisit = this->values.begin(), thisend = this->values.end(), thatit = that.values.begin();
+         thisit != thisend;
+         ++thisit, ++thatit) {
+        *thisit += *thatit;
+    }
+    return *this;
+}
+cauv::Colour& cauv::Colour::operator-= (const cauv::Colour& that) {
+    boost::array<float,4>::iterator thisit, thisend;
+    boost::array<float,4>::const_iterator thatit;
+    
+    for (thisit = this->values.begin(), thisend = this->values.end(), thatit = that.values.begin();
+         thisit != thisend;
+         ++thisit, ++thatit) {
+        *thisit -= *thatit;
+    }
+    return *this;
+}
+cauv::Colour& cauv::Colour::operator+= (float val) {
+    boost::array<float,4>::iterator thisit, thisend;
+    
+    for (thisit = this->values.begin(), thisend = this->values.end();
+         thisit != thisend;
+         ++thisit) {
+        *thisit += val;
+    }
+    return *this;
+}
+cauv::Colour& cauv::Colour::operator-= (float val) {
+    boost::array<float,4>::iterator thisit, thisend;
+    
+    for (thisit = this->values.begin(), thisend = this->values.end();
+         thisit != thisend;
+         ++thisit) {
+        *thisit -= val;
+    }
+    return *this;
+}
+cauv::Colour& cauv::Colour::operator*= (float val) {
+    boost::array<float,4>::iterator thisit, thisend;
+    
+    for (thisit = this->values.begin(), thisend = this->values.end();
+         thisit != thisend;
+         ++thisit) {
+        *thisit *= val;
+    }
+    return *this;
+}
+cauv::Colour& cauv::Colour::operator/= (float val) {
+    boost::array<float,4>::iterator thisit, thisend;
+    
+    for (thisit = this->values.begin(), thisend = this->values.end();
+         thisit != thisend;
+         ++thisit) {
+        *thisit /= val;
+    }
+    return *this;
 }

@@ -60,16 +60,18 @@ class MixValueNode: public Node{
             int nchannels = m.channels();
             if ((nchannels == 3 && colour.type != ColourType::RGB && colour.type != ColourType::BGR)
                 || (nchannels == 4 && colour.type != ColourType::ARGB && colour.type != ColourType::BGRA)
-                || (nchannels == 1 && colour.type != ColourType::Grey))
-                throw parameter_error("wrong colour type");
+                || (nchannels == 1 && colour.type != ColourType::Grey)) {
+                error() << "Wrong colour type";
+                return;
+            }
 
             // Iterate over all pixels...
             for (cv::MatIterator_<T> it = m.begin<T>(),
                                      itend = m.end<T>();
-                 it != itend; ++it) {
+                 it != itend;) {
                 // .. and all channels per pixel
                 for (int c = 0; c < nchannels; ++c, ++it)
-                    *it = round(a* (*it) + b*255.0f*colour.values[c]); 
+                    *it = clamp_cast<T>(a* (*it) + b*255.0f*colour.values[c]); 
             }
         }
 

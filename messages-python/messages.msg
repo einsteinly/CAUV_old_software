@@ -108,6 +108,8 @@ enum NodeType : int8 {
     RelabelClusters,
     FitGaussian,
     ReceiveLines,
+    MeanStd,
+    MathAddMultColour,
 }
 enum NodeStatus : int8 {
     None = 0,
