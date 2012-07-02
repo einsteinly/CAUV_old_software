@@ -5,9 +5,11 @@ from utils.boundedtypes import MotorValue
 import time
 
 class scriptOptions(aiScriptOptions):
+    useDepth = True
     depth = 1.0
     forward_time = 60
     forward_speed = 100, MotorValue
+    bearing = 180
         
 class scriptState(aiScriptState):
     already_run = False
@@ -18,8 +20,10 @@ class script(aiScript):
         if self.persist.already_run:
             return 'SUCCESS'
         self.persist.already_run = True
-        self.log('Diving to %d to start mission' %(self.options.depth))
-        self.auv.depthAndWait(self.options.depth)
+        self.auv.bearingAndWait(self.options.bearing)
+        if self.options.useDepth:
+            self.log('Diving to %d to start mission' %(self.options.depth))
+            self.auv.depthAndWait(self.options.depth)
         self.log('Heading forwards through validation gate')
         self.auv.prop(self.options.forward_speed)
         debug("Heading blindly in this direction until something stops me or %d seconds elapse" %(self.options.forward_time))
