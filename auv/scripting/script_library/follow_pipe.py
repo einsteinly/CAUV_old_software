@@ -17,16 +17,15 @@ import time
 class scriptOptions(aiScriptOptions):
     #Pipeline details
     follow_pipeline_file  = 'follow_pipe'
-    centre_name = 'pipe'
+    ellipses_name = 'pipe'
     lines_name = 'pipe'
-    histogram_name = 'pipe'
     #Timeouts
     ready_timeout = 30
     lost_timeout = 10
     # Calibration
-    pipe_end     = 0.2 # of image (range +0.5 to -0.5)
+    pipe_end     = 0.4 # of image (range +0.5 to -0.5)
     target_width = 0.1 # of image
-    width_error   = 0.1 # of image
+    width_error  = 0.1 # of image
     centre_error = 0.2 # of image
     align_error  = 5   # degrees 
     average_time = 1   # seconds
@@ -43,12 +42,12 @@ class scriptOptions(aiScriptOptions):
     class Meta:
         dynamic = [
             'ready_timeout', 'lost_timeout',
-            'strafe_kP', 'depth_kP',
-            'prop_speed', 'average_time'
+            'prop_speed', 'average_time',
         ]
 
 
 class script(aiScript):
+    debug_values = ['centre_error', 'angle_error', 'depth_error']
     def __init__(self, script_name, opts, state):
         aiScript.__init__(self, script_name, opts, state) 
         self.node.join("processing")
@@ -61,6 +60,10 @@ class script(aiScript):
         self.ready = threading.Event()
         self.enabled = True
         
+        self.centre_error = 0
+        self.angle_error = 0
+        self.depth_error = 0
+        
         # controllers for staying above the pipe
         self.depthControl = PIDController((self.options.depth_kP,0,0))
         self.strafeControl = PIDController((self.options.strafe_kP,0,0))
@@ -69,9 +72,13 @@ class script(aiScript):
 
     def onLinesMessage(self, m):
         if m.name != self.options.lines_name:
-            debug('follow pipe: ignoring lines message %s != %s' % (m.name, self.options.lines_name))
             return
         if len(m.lines):
+            #
+            #          /
+            #  angle  /
+            #________/line
+            #       /
             #
             # Adjust the AUV's bearing to align with the pipe
             # calculate the average angle of the lines (assumes good line finding)
@@ -82,6 +89,7 @@ class script(aiScript):
             corrected_angle=90-degrees(angle)%180 #TODO this mod 180 probably is not needed from observation of cam following
             debug('follow pipe: mean lines direction: %g (uncorrected=%g)' % (corrected_angle, angle))
             
+            
             # work out the actual bearing of the pipe using the current bearing of the AUV
             current_bearing = self.auv.getBearing()
             if current_bearing and self.enabled:
@@ -90,43 +98,10 @@ class script(aiScript):
             if abs(corrected_angle) < self.options.align_error: self.aligned.set()
             else: self.aligned.clear()
             
-            
-            #
-            # Adjust the depth of the AUV acording to the width of the pipe in the image 
-            # we can only calculate width if we have 2 lines, and dont bother if the angle is too different
-            if len(m.lines) == 2 and degrees(abs(m.lines[0].angle-m.lines[1].angle)) < 15:
-                # dot product line between centeres with normal perpendicular to pipe
-                #             |
-                #             |    /   /
-                #     \_      |   /   /        s = -corrected_angle
-                #       \_    |s /   /
-                #         \_  | /   /
-                #           \_|/   /
-                #_________s___|___/_____________
-                #            /|  /
-                #           / | /
-                #             |
-                #             |
-                #             |
-                #             |
-                #             |
-                width = abs(-cos(corrected_angle)*(m.lines[1].centre.x-m.lines[0].centre.x)-sin(corrected_angle)*(m.lines[1].centre.x-m.lines[0].centre.y)) 
-                debug('follow pipe: estimated pipe width: %g' % width)
-                
-                # update the PID controller to get the required change in target depth
-                width_error = width - self.options.target_width
-                debug("Width error = %f" % (width_error))
-                
-                dive = self.depthControl.update(width_error)
-                if self.auv.current_depth and self.enabled: #again, none depths
-                    self.auv.depth(self.auv.current_depth + dive)
-                
-                if width_error < self.options.width_error: self.depthed.set()
-                else: self.depthed.clear()
-            
+            self.align_error = current_bearing
                 
             # set the flags that show if we're above the pipe
-            if self.centred.is_set() and self.aligned.is_set(): #and self.depthed.is_set():
+            if self.centred.is_set() and self.aligned.is_set() and self.depthed.is_set():
                 self.ready.set()
                 debug('ready over pipeline')
                 self.log('Pipeline follower managed to align itself over the pipe.')
@@ -137,15 +112,11 @@ class script(aiScript):
                 self.ready.clear()
 
 
-    def onCentreMessage(self, m):
+    def onEllipsesMessage(self, m):
         if m.name != self.options.centre_name:
             debug('follow pipe: ignoring centre message %s != %s' % (m.name, self.options.centre_name))
             return
-            
-        debug(str((m.x,m.y)))
-        
-        
-        info('Centre error: %f' %(m.x - 0.5))
+        debug('Centre error: %f' %(m.centre.x - 0.5))
         if abs(m.x) == 0:
             warning('centre at 0, ignoring')
             self.centred.clear()
