@@ -87,17 +87,17 @@ cauv::Colour cauv::Colour::fromRGB(float r, float g, float b) {
 }
 cauv::Colour cauv::Colour::fromARGB(float a, float r, float g, float b) {
     boost::array<float,4> values = {{b,g,r,a}};
-    return cauv::Colour(ColourType::RGB, values);
+    return cauv::Colour(ColourType::ARGB, values);
 }
 cauv::Colour cauv::Colour::fromBGR(float b, float g, float r) {
     boost::array<float,4> values = {{b,g,r,1}};
-    return cauv::Colour(ColourType::RGB, values);
+    return cauv::Colour(ColourType::BGR, values);
 }
 cauv::Colour cauv::Colour::fromBGRA(float b, float g, float r, float a) {
     boost::array<float,4> values = {{b,g,r,a}};
-    return cauv::Colour(ColourType::RGB, values);
+    return cauv::Colour(ColourType::BGRA, values);
 }
 cauv::Colour cauv::Colour::fromGrey(float grey) {
     boost::array<float,4> values = {{grey,grey,grey,1}};
-    return cauv::Colour(ColourType::RGB, values);
+    return cauv::Colour(ColourType::Grey, values);
 }
