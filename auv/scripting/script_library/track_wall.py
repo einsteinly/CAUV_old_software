@@ -9,27 +9,28 @@ from utils.control import PIDController
 import time
 import math
 import traceback
+import threading
 from collections import deque
 
 class InsufficientDataError(ValueError):
     pass
 
 class scriptOptions(aiScriptOptions):
-    strafeSpeed = 60 #controls strafe speed, int [-127, 127]
+    strafekP = 1000 #controls strafe speed, int [-127, 127]
+    strafe_limit = 60
     wallDistancekP = -1000
     depth = 0 #depth in metres
     runTime = -500 #run time in seconds
     #doPropLimit = 20 #controls prop limit for dist adjustment, int [-127, 127]
-    forward_angle = math.pi/6
+    forward_angle = math.pi/4
     change_difference = 0.01
     maximum_bearing_change = 5
     target_distance = 0.1
-    angles_to_avg = 5
     
     class Meta:
         # list of options that can be changed while the script is running
         dynamic = [
-                'strafeSpeed',
+                'strafekP',
                 'wallDistancekP',
                 'depth',
                 #'doPropLimit'
@@ -43,7 +44,6 @@ class script(aiScript):
         # self.node is set by aiProcess (base class of aiScript)
         # self.auv is also available, and can be used to control the vehicle
         # self.options is a copy of the option structure declared above
-        self.angles = deque(maxlen=self.options.angles_to_avg)
         
     def onLinesMessage(self, m):
         try:
@@ -64,13 +64,19 @@ class script(aiScript):
         debug('Data is %f, %f, %f, %f' %(angle,distance,angle2,distance2))
         if angled_line and (distance-0.5)/math.cos(self.options.forward_angle)-(distance2-0.5) > self.options.change_difference:
             debug('Detected wall in direction of travel, turning to wall')
-            self.auv.strafe(0)
+            debug(str((-self.options.maximum_bearing_change, angle2-90-math.degrees(self.options.forward_angle))))
             next_angle = max(-self.options.maximum_bearing_change, angle2-90-math.degrees(self.options.forward_angle))
             self.auv.bearing(self.auv.current_bearing+next_angle)
         else:
             self.auv.bearing(self.auv.current_bearing+angle-90)
         speed = (0.5+self.options.target_distance-distance)*self.options.wallDistancekP
-        debug('Setting speed %f' %speed)
+        if distance2:
+            strafe_speed = (distance2-0.5-self.options.target_distance)*self.options.strafekP
+            strafe_speed = self.options.strafe_limit if strafe_speed > self.options.strafe_limit else strafe_speed
+            strafe_speed = -self.options.strafe_limit if strafe_speed < -self.options.strafe_limit else strafe_speed
+            self.auv.strafe(int(strafe_speed))
+            debug('Setting strafe %f' %(strafe_speed))
+        debug('Setting speed %f' %(speed))
         self.auv.prop(int(speed))
         
     def calculate_intersection(self, lines, rotate_angle = 0, project = 0):
@@ -95,7 +101,7 @@ class script(aiScript):
             for line in lines:
                 centre_x = ca*(line.centre.x-0.5)-sa*(0.5-line.centre.y)+0.5
                 centre_y = 0.5-sa*(line.centre.x-0.5)-ca*(0.5-line.centre.y)
-                new_line = msg.Line(msg.floatXY(centre_x, centre_y), line.angle-rotate_angle, line.length, 0)
+                new_line = msg.Line(msg.floatXY(centre_x, centre_y), (line.angle-rotate_angle)%math.pi, line.length, 0)
                 lines2.append(new_line)
             lines = lines2
         #project line
@@ -212,5 +218,4 @@ class script(aiScript):
         
     def run(self):
         while True:
-            self.auv.strafe(self.options.strafeSpeed)
-            time.sleep(1)
+            time.sleep(10)

@@ -41,6 +41,7 @@ namespace {
             l.angle += M_PI;
         l.centre = centre;
         l.length = boost::math::hypot(top.y - btm.y, top.x - btm.x)/width;
+        l.width = 0;
 
         return l;
     }
