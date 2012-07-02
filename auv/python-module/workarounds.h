@@ -411,6 +411,43 @@ struct default_policy
     template <typename ContainerType>
     static void reserve(ContainerType&, std::size_t) {}
 };
+struct fixed_size_policy
+{
+    static bool check_convertibility_per_element() { return true; }
+
+    template <typename ContainerType>
+        static bool check_size(boost::type<ContainerType>, std::size_t sz)
+        {
+            return ContainerType::size() == sz;
+        }
+
+    template <typename ContainerType>
+        static void assert_size(boost::type<ContainerType>, std::size_t sz)
+        {
+            if (!check_size(boost::type<ContainerType>(), sz)) {
+                PyErr_SetString(PyExc_RuntimeError,
+                        "Insufficient elements for fixed-size array.");
+                boost::python::throw_error_already_set();
+            }
+        }
+
+    template <typename ContainerType>
+        static void reserve(ContainerType& /*a*/, std::size_t sz)
+        {
+            if (sz > ContainerType::size()) {
+                PyErr_SetString(PyExc_RuntimeError,
+                        "Too many elements for fixed-size array.");
+                boost::python::throw_error_already_set();
+            }
+        }
+
+    template <typename ContainerType, typename ValueType>
+        static void set_value(ContainerType& a, std::size_t i, ValueType const& v)
+        {
+            reserve(a, i+1);
+            a[i] = v;
+        }
+};
 struct variable_capacity_policy : default_policy
 {
     template <typename ContainerType>

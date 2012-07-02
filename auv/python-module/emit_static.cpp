@@ -8,6 +8,7 @@
 #include <common/mailbox.h>
 #include <common/msg_classes/bounded_float.h>
 #include <common/msg_classes/wgs84_coord.h>
+#include <common/msg_classes/colour.h>
 #include <utility/time.h>
 #include <generated/message_observers.h>
 #include <generated/types/message.h>
@@ -348,5 +349,13 @@ void emitPostGenerated(){
                bp::bases<LatLongAlt>,
                boost::shared_ptr<WGS84Coord>
               >("WGS84Coord",bp::init<double,double,float>())
+        ;
+
+    bp::class_<Colour,
+               bp::bases<ColourBase>,
+               boost::shared_ptr<Colour>
+              >("Colour",bp::init<ColourType::e,boost::array<float,4> >())
+        .def("fromRGB", &Colour::fromRGB)
+        .staticmethod("fromRGB")
         ;
 }

@@ -61,17 +61,7 @@ class FileInputNode: public AsynchronousNode{
                     closeVideo();
                 }else{
                     m_is_directory = false;
-                    // if the file might be a video, try to open it
-                    using boost::algorithm::iends_with;
-                    if(iends_with(fname, ".mpg") || iends_with(fname, ".mpeg") ||
-                       iends_with(fname, ".ogg") || iends_with(fname, ".mp4") ||
-                       iends_with(fname, ".avi") || iends_with(fname, ".mov") ||
-                       iends_with(fname, ".wmv") || iends_with(fname, ".3gp") ||
-                       iends_with(fname, ".3g2") || iends_with(fname, ".asf") ||
-                       iends_with(fname, ".vob") || iends_with(fname, ".asx") ||
-                       iends_with(fname, ".aiff")){
-                        openVideo(fname);
-                    }
+                    openVideo(fname);
                 }
                 m_iter = boost::filesystem::directory_iterator();
                 setAllowQueue();
@@ -90,14 +80,13 @@ class FileInputNode: public AsynchronousNode{
             if(!m_is_directory){
                 lock_t cl(m_capture_lock);
                 if(!m_capture.isOpened()){
-                    image = readImage(fname);
                     clearAllowQueue();
                 }else{
                     m_capture >> image;
                     if(image.empty()){
                         debug() << "video stream seems to have finished";
                         closeVideo();
-                        throw user_attention_error("video steam has finished");
+                        clearAllowQueue();
                     }
                 }
             }else{
@@ -110,7 +99,7 @@ class FileInputNode: public AsynchronousNode{
                 for(; m_iter != end; m_iter++){
                     debug(4)  << "considering path:" << m_iter->path().native();
                     if(!boost::filesystem::is_directory(m_iter->status())) {
-                        image = readImage(m_iter->path().native(), false);
+                        image = cv::imread(m_iter->path().native());
                         if (!image.empty())
                         {
                             m_iter++;
@@ -122,29 +111,9 @@ class FileInputNode: public AsynchronousNode{
                     warning() << "no images in directory" << fname;
                 // NB: allowQueue not cleared
             }
-            if(image.rows == 0 || image.cols == 0)
+            if(image.empty() || image.rows == 0 || image.cols == 0)
                 throw user_attention_error("invalid image:" + fname);
             r.internalValue("image") = boost::make_shared<Image>(image, now(), mkUID(SensorUIDBase::File + m_instance_num, ++m_seq));
-        }
-
-        cv::Mat readImage(std::string const& fname, bool warn=true) const{
-            cv::Mat img;
-
-            try{
-                img = cv::imread(fname.c_str());
-            }catch(cv::Exception& e){
-                error() << "FileInputNode:\n\t"
-                        << e.err << "\n\t"
-                        << "in" << e.func << "," << e.file << ":" << e.line;
-            }
-
-            if(!img.empty()){
-                debug(4) << "fileInputNode::readImage:" << fname << "-> (" << img.cols << "," << img.rows << ")";
-            }else if(warn){
-                warning() << "fileInputNode::readImage:" << fname << "-> (no image)";
-            }
-
-            return img;
         }
 
         bool openVideo(std::string const& fname){
