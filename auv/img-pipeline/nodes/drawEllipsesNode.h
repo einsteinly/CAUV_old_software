@@ -62,7 +62,6 @@ class DrawEllipsesNode: public Node{
                     throw parameter_error("image must be 1, 3 or 4 channel");
                 }
                 foreach(Ellipse const& p, m_ellipses){
-                    debug() << "draw ellipse:" << p;
                     cv::ellipse(
                         out,
                         cv::Point(p.centre.x, p.centre.y),
