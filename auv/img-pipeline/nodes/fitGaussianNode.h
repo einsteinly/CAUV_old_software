@@ -7,6 +7,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <generated/types/Ellipse.h>
+
 #include "../node.h"
 #include "../nodeFactory.h"
 #include "../pipelineTypes.h"
