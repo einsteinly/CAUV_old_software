@@ -5,6 +5,7 @@ import cauv.messaging as msg
 from cauv.debug import debug, info, warning, error 
 from AI_classes import aiScript, aiScriptOptions
 from utils.control import PIDController
+from utils.coordinates import Simulation_Datum, NorthEastDepthCoord
 
 import time
 import math
@@ -17,77 +18,141 @@ class InsufficientDataError(ValueError):
 
 class scriptOptions(aiScriptOptions):
     strafekP = 1000 #controls strafe speed, int [-127, 127]
-    strafe_limit = 60
+    strafeLimit = 60
     wallDistancekP = -1000
-    depth = 0 #depth in metres
-    runTime = -500 #run time in seconds
-    #doPropLimit = 20 #controls prop limit for dist adjustment, int [-127, 127]
-    forward_angle = math.pi/4
-    change_difference = 0.01
-    maximum_bearing_change = 5
-    target_distance = 0.1
+    depth = 2 #depth in metres
+    useDepth = False
+    maximumRunTime = 500 #run time in seconds
+    forwardAngle = math.pi/4
+    changeDifference = 0.01
+    maximumBearingChange = 5
+    targetDistance = 0.1
+    initialLocation = (Simulation_Datum+NorthEastDepthCoord(-18, 5, 0)).toWGS84()
+    initalBearing = 180
+    linesName = 'track_wall'
     
     class Meta:
         # list of options that can be changed while the script is running
         dynamic = [
                 'strafekP',
+                'strafeLimit',
                 'wallDistancekP',
-                'depth',
-                #'doPropLimit'
+                'maximumBearingChange',
+                'targetDistance',
                 ]
 
 
 class script(aiScript):
+    debug_values = ['angle1', 'angle2', 'distance1', 'distance2']
     def __init__(self, script_name, opts, state):
         aiScript.__init__(self, script_name, opts, state)
-        self.node.subMessage(msg.LinesMessage())
-        # self.node is set by aiProcess (base class of aiScript)
-        # self.auv is also available, and can be used to control the vehicle
-        # self.options is a copy of the option structure declared above
+        self.angle1 = 0
+        self.angle2 = 0
+        self.distance1 = 0
+        self.distance2 = 0
         
     def onLinesMessage(self, m):
+        if m.name != self.options.linesName:
+            return
+        """
+                              \
+                             / \
+                            /a2/\
+                distance2  /     \  Wall
+                       /          \
+        ________   /  b \        /a\             b = forwardAngle
+        |_AUV___| -------\------/---\
+                      distance       \
+        
+        Strategy:
+        -Calculate distances/angles
+        -If there is a wall to our left (indicated by distance2), turn to face this wall
+        -Else align with the wall in front
+        -Control distance using prop, target is targetDistance
+        -Use distance2 to set strafe, so if distance2 > target distance strafe left (since there is no wall in the way)
+            if distance2 < target distance strafe right (since there is a wall, which we will be turning to face, so to avoid crashing we need to reverse a bit)
+        """
         try:
-            angle, distance = self.calculate_intersection(m.lines, project = self.options.target_distance)
+            #Here we try projecting the lines first to avoid oscilating on corners, where as we see the next wall,
+            #we turn to face it, only to now see theprevious wall so turn to face that etc
+            #With projection, this isnt an issue as the auv is on the line so the distance where this can happen is 0
+            #
+            #              _______
+            #            /            _ projected (and interpolated
+            #        /                     _
+            #    /             _                _
+            #/               /      _                _
+            #            /               _                _
+            #        /     original           _                _
+            #    /                                 _                _
+            angle, distance = self.calculate_intersection(m.lines, project = self.options.targetDistance)
         except InsufficientDataError:
+            #fall back to original method (occasionally happens when at an angle with only straight wall in front
+            #as forward line can miss projection
             try:
                 angle, distance = self.calculate_intersection(m.lines)
             except InsufficientDataError:
                 return
-        angled_line = True
+        angled_line = True #sometimes we cant get the angled line, so keep a record of this
+        #for the second line to the left, rotate the image first and then do the same calcualtion (rotation is mathematical,
+        #so need -forwardAngle
         try:
-            angle2, distance2 = self.calculate_intersection(m.lines, rotate_angle=-self.options.forward_angle)
+            angle2, distance2 = self.calculate_intersection(m.lines, rotate_angle=-self.options.forwardAngle)
         except InsufficientDataError:
             angle2, distance2 = 0, 0
             angled_line = False
+            
+        #convert to degrees for bearing
         angle = math.degrees(angle)
         angle2 = math.degrees(angle2)
+        
+        #set debug values
+        self.angle1 = angle
+        self.angle2 = angle2
+        self.distance1 = distance
+        self.distance2 = distance2
         debug('Data is %f, %f, %f, %f' %(angle,distance,angle2,distance2))
-        if angled_line and (distance-0.5)/math.cos(self.options.forward_angle)-(distance2-0.5) > self.options.change_difference:
+        
+        #Bearing Control
+        #if we have we have the distance of the angled line, and the length of the line is notably less then the parrallel
+        #component of the forward line, then we have a wall to our left, so turn and face it
+        if angled_line and (distance-0.5)/math.cos(self.options.forwardAngle)-(distance2-0.5) > self.options.changeDifference:
             debug('Detected wall in direction of travel, turning to wall')
-            debug(str((-self.options.maximum_bearing_change, angle2-90-math.degrees(self.options.forward_angle))))
-            next_angle = max(-self.options.maximum_bearing_change, angle2-90-math.degrees(self.options.forward_angle))
+            #The maximum turn per message means that the control loops for strafe and prop have time to adjust
+            next_angle = max(-self.options.maximumBearingChange, angle2-90-math.degrees(self.options.forwardAngle))
             self.auv.bearing(self.auv.current_bearing+next_angle)
         else:
             self.auv.bearing(self.auv.current_bearing+angle-90)
-        speed = (0.5+self.options.target_distance-distance)*self.options.wallDistancekP
-        if distance2:
-            strafe_speed = (distance2-0.5-self.options.target_distance)*self.options.strafekP
-            strafe_speed = self.options.strafe_limit if strafe_speed > self.options.strafe_limit else strafe_speed
-            strafe_speed = -self.options.strafe_limit if strafe_speed < -self.options.strafe_limit else strafe_speed
-            self.auv.strafe(int(strafe_speed))
-            debug('Setting strafe %f' %(strafe_speed))
+            
+        #Prop Control
+        speed = (0.5+self.options.targetDistance-distance)*self.options.wallDistancekP
         debug('Setting speed %f' %(speed))
         self.auv.prop(int(speed))
         
+        #Strafe Control
+        if distance2:
+            strafe_speed = (distance2-0.5-self.options.targetDistance)*self.options.strafekP
+            strafe_speed = self.options.strafeLimit if strafe_speed > self.options.strafeLimit else strafe_speed
+            strafe_speed = -self.options.strafeLimit if strafe_speed < -self.options.strafeLimit else strafe_speed
+            self.auv.strafe(int(strafe_speed))
+            debug('Setting strafe %f' %(strafe_speed))
+        #if we occasionally end up stuck travelling right, uncommment the following:
+        #else:
+        #    self.auv.strafe(int(self.options.strafeLimit))
+        #    debug('Setting strafe %f' %(self.options.strafeLimit))
+        
     def calculate_intersection(self, lines, rotate_angle = 0, project = 0):
         """
-        if rotate_angle is given, rotate all the lines first (rotate_angle in radians)
-        also project lines to form "ideal path"
+        If rotate_angle is given, rotate all the lines first (rotate_angle in radians)
+        If project is given project lines first
         If there are lines directly in front, we can work out angle/distance by these lines
         If there isnt, we need to draw a line between the lines either side and then use this new line to work out angle/distance
+        Uncomment sending lines messages and use track_wall_debug to see where these lines are ending up
         """
         #remember image y coordinate is inverse to normal y,
         #normal y = 1-image y
+        
+        #Rotating
         #line_centre (normal y) is rotation matrix*(line_centre-image_centre)+image_centre, angle ->angle-rotate
         #(cos a -sin a) ( x -0.5) + (0.5)
         #(sin a cos a ) (1-y-0.5)   (0.5)
@@ -104,9 +169,11 @@ class script(aiScript):
                 new_line = msg.Line(msg.floatXY(centre_x, centre_y), (line.angle-rotate_angle)%math.pi, line.length, 0)
                 lines2.append(new_line)
             lines = lines2
-        #project line
-        #-(lsin a)
-        # (lcos a)
+            
+        #Projecting
+        #project line: take c to c2 by (where l is the projection distance)
+        #c2 = c - (lsin a) (normal coords) so image coords c2 = c + (-lsin a)
+        #         (lcos a)                                          ( lcos a)
         #            \
         #             \
         #     \       a\
@@ -125,11 +192,13 @@ class script(aiScript):
                 new_line = msg.Line(msg.floatXY(centre_x, centre_y), line.angle-rotate_angle, line.length, 0)
                 lines2.append(new_line)
             lines = lines2
-        self.node.send(msg.LinesMessage('out1'+str(bool(rotate_angle)),lines))
+            
+        #self.node.send(msg.LinesMessage('out1'+str(bool(rotate_angle)),lines))
+        
         lines_in_front = []
-        top_least = None
+        top_least = None # line not in front, above forward line, closest to forward line
         top_least_p_length = 0
-        bottom_most = None
+        bottom_most = None # line not in front, below forward line, closest to forward line
         bottom_most_p_length = 0
         #   /        ___                                            y=0
         #  /   ____|    \     |                                     |
@@ -144,8 +213,8 @@ class script(aiScript):
             p_length = math.sin(line.angle%math.pi)*line.length/2 #perpendicular length from centre to furthermost point
             if abs(line.centre.y-0.5)<=p_length:
                 lines_in_front.append(line)
-            #if above center
-            if line.centre.y+p_length<0.5:
+            #if above center (remember y coord starts at 0 at top of image
+            elif line.centre.y+p_length<0.5:
                 #if closer to center than any previous lines
                 if top_least:
                     if line.centre.y+p_length > top_least.centre.y+top_least_p_length:
@@ -164,8 +233,9 @@ class script(aiScript):
                 else:
                     bottom_most = line
                     bottom_most_p_length = p_length
+        
         if lines_in_front:
-            self.node.send(msg.LinesMessage('out2'+str(bool(rotate_angle)),lines_in_front))
+            #self.node.send(msg.LinesMessage('out2'+str(bool(rotate_angle)),lines_in_front))
             debug('Taking average of lines directly in front.')
             angle = 0
             distance = 0
@@ -199,10 +269,10 @@ class script(aiScript):
             bottom_point = (bottom_most.centre.x-bottom_most.length/2*math.cos(bottom_most.angle),
                             bottom_most.centre.y-bottom_most.length/2*math.sin(bottom_most.angle))
             angle = math.atan2(bottom_point[1]-top_point[1], bottom_point[0]-top_point[0])
-            self.node.send(msg.LinesMessage('out2'+str(bool(rotate_angle)),[msg.Line(msg.floatXY((top_point[0]+bottom_point[0])/2,(top_point[1]+bottom_point[1])/2),
-                                                             angle,
-                                                             math.sqrt((top_point[0]-bottom_point[0])**2+(top_point[1]-bottom_point[1])**2),
-                                                             0)]))
+            #self.node.send(msg.LinesMessage('out2'+str(bool(rotate_angle)),[msg.Line(msg.floatXY((top_point[0]+bottom_point[0])/2,(top_point[1]+bottom_point[1])/2),
+            #                                                 angle,
+            #                                                 math.sqrt((top_point[0]-bottom_point[0])**2+(top_point[1]-bottom_point[1])**2),
+            #                                                 0)]))
             # 
             #    \
             #______\
@@ -217,5 +287,17 @@ class script(aiScript):
         
         
     def run(self):
-        while True:
-            time.sleep(10)
+        #head to start
+        self.request_pl('track_wall2')
+        time.sleep(2)
+        if self.options.useDepth:
+            self.auv.depth(self.options.depth)
+        self.auv.headToLocation(self.options.initialLocation)
+        self.auv.bearingAndWait(self.options.initalBearing)
+        #start onMessage handler
+        start_time = time.time()
+        self.node.subMessage(msg.LinesMessage())
+        #this allows dynamic setting of running time
+        while time.time()-start_time < self.options.maximumRunTime:
+            time.sleep(1)
+            #really should have some other end condition aside from time
