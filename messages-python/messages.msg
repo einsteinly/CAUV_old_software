@@ -110,6 +110,7 @@ enum NodeType : int8 {
     ReceiveLines,
     MeanStd,
     MathAddMultColour,
+    BroadcastEllipses,
 }
 enum NodeStatus : int8 {
     None = 0,

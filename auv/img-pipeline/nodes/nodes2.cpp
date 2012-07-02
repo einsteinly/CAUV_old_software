@@ -28,6 +28,7 @@
 #include "fitGaussianNode.h"
 #include "receiveLinesNode.h"
 #include "meanStdNode.h"
+#include "broadcastEllipsesNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -60,6 +61,7 @@ DEFINE_NFR(RelabelClustersNode, NodeType::RelabelClusters);
 DEFINE_NFR(FitGaussianNode, NodeType::FitGaussian);
 DEFINE_NFR(ReceiveLinesNode, NodeType::ReceiveLines);
 DEFINE_NFR(MeanStdNode, NodeType::MeanStd);
+DEFINE_NFR(BroadcastEllipsesNode, NodeType::BroadcastEllipses);
 
 } // namespace imgproc
 } // namespace cauv
