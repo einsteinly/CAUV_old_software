@@ -23,6 +23,7 @@
 class FTFont;
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 class Text: public Renderable, public std::string{
@@ -63,6 +64,7 @@ class Text: public Renderable, public std::string{
 };
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __TEXT_RENDERABLE_H__

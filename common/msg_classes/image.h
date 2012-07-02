@@ -78,15 +78,36 @@ struct FuncVisitor : boost::static_visitor< TRet >{
         FuncVisitor(const Func& func) : func(func) {
         }
 
-        TRet operator()(cv::Mat a) const {
+        TRet operator()(cv::Mat& a) const {
             return func(a);
         }
-        TRet operator()(NonUniformPolarMat a) const {
+        TRet operator()(NonUniformPolarMat& a) const {
             return operator()(a.mat);
         }
-        TRet operator()(PyramidMat) const {
+        TRet operator()(PyramidMat&) const {
             error() << "no support for pyramids";
             return TRet();
+        }
+
+    private:
+        Func func;
+};
+
+template<typename Func>
+struct FuncVisitor<Func,void> : boost::static_visitor< void >{
+    public:
+        FuncVisitor(const Func& func) : func(func) {
+        }
+
+        void operator()(cv::Mat& a) const {
+            func(a);
+        }
+        void operator()(NonUniformPolarMat& a) const {
+            operator()(a.mat);
+        }
+        void operator()(PyramidMat& a) const {
+            for (std::vector<cv::Mat>::iterator it = a.levels.begin(), itend = a.levels.end(); it != itend; ++it)
+                operator()(*it);
         }
 
     private:

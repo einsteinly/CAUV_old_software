@@ -8,6 +8,7 @@
 #include "menu.h"
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 class NodeIOBlob: public Renderable,
@@ -89,6 +90,7 @@ class FloatingArcHandle: public Menu{
 };
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __NODE_IO_H__

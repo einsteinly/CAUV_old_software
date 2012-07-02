@@ -25,6 +25,7 @@
 #include "node.h"
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 class PVPairEditableBase: public Renderable{
@@ -109,12 +110,12 @@ class PVPair: public PVPairEditableBase{
 
         virtual bool mousePressEvent(MouseEvent const& e){
             MouseEvent referred(e, m_value);
-            BBox value_bbox = m_value->bbox();
+            cauv::gui::BBox value_bbox = m_value->bbox();
             if(!value_bbox.area())
                 value_bbox = m_min_value_bbox;
             if(value_bbox.contains(referred.pos) && m_editable){
                 debug() << "got value hit";
-                BBox edit_box = value_bbox;
+                cauv::gui::BBox edit_box = value_bbox;
                 edit_box.max.x += 40;
                 edit_box.min.y -= 3;
                 edit_box.max.y += 3;
@@ -130,7 +131,7 @@ class PVPair: public PVPairEditableBase{
             return false;
         }
 
-        virtual BBox bbox(){
+        virtual cauv::gui::BBox bbox(){
             return m_bbox;
         }
 
@@ -149,7 +150,7 @@ class PVPair: public PVPairEditableBase{
         }
 
         void updateBbox(){
-            BBox value_bbox = m_value->bbox();
+            cauv::gui::BBox value_bbox = m_value->bbox();
             if(!value_bbox.area())
                 value_bbox = m_min_value_bbox;
             
@@ -162,8 +163,8 @@ class PVPair: public PVPairEditableBase{
 
         node_ptr_t m_node;
 
-        BBox m_bbox;
-        BBox m_min_value_bbox;
+        cauv::gui::BBox m_bbox;
+        cauv::gui::BBox m_min_value_bbox;
 
         boost::shared_ptr<Text> m_param;
         boost::shared_ptr<Text> m_equals;
@@ -172,6 +173,7 @@ class PVPair: public PVPairEditableBase{
 };
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __PV_PAIR_H__

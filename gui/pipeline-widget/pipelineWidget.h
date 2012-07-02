@@ -20,6 +20,7 @@ class Message;
 class NodeAddedMessage;
 class NodeParametersMessage;
 
+namespace gui{
 namespace pw{
 
 class PipelineWidget: public QGLWidget,
@@ -176,6 +177,7 @@ class PipelineWidget: public QGLWidget,
 };
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __PIPELINE_WIDGET_H__

@@ -15,9 +15,13 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
+#include <iostream>
 #include <cmath>
 
 #include <utility/rounding.h>
+
+namespace cauv {
+namespace gui {
 
 // useful utility functions:
 template<typename T1, typename T2>
@@ -207,32 +211,6 @@ class _Colour{
 typedef _Colour<float> Colour;
 
 
-// useful overloads etc
-void glTranslatef(Point const& p, double const& z = 0.0);
-void glVertex(Point const& p);
-void glBox(BBox const& b, double const& corner_radius = 0.0f, unsigned corner_segments = 8);
-void glArc(double const& radius, double const& start, double const& end, unsigned segments);
-void glSegment(double const& radius, double const& start, double const& end, unsigned segments);
-void glCircle(double const& radius, unsigned segments = 16);
-void glCircleOutline(double const& radius, unsigned segments = 16);
-void glBezier(Point const& a, Point const& b, Point const& c, Point const& d, int segments=24);
-void glBezier(Point const& a, Point const& b, Point const& c, int segments=24);
-void glColor(Colour const& c);
-
-#define glPrintError(e) _printGlErr(e, __FILE__, __LINE__)
-#ifndef CAUV_NO_DEBUG
-#   define glCheckError() glPrintError(glGetError())
-#else
-#   define glCheckError() 
-#endif
-void _printGlErr(int err, const char* file, int line);
-
-#endif // ndef __UTIL_H__
-
-#ifdef __CAUV_DEBUG_H__
-#ifndef __UTIL_H__STREAMOPS__
-#define __UTIL_H__STREAMOPS__
-
 template<typename charT, typename traits, typename T>
 std::basic_ostream<charT, traits>& operator<<(
     std::basic_ostream<charT, traits>& os, V2D<T> const& p){
@@ -251,9 +229,30 @@ std::basic_ostream<charT, traits>& operator<<(
     return os << "(" << c.r() <<","<< c.g() <<","<< c.b() <<","<< c.a() << ")";
 }
 
-#endif // ndef __UTIL_H_STREAMOPS__
-#endif // def __CAUV_DEBUG_H__
+} // namespace gui
+} // namespace cauv
 
 
+#define glPrintError(e) _printGlErr(e, __FILE__, __LINE__)
+#ifndef CAUV_NO_DEBUG
+#   define glCheckError() glPrintError(glGetError())
+#else
+#   define glCheckError() 
+#endif
+void _printGlErr(int err, const char* file, int line);
+
+// useful overloads etc
+void glTranslatef(cauv::gui::Point const& p, double const& z = 0.0);
+void glVertex(cauv::gui::Point const& p);
+void glBox(cauv::gui::BBox const& b, double const& corner_radius = 0.0f, unsigned corner_segments = 8);
+void glArc(double const& radius, double const& start, double const& end, unsigned segments);
+void glSegment(double const& radius, double const& start, double const& end, unsigned segments);
+void glCircle(double const& radius, unsigned segments = 16);
+void glCircleOutline(double const& radius, unsigned segments = 16);
+void glBezier(cauv::gui::Point const& a, cauv::gui::Point const& b, cauv::gui::Point const& c, cauv::gui::Point const& d, int segments=24);
+void glBezier(cauv::gui::Point const& a, cauv::gui::Point const& b, cauv::gui::Point const& c, int segments=24);
+void glColor(cauv::gui::Colour const& c);
+
+#endif // ndef __UTIL_H__
 
 
