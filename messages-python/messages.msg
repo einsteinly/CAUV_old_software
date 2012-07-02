@@ -321,8 +321,8 @@ struct Circle
 struct Ellipse
 {
     eq centre : floatXY;
-    eq minorRadius : float;
     eq majorRadius : float;
+    eq minorRadius : float;
     eq angle : float; // radians, angle of major axis from x axis
 }
 struct Corner
