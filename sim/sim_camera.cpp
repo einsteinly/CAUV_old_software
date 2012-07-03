@@ -37,6 +37,7 @@ SimCamera::SimCamera (osg::Node *track_node,
     image->setOrigin(osg::Image::BOTTOM_LEFT);
     
     attenuator->camera()->attach(osg::Camera::COLOR_BUFFER0, image, 0);
+    camera->setRenderOrder(osg::Camera::POST_RENDER);
     camera->setInheritanceMask(
           osg::CullSettings::ALL_VARIABLES &
           ~osg::CullSettings::CULL_MASK);
@@ -63,8 +64,9 @@ void SimCamera::setup(osg::Node *root) {
     viewer->getWindows(windows);
     // this sets the title for all your windows, alternately you could just set it for windows[0] for example.
     for (Windows::iterator window = windows.begin();
-         window != windows.end(); ++window)
-    (*window)->setWindowName(window_title);
+         window != windows.end(); ++window) {
+        (*window)->setWindowName(window_title);
+    }
 }
 
 void SimCamera::tick(double timestamp) {
