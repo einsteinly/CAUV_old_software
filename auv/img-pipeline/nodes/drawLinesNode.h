@@ -101,9 +101,13 @@ class DrawLinesNode: public Node{
                     using boost::math::isinf;
                     if (isinf(line.length))
                     {
-                        float ll = c.x/dir.x;
-                        float lr = (img_width - c.x)/dir.x;
-                        cv::line(out_mat, c - ll*dir, c + lr*dir,
+                        float tl = c.x/dir.x;
+                        float tr = (img_width - c.x)/dir.x;
+                        float tt = c.y/dir.y;
+                        float tb = (img_height - c.y)/dir.y;
+                        using std::min;
+                        using std::max;
+                        cv::line(out_mat, c - max(tl,tt)*dir, c + min(tr,tb)*dir,
                                  cv::Scalar(0, 0, 255), line_width, CV_AA);
                     } else {
                         float l = line.length * img_width;

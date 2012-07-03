@@ -49,29 +49,29 @@ namespace {
     template<int n, typename T>
     struct is_not_max_predicate_t {
         const cv::Mat_<T>& mat;
-        is_not_max_predicate_t(const cv::Mat_<T>& mat) : mat(mat) {}
+        int mindiff;
+        is_not_max_predicate_t(const cv::Mat_<T>& mat, int mindiff) : mat(mat), mindiff(mindiff) {}
 
         bool operator()(const cv::Point2i& p) const {
-            T m = mat(p.x, p.y);
-            for (int i = std::max(0,p.x - n), imax = std::min(mat.rows, p.x + n); i < imax; ++i)
-                for (int j = std::max(0,p.y - n), jmax = std::min(mat.cols, p.y + n); j < jmax; ++j) {
-                    if (i != p.x && j != p.y && mat(i,j) > m)
+            T m = mat(p.x, p.y) - mindiff;
+            for (int i = std::max(0,p.x - n), imax = std::min(mat.rows, p.x + n + 1); i < imax; ++i)
+                for (int j = std::max(0,p.y - n), jmax = std::min(mat.cols, p.y + n + 1); j < jmax; ++j) {
+                    if (!(i == p.x && j == p.y) && mat(i,j) > m)
                         return true;
                 }
             return false;
         }
-
     };
 
     template<int n, typename T>
-    std::vector<cv::Point2i> findLocalMaxima(cv::Mat_<T>& mat, const T& threshold)
+    std::vector<cv::Point2i> findLocalMaxima(const cv::Mat_<T>& mat, const T& threshold)
     {
         std::vector<cv::Point2i> block_maxima;
         for (int bi = 0, bimax = mat.rows; bi < bimax; bi+=n+1)
             for (int bj = 0, bjmax = mat.cols; bj < bjmax; bj+=n+1)
             {
                 int mi = bi, mj = bj;
-                T& m = mat(bi,bj);
+                T m = mat(bi,bj);
 
                 for (int i = bi, imax = std::min(bi+(n+1), mat.rows); i < imax; ++i)
                     for (int j = bj, jmax = std::min(bj+(n+1), mat.cols); j < jmax; ++j)
@@ -87,7 +87,7 @@ namespace {
                     block_maxima.push_back(cv::Point2i(mi,mj));
             }
         
-        std::remove_if(block_maxima.begin(), block_maxima.end(), is_not_max_predicate_t<n,T>(mat));
+        block_maxima.erase(std::remove_if(block_maxima.begin(), block_maxima.end(), is_not_max_predicate_t<n,T>(mat,1)), block_maxima.end());
         return block_maxima;
     }
 
@@ -164,7 +164,8 @@ namespace {
         std::vector<Line> operator()(const NonUniformPolarMat& pm) const {
             const cv::Mat& m = pm.mat;
 
-            float rhoMax = pm.ranges->back() * 2 * M_SQRT2;
+            float maxRange = pm.ranges->back();
+            float rhoMax = maxRange * 2 * M_SQRT2;
 
             int numrho = std::ceil(rhoMax/rho);
             int numangle = std::ceil(3*M_PI_2/theta);
@@ -191,13 +192,15 @@ namespace {
                 {
                     if (*pData > 0) {
                         cv::Point2f xy = pm.xyAt(i,j);
+                        xy.x += maxRange;
+                        xy.y += maxRange;
                         
                         int r;
                         int n = 0;
                         while (n < numangle && (r = round( xy.x * anglecos[n] + xy.y * anglesin[n] )) < 0) {
                             ++n;
                         }
-                        while (n < numangle && (r = round( xy.x * anglecos[n] + xy.y * anglesin[n] )) > 0) {
+                        while (n < numangle && (r = round( xy.x * anglecos[n] + xy.y * anglesin[n] )) >= 0) {
                             if (r < numrho)
                                 ++accum(r,n);
                             ++n;
@@ -207,10 +210,10 @@ namespace {
                 }
             }
 
-            std::vector<cv::Point2i> maxima = findLocalMaxima<1>(accum, threshold);
+            std::vector<cv::Point2i> maxima = findLocalMaxima<2>(accum, threshold);
 
             std::vector<Line> lines;
-            std::transform(maxima.begin(), maxima.end(), std::back_inserter(lines), boost::bind(houghToLine, _1, rho, theta, m.cols, m.rows));
+            std::transform(maxima.begin(), maxima.end(), std::back_inserter(lines), boost::bind(houghToLine, _1, rho, theta, 2*maxRange , 2*maxRange));
 
             return lines;
         }
