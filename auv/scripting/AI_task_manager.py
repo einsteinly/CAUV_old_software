@@ -185,7 +185,7 @@ class taskManager(aiProcess):
         command = msg.command.name
         task_id = msg.taskId
         if command in ('Stop','Reset'):
-            if task_id == self.current_task.id:
+            if self.current_task and task_id == self.current_task.id:
                 #stop main script
                 self.stop_script()
             else:
