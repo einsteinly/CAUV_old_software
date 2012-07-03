@@ -81,7 +81,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = "Provide gampepad input to control the AUV", add_help = True)
     parser.add_argument("--mapping", "-m", help="force mapping file to use")
     parser.add_argument("--rate", "-r", help="maximum poll rate (seconds)", default=0.05)
-    parser.add_argument("--deadband", "-d", help="axis deadband", default=0.2)
+    parser.add_argument("--deadband", "-d", help="axis deadband", default=0.3)
+    parser.add_argument("--debug", "-D", help="show buttons pressed (no output)", action="store_true", default = False)
+    parser.add_argument("--controls", "-c", help="show list of controls", action="store_true", default = False)
     args, unknown = parser.parse_known_args()
     
     info("Node starting up...")
@@ -93,10 +95,20 @@ if __name__ == '__main__':
         mapFile = ("gamepad_maps.%s" % d.gamepadName().replace(' ',''))
         if args.mapping:
             mapFile = ("gamepad_maps.%s" % args.mapping)
-        exec ("from " + mapFile + " import *")
-        d.mapping = ConcreteGamepadMapping(auv)
-        node.addObserver(d.mapping)
-        d.run()
+        module = __import__(mapFile, fromlist=['gamepad_maps'])
+        info('Imported mapping module '+str(module))
+        if args.debug:
+            d.mapping = GamepadMapping(auv)
+        else:
+            d.mapping = module.ConcreteGamepadMapping(auv)
+        if args.controls:
+            try:
+                print d.mapping.controls()
+            except AttributeError:
+                print "Mapping did not provide controls listing"
+        else:
+            node.addObserver(d.mapping)
+            d.run()
     except IOError:
         info("Stopping due to IO Error")
     finally:

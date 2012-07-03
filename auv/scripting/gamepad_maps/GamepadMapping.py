@@ -27,13 +27,17 @@ class GamepadMapping(messaging.MessageObserver):
         return 0.0
     
     def onBearingAutopilotEnabledMessage(self, m):
+        debug('Received external bearing autopilot message.')
         self.bearing = m.target
         self.bearing_state = m.enabled
     
     def onPitchAutopilotEnabledMessage(self, m):
+        debug('Received external pitch autopilot message.')
         self.pitch = m.target
         self.pitch_state = m.enabled
     
     def onDepthAutopilotEnabledMessage(self, m):
+        debug('Received external depth autopilot message.')
         self.depth = m.target
         self.depth_state = m.enabled
+        self.auv.depth_disabled = not m.enabled
