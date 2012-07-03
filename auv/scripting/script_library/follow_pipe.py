@@ -19,6 +19,7 @@ class scriptOptions(aiScriptOptions):
     follow_pipeline_file  = 'follow_pipe2'
     ellipses_name = 'pipe'
     lines_name = 'pipe'
+    turns = 3
     #Timeouts
     ready_timeout = 30
     lost_timeout = 15
@@ -173,10 +174,10 @@ class script(aiScript):
 
     def followPipeUntil(self, condition):
         debug('followPipeUntil: %s', condition.is_set())
-        while not condition.is_set():
+        while True:
             self.auv.prop(0)
             # check we're still good to go, giving a little time to re-align the 
-            # pipe if neededx
+            # pipe if needed
             debug("Re-aligning with pipe...")
             if not self.ready.wait(self.options.lost_timeout):
                 return False
@@ -187,14 +188,9 @@ class script(aiScript):
             # go forward for a bit while we're still above the pipe
             while self.ready.is_set():
                 time.sleep(0.2)
-                if self.pipeEnded.is_set():
-                    debug('Reached end of pipe, turning')
-                    self.auv.prop(0)
-                    self.enabled = False
-                    self.auv.bearingAndWait((self.auv.current_bearing+180)%360)
-                    self.enabled = True
+                if condition.is_set():
+                    return True
         
-        return True
   
 
     def run(self):
@@ -202,7 +198,7 @@ class script(aiScript):
         # the detector doesn't really look for the pipe it just looks
         # for yellow things in the downward camera, so there will be
         # a few false positives
-        self.log('Attempting to align ove the pipe.')
+        self.log('Attempting to align over the pipe.')
         follow_pipe_file = self.options.follow_pipeline_file
         self.request_pl(follow_pipe_file)
         
@@ -216,7 +212,7 @@ class script(aiScript):
             self.drop_pl(follow_pipe_file)
             return 'ABORT'
         
-        for i in range(3):
+        for i in range(self.options.turns):
             self.log('Attempting to follow pipe.')
             self.auv.prop(self.options.prop_speed)
             # follow the pipe along until the end
@@ -225,12 +221,12 @@ class script(aiScript):
                 error("Pipeline lost on pass %d" %(i,))
                 self.drop_pl(follow_pipe_file)
                 return 'LOST'
-            
-            # turn 180
-            self.log('Detected the end of the pipeline, turning and heading back.')
-            info("Reached end of pass. Doing 180")
+                
+            debug('Reached end of pipe, turning (turn %i)')
             self.auv.prop(0)
-            self.auv.bearing((self.auv.getBearing()-180)%360)
+            self.enabled = False
+            self.auv.bearingAndWait((self.auv.current_bearing+180)%360)
+            self.enabled = True
         
         self.drop_pl(follow_pipe_file)
         self.log('Finished following the pipe.')
