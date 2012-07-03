@@ -57,7 +57,7 @@ class FitGaussianNode : public Node{
             double b = sqrt((v20+v02)/2 - sqrt(4*v11*v11 + (v20-v02)*(v20-v02))/2);
 
             std::vector<Ellipse> ret;
-            ret.push_back(Ellipse(floatXY(x,y),a,b,angle));
+            ret.push_back(Ellipse(floatXY(x/img.cols,y/img.rows),a/img.cols,b/img.cols,angle));
             r["ellipse"] = ret;
 
             return;

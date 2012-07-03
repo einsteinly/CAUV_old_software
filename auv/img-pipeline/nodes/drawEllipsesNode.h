@@ -20,6 +20,8 @@
 #include <string>
 #include <cmath>
 
+#include <boost/bind.hpp>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/features2d/features2d.hpp>
@@ -50,49 +52,39 @@ class DrawEllipsesNode: public Node{
 
     protected:
         // return a simple cv-mat image whatever the input type
-        struct DrawEllipses: boost::static_visitor< cv::Mat >{
-            DrawEllipses(std::vector<cauv::Ellipse> const& es) : m_ellipses(es){}
-            cv::Mat operator()(cv::Mat a) const{
-                cv::Mat out;
-                if(a.channels() >= 3){
-                    out = a.clone();
-                }else if(a.channels() == 1){
-                    cv::cvtColor(a, out, CV_GRAY2RGB);
-                }else{
-                    throw parameter_error("image must be 1, 3 or 4 channel");
-                }
-                foreach(Ellipse const& p, m_ellipses){
-                    cv::ellipse(
-                        out,
-                        cv::Point(p.centre.x, p.centre.y),
-                        cv::Size(p.majorRadius,p.minorRadius),
-                        p.angle * 180/M_PI,
-                        0, 360,
-                        CV_RGB(40,255,40),
-                        2,
-                        CV_AA
-                    );
-                }
-                return out;
+        static cv::Mat drawEllipses(const cv::Mat& m, const std::vector<Ellipse>& ellipses) {
+            cv::Mat out;
+            if(m.channels() >= 3){
+                out = m.clone();
+            }else if(m.channels() == 1){
+                cv::cvtColor(m, out, CV_GRAY2RGB);
+            }else{
+                throw parameter_error("image must be 1, 3 or 4 channel");
             }
-            cv::Mat operator()(NonUniformPolarMat a) const{
-                return operator()(a.mat);
+
+            foreach(Ellipse const& p, ellipses){
+                cv::ellipse(
+                    out,
+                    cv::Point(p.centre.x * m.cols, p.centre.y * m.rows),
+                    cv::Size(p.majorRadius * m.cols, p.minorRadius * m.rows),
+                    p.angle * 180/M_PI,
+                    0, 360,
+                    CV_RGB(40,255,40),
+                    2,
+                    CV_AA
+                );
             }
-            cv::Mat operator()(PyramidMat a) const{
-                return operator()(a.levels.at(0));
-            }
-            private:
-                std::vector<cauv::Ellipse> m_ellipses;
-        };
+            return out;
+        }
 
         void doWork(in_image_map_t& inputs, out_map_t& r){
 
-            augmented_mat_t img = inputs[Image_In_Name]->augmentedMat();
+            image_ptr_t img = inputs[Image_In_Name];
             
             const std::vector<Ellipse> ellipses = param< std::vector<Ellipse> >("Ellipses");
             
             try{
-                cv::Mat out = boost::apply_visitor(DrawEllipses(ellipses), img);
+                cv::Mat out = img->apply(boost::bind(drawEllipses, _1, boost::ref(ellipses)));
                 r[Image_Out_Copied_Name] = boost::make_shared<Image>(out);
             }catch(cv::Exception& e){
                 error() << "DrawEllipsesNode:\n\t"
