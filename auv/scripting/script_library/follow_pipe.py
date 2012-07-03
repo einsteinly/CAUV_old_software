@@ -16,15 +16,15 @@ import time
 
 class scriptOptions(aiScriptOptions):
     #Pipeline details
-    follow_pipeline_file  = 'follow_pipe'
+    follow_pipeline_file  = 'follow_pipe2'
     ellipses_name = 'pipe'
     lines_name = 'pipe'
     #Timeouts
     ready_timeout = 30
-    lost_timeout = 10
+    lost_timeout = 15
     # Calibration
     pipe_end     = 0.1 # of image (range +0.5 to -0.5)
-    target_width = 0.2 # of image
+    target_width = 0.05 # of image
     width_error  = 0.1 # of image
     centre_error = 0.2 # of image
     align_error  = 10   # degrees 
@@ -32,8 +32,10 @@ class scriptOptions(aiScriptOptions):
     angle_consistency = 0.4
     # Control
     prop_speed = 80
-    strafe_kP  = -50
-    depth_kP   = 0.1
+    strafe_kP  = -50 # if we are to the left of the pipe then the pipe is on the right, so has positive center error
+    #we want to move right, ie negative strafe, so set kP negative
+    depth_kP = -1 # if we are too high the width is too small so the error appears negative
+    #we want to dive, ie positive value to add to depth, so kP is negative
 
     class Meta:
         dynamic = [
@@ -43,7 +45,7 @@ class scriptOptions(aiScriptOptions):
 
 
 class script(aiScript):
-    debug_values = ['centre_error', 'angle_error', 'depth_error', 'angle']
+    debug_values = ['centre_error', 'angle_error', 'depth_error', 'angle', 'centred', 'depthed', 'aligned', 'pipeEnded', 'yVal']
     def __init__(self, script_name, opts, state):
         aiScript.__init__(self, script_name, opts, state) 
         self.node.join("processing")
@@ -56,12 +58,15 @@ class script(aiScript):
         self.ready = threading.Event()
         self.enabled = True
         
+        #debug values
         self.centre_error = 0
         self.angle_error = 0
         self.depth_error = 0
         self.angle = 0
+        self.yVal = 0
         
         # controllers for staying above the pipe
+        # proportional: if the value we give is positive, then the values we get is positive*sign(kP)
         self.depthControl = PIDController((self.options.depth_kP,0,0))
         self.strafeControl = PIDController((self.options.strafe_kP,0,0))
 
@@ -84,23 +89,22 @@ class script(aiScript):
             # calculate the bearing of the pipe (relative to the sub),
             # mod 180 as we dont want to accidentally turn the sub around
             corrected_angle=90-degrees(self.angle)%180 #TODO this mod 180 probably is not needed from observation of cam following
+            
+            #debug
             debug('Average lines direction: %g (uncorrected=%g)' % (corrected_angle, self.angle))
+            self.angle_error = corrected_angle
             
             # work out the actual bearing of the pipe using the current bearing of the AUV
-            current_bearing = self.auv.getBearing()
-            if current_bearing and self.enabled:
-                self.auv.bearing((current_bearing-corrected_angle)%360) #- as angle is opposite direction to bearing
+            if self.auv.current_bearing and self.enabled:
+                self.auv.bearing((self.auv.current_bearing-corrected_angle)%360) #- as angle is opposite direction to bearing
             
             if abs(corrected_angle) < self.options.align_error:
                 self.aligned.set()
             else:
                 self.aligned.clear()
-            
-            #debug info
-            self.align_error = corrected_angle
-                
+                            
             # set the flags that show if we're above the pipe
-            debug('centred:%s aligned:%s depthed:%s' %
+            debug('Centred:%s Aligned:%s Depthed:%s' %
                     (self.centred.is_set(), self.aligned.is_set(), self.depthed.is_set())
             )
             if self.centred.is_set() and self.aligned.is_set() and self.depthed.is_set():
@@ -118,10 +122,11 @@ class script(aiScript):
             warning('Incorrect ellipses message received')
         #centering
         debug('Centre error: %f' %(m.centre.x - 0.5))
-        if abs(m.centre.x) == 0:
+        if abs(m.centre.x) == 0: #probably an error
             warning('Centre at 0, ignoring')
             self.centred.clear()
             return
+        
         strafe = int(self.strafeControl.update(m.centre.x - 0.5))
         if strafe < -127:
             strafe = -127
@@ -142,6 +147,9 @@ class script(aiScript):
             self.pipeEnded.set()
         else: self.pipeEnded.clear()
         
+        #debug
+        self.yVal = yCoord
+        
         # set the flag used for determining if we're above the pipe
         if abs(m.centre.x -0.5) < abs(self.options.centre_error):
             self.centred.set() #ie within circle radius centre error
@@ -153,7 +161,10 @@ class script(aiScript):
         abs(self.angle%pi-m.angle%pi)<pi-self.options.angle_consistency:
             debug('Too much variation in angle between lines and ellipse (angles %f, %f respectively)' %(self.angle, m.angle))
             return
-        depth = self.depthControl.update(self.options.target_width-m.minorRadius)
+        depth = self.depthControl.update(m.minorRadius-self.options.target_width)
+        debug(str(m.minorRadius))
+        self.depth_error = depth
+        debug('Width error: %f, diving: %f' %(m.minorRadius-self.options.target_width, depth))
         self.auv.depth(self.auv.current_depth+depth)
         if abs(self.options.target_width-m.minorRadius) < self.options.width_error:
             self.depthed.set()
@@ -167,8 +178,7 @@ class script(aiScript):
             # check we're still good to go, giving a little time to re-align the 
             # pipe if neededx
             debug("Re-aligning with pipe...")
-            self.ready.wait(self.options.lost_timeout)
-            if not self.ready.is_set():
+            if not self.ready.wait(self.options.lost_timeout):
                 return False
             
             debug("Above pipe, heading forward...")
@@ -200,8 +210,7 @@ class script(aiScript):
         # the pipe, but if this is taking too long then just give up as we've
         # probably drifted away from the pipe
         debug('Waiting for ready...')
-        self.ready.wait(self.options.ready_timeout)
-        if not self.ready.is_set():
+        if not self.ready.wait(self.options.ready_timeout):
             self.log('Pipeline follower could not position itself over the pipe (timed out).')
             error("Took too long to become ready, aborting")
             self.drop_pl(follow_pipe_file)
