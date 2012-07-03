@@ -40,6 +40,10 @@ class Attenuator : public osg::Referenced {
 			createAttenuation();
 		}
 
+        osg::ref_ptr<osg::Camera> camera() {
+            return _compositeCamera;
+        }
+
 		osg::Node* createQuad()
 		{
 			osg::Geometry* geometry = new osg::Geometry;
@@ -98,7 +102,7 @@ class Attenuator : public osg::Referenced {
 				_compositeCamera->setName("Composite");
 				_compositeCamera->setDataVariance(osg::Object::DYNAMIC);
 				_compositeCamera->setInheritanceMask(osg::Camera::READ_BUFFER | osg::Camera::DRAW_BUFFER);
-				_compositeCamera->setRenderOrder(osg::Camera::POST_RENDER);
+//				_compositeCamera->setRenderOrder(osg::Camera::POST_RENDER);
 				_compositeCamera->setComputeNearFarMode(osg::Camera::COMPUTE_NEAR_FAR_USING_PRIMITIVES);
 				_compositeCamera->setClearMask(0);
 
@@ -132,7 +136,7 @@ class Attenuator : public osg::Referenced {
     
             camera->setDataVariance(osg::Object::DYNAMIC);
             camera->setInheritanceMask(osg::Camera::ALL_VARIABLES);
-            camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
+            //camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
             camera->setRenderOrder(osg::Camera::PRE_RENDER);
             camera->setClearMask(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
             camera->setClearColor(osg::Vec4f(0, 0, 0, 0));

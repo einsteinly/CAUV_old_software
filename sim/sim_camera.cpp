@@ -35,6 +35,12 @@ SimCamera::SimCamera (osg::Node *track_node,
 
     image->allocateImage(width, height, 1, GL_BGR, GL_UNSIGNED_BYTE);
     image->setOrigin(osg::Image::BOTTOM_LEFT);
+    
+    attenuator->camera()->attach(osg::Camera::COLOR_BUFFER0, image, 0);
+    camera->setInheritanceMask(
+          osg::CullSettings::ALL_VARIABLES &
+          ~osg::CullSettings::CULL_MASK);
+    camera->setCullMask(node_mask);
 
     fixed_manip->setTrackNode(track_node);
     fixed_manip->setRotation(axis1, angle1, axis2, angle2, axis3, angle3);
@@ -43,13 +49,6 @@ SimCamera::SimCamera (osg::Node *track_node,
 
 	viewer->addEventHandler(new AttenuatorEventHandler(attenuator));
     viewer->setSceneData(attenuator->getRoot());
-    
-    camera = viewer->getCamera();
-    camera->attach(osg::Camera::COLOR_BUFFER0, image);
-    camera->setInheritanceMask(
-          osg::CullSettings::ALL_VARIABLES &
-          ~osg::CullSettings::CULL_MASK);
-    camera->setCullMask(node_mask);
 
 }
 
