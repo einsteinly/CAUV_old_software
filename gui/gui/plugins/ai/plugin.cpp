@@ -26,7 +26,7 @@
 
 #include <gui/core/framework/nodescene.h>
 #include <gui/core/framework/nodepicker.h>
-#include <gui/core/framework/delegates.h>
+#include <gui/core/framework/delegates/booleandelegate.h>
 #include <gui/core/model/registry.h>
 
 #include <generated/types/GuiaiGroup.h>
@@ -75,7 +75,7 @@ void AiPlugin::initialise(){
     connect(reload, SIGNAL(reloadAiRequest()), this, SLOT(reloadAi()));
 
     m_actions->scene->registerDropHandler(boost::make_shared<AiDropHandler>(m_actions->root, m_actions->node));
-    m_actions->nodes->registerDelegate(nodeType<AiTaskNode>(), boost::make_shared<NumericDelegate>());
+    m_actions->nodes->registerDelegate(nodeType<AiTaskNode>(), boost::make_shared<BooleanDelegate>());
     m_actions->nodes->registerListFilter(m_filter);
 
 }

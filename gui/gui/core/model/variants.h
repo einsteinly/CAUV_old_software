@@ -17,6 +17,7 @@
 
 #include <QVariant>
 #include <QColor>
+#include <QMetaType>
 
 #include <boost/mpl/pop_front.hpp>
 
@@ -33,38 +34,36 @@
 #include <common/msg_classes/colour.h>
 
 #include <sstream>
+#include <vector>
+#include <string>
 
 #include <debug/cauv_debug.h>
+
+// register param values types as qt meta types
+//!!! todo: generate these?
+#include <generated/types/ParamValue.h>
+Q_DECLARE_METATYPE(std::basic_string<char>)
+Q_DECLARE_METATYPE(std::vector<cauv::Corner>)
+Q_DECLARE_METATYPE(std::vector<cauv::Line>)
+Q_DECLARE_METATYPE(std::vector<cauv::Circle>)
+Q_DECLARE_METATYPE(std::vector<float>)
+Q_DECLARE_METATYPE(std::vector<cauv::KeyPoint>)
+Q_DECLARE_METATYPE(cauv::Colour)
+Q_DECLARE_METATYPE(cauv::BoundedFloat)
+Q_DECLARE_METATYPE(std::vector<int32_t>)
+Q_DECLARE_METATYPE(cauv::ImageRegion)
+Q_DECLARE_METATYPE(cauv::Range)
+Q_DECLARE_METATYPE(cauv::floatXY)
+Q_DECLARE_METATYPE(cauv::DynamicEnum)
+Q_DECLARE_METATYPE(std::vector<cauv::floatXY>)
+Q_DECLARE_METATYPE(std::vector<cauv::Ellipse>)
+Q_DECLARE_METATYPE(cauv::LocationSequence)
+
 
 using namespace std::rel_ops;
 
 namespace cauv {
     namespace gui {
-
-        struct TypedQColor : public QColor {
-        public:
-            TypedQColor():
-                QColor(){
-            }
-
-            TypedQColor(const QColor &color):
-                QColor(color){
-            }
-
-            virtual ColourType::e colorType() const {
-                return m_type;
-            }
-
-            virtual void setColorType(ColourType::e t) {
-                m_type = t;
-            }
-
-            ColourType::e m_type;
-        };
-
-        Colour qColorToColour(TypedQColor colour);
-
-        TypedQColor colorToQColour(Colour const& colour);
 
         //
         // helper functions to convert between boost variants and QVariants
@@ -74,10 +73,6 @@ namespace cauv {
 
             QVariant operator()( std::string const& str ) const {
                 return QString::fromStdString( str );
-            }
-
-            QVariant operator()( Colour const& colour ) const {
-                return QVariant(colorToQColour( colour ));
             }
 
             template <typename T>

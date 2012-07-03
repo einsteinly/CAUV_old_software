@@ -48,8 +48,12 @@ set ( GUI_CORE_SRCS
     framework/mainwindow.cpp
     framework/nodescene.cpp
     framework/style.cpp
-    framework/delegates.cpp
     framework/manager.cpp
+
+    framework/delegates/delegate.cpp
+    framework/delegates/booleandelegate.cpp
+    framework/delegates/numericdelegate.cpp
+    framework/delegates/colourdelegate.cpp
 
     framework/elements/style.cpp
 
@@ -92,7 +96,11 @@ set ( GUI_CORE_H
     framework/nodepicker.h
     framework/mainwindow.h
     framework/style.h
-    framework/delegates.h
+
+    framework/delegates/delegate.h
+    framework/delegates/booleandelegate.h
+    framework/delegates/numericdelegate.h
+    framework/delegates/colourdelegate.h
 
     framework/fluidity/view.h
     framework/fluidity/manager.h

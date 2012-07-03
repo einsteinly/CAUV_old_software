@@ -28,7 +28,6 @@
 #include <gui/core/model/nodes/colournode.h>
 #include <gui/core/model/model.h>
 #include <gui/core/framework/nodepicker.h>
-#include <gui/core/framework/delegates.h>
 
 #include <debug/cauv_debug.h>
 

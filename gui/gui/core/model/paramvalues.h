@@ -17,39 +17,12 @@
 
 #include <gui/core/model/variants.h>
 
-#include <map>
-
 #include <QVariant>
-
-#include <gui/core/model/node.h>
-
-// register param values types as qt meta types
-//!!! todo: generate these?
-#include <QMetaType>
-#include <generated/types/ParamValue.h>
-Q_DECLARE_METATYPE(std::basic_string<char>)
-Q_DECLARE_METATYPE(std::vector<cauv::Corner>)
-Q_DECLARE_METATYPE(std::vector<cauv::Line>)
-Q_DECLARE_METATYPE(std::vector<cauv::Circle>)
-Q_DECLARE_METATYPE(std::vector<float>)
-Q_DECLARE_METATYPE(std::vector<cauv::KeyPoint>)
-Q_DECLARE_METATYPE(cauv::BoundedFloat)
-Q_DECLARE_METATYPE(std::vector<int32_t>)
-Q_DECLARE_METATYPE(cauv::ImageRegion)
-Q_DECLARE_METATYPE(cauv::Range)
-Q_DECLARE_METATYPE(cauv::floatXY)
-Q_DECLARE_METATYPE(cauv::DynamicEnum)
-Q_DECLARE_METATYPE(std::vector<cauv::floatXY>)
-Q_DECLARE_METATYPE(std::vector<cauv::Ellipse>)
-Q_DECLARE_METATYPE(cauv::LocationSequence)
-Q_DECLARE_METATYPE(cauv::Colour)
 
 namespace cauv {
     namespace gui {
 
-    extern Colour qColorToColour(TypedQColor colour);
-
-    extern TypedQColor colorToQColour(Colour const& colour);
+    class Node;
 
     struct ParamValueToNode : public boost::static_visitor<boost::shared_ptr<Node> >
     {

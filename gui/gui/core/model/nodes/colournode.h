@@ -17,26 +17,71 @@
 
 #include <gui/core/model/node.h>
 
-//#include <generated/types/Colour.h>
+#include <common/msg_classes/colour.h>
 
 namespace cauv {
-    namespace gui {
+namespace gui {
 
-        class ColourNode : public Node {
-            Q_OBJECT
+class ColourNode : public Node {
+    Q_OBJECT
 
-        public:
-            ColourNode(nid_t const& id) : Node(id, nodeType<ColourNode>()){
-                m_value = QVariant::fromValue<QColor>(Qt::black);
-            }
+public:
+    ColourNode(nid_t const& id) : Node(id, nodeType<ColourNode>()){
+        qRegisterMetaType<Colour>("Colour");
+        m_value = QVariant::fromValue<Colour>(Colour());
+    }
+/*
+    static Colour qColorToColour(TypedQColor colour) {
+        switch (colour.colorType()) {
+        case ColourType::RGB:
+            //return Colour::fromRGB(colour.redF(), colour.greenF(), colour.blueF());
+        case ColourType::ARGB:
+            //return Colour::fromRGBA(colour.redF(), colour.greenF(), colour.blueF(), colour.alphaF());
+        case ColourType::BGR:
+            //return Colour::fromBGR(colour.redF(), colour.greenF(), colour.blueF());
+        case ColourType::BGRA:
+            //return Colour::fromBGRA(colour.redF(), colour.greenF(), colour.blueF(), colour.alphaF());
+        case ColourType::Grey:
+            break;
+        default:
+            break;
+            //return Colour::fromGrey(colour.value());
+        }
+        return Colour();
+    }
 
+    static QColor colorToQColour(Colour const& colour) {
+        QColor c;
 
-        public Q_SLOTS:
-            virtual void update(QColor const& value){
-                Node::update(QVariant::fromValue<QColor>(value));
-            }
-        };
-    } //namespace gui
+                switch(colour.type){
+                    case ColourType::Grey:
+                        c = TypedQColor::fromHsv(0, 0, colour.grey());
+
+                    case ColourType::RGB:
+                    case ColourType::ARGB:
+                    case ColourType::BGR:
+                    case ColourType::BGRA: {
+                        c = TypedQColor::fromHsv(0, 0, colour.grey());
+
+                    default:
+                        warning() << "colorToQColour() - Unknown colour format";
+                        c = TypedQColor::fromHsv(0, 0, colour.grey());
+
+        return c;
+    }
+
+*/
+
+public Q_SLOTS:
+    virtual void update(Colour const& value){
+        Node::update(QVariant::fromValue<Colour>(value));
+    }
+
+    virtual void update(QColor const& value){
+        //update(qColorToColour(value));
+    }
+};
+} //namespace gui
 } // namespace cauv
 
 

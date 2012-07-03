@@ -24,7 +24,7 @@
 #include <QDebug>
 
 #include "model/nodes/numericnode.h"
-#include "delegates.h"
+#include "delegates/delegate.h"
 #include "model/model.h"
 
 using namespace cauv;
@@ -185,7 +185,8 @@ void NodePicker::registerListFilter(boost::shared_ptr<NodeFilterInterface> const
    ui->view->registerListFilter(filter);
 }
 
-void NodePicker::registerDelegate(node_type nodeType, boost::shared_ptr<NodeDelegate> delegate){
+void NodePicker::registerDelegate(node_type nodeType,
+                                  boost::shared_ptr<AbstractNodeDelegate> delegate){
     ui->view->registerDelegate(nodeType, delegate);
 }
 
@@ -194,13 +195,16 @@ NodePicker::~NodePicker(){
 }
 
 
-NodeTreeView::NodeTreeView(QWidget *) :
+NodeTreeView::NodeTreeView(QWidget * parent) :
+    QTreeView(parent),
     m_fixedSize(false)
 {
     init();
 }
 
-NodeTreeView::NodeTreeView(bool fixedSize, QWidget *) :
+NodeTreeView::NodeTreeView(bool fixedSize,
+                           QWidget * parent) :
+    QTreeView(parent),
     m_fixedSize(fixedSize) {
     init();
 }
@@ -213,13 +217,14 @@ void NodeTreeView::init() {
     setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setEditTriggers(QAbstractItemView::EditKeyPressed);
 
+
+    m_delegateMap = boost::make_shared<DelegateProxy>(this);
+    setItemDelegateForColumn(0, m_delegateMap.get());
+
     setRootIsDecorated(false);
     setDragEnabled(true);
     setDropIndicatorShown(true);
     setAcceptDrops(false);
-
-    m_delegateMap = boost::make_shared<DefaultNodeDelegate>(this);
-    setItemDelegateForColumn(0, m_delegateMap.get());
 
     QPalette p = this->palette();
     p.setColor(QPalette::Highlight, QColor(0,0,0,0));
@@ -255,7 +260,8 @@ void NodeTreeView::sizeToFit(){
     //updateGeometries();
 }
 
-void NodeTreeView::registerDelegate(node_type nodeType, boost::shared_ptr<NodeDelegate> delegate){
+void NodeTreeView::registerDelegate(node_type nodeType,
+                                    boost::shared_ptr<AbstractNodeDelegate> delegate){
     m_delegateMap->registerDelegate(nodeType, delegate);
 }
 
@@ -274,7 +280,7 @@ void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
         QStyleOptionViewItem option;
         option.initFrom(this);
         option.rect = this->visualRect(index);
-        if(m_delegateMap->childRect(option, index).contains(event->pos()) &&
+        if(m_delegateMap->controlRect(option, index).contains(event->pos()) &&
                 (model()->flags(index) & Qt::ItemIsEditable))
             edit(index);
         else toggleExpanded(index);
@@ -366,7 +372,7 @@ bool NodeTreeView::applyFilters(boost::shared_ptr<Node> const& node){
     return true;
 }
 
-void NodeTreeView::registerListFilter(boost::shared_ptr<NodeFilterInterface>  const& filter){
+void NodeTreeView::registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter){
     m_filters.push_back(filter);
     // all filters should have a filterChanged signal, but it's not actually enforced
     // by the interface as Qt doesn't handle multiple inhertiance for QObject

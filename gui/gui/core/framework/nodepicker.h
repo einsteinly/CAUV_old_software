@@ -31,8 +31,8 @@ namespace cauv {
 namespace gui {
 
 class NodeItemModel;
-class NodeDelegate;
-class DefaultNodeDelegate;
+class DelegateProxy;
+class AbstractNodeDelegate;
 class Node;
 
 /**
@@ -101,7 +101,7 @@ public:
 
 public Q_SLOTS:
     void registerDelegate(node_type nodeType,
-                          boost::shared_ptr<NodeDelegate> delegate);
+                          boost::shared_ptr<AbstractNodeDelegate> delegate);
     void sizeToFit();
 
 private Q_SLOTS:
@@ -117,7 +117,7 @@ Q_SIGNALS:
 protected:
     std::vector<boost::shared_ptr<NodeFilterInterface> > m_filters;
     void keyPressEvent(QKeyEvent *event);
-    boost::shared_ptr<DefaultNodeDelegate> m_delegateMap;
+    boost::shared_ptr<DelegateProxy> m_delegateMap;
     bool m_fixedSize;
 };
 
@@ -133,7 +133,7 @@ public:
     virtual ~NodePicker();
 
     void registerDelegate(node_type nodeType,
-                          boost::shared_ptr<NodeDelegate> delegate);
+                          boost::shared_ptr<AbstractNodeDelegate> delegate);
     void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
 
 protected Q_SLOTS:
