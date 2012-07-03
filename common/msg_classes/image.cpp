@@ -187,21 +187,16 @@ cauv::svec_t &cauv::Image::bytes(void) const {
     std::vector<int> compress_params;
     compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     compress_params.push_back(serializeQuality());
-    switch(source.channels()) {
-        case 1:
-            if (source.type() != CV_8UC1)
-                source.convertTo(converted, CV_8UC1);
-            else
-                converted = source;
-            break;
-        case 3:
-        default:
-            if (source.type() != CV_8UC3)
-                source.convertTo(converted, CV_8UC3);
-            else
-                converted = source;
-            break;
+
+    if (source.depth() != CV_8U) {
+        if (source.depth() == CV_32F || source.depth() == CV_64F)
+            source.convertTo(converted, CV_8U, 255.0, 0.0);
+        else
+            source.convertTo(converted, CV_8U);
     }
+    else
+        converted = source;
+
     m_bytes.reserve(converted.cols * converted.rows * converted.elemSize() * 0.2);
     try {
         cv::imencode(m_compress_fmt, converted, m_bytes, compress_params);

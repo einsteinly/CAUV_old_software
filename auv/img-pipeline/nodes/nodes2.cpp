@@ -29,6 +29,7 @@
 #include "receiveLinesNode.h"
 #include "meanStdNode.h"
 #include "broadcastEllipsesNode.h"
+#include "colourSimilarityNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -62,6 +63,7 @@ DEFINE_NFR(FitGaussianNode, NodeType::FitGaussian);
 DEFINE_NFR(ReceiveLinesNode, NodeType::ReceiveLines);
 DEFINE_NFR(MeanStdNode, NodeType::MeanStd);
 DEFINE_NFR(BroadcastEllipsesNode, NodeType::BroadcastEllipses);
+DEFINE_NFR(ColourSimilarityNode, NodeType::ColourSimilarity);
 
 } // namespace imgproc
 } // namespace cauv

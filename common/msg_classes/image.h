@@ -18,6 +18,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/variant.hpp>
 #include <boost/utility/result_of.hpp>
+#include <boost/make_shared.hpp>
 
 #include <opencv2/core/core.hpp>
 
@@ -82,7 +83,7 @@ struct FuncVisitor : boost::static_visitor< TRet >{
             return func(a);
         }
         TRet operator()(NonUniformPolarMat& a) const {
-            return operator()(a.mat);
+            return func(a.mat);
         }
         TRet operator()(PyramidMat&) const {
             error() << "no support for pyramids";
@@ -103,11 +104,38 @@ struct FuncVisitor<Func,void> : boost::static_visitor< void >{
             func(a);
         }
         void operator()(NonUniformPolarMat& a) const {
-            operator()(a.mat);
+            func(a.mat);
         }
         void operator()(PyramidMat& a) const {
             for (std::vector<cv::Mat>::iterator it = a.levels.begin(), itend = a.levels.end(); it != itend; ++it)
-                operator()(*it);
+                func(*it);
+        }
+
+    private:
+        Func func;
+};
+
+template<typename Func>
+struct FuncVisitor<Func,cv::Mat> : boost::static_visitor<augmented_mat_t>{
+    public:
+        FuncVisitor(const Func& func) : func(func) {
+        }
+
+        augmented_mat_t operator()(cv::Mat& a) const {
+            return func(a);
+        }
+        augmented_mat_t operator()(NonUniformPolarMat& a) const {
+            NonUniformPolarMat ret;
+            ret.mat = func(a.mat);
+            ret.ranges = boost::make_shared<std::vector<float> >(*a.ranges);
+            ret.bearings = boost::make_shared<std::vector<float> >(*a.bearings);
+            return ret;
+        }
+        augmented_mat_t operator()(PyramidMat& a) const {
+            PyramidMat ret;
+            for (std::vector<cv::Mat>::iterator it = a.levels.begin(), itend = a.levels.end(); it != itend; ++it)
+                ret.levels.push_back(func(*it));
+            return ret;
         }
 
     private:
@@ -144,7 +172,7 @@ class Image : public BaseImage {
         float bits() const;
 
         template<typename Func>
-        typename Func::result_type apply(const Func& func)
+        typename FuncVisitor<Func, typename Func::result_type>::result_type apply(const Func& func)
         {
             return boost::apply_visitor(FuncVisitor<Func, typename Func::result_type>(func), m_img);
         }

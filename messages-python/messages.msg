@@ -111,6 +111,7 @@ enum NodeType : int8 {
     MeanStd,
     MathAddMultColour,
     BroadcastEllipses,
+    ColourSimilarity,
 }
 enum NodeStatus : int8 {
     None = 0,
