@@ -30,13 +30,22 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-AiNode::AiNode(QGraphicsItem *parent) :
-        liquid::LiquidNode(AI_Node_Style(), parent)
+AiNode::AiNode(boost::shared_ptr<Node> node, QGraphicsItem *parent) :
+    liquid::LiquidNode(AI_Node_Style(), parent)
 {
+    node->connect(node.get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)), this, SLOT(deleteLater()));
 }
 
 AiNode::~AiNode(){
     debug(2) << "~AINode()";
+}
+
+void AiNode::close(){
+    LiquidNode::close();
+    QPropertyAnimation *fade = new QPropertyAnimation(this, "opacity");
+    fade->setEndValue(0.25);
+    fade->setDuration(200);
+    fade->start();
 }
 
 

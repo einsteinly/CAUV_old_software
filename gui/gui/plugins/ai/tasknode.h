@@ -18,12 +18,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include <liquid/node.h>
-#include <liquid/arcSource.h>
-
-#include <generated/types/ParamValue.h>
 
 #include <gui/core/model/nodes/numericnode.h>
-#include <gui/core/model/model.h>
 #include <gui/core/framework/manager.h>
 
 #include <gui/plugins/ai/conditionnode.h>
@@ -77,9 +73,6 @@ class AiTaskNode : public BooleanNode {
         void removeTaskOption(std::string name);
         std::map<std::string, boost::shared_ptr<Node> > getTaskOptions();
 
-        static void addType(std::string type);
-        static std::set<std::string> getTypes();
-
     protected:
         std::set<boost::shared_ptr<AiConditionNode> > m_conditions;
         std::set<boost::shared_ptr<FluidityNode> > m_pipelines;
@@ -88,12 +81,10 @@ class AiTaskNode : public BooleanNode {
         std::map<std::string, boost::shared_ptr<Node> > m_dynamicOptions;
         std::map<std::string, boost::shared_ptr<Node> > m_taskOptions;
 
-        static std::set<std::string> m_types;
-
 };
 
 class LiquidTaskNode :
-        public liquid::LiquidNode,
+        public AiNode,
         public liquid::ArcSourceDelegate,
         public Manager<LiquidTaskNode>
 {

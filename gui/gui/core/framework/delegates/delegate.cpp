@@ -173,7 +173,7 @@ void AbstractNodeDelegate::updateEditorGeometry(QWidget *editor,
 }
 
 QRect AbstractNodeDelegate::controlRect(const QStyleOptionViewItem &option,
-                                                const QModelIndex &index) const {
+                                        const QModelIndex &index) const {
     QRect rect = option.rect;
     rect.setLeft(titleRect(option, index).right());
     return rect;
@@ -183,6 +183,17 @@ SizedDelegate::SizedDelegate(QSize sizeHint,
                              QObject * parent) :
     AbstractNodeDelegate(parent),
     m_sizeHint(sizeHint) {
+}
+
+void SizedDelegate::paint(QPainter *painter,
+                          const QStyleOptionViewItem &option,
+                          const QModelIndex &index) const{
+    AbstractNodeDelegate::paint(painter, option, index);
+
+    QStyleOptionViewItem modified(option);
+    modified.rect = controlRect(option, index);
+
+    QStyledItemDelegate::paint(painter, modified, index);
 }
 
 QSize SizedDelegate::sizeHint(const QStyleOptionViewItem &,

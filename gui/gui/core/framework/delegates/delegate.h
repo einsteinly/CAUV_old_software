@@ -103,6 +103,10 @@ public:
     SizedDelegate(QSize sizeHint, QObject *parent=0);
     QSize sizeHint(const QStyleOptionViewItem &option,
                    const QModelIndex &index) const;
+    virtual void paint(QPainter *painter,
+                       const QStyleOptionViewItem &option,
+                       const QModelIndex &index) const;
+protected:
 protected:
     QSize m_sizeHint;
 };

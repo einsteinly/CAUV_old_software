@@ -37,9 +37,6 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-
-std::set<std::string> AiConditionNode::m_types;
-
 // !!! inter-plugin dependence, need this to be inline
 //AiConditionNode::AiConditionNode(const nid_t id) : Node(id, nodeType<AiConditionNode>()){
 //}
@@ -83,28 +80,16 @@ std::map<std::string, boost::shared_ptr<Node> > AiConditionNode::getOptions(){
 }
 
 
-void AiConditionNode::addType(std::string type){
-    m_types.insert(type);
-}
-
-std::set<std::string> AiConditionNode::getTypes(){
-    return m_types;
-}
-
-
-
-
 
 LiquidConditionNode::LiquidConditionNode(
         boost::shared_ptr<AiConditionNode> node,
         QGraphicsItem * parent) :
-    liquid::LiquidNode(AI_Node_Style(), parent),
+    AiNode(node, parent),
     Manager<LiquidConditionNode>(node, this),
     m_node(node),
     m_source(new liquid::ArcSource(this, new liquid::Arc(Param_Arc_Style())))
 {
     buildContents();
-    node->connect(node.get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)), this, SLOT(deleteLater()));
 }
 
 LiquidConditionNode::~LiquidConditionNode() {

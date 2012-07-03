@@ -70,15 +70,15 @@ void BooleanDelegate::commit() {
     emit commitData(static_cast<QWidget *>(sender()));
 }
 
-QSize BooleanDelegate::sizeHint(const QStyleOptionViewItem &,
-                                const QModelIndex &) const{
-    return QSize(65, 25);
+QSize BooleanDelegate::sizeHint(const QStyleOptionViewItem & option,
+                                const QModelIndex &index) const{
+    return QSize(titleRect(option, index).size().width() + 65 , 25);
 }
 
 
 QRect BooleanDelegate::controlRect(const QStyleOptionViewItem &option,
                   const QModelIndex &index) const{
     QRect rect = AbstractNodeDelegate::controlRect(option, index);
-    rect.setSize(sizeHint(option, index));
+    rect.setSize(QSize(65, 25));
     return rect;
 }

@@ -104,7 +104,6 @@ void AiMessageObserver::onTaskTypesMessage(TaskTypesMessage_ptr m){
     boost::shared_ptr<GroupingNode> tasks = creation->findOrCreate<GroupingNode>("ai-tasks");
 
     foreach (std::string const& name, m->typeNames()){
-        AiTaskNode::addType(name);
         tasks->findOrCreate<AiTaskTypeNode>(name);
     }
 }
@@ -116,7 +115,6 @@ void AiMessageObserver::onConditionTypesMessage(ConditionTypesMessage_ptr m){
     boost::shared_ptr<GroupingNode> conditions = creation->findOrCreate<GroupingNode>("ai-conditions");
 
     foreach (std::string const& name, m->conditionTypes()){
-        AiConditionNode::addType(name);
         conditions->findOrCreate<AiConditionTypeNode>(name);
     }
 }

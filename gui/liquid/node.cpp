@@ -94,7 +94,6 @@ LiquidNode::~LiquidNode(){
 
 void LiquidNode::close(){
     Q_EMIT closed(this);
-    this->deleteLater();
 }
 
 QRectF LiquidNode::boundingRect() const{

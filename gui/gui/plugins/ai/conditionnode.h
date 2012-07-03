@@ -20,12 +20,10 @@
 #include <liquid/node.h>
 #include <liquid/arcSource.h>
 
-#include <generated/types/ParamValue.h>
-
 #include <gui/core/model/node.h>
-#include <gui/core/model/model.h>
-#include <gui/core/framework/nodepicker.h>
 #include <gui/core/framework/manager.h>
+
+#include <gui/plugins/ai/ainode.h>
 
 namespace cauv {
 namespace gui {
@@ -52,9 +50,6 @@ class AiConditionNode : public Node {
         boost::shared_ptr<Node> setOption(std::string name, ParamValue value);
         void removeOption(std::string name);
         std::map<std::string, boost::shared_ptr<Node> > getOptions();
-
-        static void addType(std::string type);
-        static std::set<std::string> getTypes();
         
         void addPipeline(boost::shared_ptr<FluidityNode> pipe){
             m_pipelines.insert(pipe);
@@ -69,20 +64,18 @@ class AiConditionNode : public Node {
     protected:
         std::map<std::string, boost::shared_ptr<Node> > m_debug;
         std::map<std::string, boost::shared_ptr<Node> > m_options;
-        std::set<boost::shared_ptr<FluidityNode> > m_pipelines;        
-
-        static std::set<std::string> m_types;
+        std::set<boost::shared_ptr<FluidityNode> > m_pipelines;
 };
 
 class LiquidConditionNode :
-        public liquid::LiquidNode,
+        public AiNode,
         public liquid::ArcSourceDelegate,
         public Manager<LiquidConditionNode>
 {
 public:
     LiquidConditionNode(boost::shared_ptr<AiConditionNode> node, QGraphicsItem *parent = 0);
     virtual ~LiquidConditionNode();
-    void buildContents();
+    virtual void buildContents();
     liquid::AbstractArcSource * source();
     std::string conditionId() const;
 

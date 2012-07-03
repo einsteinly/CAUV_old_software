@@ -42,9 +42,6 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-
-std::set<std::string> AiTaskNode::m_types;
-
 // !!! inter-plugin dependence, need this to be inline
 //AiTaskNode::AiTaskNode(const nid_t id) : BooleanNode(id){
 //    type = nodeType<AiTaskNode>();
@@ -147,25 +144,15 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getTaskOptions(){
     return m_taskOptions;
 }
 
-void AiTaskNode::addType(std::string type){
-    m_types.insert(type);
-}
-
-std::set<std::string> AiTaskNode::getTypes(){
-    return m_types;
-}
-
-
 
 LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem * parent) :
-    liquid::LiquidNode(AI_Node_Style(), parent),
+    AiNode(node, parent),
     Manager<LiquidTaskNode>(node, this),
     m_node(node)
 {
     buildContents();
     node->connect(node.get(), SIGNAL(onUpdate(QVariant)), this, SLOT(highlightRunningStatus(QVariant)));
     highlightRunningStatus(node->get());
-    node->connect(node.get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)), this, SLOT(deleteLater()));
 }
 
 LiquidTaskNode::~LiquidTaskNode() {

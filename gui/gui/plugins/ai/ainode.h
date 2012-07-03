@@ -36,8 +36,10 @@ namespace cauv {
             Q_OBJECT
             typedef liquid::LiquidNode base_t;
         public:
-            AiNode(QGraphicsItem *parent = 0);
+            AiNode(boost::shared_ptr<Node> node, QGraphicsItem *parent=0);
             virtual ~AiNode();
+        public Q_SLOTS:
+            void close();
         };
 
         class AiDropHandler : public QObject, public DropHandlerInterface<QGraphicsItem * > {

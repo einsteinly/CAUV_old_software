@@ -217,9 +217,9 @@ void NodeTreeView::init() {
     setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setEditTriggers(QAbstractItemView::EditKeyPressed);
 
-
     m_delegateMap = boost::make_shared<DelegateProxy>(this);
     setItemDelegateForColumn(0, m_delegateMap.get());
+
 
     setRootIsDecorated(false);
     setDragEnabled(true);
@@ -258,6 +258,7 @@ void NodeTreeView::sizeToFit(){
     //updateGeometry();
     adjustSize();
     //updateGeometries();
+    //m_delegateMap->sizeHintChanged(rootIndex());
 }
 
 void NodeTreeView::registerDelegate(node_type nodeType,
