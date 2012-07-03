@@ -41,7 +41,11 @@ public Q_SLOTS:
     }
 
     Colour colour() const {
-        return Colour();
+        QColor c = currentColor();
+        return Colour::fromARGB(c.alphaF(),
+                                c.redF(),
+                                c.greenF(),
+                                c.blueF());
     }
 };
 
@@ -59,6 +63,10 @@ public:
 
     virtual QSize sizeHint(const QStyleOptionViewItem &option,
                            const QModelIndex &index) const;
+
+    virtual QWidget * createEditor(QWidget *parent,
+                                   const QStyleOptionViewItem &option,
+                                   const QModelIndex &index) const;
 };
 
 

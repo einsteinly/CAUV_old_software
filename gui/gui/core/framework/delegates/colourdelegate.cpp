@@ -26,12 +26,13 @@ using namespace cauv::gui;
 
 ColourDelegate::ColourDelegate(QObject * parent) :
     AbstractNodeDelegate(parent) {
-    QItemEditorFactory * factory = new QItemEditorFactory();
-    setItemEditorFactory(factory);
-    factory->registerEditor((QVariant::Type)qMetaTypeId<Colour>(),
-                            new QItemEditorCreator<ColourDialog>("colour"));
 }
 
+QWidget * ColourDelegate::createEditor(QWidget *parent,
+                                       const QStyleOptionViewItem &option,
+                                       const QModelIndex &index) const {
+    return new ColourDialog();
+}
 
 void ColourDelegate::paint(QPainter *painter,
                            const QStyleOptionViewItem &option,
@@ -45,15 +46,19 @@ void ColourDelegate::paint(QPainter *painter,
     painter->setBrush(QColor::fromRgbF(colour.r(), colour.g(), colour.b(), colour.a()));
     painter->setPen(QPen(QColor(150,150,150), 2));
     QRect rect = controlRect(option,index).adjusted(0,2,0,-2);
-    painter->drawEllipse(QRect(rect.x(), rect.y(),
-                               rect.height()-2, rect.height()-2));
+    qreal height = painter->fontMetrics().height()*1.3;
+    painter->drawEllipse(QRect(rect.x(), rect.y() + rect.height()/2 - height/2,
+                               height, height));
     painter->setPen(Qt::black);
-    QString text("%1 %2 %3");
+    QString text("%1 %2 %3 %4");
     text = text.arg(QString::number(colour.r(), 'f', 2)).
             arg(QString::number(colour.g(), 'f', 2)).
-            arg(QString::number(colour.b(), 'f', 2));
-    rect = rect.adjusted(rect.height()+2,0,0,0);
-    painter->drawText(rect, text, QTextOption(Qt::AlignVCenter));
+            arg(QString::number(colour.b(), 'f', 2)).
+            arg(QString::number(colour.a(), 'f', 2));
+    rect = rect.adjusted(height+4,0,0,0);
+    QTextOption to(Qt::AlignVCenter);
+    to.setWrapMode(QTextOption::NoWrap);
+    painter->drawText(rect, text, to);
     painter->restore();
 }
 
@@ -74,6 +79,6 @@ void ColourDelegate::setEditorData(QWidget *editor,
 
 
 QSize ColourDelegate::sizeHint(const QStyleOptionViewItem &option,
-                                       const QModelIndex &) const{
+                               const QModelIndex &) const{
     return QSize(120, option.fontMetrics.height()*2);
 }
