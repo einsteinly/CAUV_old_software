@@ -74,10 +74,10 @@ class timeCondition(aiCondition):
         timeout = 30
         startTimer = False
     def __init__(self, options={}, initial_state=False):
-        aiCondition.__init__(self, options)
         self.timer = None
         self.timer_started = False
         self.state = initial_state
+        aiCondition.__init__(self, options)
     def set_options(self, options):
         start = options.pop('startTimer', False)
         aiCondition.set_options(self, options)
@@ -114,13 +114,31 @@ class locationCondition(aiCondition):
         self.tm_info = tm_info
         aiCondition.__init__(self, options)
     def get_debug_values(self):
-        return {'current latitude':self.tm_info['latitude'],
-                'current longitude':self.tm_info['longitude'],
-                'current depth':self.tm_info['depth']}
+        return {'current_latitude':self.tm_info['latitude'],
+                'current_longitude':self.tm_info['longitude'],
+                'current_depth':self.tm_info['depth']}
     def get_state(self):
         return abs(self.tm_info['latitude']-self.options.latitude)<self.options.error and \
                abs(self.tm_info['longitude']-self.options.longitude)<self.options.error and \
                (abs(self.tm_info['depth']-self.options.depth)<self.options.error or not self.options.use_depth)  # pylint: disable=E1101
+        
+class taskSuccessfulCondition(aiCondition):
+    class options(conditionOptions):
+        task_name = ''
+    def __init__(self, options, tm_info = None):
+        self.tm_info = tm_info
+        self.state = False
+        aiCondition.__init__(self, options)
+    def get_debug_values(self):
+        return {}
+    def get_state(self):
+        #check once and store value if true as wont become false again
+        if self.state:
+            return True
+        if self.options.task_name in self.tm_info['successful_tasks']:
+            self.state = True
+            return True
+        return False
         
 class detectorCondition(aiCondition):
     _abstract = True

@@ -168,12 +168,21 @@ void Node::setOutputLinks(msg_node_output_map_t const& outputs){
 
 namespace{//Unnamed
 
-template<typename T> struct Type2Name { static const char* name; };
-template<typename T> const char* Type2Name<T>::name = "Unknown";
-template<> const char* Type2Name<cauv::KeyPoint>::name = "KeyPoint";
-template<> const char* Type2Name<Corner>::name = "Corner";
-template<> const char* Type2Name<Line>::name = "Line";
-template<> const char* Type2Name<float>::name = "float";
+template<typename T> struct Type2Name {};
+#define CAUV_MAKE_TYPE2NAME(T)\
+template<> struct Type2Name<T> { static const char* name; }; \
+const char* Type2Name<T>::name = #T;
+
+CAUV_MAKE_TYPE2NAME(int)
+CAUV_MAKE_TYPE2NAME(float)
+CAUV_MAKE_TYPE2NAME(floatXY)
+CAUV_MAKE_TYPE2NAME(KeyPoint)
+CAUV_MAKE_TYPE2NAME(Corner)
+CAUV_MAKE_TYPE2NAME(Line)
+CAUV_MAKE_TYPE2NAME(Circle)
+CAUV_MAKE_TYPE2NAME(Ellipse)
+
+#undef CAUV_MAKE_TYPE2NAME
 
 template<typename T>
 struct makePVPairHelper

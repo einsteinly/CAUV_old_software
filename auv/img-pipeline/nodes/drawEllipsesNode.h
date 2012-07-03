@@ -70,7 +70,7 @@ class DrawEllipsesNode: public Node{
                         p.angle * 180/M_PI,
                         0, 360,
                         CV_RGB(40,255,40),
-                        3,
+                        2,
                         CV_AA
                     );
                 }

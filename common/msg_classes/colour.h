@@ -16,6 +16,7 @@
 #define __CAUV_COLOUR_H__
 
 #include <boost/algorithm/string.hpp>
+#include <boost/operators.hpp>
 
 #include <utility/serialisation-types.h>
 #include <generated/types/ColourBase.h>
@@ -23,7 +24,9 @@
 
 namespace cauv {
 
-class Colour : public ColourBase {
+class Colour : public ColourBase,
+               boost::additive<Colour>,
+               boost::arithmetic<Colour, float> {
     public:
         Colour() : ColourBase() {}
         Colour(ColourType::e type, boost::array<float,4> values) : ColourBase(type,values) {}
@@ -39,7 +42,15 @@ class Colour : public ColourBase {
         static Colour fromBGR(float b, float g, float r);
         static Colour fromBGRA(float b, float g, float r, float a);
         static Colour fromGrey(float grey);
+
+        Colour& operator+= (const Colour& that);
+        Colour& operator-= (const Colour& that);
+        Colour& operator+= (float val);
+        Colour& operator-= (float val);
+        Colour& operator*= (float val);
+        Colour& operator/= (float val);
 };
+
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
@@ -95,7 +106,7 @@ std::basic_istream<charT, traits>& operator>>(
         is >> g;
         is.ignore(1,',');
         is >> b;
-        c = Colour::fromARGB(r,g,b,a);
+        c = Colour::fromARGB(a,r,g,b);
     }
     else if (boost::iequals(s, "bgr")) {
         float b,g,r;

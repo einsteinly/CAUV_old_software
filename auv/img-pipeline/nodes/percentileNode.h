@@ -41,9 +41,7 @@ class PercentileNode: public Node{
             registerInputID("image");
 
             // output parameters:
-            registerOutputID("ch1 value", int(0));
-            registerOutputID("ch2 value", int(0));
-            registerOutputID("ch3 value", int(0));
+            registerOutputID("value", Colour::fromRGB(0,0,0));
             
             // parameter: 
             registerParamID<BoundedFloat>("percentile", BoundedFloat(50,0,100,BoundedFloatType::Clamps), "percentile of pixel values");
@@ -61,107 +59,57 @@ class PercentileNode: public Node{
             return r;
         }
         
-        struct apply: boost::static_visitor< std::vector<int> >{
-            apply(float const& percentile): m_pct(percentile){ }
-            std::vector<int> operator()(cv::Mat img) const{
-                const int channels = img.channels();
-                const int pct_pixel = int(img.total() * (m_pct/100.0f));
-                
-                if(channels > 3 || channels < 1)
-                    throw(parameter_error("image must have 1--3 channels"));
-                if(img.depth() != CV_8U)
-                    throw(parameter_error("image must be unsigned bytes"));
+        static Colour getPercentile(cv::Mat& img, float pct) {
+            const int channels = img.channels();
+            const int pct_pixel = int(img.total() * (pct/100.0f));
+            
+            if(channels != 1 && channels != 3)
+                throw(parameter_error("image must have 1 or 3 channels"));
+            if(img.depth() != CV_8U)
+                throw(parameter_error("image must be unsigned bytes"));
 
-                std::vector< std::vector<uint32_t> > value_histogram(channels, std::vector<uint32_t>(256, 0));
-                
-                int dims[3] = {img.rows, img.cols, channels};
-                size_t steps[2] = {img.step[0], img.step[1]};
-                cv::Mat imgWithChannels(3, dims, CV_8U, img.data, steps);
-                //cv::MatConstIterator_<uint8_t> it = imgWithChannels.begin<unsigned char>(),
-                //                               end = imgWithChannels.end<unsigned char>();
-                // FIXME: opencv bug? iterator version is broken for me on
-                // single channel images (begin+1 == end)
-                /*while(it != end) {
-                    for(int ch = 0; ch < channels; ch++) {
-                        value_histogram[ch][*it]++;
-                    }
-                    it++;
-                }*/
-                switch(channels){
-                    case 1:
-                        for(int row = 0; row < img.rows; row++)
-                            for(int col = 0; col < img.cols; col++)
-                                value_histogram[0][img.at<uint8_t>(row,col)]++;
-                        break;
-
-                    case 2:
-                        for(int row = 0; row < img.rows; row++)
-                            for(int col = 0; col < img.cols; col++)
-                                for(int ch = 0; ch < channels; ch++)
-                                    value_histogram[ch][img.at<cv::Vec2b>(row,col)[ch]]++;
-                        break;
-
-                    case 3:
-                        for(int row = 0; row < img.rows; row++)
-                            for(int col = 0; col < img.cols; col++)
-                                for(int ch = 0; ch < channels; ch++)
-                                    value_histogram[ch][img.at<cv::Vec3b>(row,col)[ch]]++;
-                        break;
-
-                    default:
-                        assert(0); // not possible, we checked earlier
+            std::vector< std::vector<uint32_t> > value_histogram(channels, std::vector<uint32_t>(256, 0));
+            
+            for (cv::MatConstIterator_<uint8_t> it = img.begin<unsigned char>(),
+                                                end = img.end<unsigned char>();
+                 it != end;) {
+                for(int ch = 0; ch < channels; ++ch, ++it) {
+                    value_histogram[ch][*it]++;
                 }
+            }
 
-                std::vector<int> channel_results;
-                for(int ch = 0; ch < channels; ch++){
-                    int running_total = 0;
-                    int i;
-                    for(i = 0; i < 256; i++){
-                        //debug(9) << "[" << BashColour::White << bar(running_total, img.total(), 50) << "]"
-                        //         << i << running_total;
-                        
-                        running_total += value_histogram[ch][i];
-                        if(running_total >= pct_pixel){
-                            channel_results.push_back(i);
-                            break;
-                        }
+            std::vector<float> channel_results;
+            for(int ch = 0; ch < channels; ch++){
+                int running_total = 0;
+                int i;
+                for(i = 0; i < 256; i++){
+                    //debug(9) << "[" << BashColour::White << bar(running_total, img.total(), 50) << "]"
+                    //         << i << running_total;
+                    
+                    running_total += value_histogram[ch][i];
+                    if(running_total >= pct_pixel){
+                        channel_results.push_back(i/255.0f);
+                        break;
                     }
-                    if(i == 256)
-                        channel_results.push_back(255);
                 }
-                assert(channel_results.size() == uint32_t(channels));
+                if(i == 256)
+                    channel_results.push_back(1.0f);
+            }
+            assert(channel_results.size() == uint32_t(channels));
 
-                return channel_results;
-            }
-            std::vector<int> operator()(NonUniformPolarMat a) const{
-                return operator()(a.mat);
-            }
-            std::vector<int> operator()(PyramidMat) const{
-                error() << "percentile does not support pyramids";
-                return std::vector<int>();
-            }
-            float m_pct;
-        };
+            if (channels == 3)
+                return Colour::fromBGR(channel_results[0], channel_results[1], channel_results[2]);
+            else 
+                return Colour::fromGrey(channel_results[0]);
+        }
+        
         void doWork(in_image_map_t& inputs, out_map_t& r){
 
-            augmented_mat_t img = inputs["image"]->augmentedMat();
+            image_ptr_t img = inputs["image"];
             
             float pct = param<BoundedFloat>("percentile");
             
-            std::vector<int> channel_results = boost::apply_visitor(apply(pct), img);
-
-            //bool removed = true;
-            unsigned ch;
-            for (ch = 0; ch < channel_results.size() && ch < 3; ++ch) {
-                output_id id = MakeString() << "ch" << (ch+1) << " value";
-                //registerOutputID<ParamValue>(id, false);
-                r[id] = ParamValue(channel_results[ch]);
-            }
-            //for (; removed; ++ch)
-                //if (ch > 0)
-                    //removed = unregisterOutputID(MakeString() << "ch" << (ch+1) << " value", false);
-
-
+            r["value"] = img->apply(boost::bind(getPercentile, _1, pct));
         }
     
     // Register this node type

@@ -73,7 +73,10 @@ class taskManager(aiProcess):
         #dict of data known by task manager used by conditions
         self.tm_info = {'latitude':None,
                         'longitude':None,
-                        'depth':None,}
+                        'depth':None,
+                        'finished_tasks':[],
+                        'successful_tasks':[],
+                        }
         #state data file
         loaded = False
         if opts.mission_save and not opts.restore:
@@ -201,6 +204,7 @@ class taskManager(aiProcess):
         command = msg.command.name
         if command == 'PauseAll':
             self.all_paused = True
+            self.stop_script()
             self.ai.auv_control.disable()
         elif command == 'ResumeAll':
             self.all_paused = False
@@ -266,6 +270,7 @@ class taskManager(aiProcess):
                 self.tasks[task_id].options.crash_count += 1
                 if self.tasks[task_id].options.crash_count >= self.tasks[task_id].options.crash_limit:
                     self.remove_task(task_id)
+                    self.tm_info['finished_tasks'].append(task_id)
                     warning('%s had too many unhandled exceptions, so has been removed from task list.' %(task_id,))
                     return
                 self.log('Task %s failed after an exception in the script.' %(task_id, ))
@@ -274,7 +279,9 @@ class taskManager(aiProcess):
         elif status == 'SUCCESS':
             self.log('Task %s suceeded, no longer trying to complete this task.' %(task_id, ))
             self.remove_task(task_id)
-            info('%s has finished succesfully, so is being removed from active tasks.' %(task_id,))
+            self.tm_info['successful_tasks'].append(task_id)
+            self.tm_info['finished_tasks'].append(task_id)
+            info('%s has finished successfully, so is being removed from active tasks.' %(task_id,))
             return
         else:
             info('%s sent exit message %s' %(task_id, status))

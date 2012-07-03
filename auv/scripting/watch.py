@@ -33,6 +33,7 @@ parser.add_argument("--bin-dir",     "-b",  help="binary files directory",      
 parser.add_argument("--script-dir",  "-p",  help="script files directory",                   default = '.')
 parser.add_argument("--log-dir",     "-l",  help="log directory for files")
 parser.add_argument("--kill",        "-k",  help="Kill all processes in session",            nargs='?', type=int, const=15)
+parser.add_argument("--kill-after",  "-K",  help="Kill all processes once finished",         nargs='?', type=int, const=3)
 parser.add_argument("--user",        "-u",  help="Default user to run processes as",         default=watch.currentUser())
 
 args = parser.parse_args()
@@ -65,4 +66,8 @@ if args.kill is not None:
 elif args.daemonize:
     utils.multitasking.spawnDaemon(monitor)
 else:
-    monitor()
+    try:
+        monitor()
+    except:
+        if args.kill_after is not None:
+            watcher.kill(args.kill_after)

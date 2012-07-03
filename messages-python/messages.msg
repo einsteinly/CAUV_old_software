@@ -107,8 +107,10 @@ enum NodeType : int8 {
     BroadcastCircles,
     RelabelClusters,
     FitGaussian,
-    MultiplyAccumulate,
     ReceiveLines,
+    MeanStd,
+    MathAddMultColour,
+    BroadcastEllipses,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -319,8 +321,8 @@ struct Circle
 struct Ellipse
 {
     eq centre : floatXY;
-    eq minorRadius : float;
     eq majorRadius : float;
+    eq minorRadius : float;
     eq angle : float; // radians, angle of major axis from x axis
 }
 struct Corner
