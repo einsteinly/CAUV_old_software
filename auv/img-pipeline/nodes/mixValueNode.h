@@ -54,24 +54,36 @@ class MixValueNode: public Node{
         }
 
     protected:
+        template<typename T, int Channels>
+        static void channelMix(float a, cv::Mat& m, float b, const Colour& colour)
+        {
+            typedef cv::Vec<T,Channels> pixel_t;
+            cv::Mat_<float> similarityMat(m.rows, m.cols);
+
+            cv::MatIterator_<pixel_t> it, itend;
+
+            // Iterate over all pixels...
+            for (it = m.begin<pixel_t>(), itend = m.end<pixel_t>();
+                 it != itend; ++it) {
+                // .. and all channels per pixel (assume images are bgr(a))
+                pixel_t& pixel = *it;
+                for (int c = 0; c < Channels; ++c)
+                    pixel[c] = clamp_cast<T>(a*pixel[c] + b*255.0f*colour.values[c]); 
+            }
+        }
         template<typename T>
         static void mix(float a, cv::Mat& m, float b, const Colour& colour)
         {
             int nchannels = m.channels();
-            if ((nchannels == 3 && colour.type != ColourType::RGB && colour.type != ColourType::BGR)
-                || (nchannels == 4 && colour.type != ColourType::ARGB && colour.type != ColourType::BGRA)
-                || (nchannels == 1 && colour.type != ColourType::Grey)) {
-                error() << "Wrong colour type";
-                return;
-            }
 
-            // Iterate over all pixels...
-            for (cv::MatIterator_<T> it = m.begin<T>(),
-                                     itend = m.end<T>();
-                 it != itend;) {
-                // .. and all channels per pixel
-                for (int c = 0; c < nchannels; ++c, ++it)
-                    *it = clamp_cast<T>(a* (*it) + b*255.0f*colour.values[c]); 
+            if (nchannels == 3 && (colour.type == ColourType::RGB || colour.type == ColourType::BGR))
+                channelMix<T,3>(a, m, b, colour);
+            else if (nchannels == 4 && (colour.type == ColourType::ARGB || colour.type == ColourType::BGRA))
+                channelMix<T,4>(a, m, b, colour);
+            else if (nchannels == 1 && (colour.type == ColourType::Grey))
+                channelMix<T,1>(a, m, b, colour);
+            else {
+                error() << "Cannot use a" << nchannels << "image with" << colour.type;
             }
         }
 

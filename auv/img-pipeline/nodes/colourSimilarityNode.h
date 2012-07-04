@@ -53,34 +53,45 @@ class ColourSimilarityNode: public Node{
         }
 
     protected:
-        template<typename T>
-        static cv::Mat similarity(const cv::Mat& m, const Colour& colour, float sigma)
+        template<typename T, int Channels>
+        static cv::Mat channelSimilarity(const cv::Mat& m, const Colour& colour, float sigma)
         {
-            int nchannels = m.channels();
-            if ((nchannels == 3 && colour.type != ColourType::RGB && colour.type != ColourType::BGR)
-                || (nchannels == 4 && colour.type != ColourType::ARGB && colour.type != ColourType::BGRA)
-                || (nchannels == 1 && colour.type != ColourType::Grey)) {
-                error() << "Wrong colour type";
-                return cv::Mat();
-            }
+            typedef cv::Vec<T,Channels> pixel_t;
+            
+            cv::Mat_<float> similarityMat(m.rows, m.cols);
 
-            cv::Mat_<float> similarityMat(m.cols, m.rows);
-
-            cv::MatConstIterator_<T> it, itend;
+            cv::MatConstIterator_<pixel_t> it, itend;
             cv::MatIterator_<float> sit;
 
             // Iterate over all pixels...
-            for (it = m.begin<T>(), itend = m.end<T>(), sit = similarityMat.begin();
-                 it != itend; ++sit) {
-                // .. and all channels per pixel
+            for (it = m.begin<pixel_t>(), itend = m.end<pixel_t>(), sit = similarityMat.begin();
+                 it != itend; ++it, ++sit) {
+                // .. and all channels per pixel (assume images are bgr(a))
                 double sqdist = 0;
-                for (int c = 0; c < nchannels; ++c, ++it)
-                    sqdist += (*it/255.0 - colour.values[c]) * (*it/255.0 - colour.values[c]);
+                const pixel_t& pixel = *it;
+                for (int c = 0; c < Channels; ++c)
+                    sqdist += (pixel[c]/255.0 - colour.values[c]) * (pixel[c]/255.0 - colour.values[c]);
 
                 *sit = (float)std::exp(-sqdist/(2*sigma*sigma));
             }
 
             return similarityMat;
+        }
+        template<typename T>
+        static cv::Mat similarity(const cv::Mat& m, const Colour& colour, float sigma)
+        {
+            int nchannels = m.channels();
+
+            if (nchannels == 3 && (colour.type == ColourType::RGB || colour.type == ColourType::BGR))
+                return channelSimilarity<T,3>(m, colour, sigma);
+            else if (nchannels == 4 && (colour.type == ColourType::ARGB || colour.type == ColourType::BGRA))
+                return channelSimilarity<T,4>(m, colour, sigma);
+            else if (nchannels == 1 && (colour.type == ColourType::Grey))
+                return channelSimilarity<T,1>(m, colour, sigma);
+            else {
+                error() << "Cannot use a" << nchannels << "image with" << colour.type;
+                return cv::Mat();
+            }
         }
 
         void doWork(in_image_map_t& inputs, out_map_t& r){
@@ -90,9 +101,7 @@ class ColourSimilarityNode: public Node{
             Colour colour = param<Colour>("colour");
             float sigma = param<float>("sigma");
 
-            
             r["image"] = boost::make_shared<Image>(img->apply(boost::bind(similarity<unsigned char>, _1, colour, sigma)));
-            
         }
     
     // Register this node type
