@@ -39,7 +39,7 @@ class SerialPort {
     uint8_t serial_id;
     uint16_t crc;
     void next_buffer_len(uint16_t len);
-    static const unsigned int header_len = sizeof(data_len) + sizeof(serial_id);
+    static const unsigned int header_len = sizeof(uint16_t) + sizeof(uint8_t);//sizeof(data_len) + sizeof(serial_id);
 };
 
 SerialPort::SerialPort(std::string file, unsigned int) :
