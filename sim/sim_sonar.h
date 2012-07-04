@@ -17,7 +17,7 @@ class SimSonar {
               osg::Vec3d axis1, float angle1,
               osg::Vec3d axis2, float angle2,
               osg::Vec3d axis3, float angle3,
-              unsigned int width, unsigned int height,
+              unsigned int width,
               cauv::CauvNode *sim_node,
               unsigned int max_rate);
     void tick(double timestamp);

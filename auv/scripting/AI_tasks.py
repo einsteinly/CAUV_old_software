@@ -1,12 +1,11 @@
 from AI_conditions import conditions as c
-from AI_classes import subclassDict, aiOptions
+from AI_classes import subclassDict, aiOptions, aiScriptOptions
 
 from cauv.debug import debug, warning, error, info
 
 class taskOptions(aiOptions):
     script_name = ''
     priority = 1
-    detectors_enabled_while_running = False
     crash_count = 0
     crash_limit = 5
     frequency_limit = 30# once every x seconds
@@ -34,7 +33,10 @@ class aiTask(object):
         self.paused = False
     def load_script_options(self):
         if self.options.script_name:
-            self.script_options=__import__('script_library.'+self.options.script_name, fromlist=['scriptOptions']).scriptOptions()
+            try:
+                self.script_options = __import__('script_library.'+self.options.script_name, fromlist=['scriptOptions']).scriptOptions()
+            except AttributeError:
+                self.script_options = aiScriptOptions()
     def register(self, task_manager):
         if self.registered:
             error('Task already setup')
@@ -91,7 +93,6 @@ class start(aiTask):
     class options(taskOptions):
         script_name = 'start'
         priority = 1
-        detectors_enabled_while_running=True
         frequency_limit=1
     #need 1 condition or else won't start
     conditions = [
@@ -102,7 +103,6 @@ class test(aiTask):
     class options(taskOptions):
         script_name = 'test'
         priority = 1
-        detectors_enabled_while_running=True
         frequency_limit=1
     #need 1 condition or else won't start
     conditions = [
@@ -127,12 +127,11 @@ class circle_buoy(aiTask):
         
 class avoid_collision(aiTask):
     class options(taskOptions):
-        script_name = 'sonar_avoid_obstacle'
+        script_name = 'sonar_collision_avoider'
         priority = 10
         frequency_limit = 0
-        detectors_enabled_while_running=True
     conditions = [
-        (c['stateCondition'], {'state': True}),
+        (c['sonar_collision_detectorCondition'], {}),
         ]
             
 class track_wall(aiTask):
@@ -140,7 +139,7 @@ class track_wall(aiTask):
         script_name = 'track_wall'
         priority = 3
     conditions = [
-        (c['stateCondition'], {'state': False}),
+        (c['stateCondition'], {'state': True}),
         ]
 
 class surface(aiTask):
@@ -164,7 +163,6 @@ class location_search(aiTask):
     class options(taskOptions):
         script_name = 'location_search'
         priority = 0
-        detectors_enabled_while_running = True
     conditions = [
         (c['stateCondition'], {'state': True}),
         ]
@@ -173,7 +171,6 @@ class default(aiTask):
     class options(taskOptions):
         script_name = 'spiral'
         priority = 0
-        detectors_enabled_while_running = True
     conditions = [
         (c['stateCondition'], {'state': True}),
         ]
@@ -182,7 +179,6 @@ class waypoint_demo(aiTask):
     class options(taskOptions):
         script_name = 'waypoint_demo'
         priority = 2
-        detectors_enabled_while_running = True
     conditions = [
         (c['stateCondition'], {'state': True}),
         ]

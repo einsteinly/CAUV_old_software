@@ -106,6 +106,12 @@ enum NodeType : int8 {
     DrawCircles,
     BroadcastCircles,
     RelabelClusters,
+    FitGaussian,
+    ReceiveLines,
+    MeanStd,
+    MathAddMultColour,
+    BroadcastEllipses,
+    ColourSimilarity,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -143,9 +149,11 @@ enum ScriptCommand : int8 {
     Start,
     Stop,
     Reset,
-    ResetAndRestart,
+}
+enum AICommand : int8 {
     PauseAll,
     ResumeAll,
+    Save,
 }
 enum SensorUIDBase : int32 {
     None = 0,
@@ -154,6 +162,13 @@ enum SensorUIDBase : int32 {
     Network =  0x50, // network is just 0x50, but has a reserved range
     Multiple = 0x70, // multiple sources is just 0x70 (no reserved range)
     File =     0x100,   // files are 0x100 += ?: range[0x100--0xFFF]
+}
+enum ColourType : int8 {
+    RGB,
+    BGR,
+    ARGB,
+    BGRA,
+    Grey,
 }
 
 struct floatYPR
@@ -194,6 +209,11 @@ struct LatLongAlt
     eq latitude : double;  // degrees north
     eq longitude : double; // degrees east
     eq altitude : float;   // metres up
+}
+struct ColourBase
+{
+    eq cmp type : ColourType;
+    eq cmp values : float[4];
 }
 struct NodeInput
 {
@@ -302,8 +322,8 @@ struct Circle
 struct Ellipse
 {
     eq centre : floatXY;
-    eq minorRadius : float;
     eq majorRadius : float;
+    eq minorRadius : float;
     eq angle : float; // radians, angle of major axis from x axis
 }
 struct Corner
@@ -381,6 +401,7 @@ class BaseImage : <common/msg_classes/base_image.h> fmt_ver 1
 BoundedFloatBase subclass BoundedFloat : <common/msg_classes/bounded_float.h>
 LatLongAlt subclass WGS84Coord : <common/msg_classes/wgs84_coord.h>
 floatXYZ subclass NorthEastDepth : <common/msg_classes/north_east_depth.h>
+ColourBase subclass Colour : <common/msg_classes/colour.h>
 
 enum SequenceType : int8 {
     Points, Path, Area
@@ -406,6 +427,7 @@ variant ParamValue
     list<floatXY>,
     list<Ellipse>,
     LocationSequence,
+    Colour,
 }
 
 //these are zmq messaging specific
@@ -1008,6 +1030,10 @@ group guiai
     {
         taskId : string;
         command : ScriptCommand;
+    }
+    message AIControl : 217
+    {
+        command : AICommand;
     }
 }
 

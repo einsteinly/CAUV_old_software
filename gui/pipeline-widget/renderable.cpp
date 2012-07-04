@@ -17,13 +17,13 @@
 
 #include <utility/string.h>
 
-using namespace cauv::pw;
+using namespace cauv::gui::pw;
 
-Renderable::Renderable(container_ptr_t c, Point const& at)
+Renderable::Renderable(container_ptr_t c, cauv::gui::Point const& at)
     : m_pos(at), m_sort_key(toStr(this)), m_context(c){
 }
 
-Point Renderable::topLevelPos() const{
+cauv::gui::Point Renderable::topLevelPos() const{
     return m_context->referUp(m_pos);
 }
 

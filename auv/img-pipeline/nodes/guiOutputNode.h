@@ -16,6 +16,7 @@
 #define __GUI_OUTPUT_NODE_H__
 
 #include "../node.h"
+#include "outputNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -47,6 +48,7 @@ class GuiOutputNode: public OutputNode{
             float qual = param<BoundedFloat>("jpeg quality");
             
             debug(4) << "GuiOutputNode::doWork()" << *this;
+
             img->serializeQuality(int(qual));
             sendMessage(boost::make_shared<GuiImageMessage>(plName(), id(), img), UNRELIABLE_MSG);
         }

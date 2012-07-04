@@ -4,6 +4,7 @@
 #include "node.h"
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 class Button: public Renderable{
@@ -145,6 +146,7 @@ class ExecButton: public Button{
 };
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __BUTTONS_RENDERABLES_H__

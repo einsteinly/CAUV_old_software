@@ -303,6 +303,8 @@ class fakeAUV(messaging.MessageObserver):
         return False
         
     def headToLocation(self, target_lla, depth_enabled = False, error = 0.5, speed = 127, checking_interval = 0.5, timeout = None):
+        if not self.lla:
+            time.sleep(1) #tends to happen if task has only just started
         if self.lla:
             vector_to = self.lla.differenceInMetresTo(target_lla)
         else:

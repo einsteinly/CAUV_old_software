@@ -35,7 +35,7 @@
 
 #include "sim_camera.h"
 #include "sim_sonar.h"
-#include "objects/red_herring.h"
+#include "objects/barracuda.h"
 #include "objects/buoy.h"
 #include "objects/water.h"
 #include "objects/nodetrail.h"
@@ -109,7 +109,7 @@ void SimNode::onRun(void) {
     }
 #endif
   
-    osg::ref_ptr<osg::Node> vehicle = new RedHerringNode();
+    osg::ref_ptr<osg::Node> vehicle = new BarracudaNode();
     osg::ref_ptr<osg::PositionAttitudeTransform> vehicle_pos = new osg::PositionAttitudeTransform();
     vehicle->setNodeMask(view_mask);
     vehicle_pos->addChild(vehicle);
@@ -142,29 +142,29 @@ void SimNode::onRun(void) {
     viewer->setCameraManipulator(trackballmanip.get()); 
 
     SimCamera forward(vehicle.get(),
-              osg::Vec3d(0,0.6,0),
+              osg::Vec3d(0,0.8,0),
               osg::Vec3d(1,0,0), M_PI/2,
               osg::Vec3d(0,0,0), 0,
               osg::Vec3d(0,0,0), 0,
-              512, 512,
+              "Forward Camera", 512,
               this, CameraID::Forward,
               max_rate);
 
     SimCamera down(vehicle.get(),
-              osg::Vec3d(0,0.5,-0.3),
+              osg::Vec3d(0,0,-0.2),
               osg::Vec3d(0,0,0), M_PI/2,
               osg::Vec3d(0,0,0), M_PI/2,
               osg::Vec3d(0,0,0), 0,
-              512, 512,
+              "Down Camera", 512,
               this, CameraID::Down,
               max_rate);
 
     SimCamera up(vehicle.get(),
-              osg::Vec3d(0,0.5,0.3),
+              osg::Vec3d(0,0,0.2),
               osg::Vec3d(1,0,0), -M_PI,
               osg::Vec3d(0,0,0), 0,
               osg::Vec3d(0,0,0), 0,
-              512, 512,
+              "Up camera", 512,
               this, CameraID::Up,
               max_rate);
 
@@ -172,11 +172,11 @@ void SimNode::onRun(void) {
     if(sim_sonar) {
         sonar = new SimSonar (
                   vehicle.get(),
-                  osg::Vec3d(0,0.5,0.3),
+                  osg::Vec3d(0,0.8,0.2),
                   osg::Vec3d(1,0,0), M_PI/2,
                   osg::Vec3d(0,0,0), 0,
                   osg::Vec3d(0,0,0), 0,
-                  200, 50,
+                  300,
                   this,
                   max_rate);
     }

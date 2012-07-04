@@ -14,6 +14,7 @@
 #include <debug/cauv_debug.h>
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 template<typename done_arg_T>
@@ -255,6 +256,7 @@ class EditText: public Menu{
 };
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __EDIT_TEXT_RENDERABLE_H__

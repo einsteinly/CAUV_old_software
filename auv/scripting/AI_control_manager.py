@@ -17,7 +17,7 @@ class slightlyModifiedAUV(control.AUV):
     def __init__(self, node):
         control.AUV.__init__(self, node)
         self.depth_limit = None
-        self.prop_limit = None
+        self.prop_limit = 127
     def depth(self, value):
         if self.depth_limit and self.depth_limit<value:
             control.AUV.depth(self, self.depth_limit)
@@ -63,7 +63,7 @@ class auvControl(aiProcess):
                 if command == 'prop':
                     self.control_state['prop'] = args[0]
             else:
-                warning('Script %s tried to move auv, but only script %s should be working')
+                warning('Script %s tried to move auv, but only script %s should be working' %(task_id, self.current_task))
         else:
             debug('Function not called as paused or disabled.', 5)
 
@@ -146,10 +146,10 @@ class auvControl(aiProcess):
         self.auv.depth_limit = value
     @external_function
     def limit_prop(self, value):
-        self.auv.prop_limit = value
+        self.auv.prop_limit = int(value) if int(value)<127 else 127
         try:
             if self.control_state['prop']>value: #_control_state[function][args/kwargs]
-                self.auv.prop(value)
+                self.auv.prop(int(value))
         except KeyError:
             #self.auv.prop(0)
             pass

@@ -25,6 +25,11 @@
 #include "drawCirclesNode.h"
 #include "broadcastCirclesNode.h"
 #include "relabelClustersNode.h"
+#include "fitGaussianNode.h"
+#include "receiveLinesNode.h"
+#include "meanStdNode.h"
+#include "broadcastEllipsesNode.h"
+#include "colourSimilarityNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -54,6 +59,11 @@ DEFINE_NFR(BlobNode, NodeType::Blob);
 DEFINE_NFR(DrawCirclesNode, NodeType::DrawCircles);
 DEFINE_NFR(BroadcastCirclesNode, NodeType::BroadcastCircles);
 DEFINE_NFR(RelabelClustersNode, NodeType::RelabelClusters);
+DEFINE_NFR(FitGaussianNode, NodeType::FitGaussian);
+DEFINE_NFR(ReceiveLinesNode, NodeType::ReceiveLines);
+DEFINE_NFR(MeanStdNode, NodeType::MeanStd);
+DEFINE_NFR(BroadcastEllipsesNode, NodeType::BroadcastEllipses);
+DEFINE_NFR(ColourSimilarityNode, NodeType::ColourSimilarity);
 
 } // namespace imgproc
 } // namespace cauv

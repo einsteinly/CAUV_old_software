@@ -40,6 +40,8 @@ class aiStateListener(messaging.MessageObserver):
         print m
     def onConditionStateMessage(self, m):
         print m
+    def onSetConditionStateMessage(self, m):
+        print m
     def onTaskRemovedMessage(self, m):
         print m
     def onConditionRemovedMessage(self, m):
@@ -116,10 +118,13 @@ def reset_script(ainode):
     ainode.node.send(messaging.ScriptControlMessage(task_id,messaging.ScriptCommand.Reset))
     
 def pause_all(ainode):
-    ainode.node.send(messaging.ScriptControlMessage("",messaging.ScriptCommand.PauseAll))
+    ainode.node.send(messaging.AIControlMessage(messaging.AICommand.PauseAll))
     
 def resume_all(ainode):
-    ainode.node.send(messaging.ScriptControlMessage("",messaging.ScriptCommand.ResumeAll))
+    ainode.node.send(messaging.AIControlMessage(messaging.AICommand.ResumeAll))
+    
+def save(ainode):
+    ainode.node.send(messaging.AIControlMessage(messaging.AICommand.Save))
     
 def shell(ainode):
     print """
@@ -178,6 +183,7 @@ if __name__=='__main__':
     m.addFunction('Shell', shell, '', {})
     m.addFunction('Pause all', pause_all, '', {})
     m.addFunction('Resume all', resume_all, '', {})
+    m.addFunction('Save', save, '', {})
     
     t = menu('Task menu', '')
     t.addFunction('Add Task', add_task, '', {})

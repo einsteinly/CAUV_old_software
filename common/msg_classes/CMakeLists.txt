@@ -5,6 +5,7 @@ add_library(
     special_messages
 
     base_image.cpp
+    colour.cpp
 )
 
 target_link_libraries(

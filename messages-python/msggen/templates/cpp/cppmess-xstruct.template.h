@@ -17,9 +17,6 @@
 \#define __CAUV_${s.name.upper()}_H__
 
 \#include <string>
-\#include <vector>
-\#include <list>
-\#include <map>
 \#include <iomanip>
 \#include <boost/cstdint.hpp>
 \#include <utility/streamops.h>

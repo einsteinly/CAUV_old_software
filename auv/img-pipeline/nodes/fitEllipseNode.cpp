@@ -274,7 +274,7 @@ void cauv::imgproc::FitEllipseNode::doWork(in_image_map_t& inputs, out_map_t& r)
 
         cv::RotatedRect el = ransac.out.bestEllipse;
         std::vector<Ellipse> ret;
-        ret.push_back(Ellipse(floatXY(el.center.x, el.center.y), el.size.width / 2, el.size.height / 2, el.angle));
+        ret.push_back(Ellipse(floatXY(el.center.x/edges.cols, el.center.y/edges.rows), el.size.width / 2 / edges.cols, el.size.height / 2 / edges.cols, el.angle));
         r["ellipse"] = ret;
     }
 }

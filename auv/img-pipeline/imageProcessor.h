@@ -49,6 +49,7 @@ class ImageProcessor: public MessageObserver
          * input. It is up to nodes to filter the source of the image to select
          * their input from others.
          */
+        virtual void onLinesMessage(LinesMessage_ptr m);
         virtual void onImageMessage(ImageMessage_ptr m);
         virtual void onSonarDataMessage(SonarDataMessage_ptr m);
         virtual void onSonarImageMessage(SonarImageMessage_ptr m);

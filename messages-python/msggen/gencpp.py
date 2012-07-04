@@ -31,6 +31,8 @@ def toCPPType(t):
         return "std::vector< %s >" % toCPPType(t.valType)
     elif isinstance(t, msggenyacc.MapType):
         return "std::map< %s, %s >" % (toCPPType(t.keyType), toCPPType(t.valType))
+    elif isinstance(t, msggenyacc.ArrayType):
+        return "boost::array< %s , %d >" % (toCPPType(t.valType), t.size)
     else:
         print "ERROR: " + repr(t) + " is not a type"
         return "ERROR"
@@ -47,9 +49,11 @@ def getIncludedTypeNames(types, includestring='"%s.h"'):
         elif isinstance(t, msggenyacc.IncludedType):
             typeNames.add(t.included.location)
         elif isinstance(t, msggenyacc.ListType):
-            typeNames = typeNames | getIncludedTypeNames([t.valType], includestring)
+            typeNames = set(["<vector>"]) | typeNames | getIncludedTypeNames([t.valType], includestring)
         elif isinstance(t, msggenyacc.MapType):
-            typeNames = typeNames | getIncludedTypeNames([t.keyType, t.valType], includestring)
+            typeNames = set(["<map>"]) | typeNames | getIncludedTypeNames([t.keyType, t.valType], includestring)
+        elif isinstance(t, msggenyacc.ArrayType):
+            typeNames = set(["<boost/array.hpp>"]) | typeNames | getIncludedTypeNames([t.valType], includestring)
         elif hasattr(t,"__iter__"):
             typeNames = typeNames | getIncludedTypeNames(t, includestring)
     return typeNames

@@ -7,6 +7,7 @@
 #include <osgViewer/Viewer>
 #include <common/cauv_node.h>
 #include "FixedNodeTrackerManipulator.h"
+#include "attenuator.h"
 
 namespace cauv {
 
@@ -17,7 +18,8 @@ class SimCamera {
                osg::Vec3d axis1, float angle1,
                osg::Vec3d axis2, float angle2,
                osg::Vec3d axis3, float angle3,
-               unsigned int width, unsigned int height,
+               std::string window_title,
+               unsigned int width,
                cauv::CauvNode *sim_node, cauv::CameraID::e id,
                unsigned int max_rate);
     void tick(double timestamp);
@@ -26,12 +28,14 @@ class SimCamera {
     private:
     cauv::CauvNode *sim_node;
     cauv::CameraID::e cam_id;
+    std::string window_title;
     unsigned int width, height;
     RateLimiter output_limit;
     osg::ref_ptr<osgViewer::Viewer> viewer;
     osg::ref_ptr<osg::Image> image;
     osg::ref_ptr<osg::Camera> camera;
     osg::ref_ptr<cauv::FixedNodeTrackerManipulator> fixed_manip;
+    osg::ref_ptr<Attenuator> attenuator;
 };
 
 }

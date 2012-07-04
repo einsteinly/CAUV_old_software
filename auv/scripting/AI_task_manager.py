@@ -17,7 +17,7 @@ import cauv.messaging as messaging
 import cauv.node
 from cauv.debug import debug, warning, error, info
 
-import time
+import time, datetime
 import subprocess
 import cPickle
 import shelve
@@ -54,6 +54,7 @@ class taskManager(aiProcess):
         self.node.subMessage(messaging.SetConditionStateMessage())
         self.node.subMessage(messaging.RequestAIStateMessage())
         self.node.subMessage(messaging.ScriptControlMessage())
+        self.node.subMessage(messaging.AIControlMessage())
         #start paused
         self.all_paused = True
         #Tasks - list of tasks that (in right conditions) should be called
@@ -72,32 +73,49 @@ class taskManager(aiProcess):
         #dict of data known by task manager used by conditions
         self.tm_info = {'latitude':None,
                         'longitude':None,
-                        'depth':None,}
+                        'depth':None,
+                        'finished_tasks':[],
+                        'successful_tasks':[],
+                        }
         #state data file
+        loaded = False
+        if opts.mission_save and not opts.restore:
+            try:
+                with open(opts.mission_save, 'r') as inf:
+                    self.load_state(inf = inf)
+                loaded = True
+            except IOError:
+                pass
         try:
-            self.state_shelf = shelve.open(opts.mission)
+            self.state_shelf = shelve.open(opts.mission_name)
+            self.mission_name = opts.mission_name
         except Exception as e:
             error('Task manager could not open mission file, possibly corrupt.')
             raise e
-        #Setup intial values
-        info('Looking for previous states...')
-        if self.load_state():
-            self.log('Task manager restored.')
-            info('Found and loaded previous state.')
-        else:
-            info('No previous valid state file')
+            #Setup intial values
+        if not loaded:
+            info('Looking for previous states...')
+            if self.load_state(opts.restore,opts.restore):
+                self.log('Task manager restored.')
+                info('Found and loaded previous state.')
+            else:
+                info('No previous valid state file')
         self.gui_send_all()
         
         #start receiving messages
         self._register()
 
-    def load_state(self, include_persist=False):
+    def load_state(self, include_persist=False, include_enabled=False , inf = None):
         #check whether there is a state
-        if (not 'tasks' in self.state_shelf) or (not 'conditions' in self.state_shelf):
+        if inf:
+            source = cPickle.load(inf)
+        else:
+            source = self.state_shelf
+        if (not 'tasks' in source) or (not 'conditions' in source):
             return False
         old2new_ids = {}
         #load and set conditions first, so that they can be linked to tasks
-        for condition_id, (condition_type_name, condition_options) in self.state_shelf['conditions'].iteritems():
+        for condition_id, (condition_type_name, condition_options) in source['conditions'].iteritems():
             try:
                 condition_type = condition_classes[condition_type_name]
             except KeyError:
@@ -105,7 +123,7 @@ class taskManager(aiProcess):
                 continue
             old2new_ids[condition_id] = self.create_condition(condition_type)
             self.set_condition_options(old2new_ids[condition_id], condition_options)
-        for task_id, (task_type_name, task_options, task_script_options, condition_ids, persist_state) in self.state_shelf['tasks'].iteritems():
+        for task_id, (task_type_name, task_options, task_script_options, condition_ids, persist_state) in source['tasks'].iteritems():
             try:
                 task_type = task_classes[task_type_name]
             except KeyError:
@@ -115,10 +133,15 @@ class taskManager(aiProcess):
             self.set_task_options(task_id, task_options, task_script_options, [old2new_ids[condition_id] for condition_id in condition_ids])
             if include_persist:
                 self.tasks[task_id].persist_state = persist_state
+        if include_enabled and 'enabled' in source:
+            self.all_paused = source['enabled']
         return True
 
     @event.repeat_event(STATE_SAVE_INTERVAL, True)
-    def save_state(self):
+    def save_state_loop(self):
+        self.save_state()
+        
+    def save_state(self, outf = None):
         debug('Saving mission state.')
         task_dict = {}
         cond_dict = {}
@@ -127,9 +150,13 @@ class taskManager(aiProcess):
         for task_id, task in self.tasks.iteritems():
             task_dict[task_id] = (task.__class__.__name__, task.get_options(), 
                     task.get_script_options(), task.get_condition_ids(), task.persist_state)
-        self.state_shelf['tasks'] = task_dict
-        self.state_shelf['conditions'] = cond_dict
-        self.state_shelf.sync()
+        if outf:
+            cPickle.dump({'tasks':task_dict, 'conditions':cond_dict}, outf)
+        else:
+            self.state_shelf['tasks'] = task_dict
+            self.state_shelf['conditions'] = cond_dict
+            self.state_shelf['enabled'] = self.all_paused
+            self.state_shelf.sync()
     
     #ONMESSAGE FUNCTIONS
     @event.event_func
@@ -157,27 +184,38 @@ class taskManager(aiProcess):
     def onScriptControlMessage(self, msg):
         command = msg.command.name
         task_id = msg.taskId
-        if command in ('Stop','Restart'):
-            if task_id == self.current_task.id:
+        if command in ('Stop','Reset'):
+            if self.current_task and task_id == self.current_task.id:
                 #stop main script
                 self.stop_script()
             else:
                 warning('Tried to remove non-existant task %s' %(task_id))
         if command == 'Reset':
             self.tasks[task_id].persist_state = {}
-        if command == 'Start':
+        elif command == 'Start':
             try:
                 task = self.tasks[task_id]
             except KeyError:
                 warning('Tried to start non-existant task %s' %(task_id))
             self.start_script(task)
-        elif command == 'PauseAll':
+            
+    @event.event_func
+    def onAIControlMessage(self, msg):
+        command = msg.command.name
+        if command == 'PauseAll':
             self.all_paused = True
+            self.stop_script()
             self.ai.auv_control.disable()
         elif command == 'ResumeAll':
-            debug('Resumed')
             self.all_paused = False
             self.ai.auv_control.enable()
+        elif command == 'Save':
+            try:
+                with open(self.mission_name+'_save'+datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')+'.mission', 'w') as outf:
+                    self.save_state(outf)
+            except IOError:
+                error('Could not save mission')
+                error(traceback.format_exc().encode('ascii', 'ignore'))                        
 
     @event.event_func
     def onRequestAIStateMessage(self, msg):
@@ -226,25 +264,30 @@ class taskManager(aiProcess):
     @event.event_priority(-1)
     @event.event_func
     def on_script_exit(self, task_id, status):
+        getattr(self.ai,str(task_id)).confirm_exit()
         if status == 'ERROR':
             try:
                 self.tasks[task_id].options.crash_count += 1
                 if self.tasks[task_id].options.crash_count >= self.tasks[task_id].options.crash_limit:
                     self.remove_task(task_id)
+                    self.tm_info['finished_tasks'].append(task_id)
                     warning('%s had too many unhandled exceptions, so has been removed from task list.' %(task_id,))
+                    return
                 self.log('Task %s failed after an exception in the script.' %(task_id, ))
             except KeyError:
                 warning('Unrecognised task %s crashed' %(task_id,))
-            self.tasks[task_id].options.last_called = time.time()
         elif status == 'SUCCESS':
             self.log('Task %s suceeded, no longer trying to complete this task.' %(task_id, ))
             self.remove_task(task_id)
-            info('%s has finished succesfully, so is being removed from active tasks.' %(task_id,))
+            self.tm_info['successful_tasks'].append(task_id)
+            self.tm_info['finished_tasks'].append(task_id)
+            info('%s has finished successfully, so is being removed from active tasks.' %(task_id,))
+            return
         else:
             info('%s sent exit message %s' %(task_id, status))
-            self.log('Task %s failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].options.frequency_limit))
-            self.tasks[task_id].options.last_called = time.time()
-        getattr(self.ai,str(task_id)).confirm_exit()
+        self.log('Task %s failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].options.frequency_limit))
+        self.tasks[task_id].options.last_called = time.time()
+        self.stop_script()
 
     @external_function
     @event.event_func
@@ -379,19 +422,22 @@ class taskManager(aiProcess):
             self.current_task.active = False
             self.ai.pl_manager.drop_task_pls(self.current_task.id)
             self.gui_update_task(self.current_task)
-        self.ai.auv_control.set_current_task_id(None, 0)
+            self.current_task = None
+            self.current_priority = -1
+        self.ai.auv_control.set_current_task_id(None)
         if self.running_script:
             try:
                 self.running_script.kill()
             except OSError:
                 debug('Could not kill running script (probably already dead)')
+        self.running_script = None
         info('Stopping Script')
 
     def start_script(self, task):
         if self.all_paused:
             return
         #start the new script
-        self.ai.auv_control.signal(task.id)
+        #self.ai.auv_control.signal(task.id)
         info('Starting script: %s  (Task %s)' %(task.options.script_name, task.id))
         # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
         script = subprocess.Popen(['python2.7','./AI_scriptparent.py', str(task.id),
@@ -408,7 +454,7 @@ class taskManager(aiProcess):
         self.running_script = script
         self.current_task = task
         #inform auv control that script is running
-        self.ai.auv_control.set_current_task_id(task.id, task.options.priority)
+        self.ai.auv_control.set_current_task_id(task.id)
         #set priority
         self.current_priority = task.options.running_priority
         self.current_task.active = True
@@ -469,8 +515,10 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('-r', '--restore', dest='restore', default=False,
                  action='store_true', help="try and resume from last saved state")
-    p.add_argument('-m', '--mission', dest='mission', default='mission',
+    p.add_argument('-m', '--mission_name', dest='mission_name', default='mission',
                  action='store', help="try and resume from last saved state")
+    p.add_argument('-f', '--mission_save', dest='mission_save', default='',
+                 action='store', help="load saved state")
     opts, args = p.parse_known_args()
     
     tm = taskManager(opts)

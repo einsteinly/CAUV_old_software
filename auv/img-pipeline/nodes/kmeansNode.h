@@ -202,7 +202,7 @@ class KMeansNode: public Node{
                                 sqdist += (*img_bp - other_cl.centre[ch]) * (*img_bp - other_cl.centre[ch]);
                             }
                             
-                            if (sqdist > farthest_point_sqdist) {
+                            if (sqdist >= farthest_point_sqdist) {
                                 farthest_point_sqdist = sqdist;
                                 farthest_point_x = x;
                                 farthest_point_y = y;

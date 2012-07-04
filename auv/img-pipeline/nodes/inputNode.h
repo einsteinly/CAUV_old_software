@@ -15,6 +15,14 @@
 #ifndef INPUT_NODE_H
 #define INPUT_NODE_H
 
+#include <boost/shared_ptr.hpp>
+namespace cauv {
+    class LinesMessage;
+    class ImageMessage;
+    class SonarDataMessage;
+    class SonarImageMessage;
+}
+
 #include "../node.h"
 
 namespace cauv{
@@ -31,6 +39,8 @@ class InputNode: public Node{
             clearAllowQueue();
         }
 
+        virtual void onLinesMessage(boost::shared_ptr<const LinesMessage>){}
+        
         virtual void onImageMessage(boost::shared_ptr<const ImageMessage>){}
         
         virtual void onSonarDataMessage(boost::shared_ptr<const SonarDataMessage>){}

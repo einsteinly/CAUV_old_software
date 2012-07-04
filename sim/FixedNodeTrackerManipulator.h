@@ -51,7 +51,7 @@ class FixedNodeTrackerManipulator : public osgGA::CameraManipulator
         void setRotation(osg::Vec3d axis1, float angle1, osg::Vec3d axis2, float angle2, osg::Vec3d axis3, float angle3);
         void setTranslation(osg::Vec3d translation);
 
-        virtual void computeHomePosition();
+        virtual void computeHomePosition(const osg::Camera *camera = NULL, bool useBoundingBox = false);
 
     protected:
         void computeNodeWorldToLocal(osg::Matrixd& worldToLocal) const;

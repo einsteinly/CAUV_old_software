@@ -9,6 +9,9 @@ def isSTLVector(t):
 def isSTLMap(t):
     return isinstance(t, msggenyacc.MapType)
 
+def isArray(t):
+    return isinstance(t, msggenyacc.ArrayType)
+
 def CPPContainerTypeName(t):
     if isinstance(t, msggenyacc.BaseType):
         return t.name.replace("std::", "")
@@ -24,28 +27,36 @@ def CPPContainerTypeName(t):
         return CPPContainerTypeName(t.valType) + "Vec"
     elif isinstance(t, msggenyacc.MapType):
         return "%s%sMap" % (CPPContainerTypeName(t.keyType), CPPContainerTypeName(t.valType))
+    elif isinstance(t, msggenyacc.ArrayType):
+        return CPPContainerTypeName(t.valType) + str(t.size) + "Array"
     else:
         print "ERROR: " + repr(t) + " is not a type"
         return "ERROR"
 
-def addNestedTypes(list_types, map_types):
-    if len(list_types) == 0 and len(map_types) == 0:
-        return list_types, map_types
+def addNestedTypes(list_types, map_types, array_types):
+    if len(list_types) == 0 and len(map_types) == 0 and len(array_types) == 0:
+        return list_types, map_types, array_types
     rl = set()
     rm = set()
+    ra = set()
     def addR(t):
         if isSTLVector(t):
             rl.add(t.valType)
         elif isSTLMap(t):
             rm.add((t.keyType, t.valType))
+        if isArray(t):
+            ra.add((t.valType, t.size))
     for type in list_types:
         addR(type)
     for kt, vt in map_types:
         addR(kt)
         addR(vt)
-    recursed_list, recursed_map = addNestedTypes(rl, rm)
+    for vt,s in array_types:
+        addR(vt)
+    recursed_list, recursed_map, recursed_array = addNestedTypes(rl, rm, ra)
     return (list_types | rl | recursed_list,
-            map_types | rm | recursed_map)
+            map_types | rm | recursed_map,
+            array_types | ra | recursed_array)
     
 def get_output_files(tree):
     OutputFile = collections.namedtuple("OutputFile", ["template_file", "output_file", "search_list"])
@@ -53,6 +64,7 @@ def get_output_files(tree):
     compilation_units = ["enums", "structs", "variants", "messages", "observers", "containers"]
     requiredMapTypes = set()
     requiredVectorTypes = set()
+    requiredArrayTypes = set()
     #Urg, nested generator syntax      \/ this flattens the 'group' list to messages
     for field_cont in tree['structs'] + [m for g in tree['groups'] for m in g.messages]:
         for field in field_cont.fields:
@@ -60,17 +72,21 @@ def get_output_files(tree):
                 requiredMapTypes.add((field.type.keyType, field.type.valType))
             if isSTLVector(field.type):
                 requiredVectorTypes.add(field.type.valType)
-    requiredVectorTypes, requiredMapTypes = addNestedTypes(requiredVectorTypes, requiredMapTypes)
-    includes = gencpp.getIncludedTypeNames(requiredMapTypes | requiredVectorTypes, "<generated/types/%s.h>")
+            if isArray(field.type):
+                requiredArrayTypes.add((field.type.valType, field.type.size))
+    requiredVectorTypes, requiredMapTypes, requiredArrayTypes = addNestedTypes(requiredVectorTypes, requiredMapTypes, requiredArrayTypes)
+    includes = gencpp.getIncludedTypeNames(requiredMapTypes | requiredVectorTypes | requiredArrayTypes, "<generated/types/%s.h>")
 
     output_files = []
 
     function_dict = {"toCPPType": gencpp.toCPPType,
                      "isSTLVector": isSTLVector,
                      "isSTLMap": isSTLMap,
+                     "isArray": isArray,
                      "CPPContainerTypeName": CPPContainerTypeName,
                      "requiredMapTypes": requiredMapTypes,
-                     "requiredVectorTypes": requiredVectorTypes}
+                     "requiredVectorTypes": requiredVectorTypes,
+                     "requiredArrayTypes": requiredArrayTypes}
     tree.update(function_dict)
 
     for cu in compilation_units:

@@ -9,6 +9,7 @@
 #include "pwTypes.h"
 
 namespace cauv{
+namespace gui{
 namespace pw{
 
 class Container{
@@ -44,6 +45,7 @@ class Container{
 };
 
 } // namespace pw
+} // namespace gui
 } // namespace cauv
 
 #endif // ndef __CONTAINER_H__
