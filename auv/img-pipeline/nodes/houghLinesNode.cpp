@@ -117,7 +117,8 @@ namespace {
 
             if (probabilistic) {
                 cv::vector<cv::Vec4i> segments;
-                cv::HoughLinesP(m, segments, rho, theta, threshold, min_ll, max_lg);
+                // (const cast for backwards compatibility with older OpenCV versions)
+                cv::HoughLinesP(const_cast<cv::Mat&>(m), segments, rho, theta, threshold, min_ll, max_lg);
 
                 // Convert [x1,y1,x2,y2] segments to our lines
                 std::transform(segments.begin(), segments.end(), std::back_inserter(lines), boost::bind(segmentToLine, _1, m.cols, m.rows));

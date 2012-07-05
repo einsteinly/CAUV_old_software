@@ -66,7 +66,7 @@ class Quaternion(object):
     
     @classmethod
     def fromEuler(cls, xyz):
-        '''Create a Quaternion directly from rotations about the x, y and z axes: the rotations are applied in order X, then Y, then Z.'''
+        '''Create a Quaternion directly from rotations about the x, y and z axes: the rotations are applied in order X, then Y, then Z. Rotations are in radians.'''
         cos_x_2 = cos(xyz[0] / 2.0)
         cos_y_2 = cos(xyz[1] / 2.0)
         cos_z_2 = cos(xyz[2] / 2.0)
