@@ -84,7 +84,7 @@ class DrawEllipsesNode: public Node{
             const std::vector<Ellipse> ellipses = param< std::vector<Ellipse> >("Ellipses");
             
             try{
-                cv::Mat out = img->apply(boost::bind(drawEllipses, _1, boost::ref(ellipses)));
+                augmented_mat_t out = img->apply(boost::bind(drawEllipses, _1, boost::ref(ellipses)));
                 r[Image_Out_Copied_Name] = boost::make_shared<Image>(out);
             }catch(cv::Exception& e){
                 error() << "DrawEllipsesNode:\n\t"
