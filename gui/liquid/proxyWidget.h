@@ -19,6 +19,7 @@
 #include <QPainter>
 #include <QBrush>
 #include <QStyleOptionGraphicsItem>
+#include <QDebug>
 
 //#include "lod.h"
 
@@ -62,6 +63,7 @@ class LODItem: public ItemT{
         }
 };
 
+
 // Add LOD support to the standard QGraphicsProxyWidget
 class ProxyWidget: public QGraphicsProxyWidget{
     public:
@@ -90,6 +92,12 @@ class ProxyWidget: public QGraphicsProxyWidget{
             painter->setBrush(Qt::NoBrush);
             painter->drawRect(boundingRect());
             //#endif // def CAUV_DEBUG_DRAW_LAYOUT 
+        }
+
+        virtual void updateGeometry(){
+            qDebug() << "UPDATE GEOMETRY CALLED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+            QGraphicsProxyWidget::updateGeometry();
+            QGraphicsLayoutItem::updateGeometry();
         }
 
         // for completely different reasons make sure that geometry() is an

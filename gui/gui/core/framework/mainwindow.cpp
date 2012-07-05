@@ -60,15 +60,24 @@ StackWidget::StackWidget(QWidget* parent)
     : QWidget(parent),
       m_title(NULL),
       m_stack_widget(NULL),
-      m_stack(){
+      m_stack(),
+      m_titleAnimation(NULL){
     
     m_title = new QLabel(this);
     m_stack_widget = new QStackedWidget(this);
+    m_titleAnimation = new QPropertyAnimation(m_title, "geometry");
+    m_titleAnimation->setDuration(500);
 
     QVBoxLayout* layout = new QVBoxLayout;
+    layout->setSpacing(0);
 
     layout->addWidget(m_title);
     layout->addWidget(m_stack_widget);
+
+    layout->setContentsMargins(0,0,0,0);
+    m_stack_widget->setContentsMargins(0,0,0,0);
+    m_title->setContentsMargins(0,5,0,5);
+    setContentsMargins(0,0,0,0);
 
     setLayout(layout);
 }
@@ -94,6 +103,17 @@ void StackWidget::updateTitle(){
         if(i != m_stack.size() - 1)
             text.append(" )) ");
     }
+
+    QRect end = m_title->geometry();
+    if(text.isEmpty()) {
+        //end.setHeight(0);
+        m_title->hide();
+    } else {
+        //end.setHeight(30);
+        m_title->show();
+    }
+    m_titleAnimation->setEndValue(end);
+    //m_titleAnimation->start();
 
     m_title->setText(text);
 }
@@ -131,33 +151,34 @@ protected:
 };
 
 class GraphLayoutItem: public QGraphicsLayoutItem, public liquid::water::Graph{
-    public:
-        GraphLayoutItem(liquid::water::GraphConfig const& config)
-            : QGraphicsLayoutItem(),
-              liquid::water::Graph(config){
-            setMinimumSize(16, 16);
-            setMaximumSize(1200, 800);
-            setPreferredSize(1200, 800);
-        }
+public:
+    GraphLayoutItem(liquid::water::GraphConfig const& config)
+        : QGraphicsLayoutItem(),
+          liquid::water::Graph(config){
+        setMinimumSize(16, 16);
+        setMaximumSize(1200, 800);
+        setPreferredSize(1200, 800);
+    }
 
-        void setGeometry(const QRectF& rect){
-            setPos(rect.topLeft());
-            QGraphicsLayoutItem::setGeometry(QRectF(QPointF(0,0), rect.size()));
-            setRect(geometry());
-        }
+    void setGeometry(const QRectF& rect){
+        setPos(rect.topLeft());
+        QGraphicsLayoutItem::setGeometry(QRectF(QPointF(0,0), rect.size()));
+        setRect(geometry());
+    }
 
-        virtual void updateGeometry(){
-            liquid::water::Graph::setRect(geometry());
-            QGraphicsLayoutItem::updateGeometry();
-        }
+    virtual void updateGeometry(){
+        liquid::water::Graph::setRect(geometry());
+        QGraphicsLayoutItem::updateGeometry();
+    }
 
-    protected:
-        QSizeF sizeHint(Qt::SizeHint which, const QSizeF &constraint=QSizeF()) const{
-            switch(which){
-                case Qt::MinimumSize:   return QSizeF(60, 40);
-                default:                return constraint;
-            }
+protected:
+    QSizeF sizeHint(Qt::SizeHint which, const QSizeF &constraint=QSizeF()) const{
+        switch(which){
+        case Qt::PreferredSize: return QSizeF(300, 200);
+        case Qt::MinimumSize:   return QSizeF(60, 40);
+        default:                return constraint;
         }
+    }
 };
 
 class GraphingDropHandler: public DropHandlerInterface<QGraphicsItem * >{
@@ -181,8 +202,8 @@ public:
         GraphLayoutItem* graph = new GraphLayoutItem(liquid::water::One_Minute);
         // !!! FIXME need some sort of traits to know what is an angle
         boost::shared_ptr<liquid::water::DataSeries> series(
-            new liquid::water::DataSeries(liquid::water::Unlimited_Graph, QString::fromStdString(node->nodeName()))
-        );
+                    new liquid::water::DataSeries(liquid::water::Unlimited_Graph, QString::fromStdString(node->nodeName()))
+                    );
         graph->addDataSeries(series);
         ln->addItem(graph);
 
@@ -197,11 +218,11 @@ protected:
 
 
 CauvMainWindow::CauvMainWindow(QApplication * app) :
-        CauvNode("CauvGui"),
-        m_application(app),
-        m_actions(boost::make_shared<GuiActions>()),
-        ui(new Ui::MainWindow),
-        m_view_stack(NULL){
+    CauvNode("CauvGui"),
+    m_application(app),
+    m_actions(boost::make_shared<GuiActions>()),
+    ui(new Ui::MainWindow),
+    m_view_stack(NULL){
 
     ui->setupUi(this);
 

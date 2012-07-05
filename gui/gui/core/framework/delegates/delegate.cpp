@@ -188,12 +188,16 @@ SizedDelegate::SizedDelegate(QSize sizeHint,
 void SizedDelegate::paint(QPainter *painter,
                           const QStyleOptionViewItem &option,
                           const QModelIndex &index) const{
+    painter->save();
     AbstractNodeDelegate::paint(painter, option, index);
+    painter->restore();
 
     QStyleOptionViewItem modified(option);
     modified.rect = controlRect(option, index);
 
+    painter->save();
     QStyledItemDelegate::paint(painter, modified, index);
+    painter->restore();
 }
 
 QSize SizedDelegate::sizeHint(const QStyleOptionViewItem &,

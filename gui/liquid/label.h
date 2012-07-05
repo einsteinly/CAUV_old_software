@@ -27,6 +27,8 @@ class LiquidLabel: public QLabel{
             : QLabel(text, parent){
 
             setTextInteractionFlags(Qt::NoTextInteraction);
+
+            setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
             
             QPalette transparent_bg = palette();
             for(int i=0; i < QPalette::NColorGroups; i++){

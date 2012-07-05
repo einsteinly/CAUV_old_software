@@ -22,6 +22,8 @@
 
 #include <generated/types/GuiaiGroup.h>
 
+#include <liquid/nodeHeader.h>
+
 #include <common/cauv_node.h>
 
 #include <QtGui>
@@ -34,6 +36,9 @@ AiNode::AiNode(boost::shared_ptr<Node> node, QGraphicsItem *parent) :
     liquid::LiquidNode(AI_Node_Style(), parent)
 {
     node->connect(node.get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)), this, SLOT(deleteLater()));
+
+    header()->setTitle(QString::fromStdString(node->nodeName()));
+    header()->setInfo(QString::fromStdString(node->nodePath()));
 }
 
 AiNode::~AiNode(){
@@ -41,7 +46,7 @@ AiNode::~AiNode(){
 }
 
 void AiNode::close(){
-    LiquidNode::close();
+    Q_EMIT LiquidNode::closed(this);
     QPropertyAnimation *fade = new QPropertyAnimation(this, "opacity");
     fade->setEndValue(0.25);
     fade->setDuration(200);
