@@ -32,6 +32,8 @@
 #include <debug/cauv_debug.h>
 #include <generated/types/TimeStamp.h>
 #include <generated/types/KeyPoint.h>
+#include <generated/types/floatXYZ.h>
+#include <common/msg_classes/north_east_depth.h>
 #include <utility/string.h>
 
 #include "graphOptimiser.h"
@@ -239,6 +241,41 @@ class SlamCloudGraph{
                 }
                 //default:
                 //    return m_all_scans.back()->globalTransform();
+            }
+        }
+
+        floatXYZ speed() const{
+            if(m_all_scans.size() >= 2){
+                location_vec::const_reverse_iterator i = m_all_scans.rbegin();
+                const Eigen::Vector3f p1 = (*i)->globalTransform().block<3,1>(0,3);
+                const TimeStamp t1 = (*i)->time();
+                const Eigen::Vector3f p2 = (*++i)->globalTransform().block<3,1>(0,3);
+                const TimeStamp t2 = (*i)->time();
+                const Eigen::Vector3f speed = (p1-p2) / (t1-t2);
+                return floatXYZ(speed(0), speed(1), speed(2));
+            }else{
+                return floatXYZ(0,0,0);
+            }
+        }
+
+        NorthEastDepth position(float const& with_origin_yaw_radians=0, float const& at_depth=0){
+            if(m_all_scans.size()){
+                Eigen::Vector3f xytheta = xyThetaFrom4DAffine(m_all_scans.back()->globalTransform());
+                const float north = std::sin(with_origin_yaw_radians) * xytheta(0) +
+                                    std::cos(with_origin_yaw_radians) * xytheta(1);
+                const float east = std::cos(with_origin_yaw_radians) * xytheta(0) -
+                                   std::sin(with_origin_yaw_radians) * xytheta(1);
+                return NorthEastDepth(north, east, at_depth);
+            }else{
+                return NorthEastDepth(0, 0, at_depth);
+            }
+        }
+
+        Eigen::Matrix4f lastTransform() const{
+            if(m_all_scans.size()){
+                return m_all_scans.back()->globalTransform();
+            }else{
+                return Eigen::Matrix4f::Identity();
             }
         }
 

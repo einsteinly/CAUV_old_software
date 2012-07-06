@@ -582,6 +582,8 @@ group control
 }
 group state
 {
+    // Used by simulation to convey simulated orientation information to
+    // control
     message State : 81
     {
         // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)

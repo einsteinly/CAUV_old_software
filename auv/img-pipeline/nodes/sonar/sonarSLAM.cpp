@@ -31,6 +31,8 @@
 
 #include <utility/bash_cout.h>
 
+#include <generated/types/LocationMessage.h>
+
 #include "mapping/slamCloud.h" 
 #include "mapping/scanMatching.h"
 #include "mapping/graphOptimiser.h"
@@ -116,7 +118,13 @@ class SonarSLAMImpl{
               m_vis_last_cloud(cv::Size(0,0), CV_8UC3, cv::Scalar(0)),
               m_vis_keyframes_included(0),
               m_vis_allframes_included(0),
-              m_vis_graphopt_number(0){
+              m_vis_graphopt_number(0),
+              m_async_data_mux(),
+              m_have_coordinate_origin(false),
+              m_coordinate_origin(WGS84Coord::fromDatum("NURC")),
+              m_orientation_origin(floatYPR(0,0,0)),
+              m_have_telem(false),
+              m_last_orientation(){
         }
 
         void reset(){
@@ -125,6 +133,13 @@ class SonarSLAMImpl{
             initVis();
         }
 
+        void onTelemetry(floatYPR const& ori, float const& depth){
+            boost::unique_lock<boost::mutex> l(m_async_data_mux);
+            m_have_telem = true;
+            m_last_orientation = ori;
+            m_last_depth = depth;
+       }
+
         void setGraphProperties(CloudGraphParams params){
             m_graph.setParams(params);
         }
@@ -132,16 +147,31 @@ class SonarSLAMImpl{
         float registerScan(cloud_ptr scan,
                            PairwiseMatcher<pt_t> const& scan_matcher,
                            GraphOptimiser const& graph_optimiser,
-                           float rotation_guess_relative_to_last_scan,
+                           float rotation_guess_relative_to_last_scan, // radians
                            Eigen::Matrix4f& guessed_transformation,
                            Eigen::Matrix4f& global_transformation){
 
             m_cumulative_rotation_guess += rotation_guess_relative_to_last_scan;
 
             Eigen::Matrix4f rotation_guess = Eigen::Matrix4f::Identity();
-            rotation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
-                Eigen::AngleAxisf(m_cumulative_rotation_guess, Eigen::Vector3f::UnitZ())
-            );
+            
+            if(m_have_telem){
+                boost::unique_lock<boost::mutex> l(m_async_data_mux);
+                const Eigen::Matrix4f last_transform = m_graph.lastTransform();
+                const float yaw_rad = m_last_orientation.yaw * M_PI / 180;
+                Eigen::Matrix4f telemetry_rotation = Eigen::Matrix4f::Identity();
+                telemetry_rotation.block<3,3>(0,0) = Eigen::Matrix3f(
+                    Eigen::AngleAxisf(m_cumulative_rotation_guess, Eigen::Vector3f::UnitZ())
+                );
+                debug() << BashColour::Purple << "cumulative rotation:" << m_cumulative_rotation_guess
+                        << "telemetry rotation:" << yaw_rad << "(radians)";
+                rotation_guess = last_transform.inverse() * telemetry_rotation;
+            }else{
+                rotation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
+                    Eigen::AngleAxisf(m_cumulative_rotation_guess, Eigen::Vector3f::UnitZ())
+                );
+            }
+
 
             Eigen::Matrix4f guess = m_graph.guessTransformationAtTime(
                 scan->time(), rotation_guess
@@ -327,6 +357,29 @@ class SonarSLAMImpl{
             return m_vis_last_cloud;
         }
 
+        WGS84Coord const& wgs84AtOrigin(){
+            boost::unique_lock<boost::mutex> l(m_async_data_mux);
+            return m_coordinate_origin;
+        }
+
+        void onGPSLoc(WGS84Coord const& c){
+            boost::unique_lock<boost::mutex> l(m_async_data_mux);
+            m_coordinate_origin = c;
+            if(!m_have_coordinate_origin && m_have_telem){
+                m_have_coordinate_origin = true;
+                m_coordinate_origin = c;
+            }
+        }
+        
+        // get a location message representing the current state.
+        // depth is derived 
+        boost::shared_ptr<LocationMessage> locationMessage(){
+            boost::unique_lock<boost::mutex> l(m_async_data_mux);
+            NorthEastDepth position = m_graph.position(m_orientation_origin.yaw * M_PI / 180, m_last_depth);
+            WGS84Coord coord = m_coordinate_origin + position;
+            return boost::make_shared<LocationMessage>(coord, m_graph.speed());
+        }
+
     private:
         SlamCloudGraph<pt_t> m_graph;
         
@@ -342,6 +395,17 @@ class SonarSLAMImpl{
         int m_vis_keyframes_included;
         int m_vis_allframes_included;
         int m_vis_graphopt_number;
+
+        boost::mutex m_async_data_mux;
+        
+        bool m_have_coordinate_origin;
+        WGS84Coord m_coordinate_origin;
+        floatYPR m_orientation_origin;
+        
+        bool m_have_telem;
+        floatYPR m_last_orientation;
+        float m_last_depth;
+        
 };
 
 } // namespace imgproc
@@ -421,6 +485,16 @@ void SonarSLAMNode::init(){
     registerOutputID("training: keypoints", kp_vec());
     registerOutputID("training: keypoints image");
     registerOutputID("training: goodness", std::vector<int>());
+}
+
+void SonarSLAMNode::onGPSLoc(boost::shared_ptr<GPSLocationMessage const> m){
+    debug() << "SLAM GPS loc:" << m;
+    m_impl->onGPSLoc(m->location());
+}
+
+void SonarSLAMNode::onTelemetry(boost::shared_ptr<TelemetryMessage const> m){
+    debug() << "SLAM Telemetry:" << m->orientation();
+    m_impl->onTelemetry(m->orientation(), m->depth());
 }
 
 void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
@@ -554,6 +628,8 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     //info() << "sonarSLAM scan confidence" << confidence;
 
     m_impl->updateVis();
+
+    sendMessage(m_impl->locationMessage());
     
     #ifdef CAUV_CLOUD_VISUALISATION
     // potentially expensive: visualise every cloud:
