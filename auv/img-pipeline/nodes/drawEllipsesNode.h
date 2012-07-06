@@ -57,7 +57,7 @@ class DrawEllipsesNode: public Node{
             if(m.channels() >= 3){
                 out = m.clone();
             }else if(m.channels() == 1){
-                cv::cvtColor(m, out, CV_GRAY2RGB);
+                cv::cvtColor(m, out, CV_GRAY2BGR);
             }else{
                 throw parameter_error("image must be 1, 3 or 4 channel");
             }

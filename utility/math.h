@@ -41,6 +41,12 @@ namespace cauv {
     T radians(T const& degrees){
         return degrees * 3.14159265358979323846 / 180;
     }
+
+    template<typename T>
+    inline T sq(T const& val)
+    {
+        return val*val;
+    }
 }
 
 #endif//__CAUV_MATH_H__

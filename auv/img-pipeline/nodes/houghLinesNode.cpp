@@ -1,3 +1,17 @@
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ * 
+ * See license.txt for details.
+ * 
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
 #include "houghLinesNode.h"
 
 #include <map>
@@ -103,7 +117,8 @@ namespace {
 
             if (probabilistic) {
                 cv::vector<cv::Vec4i> segments;
-                cv::HoughLinesP(m, segments, rho, theta, threshold, min_ll, max_lg);
+                // (const cast for backwards compatibility with older OpenCV versions)
+                cv::HoughLinesP(const_cast<cv::Mat&>(m), segments, rho, theta, threshold, min_ll, max_lg);
 
                 // Convert [x1,y1,x2,y2] segments to our lines
                 std::transform(segments.begin(), segments.end(), std::back_inserter(lines), boost::bind(segmentToLine, _1, m.cols, m.rows));

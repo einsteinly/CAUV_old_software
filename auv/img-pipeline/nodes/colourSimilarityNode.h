@@ -58,10 +58,10 @@ class ColourSimilarityNode: public Node{
         {
             typedef cv::Vec<T,Channels> pixel_t;
             
-            cv::Mat_<float> similarityMat(m.rows, m.cols);
+            cv::Mat_<unsigned char> similarityMat(m.rows, m.cols);
 
             cv::MatConstIterator_<pixel_t> it, itend;
-            cv::MatIterator_<float> sit;
+            cv::MatIterator_<unsigned char> sit;
 
             // Iterate over all pixels...
             for (it = m.begin<pixel_t>(), itend = m.end<pixel_t>(), sit = similarityMat.begin();
@@ -72,7 +72,7 @@ class ColourSimilarityNode: public Node{
                 for (int c = 0; c < Channels; ++c)
                     sqdist += (pixel[c]/255.0 - colour.values[c]) * (pixel[c]/255.0 - colour.values[c]);
 
-                *sit = (float)std::exp(-sqdist/(2*sigma*sigma));
+                *sit = round(std::exp(-sqdist/(2*sigma*sigma)) * 255);
             }
 
             return similarityMat;

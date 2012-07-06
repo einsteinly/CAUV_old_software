@@ -112,6 +112,8 @@ enum NodeType : int8 {
     MathAddMultColour,
     BroadcastEllipses,
     ColourSimilarity,
+    BackgroundSubtractor,
+    GetNthColour,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -428,6 +430,7 @@ variant ParamValue
     list<Ellipse>,
     LocationSequence,
     Colour,
+    list<Colour>,
 }
 
 //these are zmq messaging specific
