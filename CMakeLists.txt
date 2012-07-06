@@ -18,6 +18,10 @@ endforeach(DIR)
 set (CMAKE_USER_MAKE_RULES_OVERRIDE_C ${CMAKE_SOURCE_DIR}/cmake/override_c.cmake)
 set (CMAKE_USER_MAKE_RULES_OVERRIDE_CXX ${CMAKE_SOURCE_DIR}/cmake/override_cxx.cmake)
 
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
+endif()
+
 project (CAUV)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CAUV_BINARY_DIR}/bin")

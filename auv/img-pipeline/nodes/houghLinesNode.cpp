@@ -87,8 +87,8 @@ namespace {
                 int mi = bi, mj = bj;
                 T m = mat(bi,bj);
 
-                for (int i = bi, imax = std::min(bi+(n+1), mat.rows); i < imax; ++i)
-                    for (int j = bj, jmax = std::min(bj+(n+1), mat.cols); j < jmax; ++j)
+                for (int i = bi, imax = std::min(bi+n, mat.rows-1); i <= imax; ++i)
+                    for (int j = bj, jmax = std::min(bj+n, mat.cols-1); j <= jmax; ++j)
                     {
                         if (mat(i,j) > m) {
                             mi = i;
