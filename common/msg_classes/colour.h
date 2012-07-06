@@ -51,6 +51,7 @@ class Colour : public ColourBase,
         Colour& operator/= (float val);
 };
 
+float sqdiff(const Colour& c1, const Colour& c2);
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(

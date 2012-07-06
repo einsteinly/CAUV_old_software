@@ -61,9 +61,9 @@ class SplitRGBNode: public Node{
                         << e.func << "," << e.file << ":" << e.line << "\n\t";
             }
 
-            r["R"] = boost::make_shared<Image>(out[0]);
+            r["R"] = boost::make_shared<Image>(out[2]);
             r["G"] = boost::make_shared<Image>(out[1]);
-            r["B"] = boost::make_shared<Image>(out[2]);
+            r["B"] = boost::make_shared<Image>(out[0]);
             
         }
     
