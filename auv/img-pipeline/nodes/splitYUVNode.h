@@ -54,7 +54,7 @@ class SplitYUVNode: public Node{
             int conversion_code = 0;
             
             if(img.channels() == 3)
-                conversion_code = CV_RGB2Luv;
+                conversion_code = CV_BGR2Luv;
             else
                 // oops... cvtColor can't do anything else
                 throw(parameter_error("image must be 3-channel RGB"));

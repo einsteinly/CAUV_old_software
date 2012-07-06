@@ -45,7 +45,7 @@ class CopyNodeMask: public Node{
             try{
                 cv::Mat out;
                 img.copyTo(out, mask);
-                r["image copy"] = boost::make_shared<Image>(out);
+                r[Image_Out_Copied_Name] = boost::make_shared<Image>(out);
             }catch(cv::Exception& e){
                 error() << "CopyNodeMask:\n\t"
                         << e.err << "\n\t"

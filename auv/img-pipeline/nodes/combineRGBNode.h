@@ -65,7 +65,7 @@ class CombineRGBNode: public Node{
                 throw(parameter_error("RGB source channels are not of the same depth"));
             
             cv::Mat out;
-            cv::Mat in[] = {R, G, B};
+            cv::Mat in[] = {B, G, R};
 
             try{
                 cv::merge(in, 3, out);

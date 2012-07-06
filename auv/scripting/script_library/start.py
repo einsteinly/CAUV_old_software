@@ -7,7 +7,7 @@ import time
 class scriptOptions(aiScriptOptions):
     useDepth = True
     depth = 1.0
-    forward_time = 60
+    forward_time = 10
     forward_speed = 100, MotorValue
     bearing = 180
         

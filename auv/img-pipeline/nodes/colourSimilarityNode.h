@@ -12,8 +12,8 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef __MIX_VALUE_NODE_H__
-#define __MIX_VALUE_NODE_H__
+#ifndef __COLOUR_SIMILARITY_NODE_H__
+#define __COLOUR_SIMILARITY_NODE_H__
 
 #include <map>
 #include <vector>
@@ -31,9 +31,9 @@
 namespace cauv{
 namespace imgproc{
 
-class MixValueNode: public Node{
+class ColourSimilarityNode: public Node{
     public:
-        MixValueNode(ConstructArgs const& args)
+        ColourSimilarityNode(ConstructArgs const& args)
             : Node(args){
         }
 
@@ -45,45 +45,52 @@ class MixValueNode: public Node{
             registerInputID("image");
 
             // one output
-            registerOutputID("image (not copied)");
+            registerOutputID("image");
             
             // parameters:
-            registerParamID<float>("image fac", 1, "Image value factor");
-            registerParamID<float>("value fac", 1, "Mixing value factor");
-            registerParamID<Colour>("value", Colour::fromRGB(0,0,0), "Colour to mix in");
+            registerParamID<Colour>("colour", Colour::fromRGB(1,1,0), "Colour to compare against");
+            registerParamID<float>("sigma", 1, "Sigma to use for converting distance to similarity");
         }
 
     protected:
         template<typename T, int Channels>
-        static void channelMix(float a, cv::Mat& m, float b, const Colour& colour)
+        static cv::Mat channelSimilarity(const cv::Mat& m, const Colour& colour, float sigma)
         {
             typedef cv::Vec<T,Channels> pixel_t;
-            cv::Mat_<float> similarityMat(m.rows, m.cols);
+            
+            cv::Mat_<unsigned char> similarityMat(m.rows, m.cols);
 
-            cv::MatIterator_<pixel_t> it, itend;
+            cv::MatConstIterator_<pixel_t> it, itend;
+            cv::MatIterator_<unsigned char> sit;
 
             // Iterate over all pixels...
-            for (it = m.begin<pixel_t>(), itend = m.end<pixel_t>();
-                 it != itend; ++it) {
+            for (it = m.begin<pixel_t>(), itend = m.end<pixel_t>(), sit = similarityMat.begin();
+                 it != itend; ++it, ++sit) {
                 // .. and all channels per pixel (assume images are bgr(a))
-                pixel_t& pixel = *it;
+                double sqdist = 0;
+                const pixel_t& pixel = *it;
                 for (int c = 0; c < Channels; ++c)
-                    pixel[c] = clamp_cast<T>(a*pixel[c] + b*255.0f*colour.values[c]); 
+                    sqdist += (pixel[c]/255.0 - colour.values[c]) * (pixel[c]/255.0 - colour.values[c]);
+
+                *sit = round(std::exp(-sqdist/(2*sigma*sigma)) * 255);
             }
+
+            return similarityMat;
         }
         template<typename T>
-        static void mix(float a, cv::Mat& m, float b, const Colour& colour)
+        static cv::Mat similarity(const cv::Mat& m, const Colour& colour, float sigma)
         {
             int nchannels = m.channels();
 
             if (nchannels == 3 && (colour.type == ColourType::RGB || colour.type == ColourType::BGR))
-                channelMix<T,3>(a, m, b, colour);
+                return channelSimilarity<T,3>(m, colour, sigma);
             else if (nchannels == 4 && (colour.type == ColourType::ARGB || colour.type == ColourType::BGRA))
-                channelMix<T,4>(a, m, b, colour);
+                return channelSimilarity<T,4>(m, colour, sigma);
             else if (nchannels == 1 && (colour.type == ColourType::Grey))
-                channelMix<T,1>(a, m, b, colour);
+                return channelSimilarity<T,1>(m, colour, sigma);
             else {
                 error() << "Cannot use a" << nchannels << "image with" << colour.type;
+                return cv::Mat();
             }
         }
 
@@ -91,14 +98,10 @@ class MixValueNode: public Node{
 
             image_ptr_t img = inputs["image"];
             
-            float img_f = param<float>("image fac");
-            float value_f = param<float>("value fac");
-            Colour value =  param<Colour>("value");
-            
-            img->apply(boost::bind(mix<unsigned char>, img_f, _1, value_f, value));
-            
-            r["image (not copied)"] = img;
-            
+            Colour colour = param<Colour>("colour");
+            float sigma = param<float>("sigma");
+
+            r["image"] = boost::make_shared<Image>(img->apply(boost::bind(similarity<unsigned char>, _1, colour, sigma)));
         }
     
     // Register this node type
@@ -108,4 +111,4 @@ class MixValueNode: public Node{
 } // namespace imgproc
 } // namespace cauv
 
-#endif // ndef __MIX_VALUE_NODE_H__
+#endif // ndef __COLOUR_SIMILARITY_NODE_H__

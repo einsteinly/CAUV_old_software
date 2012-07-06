@@ -26,7 +26,7 @@ class scriptOptions(aiScriptOptions):
     class Meta:
         dynamic = ['spiral_loops',
                    'spiral_power',
-                   'spiral_unit'
+                   'spiral_unit',
                    'spiral_stop_time',]
     
 class scriptState(aiScriptState):

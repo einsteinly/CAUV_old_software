@@ -3,9 +3,9 @@ import time
 
 def expWindow(n, alpha):
     t = 1
-    r = [t]
+    r = []
     for i in xrange(0,n):
-        r.append(t * alpha)
+        r.append(t * (alpha ** i))
     return tuple(r)
 
 class Controller:

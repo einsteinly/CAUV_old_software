@@ -30,6 +30,17 @@ class slightlyModifiedAUV(control.AUV):
             #getattr(self.ai, self.current_task_id).propOverridden()
         else:
             control.AUV.prop(self, value)
+    def stop(self):
+        #if the sub keeps turning too far, it might be an idea instead of calling
+        #stop which disables auto pilots to set them to the current value
+        self.prop(0)
+        self.hbow(0)
+        self.vbow(0)
+        self.hstern(0)
+        self.vstern(0)
+        if self.bearing != None:
+            self.bearing(self.current_bearing)
+        self.pitch(0)
 
 class auvControl(aiProcess):
     def __init__(self, opts):
@@ -77,16 +88,7 @@ class auvControl(aiProcess):
     #GENERAL FUNCTIONS (that could be called from anywhere)
     @external_function
     def stop(self):
-        #if the sub keeps turning too far, it might be an idea instead of calling
-        #stop which disables auto pilots to set them to the current value
-        self.auv.prop(0)
-        self.auv.hbow(0)
-        self.auv.vbow(0)
-        self.auv.hstern(0)
-        self.auv.vstern(0)
-        if self.auv.bearing != None:
-            self.auv.bearing(self.auv.current_bearing)
-        self.auv.pitch(0)
+        self.auv.stop()
         self.control_state = {}
 
     @external_function
@@ -130,6 +132,7 @@ class auvControl(aiProcess):
     @external_function
     @event.event_func
     def set_current_task_id(self, task_id):
+        self.stop()
         self.current_task = task_id
         self.control_state = {}
         

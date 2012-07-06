@@ -50,6 +50,8 @@ class aiStateListener(messaging.MessageObserver):
         print m
     def onTaskTypesMessage(self, m):
         print m
+    def onScriptControlMessage(self, m):
+        print m
     def die(self):
         self.node.removeObserver(self)
         

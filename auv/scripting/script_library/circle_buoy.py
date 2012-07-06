@@ -17,7 +17,6 @@ class scriptOptions(aiScriptOptions):
     Camera_FOV = 90     # degrees
     Warn_Seconds_Between_Sights = 5
     Give_Up_Seconds_Between_Sights = 30
-    Node_Name = "py-CrcB" # unused
     Depth_Ceiling = 0.8
     Strafe_Speed = 70   # (int [-127,127]) controls strafe speed
     Buoy_Size = 0.15     # (float [0.0, 1.0]) controls distance from buoy. Units are field of view (fraction) that the buoy should fill
@@ -198,7 +197,9 @@ class script(aiScript):
 
     def run(self):
         self.request_pl(self.options.Pipeline_File)
-        start_bearing = self.auv.getBearing()
+        if not self.auv.current_bearing:
+            time.sleep(1)
+        start_bearing = self.auv.current_bearing
         total_right_angles_turned = 0
         exit_status = 'SUCCESS'
         info('Waiting for circles...')

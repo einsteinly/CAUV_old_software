@@ -15,6 +15,7 @@
 #include "colour.h"
 
 #include <limits>
+#include <utility/math.h>
 
 float cauv::Colour::r() const {
     switch (type) {
@@ -168,4 +169,16 @@ cauv::Colour& cauv::Colour::operator/= (float val) {
         *thisit /= val;
     }
     return *this;
+}
+
+float cauv::sqdiff(const Colour& c1, const Colour& c2) {
+    float sqdiff = 0;
+    sqdiff += sq(c1.a() - c2.a());
+    
+    if (c1.type != ColourType::Grey || c2.type != ColourType::Grey)
+        sqdiff += sq(c1.r() - c2.r()) + sq(c1.g() - c2.g()) + sq(c1.b() - c2.b());
+    else
+        sqdiff += sq(c1.grey() - c2.grey());
+
+    return sqdiff;
 }

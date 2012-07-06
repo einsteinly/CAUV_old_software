@@ -41,6 +41,8 @@
 #include <generated/types/InputSchedType.h>
 #include <generated/types/SensorUIDBase.h>
 #include <generated/types/UID.h>
+#include <generated/types/GPSLocationMessage.h>
+#include <generated/types/TelemetryMessage.h>
 
 #include "pipelineTypes.h"
 
@@ -542,6 +544,16 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         * there is new input.
         */
         virtual bool isOutputNode() const { return false; }
+
+        
+        /* !!!! temporary: the location system will be moved to a separate
+         * process, at which time img pipeline nodes will no longer be able to
+         * receive gps data (this should only ever be used by the slam node
+         */
+        virtual bool requiresGPS() const { return false; }
+        virtual void onGPSLoc(boost::shared_ptr<GPSLocationMessage const>){ }
+        virtual bool requiresTelemetry() const { return false; }
+        virtual void onTelemetry(boost::shared_ptr<TelemetryMessage const>){ }
 
 
         /* Check to see whether this node should be added to the scheduler queue

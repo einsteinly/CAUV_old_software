@@ -29,6 +29,12 @@ class SonarSLAMNode: public OutputNode{
 
         void init();
 
+        virtual bool requiresGPS() const { return true; }
+        virtual bool requiresTelemetry() const { return true; }
+
+        virtual void onGPSLoc(boost::shared_ptr<GPSLocationMessage const>);
+        virtual void onTelemetry(boost::shared_ptr<TelemetryMessage const>);
+
     protected:
         void doWork(in_image_map_t& inputs, out_map_t& r);
 

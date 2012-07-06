@@ -18,7 +18,7 @@ add_executable (
 
     control.cpp
     xsens_imu.cpp
-	sbg_imu.cpp
+    sbg_imu.cpp
 )
 cauv_install ( control )
 
