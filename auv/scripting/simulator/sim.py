@@ -60,7 +60,7 @@ def runLoop(auv_model, node):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='simulate vehicle motion')
     parser.add_argument('-n', '--vehicle', dest='vehicle',
-        help='name of vehicle to model', default='red-herring')
+        help='name of vehicle to model', default='barracuda')
     parser.add_argument('-p', '--profile', dest='profile', action='store_true')
 
     opts,args  = parser.parse_known_args()
