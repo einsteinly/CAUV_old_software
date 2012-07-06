@@ -13,6 +13,7 @@ import argparse
 import pygame
 
 from gamepad_maps.DefaultMapping import ConcreteGamepadMapping
+from gamepad_maps.GamepadMapping import GamepadMapping
 
 
 class GamepadServer(messaging.MessageObserver):
