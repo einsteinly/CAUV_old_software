@@ -93,12 +93,26 @@ public:
             QGraphicsProxyWidget::paint(painter, option, widget);
         }
 
-        //#ifdef CAUV_DEBUG_DRAW_LAYOUT
+        #ifdef CAUV_DEBUG_DRAW_LAYOUT
         painter->setPen(QPen(QColor(120,10,100,64)));
         painter->setBrush(Qt::NoBrush);
         painter->drawRect(boundingRect());
-        //#endif // def CAUV_DEBUG_DRAW_LAYOUT
+        #endif // def CAUV_DEBUG_DRAW_LAYOUT
     }
+    /*
+    virtual void mousePressEvent(QGraphicsSceneMouseEvent *event){
+        QGraphicsProxyWidget::mousePressEvent(event);
+
+        qDebug() << "size"  << size();
+        qDebug() << "minimumSize"  << minimumSize();
+        qDebug() << "maximumSize"  << maximumSize();
+        qDebug() << "sizeHint(Qt::PreferredSize)"  << sizeHint(Qt::PreferredSize);
+        qDebug() << "sizeHint(Qt::MinimumSize)"  << sizeHint(Qt::MinimumSize);
+        qDebug() << "sizeHint(Qt::MaximumSize)"  << sizeHint(Qt::MaximumSize);
+        qDebug() << "effectiveSizeHint(Qt::PreferredSize)"  << effectiveSizeHint(Qt::PreferredSize);
+        qDebug() << "effectiveSizeHint(Qt::MinimumSize)"  << effectiveSizeHint(Qt::MinimumSize);
+        qDebug() << "effectiveSizeHint(Qt::MaximumSize)"  << effectiveSizeHint(Qt::MaximumSize);
+    }*/
 
     virtual void setWidget(QWidget * widget){
         if(QTreeView * view = dynamic_cast<QTreeView*>(widget)) {

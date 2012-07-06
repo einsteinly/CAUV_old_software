@@ -20,6 +20,7 @@
 #include <liquid/connectionSink.h>
 #include <liquid/forward.h>
 #include <liquid/arcSinkLabel.h>
+#include <liquid/proxyWidget.h>
 
 #include "elements/style.h"
 
@@ -107,7 +108,7 @@ class FNodeParamInput: public FNodeInput{
         boost::shared_ptr<Node> m_model_node;
         boost::shared_ptr<Node> m_model_root;
         NodeTreeView* m_view;
-        QGraphicsProxyWidget* m_view_proxy;
+        liquid::ProxyWidget* m_view_proxy;
 };
 
 } // namespace f

@@ -122,7 +122,8 @@ void NumericDelegate::setEditorData(QWidget *editor,
 
 QSize NumericDelegate::sizeHint(const QStyleOptionViewItem & option,
                        const QModelIndex &index) const{
-    return QSize(titleRect(option, index).width() * 1.2, option.fontMetrics.height()*1.5);
+    return QSize(std::max(titleRect(option, index).width() * 1.2, 140.0),
+                 option.fontMetrics.height()*1.5);
 }
 
 QRect NumericDelegate::controlRect(const QStyleOptionViewItem &option,

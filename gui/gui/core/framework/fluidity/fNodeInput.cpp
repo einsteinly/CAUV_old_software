@@ -292,6 +292,7 @@ void FNodeParamInput::initView(){
     m_view->updateGeometry();
     m_view->setRootIndex(m_model->indexFromNode(m_model_root));
     qDebug() << "size hint = " << m_view->sizeHint();
+    m_view->resize(m_view->sizeHint());
     //m_view->setRootIndex(m_model->index(0, 0));
     //m_view->resizeColumnToContents(0);
     //m_view->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
@@ -325,10 +326,10 @@ void FNodeParamInput::initView(){
     //m_view->setStyleSheet("QTreeView::item {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #e7effd, stop: 1 #cbdaf1);}");
 
     m_view_proxy = new liquid::ProxyWidget();
+    addWidget(m_view_proxy);
     m_view_proxy->setWidget(m_view);
     m_view_proxy->setAutoFillBackground(false);    
     m_view_proxy->setPalette(transparent_bg_and_base);
-    
-    addWidget(m_view_proxy);
+
 }
 

@@ -113,9 +113,14 @@ QMimeData * NodeItemModel::mimeData(const QModelIndexList &indexes) const {
             boost::shared_ptr<Node> node = nodeFromIndex(index);
             QUrl url = QUrl();
             url.setScheme("varstream");
-            boost::shared_ptr<Vehicle> vehicleNode = node->getClosestParentOfType<Vehicle>();
-            url.setHost(QString::fromStdString(vehicleNode->nodeName()));
-            url.setPath(QString::fromStdString(node->nodePath()).remove(url.host().prepend("/")));
+            try {
+                boost::shared_ptr<Vehicle> vehicleNode = node->getClosestParentOfType<Vehicle>();
+                url.setHost(QString::fromStdString(vehicleNode->nodeName()));
+                url.setPath(QString::fromStdString(node->nodePath()).remove(url.host().prepend("/")));
+            } catch (std::out_of_range){
+                error() << "NodeItemModel::mimiData() - Vehicle node not found while building path string";
+                continue;
+            }
             urls.append(url);
             debug(5) << url.toString().toStdString() << "added to drag";
         }
