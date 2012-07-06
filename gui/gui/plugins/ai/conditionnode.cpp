@@ -25,7 +25,7 @@
 #include <liquid/requiresCutout.h>
 #include <liquid/style.h>
 #include <liquid/arcSinkLabel.h>
-#include <liquid/nodeHeader.h>
+#include <liquid/proxyWidget.h>
 
 #include <gui/core/framework/elements/style.h>
 #include <gui/core/model/model.h>
@@ -87,7 +87,10 @@ LiquidConditionNode::LiquidConditionNode(
     AiNode(node, parent),
     Manager<LiquidConditionNode>(node, this),
     m_node(node),
-    m_source(new liquid::ArcSource(this, new liquid::Arc(Param_Arc_Style())))
+    m_source(new liquid::ArcSource(this, new liquid::Arc(Param_Arc_Style()))),
+    m_model(boost::make_shared<NodeItemModel>(m_node)),
+    m_view(new NodeTreeView(true)),
+    m_sourceLayout(new QGraphicsLinearLayout(Qt::Horizontal))
 {
     buildContents();
 }
@@ -100,29 +103,21 @@ LiquidConditionNode::~LiquidConditionNode() {
 void LiquidConditionNode::buildContents(){
 
     // the item view
-    header()->setTitle(QString::fromStdString(m_node->nodeName()));
-    header()->setInfo(QString::fromStdString(m_node->nodePath()));
-    NodeTreeView * view = new NodeTreeView(true);
-    m_model = boost::make_shared<NodeItemModel>(m_node);
-    view->setModel(m_model.get());
-    view->setRootIndex(m_model->indexFromNode(m_node));
-    QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
-    proxy->setWidget(view);
+    m_view->setModel(m_model.get());
+    m_view->setRootIndex(m_model->indexFromNode(m_node));
+    liquid::ProxyWidget * proxy = new liquid::ProxyWidget();
+    proxy->setWidget(m_view);
     addItem(proxy);
 
     m_source->setParentItem(this);
     m_source->setZValue(10);
 
-    QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(Qt::Horizontal);
-    hlayout->setSpacing(0);
-    hlayout->setContentsMargins(0,0,0,0);
-    hlayout->addStretch(1);
-    hlayout->addItem(m_source);
-    hlayout->setAlignment(m_source, Qt::AlignBottom | Qt::AlignRight);
-
-    connect(this, SIGNAL(xChanged()), m_source, SIGNAL(xChanged()));
-    connect(this, SIGNAL(yChanged()), m_source, SIGNAL(yChanged()));
-    this->addItem(hlayout);
+    m_sourceLayout->setSpacing(0);
+    m_sourceLayout->setContentsMargins(0,0,0,0);
+    m_sourceLayout->addStretch(1);
+    m_sourceLayout->addItem(m_source);
+    m_sourceLayout->setAlignment(m_source, Qt::AlignBottom | Qt::AlignRight);
+    this->addItem(m_sourceLayout);
 }
 
 

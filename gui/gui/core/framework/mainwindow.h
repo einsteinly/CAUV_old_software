@@ -51,6 +51,8 @@ class StackWidget: public QWidget{
         QStackedWidget* m_stack_widget;
 
         QStack<QPair<QString, QWidget*> > m_stack;
+
+        QPropertyAnimation * m_titleAnimation;
 };
 
 class CauvMainWindow : public QMainWindow, public CauvNode, public boost::enable_shared_from_this<CauvMainWindow> {

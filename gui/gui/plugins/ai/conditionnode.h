@@ -31,6 +31,8 @@ namespace gui {
 // !!! inter-plugin dependence
 class FluidityNode;
 
+class NodeTreeView;
+
 GENERATE_SIMPLE_NODE(AiConditionTypeNode)
 
 class AiConditionNode : public Node {
@@ -83,6 +85,8 @@ protected:
     boost::shared_ptr<AiConditionNode> m_node;
     liquid::ArcSource * m_source;
     boost::shared_ptr<NodeItemModel> m_model;
+    NodeTreeView * m_view;
+    QGraphicsLinearLayout * m_sourceLayout;
 };
 
 

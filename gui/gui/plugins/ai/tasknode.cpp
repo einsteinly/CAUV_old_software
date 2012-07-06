@@ -203,7 +203,7 @@ void LiquidTaskNode::buildContents(){
     m_model = boost::make_shared<NodeItemModel>(m_node);
     view->setModel(m_model.get());
     view->setRootIndex(m_model->indexFromNode(m_node));
-    QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
+    liquid::ProxyWidget * proxy = new liquid::ProxyWidget();
     proxy->setWidget(view);
     addItem(proxy);
 }

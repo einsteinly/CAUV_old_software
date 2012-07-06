@@ -240,11 +240,17 @@ void NodeTreeView::init() {
     this->viewport()->setMinimumSize(0,0);
     setIndentation(3);
 
-    connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(toggleExpanded(QModelIndex)));
+    this->setExpandsOnDoubleClick(false);
+
+
+    //QTimer * t =new QTimer();
+    //t->connect(t, SIGNAL(timeout()), this, SLOT(sizeToFit()));
+    //t->setSingleShot(false);
+    //t->start(100);
 
     if(m_fixedSize){
-        connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(sizeToFit()));
-        connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(sizeToFit()));
+        //connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(sizeToFit(QModelIndex)));
+        //connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(sizeToFit(QModelIndex)));
         this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         this->viewport()->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -252,12 +258,16 @@ void NodeTreeView::init() {
     }
 }
 
-void NodeTreeView::sizeToFit(){
-    //resize(sizeHint());
+void NodeTreeView::sizeToFit(QModelIndex i){
+
+    info() << "expanded = " << isExpanded(i);
+    resize(sizeHint());
     info() << "sizing to fit";
-    //updateGeometry();
+    updateGeometry();
+    if(this->layout())
+        qDebug() << this->layout();
     adjustSize();
-    //updateGeometries();
+    updateGeometries();
     //m_delegateMap->sizeHintChanged(rootIndex());
 }
 
@@ -268,7 +278,7 @@ void NodeTreeView::registerDelegate(node_type nodeType,
 
 void NodeTreeView::setModel(QAbstractItemModel *model){
     QTreeView::setModel(model);
-    sizeToFit();
+    sizeToFit(rootIndex());
 }
 
 void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
@@ -332,10 +342,22 @@ QSize NodeTreeView::sizeHint(QModelIndex index) const {
 }
 
 void NodeTreeView::toggleExpanded(QModelIndex const& index){
+    info() << "pre-inversion" << isExpanded(index);
+    qDebug() << "sizeHint = " << sizeHint();
     setExpanded(index, !isExpanded(index));
+    info() << "post-inversion" << isExpanded(index);
+    qDebug() << "sizeHint = " << sizeHint();
+    sizeToFit(index);
 }
 
 void NodeTreeView::keyPressEvent(QKeyEvent *event){
+    qDebug() << "size = " << size();
+    qDebug() << "minimumSize = " << minimumSize();
+    qDebug() << "maximumSize = " << maximumSize();
+    qDebug() << "sizeHint = " << sizeHint();
+    qDebug() << "baseSize = " << this->baseSize();
+    qDebug() << "normalGeometry = " << this->normalGeometry();
+    this->setAutoFillBackground(true);
     Q_EMIT onKeyPressed(event);
     QTreeView::keyPressEvent(event);
 }
