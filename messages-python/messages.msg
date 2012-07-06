@@ -114,6 +114,7 @@ enum NodeType : int8 {
     ColourSimilarity,
     BackgroundSubtractor,
     GetNthColour,
+    ClampColour,
 }
 enum NodeStatus : int8 {
     None = 0,

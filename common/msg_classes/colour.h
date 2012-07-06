@@ -19,6 +19,7 @@
 #include <boost/operators.hpp>
 
 #include <utility/serialisation-types.h>
+#include <utility/rounding.h>
 #include <generated/types/ColourBase.h>
 #include <generated/types/ColourType.h>
 
@@ -142,6 +143,26 @@ std::basic_istream<charT, traits>& operator>>(
 }
 
 } //namespace cauv
+
+template<>
+inline cauv::Colour clamp_cast<cauv::Colour,cauv::Colour,cauv::Colour,cauv::Colour>(const cauv::Colour& low, const cauv::Colour& val, const cauv::Colour& high)
+{
+    cauv::Colour ret;
+    ret.type = val.type;
+    boost::array<float,4>::const_iterator ilow, ival, ihigh, ivalend;
+    boost::array<float,4>::iterator iret;
+    for(ilow = low.values.begin(),
+        ival = val.values.begin(),
+        ihigh = high.values.begin(),
+        ivalend = val.values.end(),
+        iret = ret.values.end();
+        ival != ivalend;
+        ++ilow, ++ival, ++ihigh, ++iret)
+    {
+        *iret = clamp_cast<float>(*ilow, *ival, *ihigh);
+    }
+    return ret;
+}
 
 #endif
 
