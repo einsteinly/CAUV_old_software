@@ -41,7 +41,9 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-AiPlugin::AiPlugin() : m_filter(boost::make_shared<NodeChildrenExclusionFilter>()){
+AiPlugin::AiPlugin() :
+    m_filter(boost::make_shared<NodeChildrenExclusionFilter>()),
+    m_aiRunning(false){
 }
 
 const QString AiPlugin::name() const{
@@ -70,14 +72,24 @@ void AiPlugin::initialise(){
         node->send(boost::make_shared<RequestAIStateMessage>());
     } else error() << "AiPlugin failed to lock cauv node";
 
-    ReloadAiFilter * reload = new ReloadAiFilter();
-    m_actions->view->installEventFilter(reload);
-    connect(reload, SIGNAL(reloadAiRequest()), this, SLOT(reloadAi()));
+    connect(m_actions->view, SIGNAL(keyPressed(int,Qt::KeyboardModifiers)),
+            this, SLOT(keyPressed(int,Qt::KeyboardModifiers)));
 
     m_actions->scene->registerDropHandler(boost::make_shared<AiDropHandler>(m_actions->root, m_actions->node));
     m_actions->nodes->registerDelegate(nodeType<AiTaskNode>(), boost::make_shared<BooleanDelegate>());
     m_actions->nodes->registerListFilter(m_filter);
 
+}
+
+void AiPlugin::keyPressed(int key,Qt::KeyboardModifiers){
+    switch (key){
+    case Qt::Key_R:
+    reloadAi();
+    break;
+    case Qt::Key_P:
+    toggleAi();
+    break;
+    }
 }
 
 void AiPlugin::setupTask(boost::shared_ptr<Node> node){
@@ -192,6 +204,27 @@ void AiPlugin::startTask(){
                                task->taskId(), ScriptCommand::Start ));
         }
     }
+}
+
+void AiPlugin::resumeAi(){
+    if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()){
+        cauvNode->send(boost::make_shared<AIControlMessage>(
+                           AICommand::ResumeAll ));
+    }
+}
+
+void AiPlugin::pauseAi(){
+    if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()){
+        cauvNode->send(boost::make_shared<AIControlMessage>(
+                           AICommand::PauseAll ));
+    }
+}
+
+void AiPlugin::toggleAi(){
+    if(m_aiRunning){
+        pauseAi();
+    } else resumeAi();
+    m_aiRunning = !m_aiRunning;
 }
 
 void AiPlugin::nodeClosed(liquid::LiquidNode * node) {

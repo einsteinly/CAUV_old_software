@@ -23,6 +23,7 @@ namespace liquid {
 
 class LiquidView : public QGraphicsView
 {
+    Q_OBJECT
 public:
     LiquidView(QWidget * parent = NULL);
 
@@ -42,6 +43,9 @@ protected:
     virtual bool gestureEvent(QGestureEvent *event);
     virtual void wheelEvent(QWheelEvent *event);
     virtual void keyPressEvent(QKeyEvent *event);
+
+Q_SIGNALS:
+    void keyPressed(int key, Qt::KeyboardModifiers);
 
 protected:
     float m_scaleFactor;

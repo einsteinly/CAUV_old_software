@@ -106,6 +106,7 @@ public:
             connect(view, SIGNAL(collapsed(QModelIndex)), this, SLOT(updateGeometry()));
         }
         QGraphicsProxyWidget::setWidget(widget);
+        this->setMinimumSize(0, 0);
     }
 
     // for completely different reasons make sure that geometry() is an
@@ -117,7 +118,6 @@ public:
 
 public Q_SLOTS:
     virtual void updateGeometry(){
-        qDebug() << "UPDATE GEOMETRY CALLED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
         // https://bugreports.qt-project.org/browse/QTBUG-14622
         QGraphicsProxyWidget::updateGeometry();
         QGraphicsLayoutItem::updateGeometry();

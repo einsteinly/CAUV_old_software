@@ -136,6 +136,9 @@ public:
                           boost::shared_ptr<AbstractNodeDelegate> delegate);
     void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
 
+public Q_SLOTS:
+        void setHighlighting(QString);
+
 protected Q_SLOTS:
     void redirectKeyboardFocus(QKeyEvent* key);
 
@@ -144,6 +147,7 @@ protected:
 
 private:
     Ui::NodePicker *ui;
+    QPushButton * m_clearButton;
 };
 
 } // namespace gui

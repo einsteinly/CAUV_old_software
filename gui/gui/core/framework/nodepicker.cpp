@@ -15,13 +15,9 @@
 #include "nodepicker.h"
 #include "ui_nodepicker.h"
 
-#include <QKeyEvent>
-#include <QCompleter>
-#include <QPushButton>
-#include <QLayout>
+#include <QtGui>
 
 #include <debug/cauv_debug.h>
-#include <QDebug>
 
 #include "model/nodes/numericnode.h"
 #include "delegates/delegate.h"
@@ -143,10 +139,14 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     ui->view->setIndentation(10);
 
     QHBoxLayout * layout = new QHBoxLayout(ui->filter);
-    QPushButton * button = new QPushButton("X");
-    button->setCursor(Qt::PointingHandCursor);
-    button->connect(button, SIGNAL(clicked()), ui->filter, SLOT(clear()));
-    layout->addWidget(button, 0, Qt::AlignLeft);
+    m_clearButton = new QPushButton("X");
+    QFont font("Verdana", 12);
+    font.setPixelSize(12);
+    m_clearButton->setFont(font);
+    m_clearButton->hide();
+    m_clearButton->setCursor(Qt::PointingHandCursor);
+    m_clearButton->connect(m_clearButton, SIGNAL(clicked()), ui->filter, SLOT(clear()));
+    layout->addWidget(m_clearButton, 0, Qt::AlignLeft);
     layout->setMargin(0);
     layout->setContentsMargins(0, 0, 5, 0);
 
@@ -154,6 +154,7 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     boost::shared_ptr<NodePathFilter> pathFilter = boost::make_shared<NodePathFilter>();
     ui->view->registerListFilter(pathFilter);
     ui->filter->connect(ui->filter, SIGNAL(textChanged(QString)), pathFilter.get(), SLOT(setText(QString)));
+    ui->filter->connect(ui->filter, SIGNAL(textChanged(QString)), this, SLOT(setHighlighting(QString)));
 
     // and auto completion of the path filter
     QCompleter * completer = new NodePathCompleter(ui->view->model());
@@ -167,6 +168,24 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     // redirect focus so the filter gets the key events
     ui->view->connect(ui->view, SIGNAL(onKeyPressed(QKeyEvent*)), this, SLOT(redirectKeyboardFocus(QKeyEvent*)));
 
+}
+
+void NodePicker::setHighlighting(QString text){
+    //QPalette p = ui->filter->palette();
+    if(text.isEmpty()){
+        //p.setColor(ui->filter->backgroundRole(), QColor('red'));
+        m_clearButton->hide();
+    } else{
+        m_clearButton->show();
+    }
+
+
+    //p.setColor( QPalette::Base, bg );
+    //p.setColor( QPalette::Window, bg );
+    //p.setColor( QPalette::Background, bg );
+    //ui->filter->setPalette(p);
+    //ui->filter->setAutoFillBackground(true);
+    //ui->filter->setBackgroundRole(QPalette::Background);
 }
 
 void NodePicker::redirectKeyboardFocus(QKeyEvent* event){
@@ -298,6 +317,7 @@ void NodeTreeView::registerDelegate(node_type nodeType,
 
 void NodeTreeView::setModel(QAbstractItemModel *model){
     QTreeView::setModel(model);
+    setExpanded(rootIndex(), true);
     sizeToFit(rootIndex());
 }
 

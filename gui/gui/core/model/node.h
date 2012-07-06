@@ -74,6 +74,7 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
             boost::shared_ptr<Node> node = shared_from_this();
 
             while(node->m_parent.lock()) {
+                // TODO: get rid of this exception handling, do it a neater way
                 try {
                     return node->to<T>();
                 } catch (std::runtime_error ex) {
@@ -115,22 +116,26 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
 
         template <class T> boost::shared_ptr<T> find(nid_t const& id) const {
             // throws std::out_of_range_exception if its not found
-            boost::shared_ptr<Node> node = m_id_map.at(id);
-            try {
+            if(exists<T>(id)) {
+                boost::shared_ptr<Node> node = m_id_map.at(id);
                 return node->to<T>();
-            } catch (std::runtime_error){ // invalid node conversions
+            } else {
                 std::stringstream str;
                 str << "Node not found: " << boost::apply_visitor(id_to_name(), id);
                 throw std::out_of_range(str.str());
             }
         }
 
+        template <class T> bool exists(nid_t const& id) const {
+            return m_id_map.find(id) != m_id_map.end();
+        }
+
         template <class T> boost::shared_ptr<T> findOrCreate(nid_t const& id){
             lock_t l(m_creationLock);
 
-            try {
+            if(exists<T>(id)) {
                 return find<T>(id);
-            } catch (std::out_of_range){
+            } else {
                 boost::shared_ptr<T> newNode = boost::make_shared<T>(id);
                 this->addChild(newNode);
                 info() << "New node added" << newNode->nodePath();

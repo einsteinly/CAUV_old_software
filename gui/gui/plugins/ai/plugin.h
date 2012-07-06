@@ -2,9 +2,9 @@
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
- * 
+ *
  * See license.txt for details.
- * 
+ *
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
@@ -23,60 +23,45 @@
 #include <liquid/node.h>
 
 namespace cauv {
-    namespace gui {
+namespace gui {
 
-        class NodeChildrenExclusionFilter;
+class NodeChildrenExclusionFilter;
 
-        class AiPlugin : public QObject, public CauvBasicPlugin
-        {
-            Q_OBJECT
-            Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
+class AiPlugin : public QObject, public CauvBasicPlugin
+{
+    Q_OBJECT
+    Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
 
-        public:
-            AiPlugin();
-            virtual const QString name() const;
-            virtual void initialise();
+public:
+    AiPlugin();
+    virtual const QString name() const;
+    virtual void initialise();
 
-            typedef liquid::LiquidNode LiquidNode;
-        public Q_SLOTS:
-            void setupTask(boost::shared_ptr<Node> node);
-            void setupCondition(boost::shared_ptr<Node> node);
-            void setupVehicle(boost::shared_ptr<Node> node);
-            void reloadAi();
-            void nodeClosed(LiquidNode * node);
+    typedef liquid::LiquidNode LiquidNode;
+public Q_SLOTS:
+    void setupTask(boost::shared_ptr<Node> node);
+    void setupCondition(boost::shared_ptr<Node> node);
+    void setupVehicle(boost::shared_ptr<Node> node);
+    void reloadAi();
+    void nodeClosed(LiquidNode * node);
 
-        protected Q_SLOTS:
-            void resetTask();
-            void stopTask();
-            void startTask();
+protected Q_SLOTS:
+    void resetTask();
+    void stopTask();
+    void startTask();
+    void pauseAi();
+    void resumeAi();
+    void toggleAi();
+    void keyPressed(int,Qt::KeyboardModifiers);
 
-        protected:
-            boost::shared_ptr<NodeChildrenExclusionFilter> m_filter;
+protected:
+    boost::shared_ptr<NodeChildrenExclusionFilter> m_filter;
+    bool m_aiRunning;
 
-        };
-
-
-        class ReloadAiFilter : public QObject {
-            Q_OBJECT
-        public:
-            virtual bool eventFilter(QObject *, QEvent *event){
-                if (event->type() == QEvent::KeyPress) {
-                    QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-                    if (keyEvent->key() == Qt::Key_R) {
-                        Q_EMIT reloadAiRequest();
-                        return true;
-                    } else
-                        return false;
-                }
-                return false;
-            }
-
-        Q_SIGNALS:
-            void reloadAiRequest();
-        };
+};
 
 
-    } // namespace gui
+} // namespace gui
 } // namespace cauv
 
 #endif // AIPLUGIN_H

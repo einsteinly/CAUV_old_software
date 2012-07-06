@@ -155,10 +155,12 @@ void LiquidView::keyPressEvent(QKeyEvent *event){
                 LayoutItems::updateLayout(scene());
                 break;
             default:
-                event->ignore();
+                Q_EMIT keyPressed(event->key(), event->modifiers());
+                event->accept();
                 break;
         }
     }
+    event->ignore();
 }
 
 

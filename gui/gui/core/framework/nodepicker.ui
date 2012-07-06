@@ -105,7 +105,7 @@
 QPushButton {
      border: 0px solid;
      border-radius: 9px;
-     background: rgba(100, 100, 100, 20);
+	 background: rgb(255, 96, 84);
      color: white;
      margin-left: 4px;
      min-width: 18px;
@@ -113,10 +113,6 @@ QPushButton {
      max-width: 18px;
      max-height: 18px;
 	 font: 75 12pt &quot;Lucida Grande&quot;;
-}
-
-QPushButton:hover {
-     background: rgba(100, 100, 100, 190);
 }</string>
        </property>
        <property name="placeholderText">
