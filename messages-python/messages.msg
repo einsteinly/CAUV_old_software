@@ -115,6 +115,7 @@ enum NodeType : int8 {
     BackgroundSubtractor,
     GetNthColour,
     ClampColour,
+    SumSquared,
 }
 enum NodeStatus : int8 {
     None = 0,
