@@ -22,7 +22,11 @@
 #include <boost/bind.hpp>
 
 #include <opencv2/core/core.hpp>
+#if CV_MAJOR_VERSION >=2 && CV_MINOR_VERSION >= 3
 #include <opencv2/video/video.hpp>
+#else
+#include <opencv2/video/background_segm.hpp>
+#endif
 
 #include "../node.h"
 #include "../nodeFactory.h"
@@ -60,9 +64,13 @@ class BackgroundSubtractorNode: public Node{
 
             cv::Mat fg, bg;
             subtractor(m, fg, param<float>("learningRate"));
+#if CV_MAJOR_VERSION >=2 && CV_MINOR_VERSION >= 3
             subtractor.getBackgroundImage(bg);
-
             r["background"] = boost::make_shared<Image>(bg);
+            #else
+            #warning background of background subtraction is only available in opencv >= 2.3
+            #endif
+
             r["foreground"] = boost::make_shared<Image>(fg);
             
         }
