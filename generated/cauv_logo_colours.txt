@@ -1,12 +1,12 @@
-     wwwwwwwww           wwww          wwww       wwww   www             www 
-   w          ww        w    w        w    w     w    w w   w           w   w
-  w   wwwwwww   w      w      w       w    w     w    w w    w         w    w
- w   w       www      w  w  w  w      w    w     w    w  w    w       w    w 
- w   w               w  w www   w     w    w     w    w   w    w     w    w  
- w   w              w    w w     w    w    w     w    w    w    w   w    w   
- w bbw       ww    wbbbb    w  bbbw   wbb  w     wbbbbw     w bbbwww    w    
- bbbwbbbbbbbbbbb  bbwbbbbbbbbbbbbbbb  bwbbbbbbbbbbbbwbb      bbwbbbbbbbb     
-  bbbbbbbbbbbbbb bbwbbbb      bbbbbbb  bbwbbbbbbbbwbbb        bbbwbbbwb      
-    bbbbbbbbbb    bbbbb        bbbbb    bbbbbbbbbbbbb          bbbbbbb      
+     wwwwwwwww            wwww          wwww       wwww   www             www 
+   ww         ww         w    w        w    w     w    w w   w           w   w
+  w   wwwwwww   w       w      w       w    w     w    w w    w         w    w
+ w   w       www       w  w  w  w      w    w     w    w  w    w       w    w 
+ w   w                w  w www   w     w    w     w    w   w    w     w    w  
+ w   w               w    w w     w    w    w     w    w    w    w   w    w   
+ w bbw       www    wbbbb    w  bbbw   wbb  w     wbbbbw     w bbbwww    w    
+  bbwbbbbbbbbbbbb  bbwbbbbbbbbbbbbbbb  bwbbbbbbbbbbbbwbb      bbwbbbbbbbb     
+   bbbbbbbbbbbbb  bbwbbbb      bbbbbbb  bbwbbbbbbbbwbbb        bbbwbbbwb      
+    bbbbbbbbbbb    bbbbb        bbbbb    bbbbbbbbbbbbb          bbbbbbb      
 
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
