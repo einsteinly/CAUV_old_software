@@ -12,7 +12,8 @@ import math
 import argparse
 import pygame
 
-from gamepad_maps.GamepadMapping import *
+from gamepad_maps.DefaultMapping import ConcreteGamepadMapping
+from gamepad_maps.GamepadMapping import GamepadMapping
 
 
 class GamepadServer(messaging.MessageObserver):
@@ -100,7 +101,7 @@ if __name__ == '__main__':
         if args.debug:
             d.mapping = GamepadMapping(auv)
         else:
-            d.mapping = module.ConcreteGamepadMapping(auv)
+            d.mapping = ConcreteGamepadMapping(auv, module.XBoxAxes, module.XBoxButtons)
         if args.controls:
             try:
                 print d.mapping.controls()
