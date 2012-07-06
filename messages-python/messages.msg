@@ -112,6 +112,7 @@ enum NodeType : int8 {
     MathAddMultColour,
     BroadcastEllipses,
     ColourSimilarity,
+    BackgroundSubtractor,
 }
 enum NodeStatus : int8 {
     None = 0,
