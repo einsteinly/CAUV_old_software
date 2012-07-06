@@ -96,6 +96,9 @@ void Node::addChild(boost::shared_ptr<Node> const& child){
 
 
 bool Node::removeChild(boost::shared_ptr<Node> const& child){
+    
+    lock_t l(m_creationLock);
+    
     //check it's actually a child of this node
     try {
         find<Node>(child->nodeId());
