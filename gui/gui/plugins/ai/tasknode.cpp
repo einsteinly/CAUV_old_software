@@ -29,6 +29,7 @@
 #include <liquid/arcSinkLabel.h>
 #include <liquid/nodeHeader.h>
 #include <liquid/shadow.h>
+#include <liquid/button.h>
 
 #include <gui/core/framework/elements/style.h>
 #include <gui/core/model/model.h>
@@ -161,15 +162,44 @@ LiquidTaskNode::~LiquidTaskNode() {
 }
 
 void LiquidTaskNode::highlightRunningStatus(QVariant status){
-    if(status.toBool())
+    if(status.toBool()) {
         m_status_highlight->setBrush(QBrush(QColor(92,205,92)));
-    else
+        m_playButton->hide();
+        m_stopButton->show();
+    }
+    else {
         m_status_highlight->setBrush(QBrush());
+        m_stopButton->hide();
+        m_playButton->show();
+    }
+}
+
+void LiquidTaskNode::initButtons(){
+    m_resetButton = new liquid::Button(
+       QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
+    );
+    header()->addButton("reset", m_resetButton);
+
+    m_stopButton = new liquid::Button(
+       QRectF(0,0,24,24), QString(":/resources/icons/stop_button"), NULL, this
+    );
+    header()->addButton("stop", m_stopButton);
+
+    m_playButton = new liquid::Button(
+       QRectF(0,0,24,24), QString(":/resources/icons/play_button"), NULL, this
+    );
+    header()->addButton("play", m_playButton);
+
+    connect(m_resetButton, SIGNAL(pressed()), this, SIGNAL(reset()));
+    connect(m_stopButton, SIGNAL(pressed()), this, SIGNAL(stop()));
+    connect(m_playButton, SIGNAL(pressed()), this, SIGNAL(start()));
 }
 
 void LiquidTaskNode::buildContents(){
 
     // incoming dependencies
+
+    initButtons();
 
     foreach(boost::shared_ptr<AiConditionNode> const& condition, m_node->getConditions()){
         LiquidConditionNode * conditionNode = LiquidConditionNode::liquidNode(condition);

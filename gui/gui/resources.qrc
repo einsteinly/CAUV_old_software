@@ -17,5 +17,11 @@
         <file>resources/icons/maximise_button.pressed.png</file>
         <file>resources/icons/maximise_button.png</file>
         <file>resources/stylesheet.qss</file>
+        <file>resources/icons/play_button.hover.png</file>
+        <file>resources/icons/play_button.png</file>
+        <file>resources/icons/play_button.pressed.png</file>
+        <file>resources/icons/stop_button.hover.png</file>
+        <file>resources/icons/stop_button.png</file>
+        <file>resources/icons/stop_button.pressed.png</file>
     </qresource>
 </RCC>

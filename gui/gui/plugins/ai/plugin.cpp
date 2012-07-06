@@ -2,9 +2,9 @@
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
- * 
+ *
  * See license.txt for details.
- * 
+ *
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
@@ -55,7 +55,7 @@ void AiPlugin::initialise(){
         setupVehicle(vehicle);
     }
     connect(VehicleRegistry::instance().get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
-           this, SLOT(setupVehicle(boost::shared_ptr<Node>)));
+            this, SLOT(setupVehicle(boost::shared_ptr<Node>)));
 
     boost::shared_ptr<CauvNode> node = m_actions->node.lock();
     if(node) {
@@ -90,6 +90,11 @@ void AiPlugin::setupTask(boost::shared_ptr<Node> node){
         LiquidTaskNode * liquidNode = new LiquidTaskNode(node->to<AiTaskNode>());
         m_actions->scene->addItem(liquidNode);
         connect(liquidNode, SIGNAL(closed(LiquidNode*)), this, SLOT(nodeClosed(LiquidNode*)));
+        connect(liquidNode, SIGNAL(reset()), this, SLOT(resetTask()));
+        connect(liquidNode, SIGNAL(stop()), this, SLOT(stopTask()));
+        connect(liquidNode, SIGNAL(start()), this, SLOT(startTask()));
+
+
     } catch(std::runtime_error& e) {
         error() << "AiPlugin::setupTask: Expecting AiTaskNode" << e.what();
 
@@ -159,6 +164,33 @@ void AiPlugin::reloadAi(){
 
     if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()) {
         cauvNode->send(boost::make_shared<RequestAIStateMessage>());
+    }
+}
+
+void AiPlugin::resetTask(){
+    if(LiquidTaskNode * task = dynamic_cast<LiquidTaskNode*>(sender())){
+        if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()){
+            cauvNode->send(boost::make_shared<ScriptControlMessage>(
+                               task->taskId(), ScriptCommand::Reset ));
+        }
+    }
+}
+
+void AiPlugin::stopTask(){
+    if(LiquidTaskNode * task = dynamic_cast<LiquidTaskNode*>(sender())){
+        if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()){
+            cauvNode->send(boost::make_shared<ScriptControlMessage>(
+                               task->taskId(), ScriptCommand::Stop ));
+        }
+    }
+}
+
+void AiPlugin::startTask(){
+    if(LiquidTaskNode * task = dynamic_cast<LiquidTaskNode*>(sender())){
+        if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()){
+            cauvNode->send(boost::make_shared<ScriptControlMessage>(
+                               task->taskId(), ScriptCommand::Start ));
+        }
     }
 }
 

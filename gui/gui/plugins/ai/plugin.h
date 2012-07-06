@@ -45,6 +45,11 @@ namespace cauv {
             void reloadAi();
             void nodeClosed(LiquidNode * node);
 
+        protected Q_SLOTS:
+            void resetTask();
+            void stopTask();
+            void startTask();
+
         protected:
             boost::shared_ptr<NodeChildrenExclusionFilter> m_filter;
 

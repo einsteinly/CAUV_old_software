@@ -18,6 +18,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <liquid/node.h>
+#include <liquid/button.h>
 
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/framework/manager.h>
@@ -94,13 +95,22 @@ public:
     virtual ~LiquidTaskNode();
     void buildContents();
     std::string taskId() const;
+    void initButtons();
 
 public Q_SLOTS:
     void highlightRunningStatus(QVariant status);
 
+Q_SIGNALS:
+    void reset();
+    void stop();
+    void start();
+
 protected:
     boost::shared_ptr<AiTaskNode> m_node;
     boost::shared_ptr<NodeItemModel> m_model;
+    liquid::Button * m_playButton;
+    liquid::Button * m_stopButton;
+    liquid::Button * m_resetButton;
 };
 
 

@@ -260,14 +260,34 @@ void NodeTreeView::init() {
 
 void NodeTreeView::sizeToFit(QModelIndex i){
 
-    info() << "expanded = " << isExpanded(i);
+    updateGeometry();
+    resize(sizeHint());
+    /*
+
+    // https://bugreports.qt-project.org/browse/QTBUG-14622
+    QObject * p = parent();
+    if(!p)
+        qDebug() << "parent not found";
+    while(p){
+
+        qDebug() << p;
+
+        if(QGraphicsLayoutItem * layoutItem = dynamic_cast<QGraphicsLayoutItem*>(p)){
+            info() << "found layout item parent";
+            layoutItem->updateGeometry();
+        }
+
+        p = p->parent();
+    }*/
+
+    /*info() << "expanded = " << isExpanded(i);
     resize(sizeHint());
     info() << "sizing to fit";
     updateGeometry();
     if(this->layout())
         qDebug() << this->layout();
     adjustSize();
-    updateGeometries();
+    updateGeometries();*/
     //m_delegateMap->sizeHintChanged(rootIndex());
 }
 
