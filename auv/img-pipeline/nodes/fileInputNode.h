@@ -143,7 +143,8 @@ class FileInputNode: public AsynchronousNode{
                 }
             }
             
-            r.internalValue("image") = boost::make_shared<Image>(image.clone(), now(), mkUID(SensorUIDBase::File + m_instance_num, ++m_seq));
+            if(!image.empty())
+                r.internalValue("image") = boost::make_shared<Image>(image.clone(), now(), mkUID(SensorUIDBase::File + m_instance_num, ++m_seq));
             r["fps"] = (float)m_fps;
         }
 
