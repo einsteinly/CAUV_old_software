@@ -23,6 +23,8 @@ class pipelineManager(aiProcess):
             self.requests = {'script':{}, 'other':{}}
         else:
             self.requests = {'script':{}, 'other':{}}
+        self.hold_pls = opts.hold_pls
+        self.load_temp = opts.load_temp
 
         self.detector_requests = []
         
@@ -54,7 +56,8 @@ class pipelineManager(aiProcess):
         for name, filename in zip(pipeline_names, pipeline_files):
             if name.startswith('temp__'):
                 warning('Found temporary pipelines in file %s.pipe, it is recommended these are sorted and deleted' %(name,))
-                pipeline_groups[name[6:]].append(filename)
+                if self.load_temp:
+                    pipeline_groups[name[6:]].append(filename)
             else:
                 pipeline_groups[name].append(filename)
 
@@ -161,7 +164,8 @@ class pipelineManager(aiProcess):
             except Exception:
                 error('Error saving pipeline %s' %(reqname))
                 error(traceback.format_exc().encode('ascii','ignore'))
-            #pl.clear()
+            if not self.hold_pls:
+                pl.clear()
         #4
         for reqname in to_add:
             pl = cauv.pipeline.Model(self.node, 'ai/'+reqname)
@@ -200,6 +204,10 @@ if __name__ == '__main__':
                  action='store_true', help="disable/ignore gui output nodes")
     p.add_argument('--reset_pls', dest='reset_pls', default=False,
                  action='store_true', help="reset pipelines to those stored in /pipelines")
+    p.add_argument('--hold_pls', dest='hold_pls', default=False,
+                 action='store_true', help="Don't clear pipelines when they've been finished with.")
+    p.add_argument('--load_temp', dest='load_temp', default=False,
+                 action='store_true', help="Don't load any temporary files created.")
     p.add_argument('--freeze_pls', dest='freeze_pls', default=False,
                  action='store_true', help="ignore changes to the pipeline")
     opts, args = p.parse_known_args()

@@ -30,6 +30,8 @@
 #include "meanStdNode.h"
 #include "broadcastEllipsesNode.h"
 #include "colourSimilarityNode.h"
+#include "backgroundSubtractorNode.h"
+#include "getNthNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -64,6 +66,8 @@ DEFINE_NFR(ReceiveLinesNode, NodeType::ReceiveLines);
 DEFINE_NFR(MeanStdNode, NodeType::MeanStd);
 DEFINE_NFR(BroadcastEllipsesNode, NodeType::BroadcastEllipses);
 DEFINE_NFR(ColourSimilarityNode, NodeType::ColourSimilarity);
+DEFINE_NFR(BackgroundSubtractorNode, NodeType::BackgroundSubtractor);
+template<> DEFINE_NFR(GetNthNode<Colour>, NodeType::GetNthColour);
 
 } // namespace imgproc
 } // namespace cauv
