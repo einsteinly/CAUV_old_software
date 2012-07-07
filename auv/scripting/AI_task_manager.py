@@ -232,7 +232,7 @@ class taskManager(aiProcess):
     def gui_update_condition(self, condition):
         if not condition._suppress_reporting: #eg detector conditions
             self.node.send(messaging.ConditionStateMessage(condition.id,
-                condition.get_options(), condition.get_debug_values(), condition.get_pipeline_ids()))
+                condition.get_options(), condition.get_debug_values(), condition.get_pipeline_ids(), condition.get_state()))
     def gui_remove_task(self, task_id):
         self.node.send(messaging.TaskRemovedMessage(task_id))
     def gui_remove_condition(self, condition_id):
