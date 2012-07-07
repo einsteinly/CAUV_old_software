@@ -1028,6 +1028,7 @@ group guiai
         conditionOptions : map<string, ParamValue>;
         debugValues : map<string, ParamValue>;
         pipelineIds : list<string>;
+        conditionValue: bool;
     }
     message TaskTypes : 213
     {
