@@ -27,7 +27,7 @@
 
 #include <Eigen/StdVector>
 
-#include <clipper.hpp> // Boost Software License
+#include <polyclipping/clipper.hpp> // Boost Software License
 
 #include <debug/cauv_debug.h>
 #include <generated/types/TimeStamp.h>
