@@ -15,6 +15,7 @@ pl = pipeline.Model(node)
 
 # FIXME Obvious.
 try:
+    import IPython
     ipython_version_is_jameses_shitty_one = [int(v) for v in IPython.__version__.split('.')] < [0,11]
 except:
     ipython_version_is_jameses_shitty_one = False

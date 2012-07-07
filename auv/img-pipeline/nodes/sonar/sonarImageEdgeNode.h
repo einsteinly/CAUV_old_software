@@ -37,7 +37,7 @@ class SonarImageEdgeNode : public Node {
             m_speed = fast;
 
             // one input:
-            registerInputID("polar image");
+            registerInputID("polar image", false);
             
             // one output
             registerOutputID("polar image");

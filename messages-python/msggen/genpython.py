@@ -65,15 +65,25 @@ def get_output_files(tree):
     requiredMapTypes = set()
     requiredVectorTypes = set()
     requiredArrayTypes = set()
-    #Urg, nested generator syntax      \/ this flattens the 'group' list to messages
-    for field_cont in tree['structs'] + [m for g in tree['groups'] for m in g.messages]:
-        for field in field_cont.fields:
-            if isSTLMap(field.type):
-                requiredMapTypes.add((field.type.keyType, field.type.valType))
-            if isSTLVector(field.type):
-                requiredVectorTypes.add(field.type.valType)
-            if isArray(field.type):
-                requiredArrayTypes.add((field.type.valType, field.type.size))
+    def types():
+        for s in tree["structs"]:
+            for field in s.fields:
+                yield field.type
+        for g in tree["groups"]:
+            for m in g.messages:
+                for field in m.fields:
+                    yield field.type
+        for v in tree["variants"]:
+            for t in v.types:
+                yield t
+    for t in types():
+        if isSTLMap(t):
+            requiredMapTypes.add((t.keyType, t.valType))
+        if isSTLVector(t):
+            requiredVectorTypes.add(t.valType)
+        if isArray(t):
+            requiredArrayTypes.add((t.valType, t.size))
+
     requiredVectorTypes, requiredMapTypes, requiredArrayTypes = addNestedTypes(requiredVectorTypes, requiredMapTypes, requiredArrayTypes)
     includes = gencpp.getIncludedTypeNames(requiredMapTypes | requiredVectorTypes | requiredArrayTypes, "<generated/types/%s.h>")
 

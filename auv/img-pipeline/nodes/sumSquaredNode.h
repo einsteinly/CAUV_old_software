@@ -12,32 +12,24 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef __BACKGROUNDSUBTRACTOR_NODE_H__
-#define __BACKGROUNDSUBTRACTOR_NODE_H__
-
-#include <map>
-#include <vector>
-#include <string>
+#ifndef __SUMSQUARED_NODE_H__
+#define __SUMSQUARED_NODE_H__
 
 #include <boost/bind.hpp>
 
 #include <opencv2/core/core.hpp>
-#if CV_MAJOR_VERSION >=2 && CV_MINOR_VERSION >= 3
-#include <opencv2/video/video.hpp>
-#else
-#include <opencv2/video/background_segm.hpp>
-#endif
 
 #include "../node.h"
 #include "../nodeFactory.h"
+#include "../pipelineTypes.h"
 
 
 namespace cauv{
 namespace imgproc{
 
-class BackgroundSubtractorNode: public Node{
+class SumSquaredNode: public Node{
     public:
-        BackgroundSubtractorNode(ConstructArgs const& args)
+        SumSquaredNode(ConstructArgs const& args)
             : Node(args){
         }
 
@@ -49,29 +41,27 @@ class BackgroundSubtractorNode: public Node{
             registerInputID("image", true);
 
             // one output
-            registerOutputID("background");
-            registerOutputID("foreground");
-
-            registerParamID<float>("learningRate", -1.0);
+            registerOutputID<float>("sum sq", 0.0f);
         }
 
     protected:
 
-        cv::BackgroundSubtractorMOG2 subtractor;
+        static float sumsquared(const cv::Mat& m) {
+            if (m.channels() != 1)
+                throw parameter_error("Input matrix has to be single channel");
+
+            float sumsq = 0;
+            cv::MatConstIterator_<unsigned char> it, itend;
+            for (it = m.begin<unsigned char>(), itend = m.end<unsigned char>(); it != itend; ++it)
+                sumsq += *it/255.0f;
+            
+            return sumsq / m.total();
+        }
+
         void doWork(in_image_map_t& inputs, out_map_t& r){
+
             image_ptr_t img = inputs["image"];
-            cv::Mat m = img->mat();
-
-            cv::Mat fg, bg;
-            subtractor(m, fg, param<float>("learningRate"));
-#if CV_MAJOR_VERSION >=2 && CV_MINOR_VERSION >= 3
-            subtractor.getBackgroundImage(bg);
-            r["background"] = boost::make_shared<Image>(bg);
-            #else
-            #warning background of background subtraction is only available in opencv >= 2.3
-            #endif
-
-            r["foreground"] = boost::make_shared<Image>(fg);
+            r["sum sq"] = img->apply(boost::bind(sumsquared, _1));
             
         }
     
@@ -82,4 +72,4 @@ class BackgroundSubtractorNode: public Node{
 } // namespace imgproc
 } // namespace cauv
 
-#endif // ndef __BACKGROUNDSUBTRACTOR_NODE_H__
+#endif // ndef __SUMSQUARED_NODE_H__

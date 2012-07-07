@@ -22,7 +22,7 @@
 #include <opencv2/core/core.hpp>
 
 #include "../node.h"
-
+#include "../nodeFactory.h"
 
 namespace cauv{
 namespace imgproc{
@@ -38,7 +38,7 @@ class PercentileNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image");
+            registerInputID("image", true);
 
             // output parameters:
             registerOutputID("value", Colour::fromRGB(0,0,0));
@@ -85,9 +85,11 @@ class PercentileNode: public Node{
         static Colour getPercentileChannels(const cv::Mat& img, float pct) {
             typedef cv::Vec<T,Channels> pixel_t;
 
-            boost::array< boost::array<uint32_t, 256>, Channels > value_histogram;;
-
+            boost::array< boost::array<uint32_t, 256>, Channels > value_histogram;
            
+            for(int ch = 0; ch < Channels; ch++){
+                std::fill(value_histogram[ch].begin(), value_histogram[ch].end(), 0);
+            }
             for (cv::MatConstIterator_<pixel_t> it = img.begin<pixel_t>(),
                                                 end = img.end<pixel_t>();
                  it != end; ++it) {

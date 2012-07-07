@@ -26,8 +26,8 @@ class GrabCutNode: public Node{
             m_speed = slow;
             
             // two input:
-            registerInputID("image");
-            registerInputID("mask");
+            registerInputID("image", true);
+            registerInputID("mask", false);
         
             // one output
             registerOutputID("mask (not copied)");

@@ -345,7 +345,7 @@ def a__map_gen(T):
 p_int32NodeTypeEMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_int + c + p_NodeType + r)) + r)
 p_int32NodeTypeEMap.setParseAction(a__map_gen(messaging.int32NodeTypeEMap))
 p_stringstringVecMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_str + c + p_stringVec + r)) + r)
-p_stringstringVecMap.setParseAction(a__map_gen(messaging.stringstringVecMap))
+
 p_stringParamValueMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_str + c + p_ParamValue + r)) + r)
 p_stringParamValueMap.setParseAction(a__map_gen(messaging.stringParamValueMap))
 p_int32LocalNodeOutputNodeInputVecMapMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_int + c + p_LocalNodeOutputNodeInputVecMap + r)) + r)

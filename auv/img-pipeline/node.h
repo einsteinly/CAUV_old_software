@@ -298,14 +298,17 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             std::set<int32_t> compatible_subtypes;
             std::string tip;
             input_ptr synchronised_with;
+            bool isconst;
 
-            Input(InputSchedType::e s);
+            Input(InputSchedType::e s,
+                  bool isconst);
             Input(InputSchedType::e s,
                   ParamValue const& default_value,
                   std::string const& tip,
                   std::vector<int32_t> const& compatible_subtypes);
 
-            static input_ptr makeImageInputShared(InputSchedType::e const& st = Must_Be_New);
+            static input_ptr makeImageInputShared(bool isconst,
+                                                  InputSchedType::e const& st = Must_Be_New);
             static input_ptr makeParamInputShared(ParamValue const& default_value,
                                                   std::string const& tip,
                                                   InputSchedType::e const& st = May_Be_Old);
@@ -316,6 +319,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             InternalParamValue getParam(bool& did_change, UID const&) const;
             bool valid() const;
             bool isParam() const;
+            bool isConst() const;
             
             UID latestUIDSharedWithSync() const;            
             bool synchronisedInputAvailable() const;
@@ -435,6 +439,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         // TODO NPA: include param children
         /* parameters DO count, return everything not just connected things */
         msg_node_output_map_t outputLinks() const;
+        const output_link_list_t& linksOnOutput(output_id const& o) const;
         bool hasChildOnOutput(output_id const&) const;
 
         // TODO NPA: include param children
@@ -657,7 +662,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             _explicitRegisterOutputID<image_ptr_t>(o, default_value);
         }
 
-        void registerInputID(input_id const& i, InputSchedType::e const& st = Must_Be_New);
+        void registerInputID(input_id const& i, bool isconst, InputSchedType::e const& st = Must_Be_New);
 
         void requireSyncInputs(input_id const& a, input_id const& b);
 

@@ -38,7 +38,7 @@ class LocalMaximaNode: public Node{
 
         void init(){
             m_speed = fast;
-            registerInputID("image_in"); 
+            registerInputID("image_in", true); 
             registerOutputID("keypoints", std::vector<KeyPoint>());
             registerParamID<float>("delta", 1.0f, "");
         }

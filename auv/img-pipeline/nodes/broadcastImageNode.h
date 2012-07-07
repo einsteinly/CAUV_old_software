@@ -30,7 +30,7 @@ class BroadcastImageNode: public OutputNode{
 
         void init(){
             // one input:
-            registerInputID("image_in");
+            registerInputID("image_in", true);
 
             // no outputs
             
