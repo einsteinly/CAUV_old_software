@@ -44,7 +44,7 @@ class RunningAverageNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image");
+            registerInputID("image", true);
 
             // one output:
             registerOutputID("image");

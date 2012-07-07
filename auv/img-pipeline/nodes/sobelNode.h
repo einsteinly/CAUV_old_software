@@ -42,7 +42,7 @@ class SobelNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image_in");
+            registerInputID("image_in", true);
             
             // one output
             registerOutputID("image_out");
@@ -54,40 +54,11 @@ class SobelNode: public Node{
         }
 
     protected:
-        struct applySobel {
-            applySobel(int xorder, int yorder, int size) : xorder(xorder), yorder(yorder), size(size) {}        
-            cv::Mat operator()(cv::Mat m) const
-            {
-                cv::Mat ret;
-                cv::Sobel(m, ret, -1, xorder, yorder, size);
-                return ret;
-            }
-
-            int xorder, yorder;
-            int size;
-        };
-        template<typename F>
-        struct applyToMatHelper: boost::static_visitor<augmented_mat_t>{
-            applyToMatHelper(F func) : func(func) {
-            }
-            augmented_mat_t operator()(cv::Mat a) const{
-                return func(a);
-            }
-            augmented_mat_t operator()(NonUniformPolarMat a) const{
-                NonUniformPolarMat r;
-                r.mat = func(a.mat);
-                return r;
-            }
-            augmented_mat_t operator()(PyramidMat a) const{
-                error() << "applyToMat does not support pyramids";
-                return a;
-            }
-            F func;
-        };
-        template<typename F>
-        augmented_mat_t applyToMat(augmented_mat_t& in, F func)
+        static cv::Mat sobel(cv::Mat m, int xorder, int yorder, int size)
         {
-            return boost::apply_visitor(applyToMatHelper<F>(func), in);
+            cv::Mat ret;
+            cv::Sobel(m, ret, -1, xorder, yorder, size);
+            return ret;
         }
 
         void doWork(in_image_map_t& inputs, out_map_t& r){
@@ -101,7 +72,7 @@ class SobelNode: public Node{
             augmented_mat_t in = img->augmentedMat();
 
             try{
-                r["image_out"] = boost::make_shared<Image>(applyToMat(in, applySobel(xorder,yorder,size)));
+                r["image_out"] = boost::make_shared<Image>(img->apply(boost::bind(sobel, _1, xorder, yorder, size)));
             }catch(cv::Exception& e){
                 error() << "SobelNode:\n\t"
                         << e.err << "\n\t"

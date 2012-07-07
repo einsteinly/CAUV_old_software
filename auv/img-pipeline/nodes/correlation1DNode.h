@@ -43,8 +43,8 @@ class Correlation1DNode: public Node{
             m_speed = fast;
 
             // input images: both must be new to trigger execution
-            registerInputID("Image A");
-            registerInputID("Image B");
+            registerInputID("Image A", true);
+            registerInputID("Image B", true);
             
             // outputs:
             registerOutputID("max correl location", 0.0f);

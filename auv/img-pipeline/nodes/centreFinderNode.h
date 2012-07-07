@@ -28,7 +28,7 @@ class CentreFinderNode : public OutputNode{
             m_speed = fast;
             
             //One input
-            registerInputID("image_in");
+            registerInputID("image_in", true);
             
             //No output
             

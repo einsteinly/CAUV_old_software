@@ -49,7 +49,7 @@ class KMeansNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image");
+            registerInputID("image", false);
 
             // two outputs:
             registerOutputID("clusters", std::vector<Colour>());

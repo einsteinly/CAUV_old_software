@@ -27,7 +27,7 @@ class CornerHarrisNode: public Node{
             m_speed = slow;
             
             // one input:
-            registerInputID("image_in");
+            registerInputID("image_in", true);
             
             // one output
             registerOutputID("image_out", image_ptr_t());

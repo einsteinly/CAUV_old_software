@@ -45,7 +45,7 @@ class DrawKeyPointsNode: public Node{
             m_speed = slow;
             
             // one input:
-            registerInputID(Image_In_Name);
+            registerInputID(Image_In_Name, true);
             
             // one output:
             registerOutputID(Image_Out_Copied_Name);

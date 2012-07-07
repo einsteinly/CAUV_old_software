@@ -38,7 +38,7 @@ class MedianFilterNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image");
+            registerInputID("image",false);
 
             // one output
             registerOutputID("image (not copied)");

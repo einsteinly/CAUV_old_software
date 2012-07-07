@@ -33,9 +33,9 @@ class FitEllipseNode : public Node {
             m_speed = fast;
             
             //One input
-            registerInputID("edge_image");
-            registerInputID("imageDx");
-            registerInputID("imageDy");
+            registerInputID("edge_image", true);
+            registerInputID("imageDx", true);
+            registerInputID("imageDy", true);
             
             //One output
             registerOutputID("ellipse", std::vector<Ellipse>());
