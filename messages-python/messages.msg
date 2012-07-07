@@ -554,10 +554,6 @@ group control
         maxError : float;
     }
 
-    message StateRequest : 82
-    {
-    }
-
     message Script : 102
     {
         request : ScriptExecRequest;

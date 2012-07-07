@@ -74,7 +74,8 @@ void ImageProcessor::onSonarImageMessage(SonarImageMessage_ptr m){
 }
 
 
-void ImageProcessor::onTelemtryMessage(TelemetryMessage_ptr m){
+void ImageProcessor::onTelemetryMessage(TelemetryMessage_ptr m){
+    debug() << "ImageProcessor::onTelemetry" << *m;
     lock_t l(m_nodes_lock);
     std::set<node_ptr_t>::iterator i;        
     for(i = m_telem_req_nodes.begin(); i != m_telem_req_nodes.end(); i++)
