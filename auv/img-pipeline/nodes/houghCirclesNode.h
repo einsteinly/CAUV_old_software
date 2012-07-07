@@ -43,7 +43,7 @@ class HoughCirclesNode: public OutputNode{
             m_speed = slow;
             
             // one input:
-            registerInputID("image_in");
+            registerInputID("image_in", true);
             
             // one output
             registerOutputID("image_out");

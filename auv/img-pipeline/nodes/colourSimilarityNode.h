@@ -42,7 +42,7 @@ class ColourSimilarityNode: public Node{
             m_speed = fast;
 
             // inputs:
-            registerInputID("image");
+            registerInputID("image", true);
 
             // one output
             registerOutputID("image");

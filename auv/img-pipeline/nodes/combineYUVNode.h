@@ -40,9 +40,9 @@ class CombineYUVNode: public Node{
             m_speed = fast;
 
             // inputs:
-            registerInputID("Y");
-            registerInputID("U");
-            registerInputID("V");
+            registerInputID("Y", true);
+            registerInputID("U", true);
+            registerInputID("V", true);
             
             // output:
             registerOutputID("image", image_ptr_t());

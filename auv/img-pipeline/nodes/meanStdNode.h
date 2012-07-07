@@ -38,7 +38,7 @@ class MeanStdNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image");
+            registerInputID("image", true);
 
             // output parameters:
             registerOutputID("mean", Colour::fromRGB(0,0,0));

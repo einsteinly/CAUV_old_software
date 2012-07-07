@@ -38,7 +38,7 @@ class SumSquaredNode: public Node{
             m_speed = fast;
 
             // inputs:
-            registerInputID("image");
+            registerInputID("image", true);
 
             // one output
             registerOutputID<float>("sum sq", 0.0f);

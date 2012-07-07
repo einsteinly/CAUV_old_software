@@ -36,7 +36,7 @@ class LocalDisplayNode: public OutputNode{
 
         void init(){
             // one input:
-            registerInputID("image_in");
+            registerInputID("image_in",true);
             
             cv::namedWindow("LocalDisplayNode", CV_WINDOW_AUTOSIZE);
             // no outputs

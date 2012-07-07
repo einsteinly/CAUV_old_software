@@ -38,8 +38,8 @@ class MixNode: public Node{
             m_speed = fast;
 
             // inputs:
-            registerInputID("image");
-            registerInputID("mix");
+            registerInputID("image", false);
+            registerInputID("mix", true);
 
             // one output
             registerOutputID("image (not copied)");

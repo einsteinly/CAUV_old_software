@@ -25,7 +25,7 @@ class ThresholdMaskNode: public Node{
             m_speed = fast;
 
             // one input
-            registerInputID("channel (not copied)"); // must be matrix of a single channel
+            registerInputID("channel (not copied)", false); // must be matrix of a single channel
 
             // one output
             registerOutputID("output mask");

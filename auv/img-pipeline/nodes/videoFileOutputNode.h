@@ -42,7 +42,7 @@ class VideoFileOutputNode: public OutputNode{
 
         void init(){
             // one input:
-            registerInputID("image");
+            registerInputID("image", true);
 
             // no outputs
 

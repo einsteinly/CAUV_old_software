@@ -39,7 +39,7 @@ class BilateralFilterNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image in");
+            registerInputID("image in", true);
             
             // one output
             registerOutputID("image out", image_ptr_t());

@@ -39,7 +39,7 @@ class SplitRGBNode: public Node{
             m_speed = fast;
 
             // input:
-            registerInputID("image");
+            registerInputID("image", true);
             
             // outputs:
             registerOutputID("R");

@@ -42,7 +42,7 @@ class SonarShadowFilterNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("polar image");
+            registerInputID("polar image", true);
             
             // one output
             registerOutputID("polar image");

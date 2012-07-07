@@ -118,14 +118,16 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
 // (defined in header, it's all inlined)
 
 // - Node::Input
-Node::Input::Input(InputSchedType::e s)
+Node::Input::Input(InputSchedType::e s,
+                   bool isconst)
     : TestableBase<Input>(*this),
       target(),
       sched_type(s),
       status(NodeInputStatus::New),
       input_type(InType_Image),
       param_value(),
-      tip(){
+      tip(),
+      isconst(isconst){
 }
 
 Node::Input::Input(InputSchedType::e s,
@@ -139,11 +141,12 @@ Node::Input::Input(InputSchedType::e s,
       input_type(InType_Parameter),
       param_value(default_value),
       compatible_subtypes(compatible_subtypes.begin(), compatible_subtypes.end()),
-      tip(tip){
+      tip(tip),
+      isconst(true){
 }
 
-Node::input_ptr Node::Input::makeImageInputShared(InputSchedType::e const& st){
-    return boost::make_shared<Input>(boost::cref(st));
+Node::input_ptr Node::Input::makeImageInputShared(bool isconst, InputSchedType::e const& st){
+    return boost::make_shared<Input>(boost::cref(st), isconst);
 }
 
 Node::input_ptr Node::Input::makeParamInputShared(
@@ -244,6 +247,10 @@ bool Node::Input::valid() const{
 
 bool Node::Input::isParam() const{
     return input_type == InType_Parameter;
+}
+
+bool Node::Input::isConst() const{
+    return isconst;
 }
 
 UID Node::Input::latestUIDSharedWithSync() const{
@@ -610,11 +617,22 @@ Node::msg_node_output_map_t Node::outputLinks() const{
     return r;
 }
 
+const Node::output_link_list_t& Node::linksOnOutput(output_id const& o) const{
+    lock_t l(m_outputs_lock);
+    msg_node_in_list_t input_list;
+    private_out_map_t::const_iterator i = m_outputs.find(o);
+    if(i != m_outputs.end()) {
+        return i->second->targets;
+    }
+    static const Node::output_link_list_t emptyOutputLinks;
+    return emptyOutputLinks;
+}
+
 bool Node::hasChildOnOutput(output_id const& o) const{
     lock_t l(m_outputs_lock);
     private_out_map_t::const_iterator i = m_outputs.find(o);
-    if(i != m_outputs.end() && i->second->targets.size())
-        return true;
+    if(i != m_outputs.end())
+        return i->second->targets.size() > 0;
     return false;
 }
 
@@ -649,6 +667,16 @@ static NodeStatus::e operator|(NodeStatus::e const& l, NodeStatus::e const& r){
 static NodeIOStatus::e operator|(NodeIOStatus::e const& l, NodeIOStatus::e const& r){
     return NodeIOStatus::e(unsigned(l) | unsigned(r));
 }
+struct isuniquevisitor : boost::static_visitor<bool> {
+    bool operator()(const cv::Mat& m) const { return !m.refcount || *m.refcount <= 1; } 
+    bool operator()(const NonUniformPolarMat& m) const { return operator()(m.mat); }
+    bool operator()(const PyramidMat& m) const {
+        foreach(const cv::Mat& mat, m.levels)
+            if (!operator()(mat))
+                return false;
+        return true;
+    }
+};
 
 // there must be a nicer way to do this... (yeah, it would involve pointers to
 // member functions)
@@ -665,21 +693,53 @@ void Node::exec(){
 
     try{
         foreach(private_in_map_t::value_type const& v, m_inputs){
-            if(!v.second->isParam()){
-                const input_ptr ip = v.second;
+            const input_ptr ip = v.second;
+            if(!ip->isParam()){
                 if(!*ip && ip->sched_type != Optional){
-                    warning() << "exec: no parent or valid input on: " << v.first;
+                    warning() << "exec:" << *this << "no parent or valid input on: " << v.first;
                     clearValidInput(v.first);
                     throw bad_input_error(v.first);
                 }else if(*ip){
                     inputs[v.first] = ip->getImage();
                     if(!inputs[v.first] && ip->sched_type != Optional){
-                        warning() << "exec: no output from: " << ip->target << "->" << v.first;
+                        warning() << "exec:" << *this << "no output from: " << ip->target << "->" << v.first;
                         throw bad_input_error(v.first);
                     }
                 }
                 if(inputs[v.first])
                     bits += inputs[v.first]->bits();
+            }
+            // Check if we need to make a copy of this input so that we can modify it
+            if (!ip->isConst()) {
+                output_link_list_t siblingLinks = ip->target.node->linksOnOutput(ip->target.id);
+                bool needCopy = false;
+                if (siblingLinks.size() != 1)
+                {
+                    // We're not the only output of the parent
+                    // Check the refcount of the input
+
+                    // Potentially, params in the future may be shared ptrs too, will need their own check
+                    // Currently, just use images
+                    if (!ip->isParam()) {
+                        // If someone other than us and our parent holds this shared_ptr, make a copy
+                        if (inputs[v.first].use_count() >= 2) {
+                            debug(2) << "exec:" << *this << "copying image on" << v.first << "due to shared boost pointer";
+                            needCopy = true;
+                        }
+                        else {
+                            // Only we hold the boost pointer to the image, but there may still be
+                            // cv::Mat instances pointing to the same data.
+                            const image_ptr_t& img = inputs[v.first];
+                            bool isunique = img->apply_visitor(isuniquevisitor());
+                            if (!isunique) {
+                                debug(2) << "exec:" << *this << "copying image on" << v.first << "due to shared image data";
+                                needCopy = true;
+                            }
+                        }
+                    }
+                }
+                if (needCopy)
+                    inputs[v.first] = boost::make_shared<Image>(*inputs[v.first]); 
             }
         }
     }catch(bad_input_error& e){
@@ -910,14 +970,14 @@ void Node::setParam(boost::shared_ptr<const SetNodeParameterMessage>  m){
     setParam(m->paramId(), m->value());
 }
 
-void Node::registerInputID(input_id const& i, InputSchedType::e const& st){
+void Node::registerInputID(input_id const& i, bool isconst, InputSchedType::e const& st){
     lock_t l(m_inputs_lock);
     if(m_inputs.count(i)){
         error() << "Duplicate input/parameter id:" << i;
         return;
     }
     m_inputs.insert(
-        private_in_map_t::value_type(i, Input::makeImageInputShared(st))
+        private_in_map_t::value_type(i, Input::makeImageInputShared(isconst, st))
     );
     _statusMessage(boost::make_shared<InputStatusMessage>(m_pl_name, m_id, i, NodeIOStatus::None));
 }

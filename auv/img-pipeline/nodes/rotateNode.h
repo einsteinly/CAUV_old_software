@@ -41,7 +41,7 @@ class RotateNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image_in");
+            registerInputID("image_in", true);
             
             // one output
             registerOutputID("image_out");

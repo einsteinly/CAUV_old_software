@@ -44,7 +44,7 @@ class ShiTomasiCornersNode: public Node{
             m_speed = fast;
             
             // one input:
-            registerInputID(Image_In_Name);
+            registerInputID(Image_In_Name, true);
             
             // one output:
             registerOutputID("corners", std::vector<Corner>());

@@ -33,6 +33,7 @@
 #include "backgroundSubtractorNode.h"
 #include "getNthNode.h"
 #include "sumSquaredNode.h"
+#include "broadcastFloatNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -70,6 +71,7 @@ DEFINE_NFR(ColourSimilarityNode, NodeType::ColourSimilarity);
 DEFINE_NFR(BackgroundSubtractorNode, NodeType::BackgroundSubtractor);
 template<> DEFINE_NFR(GetNthNode<Colour>, NodeType::GetNthColour);
 DEFINE_NFR(SumSquaredNode, NodeType::SumSquared);
+DEFINE_NFR(BroadcastFloatNode, NodeType::BroadcastFloat);
 
 } // namespace imgproc
 } // namespace cauv
