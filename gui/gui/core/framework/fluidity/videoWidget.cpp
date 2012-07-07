@@ -68,6 +68,7 @@ void VideoWidget::displayImage(boost::shared_ptr<const GuiImageMessage> p){
     m_image_msg->get_image_inplace(t);
     m_qimg = boost::make_shared<QImage>();
     m_qimg->loadFromData(&t.bytes()[0], t.bytes().size(), "jpg");
-    scene()->invalidate(sceneBoundingRect());
+    if(scene())
+        scene()->invalidate(sceneBoundingRect());
 }
 
