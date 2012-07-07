@@ -155,7 +155,7 @@ inline cauv::Colour clamp_cast<cauv::Colour,cauv::Colour,cauv::Colour,cauv::Colo
         ival = val.values.begin(),
         ihigh = high.values.begin(),
         ivalend = val.values.end(),
-        iret = ret.values.end();
+        iret = ret.values.begin();
         ival != ivalend;
         ++ilow, ++ival, ++ihigh, ++iret)
     {

@@ -116,6 +116,7 @@ enum NodeType : int8 {
     GetNthColour,
     ClampColour,
     SumSquared,
+    BroadcastFloat,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -813,6 +814,12 @@ group processing
         name : string;
         x : float;
         y : float;
+    }
+
+    message Float : 138
+    {
+        name : string;
+        value : float;
     }
 }
 
