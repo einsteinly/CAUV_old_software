@@ -29,6 +29,7 @@ template<> DEFINE_NFR(MathDivideNode<int>, NodeType::MathDivideInt);
 template<> DEFINE_NFR(MathDivideNode<float>, NodeType::MathDivideFloat);
 template<> DEFINE_NFR(ClampNode<int>, NodeType::ClampInt);
 template<> DEFINE_NFR(ClampNode<float>, NodeType::ClampFloat);
+template<> DEFINE_NFR(ClampNode<Colour>, NodeType::ClampColour);
 template<> DEFINE_NFR(ValueInputNode<int32_t>, NodeType::IntInput);
 template<> DEFINE_NFR(ValueInputNode<float>, NodeType::FloatInput);
 template<> DEFINE_NFR(ValueInputNode<bool>, NodeType::BoolInput);
