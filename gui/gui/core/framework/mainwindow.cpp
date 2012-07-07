@@ -42,7 +42,6 @@
 
 #include "framework/nodescene.h"
 #include "framework/nodepicker.h"
-#include "framework/manager.h"
 
 #include "fluidity/view.h"
 

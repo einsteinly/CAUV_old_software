@@ -48,7 +48,6 @@ set ( GUI_CORE_SRCS
     framework/mainwindow.cpp
     framework/nodescene.cpp
     framework/style.cpp
-    framework/manager.cpp
     framework/connectednode.cpp
 
     framework/delegates/delegate.cpp

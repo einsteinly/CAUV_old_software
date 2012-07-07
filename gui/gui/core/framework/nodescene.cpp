@@ -29,7 +29,6 @@
 #include <liquid/layout.h>
 
 #include <gui/core/framework/elements/style.h>
-#include <gui/core/framework/manager.h>
 
 using namespace cauv;
 using namespace cauv::gui;
