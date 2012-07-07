@@ -35,6 +35,7 @@ parser.add_argument("--log-dir",     "-l",  help="log directory for files")
 parser.add_argument("--kill",        "-k",  help="Kill all processes in session",            nargs='?', type=int, const=15)
 parser.add_argument("--kill-after",  "-K",  help="Kill all processes once finished",         nargs='?', type=int, const=3)
 parser.add_argument("--user",        "-u",  help="Default user to run processes as",         default=watch.currentUser())
+parser.add_argument("--tick",        "-t",  help="Time between process checks (seconds)",    default=1.0, type=float)
 
 args = parser.parse_args()
 
@@ -59,7 +60,7 @@ def monitor():
         os.dup2(null_fd, sys.stdout.fileno())
         os.dup2(null_fd, sys.stderr.fileno())
 
-    watcher.monitor()
+    watcher.monitor(args.tick)
     
 if args.kill is not None:
     watcher.kill(args.kill)

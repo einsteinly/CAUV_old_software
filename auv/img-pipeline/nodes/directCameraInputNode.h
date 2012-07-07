@@ -80,7 +80,7 @@ class DirectCameraInputNode: public AsynchronousNode{
                 cv::Mat img;
                 m_capture >> img;
                 // use internalValue to avoid automatic UID setting on outputs                
-                r.internalValue("image_out") = boost::make_shared<Image>(img, now(), mkUID(SensorUIDBase::Camera + m_current_device, ++m_seq));
+                r.internalValue("image_out") = boost::make_shared<Image>(img.clone(), now(), mkUID(SensorUIDBase::Camera + m_current_device, ++m_seq));
             }
         }
 

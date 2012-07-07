@@ -49,10 +49,11 @@ class KMeansNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image");
+            registerInputID("image", false);
 
             // two outputs:
-            registerOutputID("cluster ids");
+            registerOutputID("clusters", std::vector<Colour>());
+            registerOutputID("labels");
             registerOutputID("image (not copied)");
 
             // parameters:
@@ -86,8 +87,7 @@ class KMeansNode: public Node{
             int K = param<int>("K");
             bool colorise = !!param<int>("colorise");
 
-            if(K < 1)
-            {
+            if(K < 1) {
                 error() << "must be at least one cluster";
             }
             else if (K > 255) {
@@ -239,6 +239,22 @@ class KMeansNode: public Node{
                 }
             }
 
+            if(hasChildOnOutput("clusters")) {
+                std::vector<Colour> clusters;
+                for (size_t i = 0; i < m_clusters.size(); i++)
+                {
+                    cluster& cl = m_clusters[i];
+                    if (m_channels == 3)
+                        clusters.push_back(Colour::fromBGR(cl.centre[0]/255.0f, cl.centre[1]/255.0f, cl.centre[2]/255.0f));
+                    else if (m_channels == 1)
+                        clusters.push_back(Colour::fromGrey(cl.centre[0]/255.0f));
+                    else
+                        error() << "No colour for" << m_channels << " channel image";
+                }
+                r["clusters"] = clusters;
+            }
+
+
             if (colorise) {
                 // Colorise if necessary
 
@@ -254,7 +270,7 @@ class KMeansNode: public Node{
                     }
             }
             
-            r["cluster ids"] = boost::make_shared<Image>(clusteridsMat);
+            r["labels"] = boost::make_shared<Image>(clusteridsMat);
             r["image (not copied)"] = boost::make_shared<Image>(img);
             
         }

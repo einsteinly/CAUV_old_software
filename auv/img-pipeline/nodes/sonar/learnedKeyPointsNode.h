@@ -457,7 +457,7 @@ class LearnedKeyPointsNode: public Node{
             m_speed = fast;
             
             // source image input:
-            registerInputID("image");
+            registerInputID("image", true);
             registerParamID("bootstrap keypoints", kp_vec());
 
             // training inputs:

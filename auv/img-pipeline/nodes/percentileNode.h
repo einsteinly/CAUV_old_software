@@ -22,7 +22,7 @@
 #include <opencv2/core/core.hpp>
 
 #include "../node.h"
-
+#include "../nodeFactory.h"
 
 namespace cauv{
 namespace imgproc{
@@ -38,7 +38,7 @@ class PercentileNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image");
+            registerInputID("image", true);
 
             // output parameters:
             registerOutputID("value", Colour::fromRGB(0,0,0));
@@ -59,27 +59,49 @@ class PercentileNode: public Node{
             return r;
         }
         
-        static Colour getPercentile(cv::Mat& img, float pct) {
-            const int channels = img.channels();
-            const int pct_pixel = int(img.total() * (pct/100.0f));
-            
-            if(channels != 1 && channels != 3)
-                throw(parameter_error("image must have 1 or 3 channels"));
-            if(img.depth() != CV_8U)
-                throw(parameter_error("image must be unsigned bytes"));
+        template<typename T, int Channels>
+        struct channelsToColourHelper;
+        
+        template<typename T>
+        struct channelsToColourHelper<T, 1> {
+            static Colour colour(boost::array<T, 1> vals) {
+                return Colour::fromGrey(vals[0]);
+            }
+        };
+        template<typename T>
+        struct channelsToColourHelper<T, 3> {
+            static Colour colour(boost::array<T, 3> vals) {
+                return Colour::fromBGR(vals[0], vals[1], vals[2]);
+            }
+        };
+        template<typename T>
+        struct channelsToColourHelper<T, 4> {
+            static Colour colour(boost::array<T, 4> vals) {
+                return Colour::fromBGRA(vals[0], vals[1], vals[2], vals[3]);
+            }
+        };
+        
+        template<typename T, int Channels>
+        static Colour getPercentileChannels(const cv::Mat& img, float pct) {
+            typedef cv::Vec<T,Channels> pixel_t;
 
-            std::vector< std::vector<uint32_t> > value_histogram(channels, std::vector<uint32_t>(256, 0));
-            
-            for (cv::MatConstIterator_<uint8_t> it = img.begin<unsigned char>(),
-                                                end = img.end<unsigned char>();
-                 it != end;) {
-                for(int ch = 0; ch < channels; ++ch, ++it) {
-                    value_histogram[ch][*it]++;
+            boost::array< boost::array<uint32_t, 256>, Channels > value_histogram;
+           
+            for(int ch = 0; ch < Channels; ch++){
+                std::fill(value_histogram[ch].begin(), value_histogram[ch].end(), 0);
+            }
+            for (cv::MatConstIterator_<pixel_t> it = img.begin<pixel_t>(),
+                                                end = img.end<pixel_t>();
+                 it != end; ++it) {
+                const pixel_t& pixel = *it;
+                for(int ch = 0; ch < Channels; ++ch) {
+                    value_histogram[ch][pixel[ch]]++;
                 }
             }
 
-            std::vector<float> channel_results;
-            for(int ch = 0; ch < channels; ch++){
+            const int pct_pixel = int(img.total() * (pct/100.0f));
+            boost::array<float, Channels> channel_results;
+            for(int ch = 0; ch < Channels; ch++){
                 int running_total = 0;
                 int i;
                 for(i = 0; i < 256; i++){
@@ -88,19 +110,32 @@ class PercentileNode: public Node{
                     
                     running_total += value_histogram[ch][i];
                     if(running_total >= pct_pixel){
-                        channel_results.push_back(i/255.0f);
+                        channel_results[ch] = i/256.0f;
                         break;
                     }
                 }
                 if(i == 256)
-                    channel_results.push_back(1.0f);
+                    channel_results[ch] = 1.0f;
             }
-            assert(channel_results.size() == uint32_t(channels));
 
+            return channelsToColourHelper<float,Channels>::colour(channel_results);
+        }
+        
+        static Colour getPercentile(const cv::Mat& img, float pct) {
+            const int channels = img.channels();
+            
+            if(img.depth() != CV_8U)
+                throw(parameter_error("image must be unsigned bytes"));
+            
             if (channels == 3)
-                return Colour::fromBGR(channel_results[0], channel_results[1], channel_results[2]);
-            else 
-                return Colour::fromGrey(channel_results[0]);
+                return getPercentileChannels<unsigned char, 3>(img, pct);
+            else if (channels == 4)
+                return getPercentileChannels<unsigned char, 4>(img, pct);
+            else if (channels == 1) 
+                return getPercentileChannels<unsigned char, 1>(img, pct);
+            else
+                throw(parameter_error("image must have 1, 3 or 4 channels"));
+
         }
         
         void doWork(in_image_map_t& inputs, out_map_t& r){

@@ -41,7 +41,7 @@ class DrawCirclesNode: public Node{
 
         void init(){
             m_speed = slow;
-            registerInputID(Image_In_Name);
+            registerInputID(Image_In_Name, true);
             registerOutputID(Image_Out_Copied_Name);
             registerParamID< std::vector<Circle> >(
                 "Circles", std::vector<Circle>(), "the Circles to draw", Must_Be_New
@@ -57,7 +57,7 @@ class DrawCirclesNode: public Node{
                 if(a.channels() >= 3){
                     out = a.clone();
                 }else if(a.channels() == 1){
-                    cv::cvtColor(a, out, CV_GRAY2RGB);
+                    cv::cvtColor(a, out, CV_GRAY2BGR);
                 }else{
                     throw parameter_error("image must be 1, 3 or 4 channel");
                 }

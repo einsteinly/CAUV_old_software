@@ -39,7 +39,7 @@ class SplitHSVNode: public Node{
             m_speed = fast;
 
             // input:
-            registerInputID("image");
+            registerInputID("image", true);
             
             // outputs:
             registerOutputID("H");
@@ -54,13 +54,7 @@ class SplitHSVNode: public Node{
             int conversion_code = 0;
             
             if(img.channels() == 3)
-            //CV_RGB2HSV_FULL doesnt seem to be documented or exist in new versions...
-            //#ifdef CV_RGB2HSV_FULL
-            //    conversion_code = CV_RGB2HSV_FULL;
-            //#else 
-                conversion_code = CV_RGB2HSV;
-            //    #warning not using full hsv (may cause errors in pipeline)
-            //#endif
+                conversion_code = CV_BGR2HSV;
             else
                 // oops... cvtColor can't do anything else
                 throw(parameter_error("image must be 3-channel RGB"));

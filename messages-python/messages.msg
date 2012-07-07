@@ -111,6 +111,11 @@ enum NodeType : int8 {
     MeanStd,
     MathAddMultColour,
     BroadcastEllipses,
+    ColourSimilarity,
+    BackgroundSubtractor,
+    GetNthColour,
+    ClampColour,
+    SumSquared,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -427,6 +432,7 @@ variant ParamValue
     list<Ellipse>,
     LocationSequence,
     Colour,
+    list<Colour>,
 }
 
 //these are zmq messaging specific
@@ -581,6 +587,8 @@ group control
 }
 group state
 {
+    // Used by simulation to convey simulated orientation information to
+    // control
     message State : 81
     {
         // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)

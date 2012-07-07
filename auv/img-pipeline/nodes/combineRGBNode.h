@@ -40,9 +40,9 @@ class CombineRGBNode: public Node{
             m_speed = fast;
 
             // inputs:
-            registerInputID("R");
-            registerInputID("G");
-            registerInputID("B");
+            registerInputID("R", true);
+            registerInputID("G", true);
+            registerInputID("B", true);
             
             // output:
             registerOutputID("image", image_ptr_t());
@@ -65,7 +65,7 @@ class CombineRGBNode: public Node{
                 throw(parameter_error("RGB source channels are not of the same depth"));
             
             cv::Mat out;
-            cv::Mat in[] = {R, G, B};
+            cv::Mat in[] = {B, G, R};
 
             try{
                 cv::merge(in, 3, out);

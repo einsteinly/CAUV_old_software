@@ -26,8 +26,8 @@ class CopyNodeMask: public Node{
             m_speed = fast;
 
             // two input:
-            registerInputID("image");
-            registerInputID("mask");
+            registerInputID("image", true);
+            registerInputID("mask", true);
             
             // output:
             registerOutputID(Image_Out_Copied_Name, image_ptr_t());
@@ -45,7 +45,7 @@ class CopyNodeMask: public Node{
             try{
                 cv::Mat out;
                 img.copyTo(out, mask);
-                r["image copy"] = boost::make_shared<Image>(out);
+                r[Image_Out_Copied_Name] = boost::make_shared<Image>(out);
             }catch(cv::Exception& e){
                 error() << "CopyNodeMask:\n\t"
                         << e.err << "\n\t"

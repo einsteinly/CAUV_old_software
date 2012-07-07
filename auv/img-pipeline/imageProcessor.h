@@ -15,6 +15,8 @@
 #include <utility/ratelimit.h>
 #include <utility/foreach.h>
 #include <generated/message_observers.h>
+#include <generated/types/TelemetryMessage.h>
+#include <generated/types/GPSLocationMessage.h>
 
 #include "pipelineTypes.h"
 #include "scheduler.h"
@@ -53,6 +55,12 @@ class ImageProcessor: public MessageObserver
         virtual void onImageMessage(ImageMessage_ptr m);
         virtual void onSonarDataMessage(SonarDataMessage_ptr m);
         virtual void onSonarImageMessage(SonarImageMessage_ptr m);
+
+        /** !!!!! temporary: slam-based location combination system, requires
+         * the other location inputs...
+         */
+        virtual void onTelemtryMessage(TelemetryMessage_ptr m);
+        virtual void onGPSLocationMessage(GPSLocationMessage_ptr m);
         
         /**
          * These messages describe modifications to the pipeline
@@ -114,6 +122,9 @@ class ImageProcessor: public MessageObserver
         std::map<node_id, node_ptr_t> m_nodes;
         std::map<node_ptr_t, node_id> m_nodes_rev;
         std::set<input_node_ptr_t> m_input_nodes;
+
+        std::set<node_ptr_t> m_gps_req_nodes;
+        std::set<node_ptr_t> m_telem_req_nodes;
 
         boost::shared_ptr<Scheduler> m_scheduler;
 

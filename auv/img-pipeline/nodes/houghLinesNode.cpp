@@ -1,3 +1,17 @@
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ * 
+ * See license.txt for details.
+ * 
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
 #include "houghLinesNode.h"
 
 #include <map>
@@ -73,8 +87,8 @@ namespace {
                 int mi = bi, mj = bj;
                 T m = mat(bi,bj);
 
-                for (int i = bi, imax = std::min(bi+(n+1), mat.rows); i < imax; ++i)
-                    for (int j = bj, jmax = std::min(bj+(n+1), mat.cols); j < jmax; ++j)
+                for (int i = bi, imax = std::min(bi+n, mat.rows-1); i <= imax; ++i)
+                    for (int j = bj, jmax = std::min(bj+n, mat.cols-1); j <= jmax; ++j)
                     {
                         if (mat(i,j) > m) {
                             mi = i;

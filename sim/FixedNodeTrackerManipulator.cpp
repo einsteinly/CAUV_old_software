@@ -86,7 +86,7 @@ void FixedNodeTrackerManipulator::setTrackNode(osg::Node* node)
 }
 
 
-void FixedNodeTrackerManipulator::computeHomePosition()
+void FixedNodeTrackerManipulator::computeHomePosition(const osg::Camera *camera, bool useBoundingBox)
 {
     osg::Node* node = getTrackNode();
     if(node)

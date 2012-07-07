@@ -29,7 +29,7 @@ main process keeps sets up things alive
 processes = [
     (wf.Process('pl_manager',        '{SDIR}',  wf.node_pid('ai_pl_manager'),        wf.restart(3),  None,
                     ["python2.7 {SDIR}/AI_pipeline_manager.py"]),
-                        {'disable_gui', 'reset_pls', 'freeze_pls', 'restore'}),
+                        {'disable_gui', 'reset_pls', 'freeze_pls', 'restore', 'hold_pls', 'load_temp'}),
     (wf.Process('auv_control',       '{SDIR}',  wf.node_pid('ai_auv_control'),       wf.restart(3),  None, 
                     ["python2.7 {SDIR}/AI_control_manager.py"]),
                          set()),
@@ -69,6 +69,10 @@ p.add_argument('-d','--donotdetach',      action='store_false', default=True,   
 p.add_argument('-r','--restore',      action='store_true',      help="try and resume from last saved state")
 p.add_argument('-m','--mission_name',      default='mission',        help='which mission script to run')
 p.add_argument('-f', '--mission_save', dest='mission_save', action='store', help="load saved state")
+p.add_argument('--hold_pls', dest='hold_pls', default=False,
+                action='store_true', help="Don't clear pipelines when they've been finished with.")
+p.add_argument('--load_temp', dest='load_temp', default=False,
+                action='store_true', help="Don't load any temporary files created.")
 #currently not implemented/not implemented properly
 #p.add_argument('--disable-gui',       action='store_true',      help="disable/ignore gui output nodes")
 #p.add_argument('--disable-control',   action='store_true',      help="stop AI script from controlling the sub")

@@ -43,7 +43,7 @@ class DrawEllipsesNode: public Node{
 
         void init(){
             m_speed = slow;
-            registerInputID(Image_In_Name);
+            registerInputID(Image_In_Name, true);
             registerOutputID(Image_Out_Copied_Name);
             registerParamID< std::vector<Ellipse> >(
                 "Ellipses", std::vector<Ellipse>(), "the Ellipses to draw", Must_Be_New
@@ -57,7 +57,7 @@ class DrawEllipsesNode: public Node{
             if(m.channels() >= 3){
                 out = m.clone();
             }else if(m.channels() == 1){
-                cv::cvtColor(m, out, CV_GRAY2RGB);
+                cv::cvtColor(m, out, CV_GRAY2BGR);
             }else{
                 throw parameter_error("image must be 1, 3 or 4 channel");
             }
@@ -84,7 +84,7 @@ class DrawEllipsesNode: public Node{
             const std::vector<Ellipse> ellipses = param< std::vector<Ellipse> >("Ellipses");
             
             try{
-                cv::Mat out = img->apply(boost::bind(drawEllipses, _1, boost::ref(ellipses)));
+                augmented_mat_t out = img->apply(boost::bind(drawEllipses, _1, boost::ref(ellipses)));
                 r[Image_Out_Copied_Name] = boost::make_shared<Image>(out);
             }catch(cv::Exception& e){
                 error() << "DrawEllipsesNode:\n\t"

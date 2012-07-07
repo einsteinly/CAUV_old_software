@@ -1,3 +1,17 @@
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ * 
+ * See license.txt for details.
+ * 
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
 #ifndef __FITELLIPSE_H__
 #define __FITELLIPSE_H__
 
@@ -19,9 +33,9 @@ class FitEllipseNode : public Node {
             m_speed = fast;
             
             //One input
-            registerInputID("edge_image");
-            registerInputID("imageDx");
-            registerInputID("imageDy");
+            registerInputID("edge_image", true);
+            registerInputID("imageDx", true);
+            registerInputID("imageDy", true);
             
             //One output
             registerOutputID("ellipse", std::vector<Ellipse>());

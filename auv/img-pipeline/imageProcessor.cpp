@@ -35,6 +35,9 @@ ImageProcessor::ImageProcessor(mb_ptr_t mb, boost::shared_ptr<Scheduler> schedul
     m_mailbox->subMessage(ForceExecRequestMessage());
     m_mailbox->subMessage(ClearPipelineMessage());
     m_mailbox->subMessage(PipelineDiscoveryRequestMessage());
+
+    m_mailbox->subMessage(GPSLocationMessage());
+    m_mailbox->subMessage(TelemetryMessage());
 }
 
 void ImageProcessor::start(std::string const& name){
@@ -68,6 +71,22 @@ void ImageProcessor::onSonarImageMessage(SonarImageMessage_ptr m){
     std::set<input_node_ptr_t>::iterator i;        
     for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
         (*i)->onSonarImageMessage(m);
+}
+
+
+void ImageProcessor::onTelemtryMessage(TelemetryMessage_ptr m){
+    lock_t l(m_nodes_lock);
+    std::set<node_ptr_t>::iterator i;        
+    for(i = m_telem_req_nodes.begin(); i != m_telem_req_nodes.end(); i++)
+        (*i)->onTelemetry(m);
+    
+}
+
+void ImageProcessor::onGPSLocationMessage(GPSLocationMessage_ptr m){
+    lock_t l(m_nodes_lock);
+    std::set<node_ptr_t>::iterator i;        
+    for(i = m_gps_req_nodes.begin(); i != m_gps_req_nodes.end(); i++)
+        (*i)->onGPSLoc(m);
 }
 
 void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
@@ -365,6 +384,10 @@ void ImageProcessor::_addNode(node_ptr_t const& p, node_id const& id) throw(){
     lock_t l(m_nodes_lock);
     m_nodes[id] = p;
     m_nodes_rev[p] = id;
+    if(p->requiresGPS())
+        m_gps_req_nodes.insert(p);
+    if(p->requiresTelemetry())
+        m_telem_req_nodes.insert(p);
 }
 
 void ImageProcessor::_addNode(node_ptr_t const& p) throw(){

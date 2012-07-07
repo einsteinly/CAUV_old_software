@@ -40,9 +40,9 @@ class CombineHSVNode: public Node{
             m_speed = fast;
 
             // inputs:
-            registerInputID("H");
-            registerInputID("S");
-            registerInputID("V");
+            registerInputID("H", true);
+            registerInputID("S", true);
+            registerInputID("V", true);
             
             // output:
             registerOutputID("image", image_ptr_t());
@@ -69,7 +69,7 @@ class CombineHSVNode: public Node{
 
             try{
                 cv::merge(in, 3, HSV);
-                cv::cvtColor(HSV, out, CV_HSV2RGB, 0);
+                cv::cvtColor(HSV, out, CV_HSV2BGR, 0);
             }catch(cv::Exception& e){
                 error() << "CombineHSVNode:\n\t"
                         << e.err << "\n\t"

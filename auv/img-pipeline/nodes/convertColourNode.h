@@ -40,7 +40,7 @@ class ConvertColourNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image in");
+            registerInputID("image in", true);
             
             // one output
             registerOutputID("image out", image_ptr_t());
@@ -69,11 +69,13 @@ class ConvertColourNode: public Node{
             int conversion_code = 0;
             if(out_fmt == "rgb" && in.channels() == 1){
                 conversion_code = CV_GRAY2RGB;
+            }else if(out_fmt == "bgr" && in.channels() == 1){
+                conversion_code = CV_GRAY2BGR;
             }else if(out_fmt == "grey" || out_fmt == "gray"){
                 if(in.channels() == 3)
-                    conversion_code = CV_RGB2GRAY;
+                    conversion_code = CV_BGR2GRAY;
                 else if(in.channels() == 4)
-                    conversion_code = CV_RGBA2GRAY;
+                    conversion_code = CV_BGRA2GRAY;
             }else{
                 throw parameter_error("Invalid output format: " + out_fmt);
             }
