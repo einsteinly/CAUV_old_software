@@ -27,7 +27,7 @@
 
 #include <Eigen/StdVector>
 
-#include <clipper.hpp> // Boost Software License
+#include <polyclipping/clipper.hpp> // Boost Software License
 
 #include <debug/cauv_debug.h>
 #include <generated/types/TimeStamp.h>
@@ -292,7 +292,8 @@ class SlamCloudGraph{
                 if(cloudIsGoodEnoughForInitialisation(p)){
                     m_key_scans.push_back(p);
                     m_all_scans.push_back(p);
-                    transformation = Eigen::Matrix4f::Identity();
+                    //transformation = Eigen::Matrix4f::Identity();
+                    transformation = guess;
                     p->setRelativeToNone();
                     p->setRelativeTransform(transformation);
                     const Eigen::Vector3f xyr = xyScaledTFromMat(p->globalTransform());

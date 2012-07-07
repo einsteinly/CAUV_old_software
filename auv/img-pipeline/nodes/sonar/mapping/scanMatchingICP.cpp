@@ -187,6 +187,7 @@ class ICP: public BaseT{
         typename base_t::TransformationEstimationPtr getTransformationEstimation() const{
             return base_t::transformation_estimation_;
         }
+
         /*float euclideanFitness() const{
             // should match the check in termination condition of ICP
             return std::fabs(base_t::getFitnessScore(

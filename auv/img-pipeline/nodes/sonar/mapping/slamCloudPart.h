@@ -241,7 +241,7 @@ class KDTreeCachingCloud: public pcl::PointCloud<PointT>,
                 // clear the circular reference just created through call to
                 // base version of setInputCloud, which doesn't clobber the
                 // kdtree...
-                m_kdtree.pcl::KdTree<PointT>::setInputCloud(base_cloud_ptr());
+                m_kdtree.pcl::template KdTree<PointT>::setInputCloud(base_cloud_ptr());
            }
         }
 

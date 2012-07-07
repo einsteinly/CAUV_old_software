@@ -59,7 +59,7 @@ class ImageProcessor: public MessageObserver
         /** !!!!! temporary: slam-based location combination system, requires
          * the other location inputs...
          */
-        virtual void onTelemtryMessage(TelemetryMessage_ptr m);
+        virtual void onTelemetryMessage(TelemetryMessage_ptr m);
         virtual void onGPSLocationMessage(GPSLocationMessage_ptr m);
         
         /**

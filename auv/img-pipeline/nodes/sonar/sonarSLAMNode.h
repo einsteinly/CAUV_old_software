@@ -21,7 +21,7 @@
 namespace cauv{
 namespace imgproc{
 
-struct SonarSLAMImpl;
+class SonarSLAMImpl;
 
 class SonarSLAMNode: public OutputNode{
     public:
