@@ -56,6 +56,7 @@ void AiTaskNode::addPipeline(boost::shared_ptr<FluidityNode> pipe){
 
 void AiTaskNode::addCondition(boost::shared_ptr<AiConditionNode> condition){
     m_conditions.insert(condition);
+    condition->connect(condition.get(), SIGNAL(structureChanged()), this, SIGNAL(structureChanged()));
 }
 
 void AiTaskNode::removeCondition(boost::shared_ptr<AiConditionNode> condition){
