@@ -56,8 +56,7 @@ public:
 
     virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node){
         if(node->type == nodeType<FluidityNode>()){
-            if(LiquidFluidityNode * n = LiquidFluidityNode::liquidNode(
-                boost::static_pointer_cast<FluidityNode>(node))){
+            if(ConnectedNode * n = LiquidFluidityNode::nodeFor(node)){
                 return n;
             } else {
                 return new LiquidFluidityNode(

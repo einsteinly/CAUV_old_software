@@ -18,10 +18,11 @@
 #include <boost/shared_ptr.hpp>
 
 #include <liquid/node.h>
+#include <liquid/arcSink.h>
 #include <liquid/arcSource.h>
+#include <liquid/arcSourceLabel.h>
 
 #include <gui/core/model/node.h>
-#include <gui/core/framework/manager.h>
 
 #include <gui/plugins/ai/ainode.h>
 
@@ -37,13 +38,8 @@ GENERATE_SIMPLE_NODE(AiConditionTypeNode)
 
 class AiConditionNode : public Node {
     public:
-        // !!! inter-plugin dependence
-        AiConditionNode(const nid_t id) : Node(id, nodeType<AiConditionNode>()){
-        }
-
-        virtual ~AiConditionNode(){
-            info() << "~AiConditionNode()";
-        }
+        AiConditionNode(const nid_t id);
+        virtual ~AiConditionNode();
 
         boost::shared_ptr<Node> setDebug(std::string name, ParamValue value);
         void removeDebug(std::string name);
@@ -53,40 +49,43 @@ class AiConditionNode : public Node {
         void removeOption(std::string name);
         std::map<std::string, boost::shared_ptr<Node> > getOptions();
         
-        void addPipeline(boost::shared_ptr<FluidityNode> pipe){
-            m_pipelines.insert(pipe);
-        }
-        void removePipeline(boost::shared_ptr<FluidityNode> pipe){
-            m_pipelines.erase(std::find(m_pipelines.begin(), m_pipelines.end(), pipe));
-        }
-        std::set<boost::shared_ptr<FluidityNode> > getPipelines(){
-            return m_pipelines;
-        }
+        // ideally these should be type safe. Do we want inter-plugin header
+        // dependancies?
+        void addPipeline(boost::shared_ptr<FluidityNode> pipe);
+        void removePipeline(boost::shared_ptr<FluidityNode> pipe);
+        std::set<boost::shared_ptr<Node> > getPipelines();
 
     protected:
         std::map<std::string, boost::shared_ptr<Node> > m_debug;
         std::map<std::string, boost::shared_ptr<Node> > m_options;
-        std::set<boost::shared_ptr<FluidityNode> > m_pipelines;
+        std::set<boost::shared_ptr<Node> > m_pipelines;
+};
+
+
+struct ConditionSourceDelegate : public liquid::ArcSourceDelegate{
+    ConditionSourceDelegate(boost::shared_ptr<AiConditionNode> const& node) : m_node(node){}
+    boost::shared_ptr<AiConditionNode> m_node;
 };
 
 class LiquidConditionNode :
-        public AiNode,
-        public liquid::ArcSourceDelegate,
-        public Manager<LiquidConditionNode>
+        public AiNode
 {
 public:
     LiquidConditionNode(boost::shared_ptr<AiConditionNode> node, QGraphicsItem *parent = 0);
     virtual ~LiquidConditionNode();
-    virtual void buildContents();
-    liquid::AbstractArcSource * source();
+    virtual void rebuildContents();
     std::string conditionId() const;
+
+    virtual liquid::ArcSource * getSourceFor(boost::shared_ptr<Node> const&) const;
 
 protected:
     boost::shared_ptr<AiConditionNode> m_node;
-    liquid::ArcSource * m_source;
     boost::shared_ptr<NodeItemModel> m_model;
     NodeTreeView * m_view;
-    QGraphicsLinearLayout * m_sourceLayout;
+
+    liquid::Arc * m_arc;
+    liquid::ArcSource * m_arcSource;
+    liquid::ArcSourceLabel * m_arcLabel;
 };
 
 

@@ -39,8 +39,7 @@ using namespace cauv::gui;
 LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node, 
                                        boost::weak_ptr<CauvMainWindow> in_window,
                                        QGraphicsItem *parent)
-    : liquid::LiquidNode(AI_Node_Style(), parent),
-      Manager<LiquidFluidityNode>(node, this),
+    : ConnectedNode(node, AI_Node_Style(), parent),
       m_node(node),
       m_contents(NULL),
       m_view(NULL),
@@ -178,5 +177,11 @@ void LiquidFluidityNode::unMaximise(){
     connect(timeline, SIGNAL(frameChanged(int)), this, SLOT(zoomOut(int)));
     timeline->start();
 }
+
+
+liquid::ArcSource *  LiquidFluidityNode::getSourceFor(boost::shared_ptr<Node> const&) const{
+    return NULL;
+}
+
 
 

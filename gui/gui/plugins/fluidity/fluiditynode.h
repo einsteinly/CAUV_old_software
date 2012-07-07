@@ -24,8 +24,8 @@
 
 #include <gui/core/model/model.h>
 #include <gui/core/model/node.h>
-#include <gui/core/framework/manager.h>
 #include <gui/core/framework/mainwindow.h>
+#include <gui/core/framework/connectednode.h>
 
 
 namespace cauv {
@@ -39,9 +39,8 @@ class FView;
 
 GENERATE_SIMPLE_NODE(FluidityNode)
 
-class LiquidFluidityNode: public liquid::LiquidNode,
-                          public liquid::ArcSourceDelegate,
-                          public Manager<LiquidFluidityNode>
+class LiquidFluidityNode: public ConnectedNode,
+                          public liquid::ArcSourceDelegate
 {
     Q_OBJECT
 public:
@@ -51,6 +50,8 @@ public:
     virtual ~LiquidFluidityNode();
 
     liquid::AbstractArcSource * source(){ return m_source; }
+
+    virtual liquid::ArcSource * getSourceFor(boost::shared_ptr<Node> const&) const;
 
 public Q_SLOTS:
     void beginMaximise();

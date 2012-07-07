@@ -32,6 +32,7 @@ else()
         ephemeralArcEnd.cpp
         layout.cpp
         arcSinkLabel.cpp
+        arcSourceLabel.cpp
         shadow.cpp
     )
 
@@ -52,6 +53,7 @@ else()
         ephemeralArcEnd.h
         layout.h
         arcSinkLabel.h
+        arcSourceLabel.h
         proxyWidget.h
         shadow.h
     )

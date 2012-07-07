@@ -32,14 +32,21 @@
 #include <gui/core/model/nodes/groupingnode.h>
 #include <gui/core/framework/nodepicker.h>
 
-#include <gui/plugins/ai/conditionnode.h>
+#include <gui/plugins/ai/tasknode.h>
+
+// !!! inter plugin dependance
+#include <gui/plugins/fluidity/fluiditynode.h>
 
 using namespace cauv;
 using namespace cauv::gui;
 
-// !!! inter-plugin dependence, need this to be inline
-//AiConditionNode::AiConditionNode(const nid_t id) : Node(id, nodeType<AiConditionNode>()){
-//}
+AiConditionNode::AiConditionNode(const nid_t id) : Node(id, nodeType<AiConditionNode>()){
+}
+
+AiConditionNode::~AiConditionNode(){
+    info() << "~AiConditionNode()";
+}
+
 
 boost::shared_ptr<Node> AiConditionNode::setDebug(std::string name, ParamValue value){
     boost::shared_ptr<GroupingNode> debug = findOrCreate<GroupingNode>("debug");
@@ -79,20 +86,30 @@ std::map<std::string, boost::shared_ptr<Node> > AiConditionNode::getOptions(){
     return m_options;
 }
 
+void AiConditionNode::addPipeline(boost::shared_ptr<FluidityNode> pipe){
+    m_pipelines.insert(pipe->to<Node>());
+}
+void AiConditionNode::removePipeline(boost::shared_ptr<FluidityNode> pipe){
+    m_pipelines.erase(std::find(m_pipelines.begin(), m_pipelines.end(), pipe));
+}
+std::set<boost::shared_ptr<Node> > AiConditionNode::getPipelines(){
+    return m_pipelines;
+}
+
 
 
 LiquidConditionNode::LiquidConditionNode(
         boost::shared_ptr<AiConditionNode> node,
         QGraphicsItem * parent) :
     AiNode(node, parent),
-    Manager<LiquidConditionNode>(node, this),
     m_node(node),
-    m_source(new liquid::ArcSource(this, new liquid::Arc(Param_Arc_Style()))),
     m_model(boost::make_shared<NodeItemModel>(m_node)),
     m_view(new NodeTreeView(true)),
-    m_sourceLayout(new QGraphicsLinearLayout(Qt::Horizontal))
+    m_arc(new liquid::Arc(Param_Arc_Style())),
+    m_arcSource(new liquid::ArcSource(new ConditionSourceDelegate(node), m_arc)),
+    m_arcLabel(new liquid::ArcSourceLabel(m_arcSource, this, "state"))
 {
-    buildContents();
+    rebuildContents();
 }
 
 LiquidConditionNode::~LiquidConditionNode() {
@@ -100,7 +117,9 @@ LiquidConditionNode::~LiquidConditionNode() {
     unregister(this);
 }
 
-void LiquidConditionNode::buildContents(){
+void LiquidConditionNode::rebuildContents(){
+
+    addItem(m_arcLabel);
 
     // the item view
     m_view->setModel(m_model.get());
@@ -109,22 +128,13 @@ void LiquidConditionNode::buildContents(){
     proxy->setWidget(m_view);
     addItem(proxy);
 
-    m_source->setParentItem(this);
-    m_source->setZValue(10);
-
-    m_sourceLayout->setSpacing(0);
-    m_sourceLayout->setContentsMargins(0,0,0,0);
-    m_sourceLayout->addStretch(1);
-    m_sourceLayout->addItem(m_source);
-    m_sourceLayout->setAlignment(m_source, Qt::AlignBottom | Qt::AlignRight);
-    this->addItem(m_sourceLayout);
-}
-
-
-liquid::AbstractArcSource *LiquidConditionNode::source(){
-    return m_source;
 }
 
 std::string LiquidConditionNode::conditionId() const{
     return boost::get<std::string>(m_node->nodeId());
+}
+
+
+liquid::ArcSource * LiquidConditionNode::getSourceFor(boost::shared_ptr<Node> const&) const{
+    return m_arcSource;
 }

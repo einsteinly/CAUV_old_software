@@ -23,15 +23,14 @@
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/model/model.h>
 #include <gui/core/nodedragging.h>
-
-#include <liquid/node.h>
+#include <gui/core/framework/connectednode.h>
 
 namespace cauv {
     class CauvNode;
 
     namespace gui {
 
-        class AiNode : public liquid::LiquidNode
+        class AiNode : public ConnectedNode
         {
             Q_OBJECT
             typedef liquid::LiquidNode base_t;

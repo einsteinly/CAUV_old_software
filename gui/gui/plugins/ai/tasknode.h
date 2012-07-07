@@ -19,86 +19,86 @@
 
 #include <liquid/node.h>
 #include <liquid/button.h>
+#include <liquid/arcSink.h>
+#include <liquid/arcSinkLabel.h>
 
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/framework/manager.h>
 
-#include <gui/plugins/ai/conditionnode.h>
+#include "ainode.h"
 
 namespace cauv {
 namespace gui {
 
 // !!! inter-plugin dependence
 class FluidityNode;
-
+class AiConditionNode;
 
 GENERATE_SIMPLE_NODE(AiMissionNode)
 GENERATE_SIMPLE_NODE(AiTaskTypeNode)
 
 class AiTaskNode : public BooleanNode {
     public:
-        
-        // !!! inter-plugin dependence, need this to be inline
-        AiTaskNode(const nid_t id) : BooleanNode(id){
-            type = nodeType<AiTaskNode>();
-        }
 
-        virtual ~AiTaskNode(){
-            info() << "~AiTaskNode()";
-        }
+    AiTaskNode(const nid_t id);
+    virtual ~AiTaskNode();
 
-        void addCondition(boost::shared_ptr<AiConditionNode> condition);
-        void removeCondition(boost::shared_ptr<AiConditionNode> condition);
-        std::set<boost::shared_ptr<AiConditionNode> > getConditions();
+    void addCondition(boost::shared_ptr<AiConditionNode> condition);
+    void removeCondition(boost::shared_ptr<AiConditionNode> condition);
+    std::set<boost::shared_ptr<AiConditionNode> > getConditions();
 
-        // !!! inter-plugin dependence, need this to be inline
-        void addPipeline(boost::shared_ptr<FluidityNode> pipe){
-            m_pipelines.insert(pipe);
-        }
-        void removePipeline(boost::shared_ptr<FluidityNode> pipe);
-        std::set<boost::shared_ptr<FluidityNode> > getPipelines();
+    void addPipeline(boost::shared_ptr<FluidityNode> pipe);
+    void removePipeline(boost::shared_ptr<FluidityNode> pipe);
+    std::set<boost::shared_ptr<FluidityNode> > getPipelines();
 
-        boost::shared_ptr<Node> setDebug(std::string name, ParamValue value);
-        void removeDebug(std::string name);
-        std::map<std::string, boost::shared_ptr<Node> > getDebugValues();
+    boost::shared_ptr<Node> setDebug(std::string name, ParamValue value);
+    void removeDebug(std::string name);
+    std::map<std::string, boost::shared_ptr<Node> > getDebugValues();
 
-        boost::shared_ptr<Node> setStaticOption(std::string name, ParamValue value);
-        void removeStaticOption(std::string name);
-        std::map<std::string, boost::shared_ptr<Node> > getStaticOptions();
+    boost::shared_ptr<Node> setStaticOption(std::string name, ParamValue value);
+    void removeStaticOption(std::string name);
+    std::map<std::string, boost::shared_ptr<Node> > getStaticOptions();
 
-        boost::shared_ptr<Node> setDynamicOption(std::string name, ParamValue value);
-        void removeDynamicOption(std::string name);
-        std::map<std::string, boost::shared_ptr<Node> > getDynamicOptions();
+    boost::shared_ptr<Node> setDynamicOption(std::string name, ParamValue value);
+    void removeDynamicOption(std::string name);
+    std::map<std::string, boost::shared_ptr<Node> > getDynamicOptions();
 
-        boost::shared_ptr<Node> setTaskOption(std::string name, ParamValue value);
-        void removeTaskOption(std::string name);
-        std::map<std::string, boost::shared_ptr<Node> > getTaskOptions();
+    boost::shared_ptr<Node> setTaskOption(std::string name, ParamValue value);
+    void removeTaskOption(std::string name);
+    std::map<std::string, boost::shared_ptr<Node> > getTaskOptions();
+
+    void forceSet();
 
     protected:
-        std::set<boost::shared_ptr<AiConditionNode> > m_conditions;
-        std::set<boost::shared_ptr<FluidityNode> > m_pipelines;
-        std::map<std::string, boost::shared_ptr<Node> > m_debug;
-        std::map<std::string, boost::shared_ptr<Node> > m_staticOptions;
-        std::map<std::string, boost::shared_ptr<Node> > m_dynamicOptions;
-        std::map<std::string, boost::shared_ptr<Node> > m_taskOptions;
+    std::set<boost::shared_ptr<AiConditionNode> > m_conditions;
+    std::set<boost::shared_ptr<FluidityNode> > m_pipelines;
+    std::map<std::string, boost::shared_ptr<Node> > m_debug;
+    std::map<std::string, boost::shared_ptr<Node> > m_staticOptions;
+    std::map<std::string, boost::shared_ptr<Node> > m_dynamicOptions;
+    std::map<std::string, boost::shared_ptr<Node> > m_taskOptions;
 
 };
 
 class LiquidTaskNode :
         public AiNode,
-        public liquid::ArcSourceDelegate,
-        public Manager<LiquidTaskNode>
+        public liquid::ConnectionSink
 {
     Q_OBJECT
 public:
     LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem *parent = 0);
     virtual ~LiquidTaskNode();
-    void buildContents();
+    void rebuildContents();
     std::string taskId() const;
     void initButtons();
 
+    virtual liquid::ArcSource *  getSourceFor(boost::shared_ptr<Node> const&) const;
+
+    virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source);
+    virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source);
+
 public Q_SLOTS:
     void highlightRunningStatus(QVariant status);
+    void ensureConnected();
 
 Q_SIGNALS:
     void reset();
@@ -111,6 +111,9 @@ protected:
     liquid::Button * m_playButton;
     liquid::Button * m_stopButton;
     liquid::Button * m_resetButton;
+
+    liquid::ArcSink *  m_sink;
+    liquid::ArcSinkLabel *  m_sinkLabel;
 };
 
 

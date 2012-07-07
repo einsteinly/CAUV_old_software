@@ -19,6 +19,7 @@
 #include <gui/core/framework/elements/style.h>
 
 #include <gui/plugins/ai/tasknode.h>
+#include <gui/plugins/ai/conditionnode.h>
 
 #include <generated/types/GuiaiGroup.h>
 
@@ -33,12 +34,11 @@ using namespace cauv::gui;
 
 
 AiNode::AiNode(boost::shared_ptr<Node> node, QGraphicsItem *parent) :
-    liquid::LiquidNode(AI_Node_Style(), parent)
+    ConnectedNode(node, AI_Node_Style(), parent)
 {
     node->connect(node.get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)), this, SLOT(deleteLater()));
 
     header()->setTitle(QString::fromStdString(node->nodeName()));
-    header()->setInfo(QString::fromStdString(node->nodePath()));
 }
 
 AiNode::~AiNode(){
@@ -83,11 +83,11 @@ QGraphicsItem * AiDropHandler::handle(boost::shared_ptr<Node> const& node) {
     }
 
     if (node->type == nodeType<AiTaskNode>()) {
-        return LiquidTaskNode::liquidNode(boost::static_pointer_cast<AiTaskNode>(node));
+        return NULL;//LiquidTaskNode::liquidNode(boost::static_pointer_cast<AiTaskNode>(node));
     }
 
     if (node->type == nodeType<AiConditionNode>()) {
-        return LiquidConditionNode::liquidNode(boost::static_pointer_cast<AiConditionNode>(node));
+        return NULL;//LiquidConditionNode::liquidNode(boost::static_pointer_cast<AiConditionNode>(node));
     }
 
     return NULL;

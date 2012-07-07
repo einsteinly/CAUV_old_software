@@ -14,8 +14,7 @@
 
 #include "tasknode.h"
 
-#include <QBrush>
-#include <QGraphicsLinearLayout>
+#include <QtGui>
 
 #include <debug/cauv_debug.h>
 
@@ -26,7 +25,7 @@
 #include <liquid/arc.h>
 #include <liquid/requiresCutout.h>
 #include <liquid/style.h>
-#include <liquid/arcSinkLabel.h>
+#include <liquid/arcSourceLabel.h>
 #include <liquid/nodeHeader.h>
 #include <liquid/shadow.h>
 #include <liquid/button.h>
@@ -43,10 +42,17 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-// !!! inter-plugin dependence, need this to be inline
-//AiTaskNode::AiTaskNode(const nid_t id) : BooleanNode(id){
-//    type = nodeType<AiTaskNode>();
-//}
+AiTaskNode::AiTaskNode(const nid_t id) : BooleanNode(id){
+    type = nodeType<AiTaskNode>();
+}
+
+AiTaskNode::~AiTaskNode(){
+    info() << "~AiTaskNode()";
+}
+
+void AiTaskNode::addPipeline(boost::shared_ptr<FluidityNode> pipe){
+    m_pipelines.insert(pipe);
+}
 
 void AiTaskNode::addCondition(boost::shared_ptr<AiConditionNode> condition){
     m_conditions.insert(condition);
@@ -59,11 +65,6 @@ void AiTaskNode::removeCondition(boost::shared_ptr<AiConditionNode> condition){
 std::set<boost::shared_ptr<AiConditionNode> > AiTaskNode::getConditions(){
     return m_conditions;
 }
-
-// !!! inter-plugin dependence, need this to be inline
-//void AiTaskNode::addPipeline(boost::shared_ptr<FluidityNode> pipe){
-//    m_pipelines.insert(pipe);
-//}
 
 void AiTaskNode::removePipeline(boost::shared_ptr<FluidityNode> pipe){
     m_pipelines.erase(std::find(m_pipelines.begin(), m_pipelines.end(), pipe));
@@ -145,14 +146,25 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getTaskOptions(){
     return m_taskOptions;
 }
 
+void AiTaskNode::forceSet(){
+    Q_EMIT onBranchChanged();
+}
+
 
 LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem * parent) :
     AiNode(node, parent),
-    Manager<LiquidTaskNode>(node, this),
-    m_node(node)
+    m_node(node),
+    m_playButton(NULL),
+    m_stopButton(NULL),
+    m_resetButton(NULL),
+    m_sink(new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(), this)),
+    m_sinkLabel(new liquid::ArcSinkLabel(m_sink, this, "conditions"))
 {
-    buildContents();
+    initButtons();
+    rebuildContents();
     node->connect(node.get(), SIGNAL(onUpdate(QVariant)), this, SLOT(highlightRunningStatus(QVariant)));
+    node->connect(node.get(), SIGNAL(onBranchChanged()), this, SLOT(ensureConnected()));
+    node->connect(node.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
     highlightRunningStatus(node->get());
 }
 
@@ -176,18 +188,18 @@ void LiquidTaskNode::highlightRunningStatus(QVariant status){
 
 void LiquidTaskNode::initButtons(){
     m_resetButton = new liquid::Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
-    );
+                QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
+                );
     header()->addButton("reset", m_resetButton);
 
     m_stopButton = new liquid::Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/stop_button"), NULL, this
-    );
+                QRectF(0,0,24,24), QString(":/resources/icons/stop_button"), NULL, this
+                );
     header()->addButton("stop", m_stopButton);
 
     m_playButton = new liquid::Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/play_button"), NULL, this
-    );
+                QRectF(0,0,24,24), QString(":/resources/icons/play_button"), NULL, this
+                );
     header()->addButton("play", m_playButton);
 
     connect(m_resetButton, SIGNAL(pressed()), this, SIGNAL(reset()));
@@ -195,14 +207,31 @@ void LiquidTaskNode::initButtons(){
     connect(m_playButton, SIGNAL(pressed()), this, SIGNAL(start()));
 }
 
-void LiquidTaskNode::buildContents(){
+void LiquidTaskNode::ensureConnected(){
+    foreach(boost::shared_ptr<AiConditionNode> const& node, m_node->getConditions()) {
+        ConnectedNode * cn = ConnectedNode::nodeFor(node->to<Node>());
+        if(!cn) {
+            error() << "Node ConnectedNode registered for " << node->nodeName();
+            return;
+        }
+        liquid::ArcSource * source = cn->getSourceFor(node);
+        if(!source){
+            warning() << node->nodeName() << "does not have an ArcSource";
+            return;
+        }
+        source->arc()->addTo(m_sink);
+    }
+}
+
+void LiquidTaskNode::rebuildContents(){
 
     // incoming dependencies
 
-    initButtons();
+    addItem(m_sinkLabel);
 
+    /*
     foreach(boost::shared_ptr<AiConditionNode> const& condition, m_node->getConditions()){
-        LiquidConditionNode * conditionNode = LiquidConditionNode::liquidNode(condition);
+        LiquidConditionNode * conditionNode = nodeFor(condition);
         if(!conditionNode) continue;
         //conditionNode->setPos(pos().x()-(conditionNode->size().width() + 30), pos().y());
         liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
@@ -224,7 +253,7 @@ void LiquidTaskNode::buildContents(){
         sink->setParent(label);
         this->addItem(label);
         pipelineNode->source()->arc()->addTo(label->sink());
-    }
+    }*/
 
     // the item view
     header()->setTitle(QString::fromStdString(m_node->nodeName()));
@@ -236,8 +265,31 @@ void LiquidTaskNode::buildContents(){
     liquid::ProxyWidget * proxy = new liquid::ProxyWidget();
     proxy->setWidget(view);
     addItem(proxy);
+
+
 }
 
 std::string LiquidTaskNode::taskId() const{
     return boost::get<std::string>(m_node->nodeId());
+}
+
+bool LiquidTaskNode::willAcceptConnection(liquid::ArcSourceDelegate* from_source) {
+    if (dynamic_cast<ConditionSourceDelegate *>(from_source)){
+        return true;
+    }
+    return false;
+}
+
+LiquidTaskNode::ConnectionStatus LiquidTaskNode::doAcceptConnection(liquid::ArcSourceDelegate* from_source) {
+    if (ConditionSourceDelegate * tn = dynamic_cast<ConditionSourceDelegate *>(from_source)){
+        m_node->addCondition(tn->m_node);
+        m_node->forceSet();
+        return Pending;
+    }
+    return Rejected;
+}
+
+
+liquid::ArcSource * LiquidTaskNode::getSourceFor(boost::shared_ptr<Node> const&) const{
+    return NULL;
 }
