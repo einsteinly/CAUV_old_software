@@ -91,7 +91,7 @@ void PipelineGuiMsgObs::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m)
         return;
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
 
-    typedef std::map<node_id, NodeType> node_type_map_t;
+    typedef std::map<node_id, NodeType::e> node_type_map_t;
     typedef std::map<node_id, Node::msg_node_input_map_t> node_input_map_t;
     typedef std::map<node_id, Node::msg_node_output_map_t> node_output_map_t;
     typedef std::map<node_id, Node::msg_node_param_map_t> node_param_map_t;

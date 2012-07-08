@@ -462,9 +462,9 @@ class LearnedKeyPointsNode: public Node{
 
             // training inputs:
             // These must be set from the same node
-            registerParamID("training: keypoints", kp_vec(), "keypoints to update training data", InputSchedType::May_Be_Old);
-            registerInputID("training: keypoints image", InputSchedType::Optional);
-            registerParamID("training: goodness", int_vec(), "score values to update training data", InputSchedType::May_Be_Old);
+            registerParamID("training: keypoints", kp_vec(), "keypoints to update training data", May_Be_Old);
+            registerInputID("training: keypoints image", Optional);
+            registerParamID("training: goodness", int_vec(), "score values to update training data", May_Be_Old);
 
             // outputs
             registerOutputID("keypoints", kp_vec()); // all of them

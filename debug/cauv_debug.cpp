@@ -40,7 +40,7 @@
 
 using namespace cauv;
 
-SmartStreamBase::SmartStreamBase(std::ostream& stream, BashColour col, bool print)
+SmartStreamBase::SmartStreamBase(std::ostream& stream, BashColour::e col, bool print)
     : m_stuffs(), m_manipulators(),
       m_stream(stream),
       m_col(col),

@@ -7,7 +7,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <generated/types/DebugMessage.h>
-#include <generated/types/DebugType.h>
 #include <generated/message_observers.h>
 
 #include <common/zeromq/zeromq_mailbox.h>

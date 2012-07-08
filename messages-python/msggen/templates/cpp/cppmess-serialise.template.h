@@ -21,7 +21,7 @@
 \#include "${s.name}_fwd.h"
 #end for
 #for $e in $enums
-\#include "${e.name}_fwd.h"
+\#include "${e.name}.h"
 #end for
 #for $v in $variants
 \#include "${v.name}_fwd.h"
@@ -40,8 +40,8 @@ int32_t deserialise(const_svec_ptr, uint32_t, $s.name&);
 #end for
 
 #for $e in $enums
-void serialise(svec_ptr, $e.name const&);
-int32_t deserialise(const_svec_ptr, uint32_t, $e.name&);
+void serialise(svec_ptr, $e.name::e const&);
+int32_t deserialise(const_svec_ptr, uint32_t, $e.name::e&);
 #end for
 
 #for $v in $variants
@@ -62,7 +62,7 @@ std::string chil($s.name const&);
 #end for
 
 #for $e in $enums
-std::string chil($e.name const&);
+std::string chil($e.name::e const&);
 #end for
 
 #for $v in $variants

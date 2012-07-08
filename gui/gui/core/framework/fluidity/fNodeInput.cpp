@@ -102,7 +102,7 @@ FNodeImageInput::FNodeImageInput(Manager& m, LocalNodeInput const& input, FNode*
     : FNodeInput(m, Image_Arc_Style(), cutoutStyleForSchedType(input.schedType), node, input.input){
 }
 
-OutputType FNodeImageInput::ioType() const{
+OutputType::e FNodeImageInput::ioType() const{
     return OutputType::Image;
 }
 
@@ -110,7 +110,7 @@ SubType FNodeImageInput::subType() const{
     return -1;
 }
 
-liquid::CutoutStyle const& FNodeImageInput::cutoutStyleForSchedType(InputSchedType const& st){
+liquid::CutoutStyle const& FNodeImageInput::cutoutStyleForSchedType(InputSchedType::e const& st){
     switch(st){
         case InputSchedType::Must_Be_New: return Required_Image_Input();
         case InputSchedType::May_Be_Old:  return Optional_Image_Input();
@@ -200,7 +200,7 @@ FNodeParamInput::~FNodeParamInput(){
     m_view_proxy->deleteLater();
 }
 
-OutputType FNodeParamInput::ioType() const{
+OutputType::e FNodeParamInput::ioType() const{
     return OutputType::Parameter;
 }
 
@@ -267,7 +267,7 @@ void FNodeParamInput::modelValueChanged(QVariant value){
     ));
 }
 
-liquid::CutoutStyle const& FNodeParamInput::cutoutStyleForSchedType(InputSchedType const& st){
+liquid::CutoutStyle const& FNodeParamInput::cutoutStyleForSchedType(InputSchedType::e const& st){
     switch(st){
         case InputSchedType::Must_Be_New: return Required_Param_Input();
         case InputSchedType::May_Be_Old:  return Optional_Param_Input();

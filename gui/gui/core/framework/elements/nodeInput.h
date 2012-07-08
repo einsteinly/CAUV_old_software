@@ -18,8 +18,6 @@
 #include <QGraphicsPathItem>
 #include <QGraphicsLayoutItem>
 
-#include <utility/enum_class.h>
-
 #include "liquid/node.h"
 #include "liquid/requiresCutout.h"
 
@@ -31,15 +29,17 @@ namespace cauv{
 namespace gui{
 
 // !!! synchronise with pipeline
-ENUM_CLASS(NodeIOType,char,
+namespace NodeIOType {
+enum e {
     Image, Parameter
-);
+};
+}
 
 class NodeInput: public QGraphicsPathItem,
                  public QGraphicsLayoutItem,
                  public liquid::RequiresCutout{
     public:
-        NodeInput(liquid::NodeStyle const& style, NodeIOType const& type,
+        NodeInput(liquid::NodeStyle const& style, NodeIOType::e const& type,
                   bool required, QGraphicsItem *parent=NULL);
 
         virtual QList<liquid::CutoutStyle> cutoutGeometry() const;
@@ -52,7 +52,7 @@ class NodeInput: public QGraphicsPathItem,
                                 constraint=QSizeF()) const;
 
     protected:
-        NodeIOType m_type;
+        NodeIOType::e m_type;
         bool m_required;
         liquid::NodeStyle const& m_style;
         

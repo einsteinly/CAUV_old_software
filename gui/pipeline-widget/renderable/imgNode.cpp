@@ -213,7 +213,7 @@ Img::Img(container_ptr_t c)
     : Resizeable(c, cauv::gui::BBox(0, 0, 300, 200), cauv::gui::BBox(10, 10), cauv::gui::BBox(1200, 800)){
 }
 
-void Img::draw(drawtype_e flags){
+void Img::draw(drawtype_e::e flags){
 
     // delete any textures waiting to be deleted
     Textures_For_Deleting.deleteAndClear();
@@ -255,7 +255,7 @@ ImgNode::ImgNode(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMess
     refreshLayout();
 }
 
-ImgNode::ImgNode(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType const& nt)
+ImgNode::ImgNode(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const& nt)
     : Node(c, pw, id, nt), m_img(boost::make_shared<Img>(this)){
     m_contents.push_back(m_img);
     m_extra_stuff.insert(m_img);

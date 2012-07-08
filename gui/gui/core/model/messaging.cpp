@@ -20,11 +20,11 @@ using namespace cauv::gui;
 /* Motor message handling */
 
 boost::shared_ptr<const Message> MessageHandler<MotorNode, MotorStateMessage>::generate() {
-    return boost::make_shared<MotorMessage>(boost::get<MotorID>(m_node->nodeId()), (int8_t) m_node->get());
+    return boost::make_shared<MotorMessage>(boost::get<MotorID::e>(m_node->nodeId()), (int8_t) m_node->get());
 }
 
 void MessageHandler<MotorNode, MotorStateMessage>::onMotorStateMessage(MotorStateMessage_ptr message){
-    if(message->motorId() == boost::get<MotorID>(m_node->nodeId())){
+    if(message->motorId() == boost::get<MotorID::e>(m_node->nodeId())){
         m_node->update(message->speed());
     }
 }
@@ -118,7 +118,7 @@ boost::shared_ptr<const Message> MessageHandler<AutopilotParamsNode, BearingAuto
 
 void MessageHandler<AutopilotNode, ControllerStateMessage>::onControllerStateMessage(
         ControllerStateMessage_ptr message){
-    if(boost::get<Controller>(m_node->nodeId()) == message->contoller()){
+    if(boost::get<Controller::e>(m_node->nodeId()) == message->contoller()){
         boost::shared_ptr<GroupingNode> state = m_node->findOrCreate<GroupingNode>("state");
         boost::shared_ptr<GroupingNode> demands = state->findOrCreate<GroupingNode>("demands");
         demands->findOrCreate<NumericNode<float> >(MotorID::Prop)->update(message->demand().prop);
@@ -208,7 +208,7 @@ void MessageHandler<GroupingNode, ProcessStatusMessage>::onProcessStatusMessage 
 
 void MessageHandler<ImageNode, ImageMessage>::onImageMessage (
         ImageMessage_ptr message){
-    if(boost::get<CameraID>(m_node->nodeId()) == message->source()) {
+    if(boost::get<CameraID::e>(m_node->nodeId()) == message->source()) {
         boost::shared_ptr<BaseImage> shared_image= boost::make_shared<BaseImage>();
         message->get_image_inplace(*shared_image);
         m_node->update(shared_image);

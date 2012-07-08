@@ -235,7 +235,7 @@ void FView::initMenu(){
     // calls deleteLater() instead of simply delete
 
     for(int i = 0; i < NodeType::NumValues; i++){
-        QString n = QString::fromStdString(mkStr() << NodeType(i));
+        QString n = QString::fromStdString(mkStr() << NodeType::e(i));
         n.replace("NodeType::","");
         n += " Node";
         boost::shared_ptr<QAction> a = boost::make_shared<QAction>(n, this);
@@ -343,8 +343,8 @@ void FView::menuActioned(){
     QAction* s = dynamic_cast<QAction*>(sender());
     if(s){
         QVariant data = s->data();
-        m_manager->requestNode(NodeType(data.value<uint32_t>()));
-        debug() << "menuActioned:" << NodeType(data.value<uint32_t>());
+        m_manager->requestNode(NodeType::e(data.value<uint32_t>()));
+        debug() << "menuActioned:" << NodeType::e(data.value<uint32_t>());
     }else{
         error() << "menuActioned: non-action sender?";
     }

@@ -18,22 +18,24 @@
 
 // standard integral types (int32_t etc)
 \#include <boost/cstdint.hpp>
-\#include <utility/enum_class.h>
 \#include <utility/streamops.h>
 \#include <utility/serialisation-types.h>
 
 namespace cauv{
 
-ENUM_CLASS($e.name, $toCPPType($e.type),
-    #for $i, $v in $enumerate($e.values)
-    $v.name = $v.value,
-    #end for
-    NumValues = $len($e.values)
-);
+namespace $e.name
+{
+    enum e
+    {
+        #for $i, $v in $enumerate($e.values)
+        $v.name = $v.value,
+        #end for
+        NumValues = $len($e.values)
+    };
+} // namespace $e.name
 
-void serialise(svec_ptr, $e.name const&);
-int32_t deserialise(const_svec_ptr, uint32_t, $e.name&);
-std::string chil($e.name const&);
+void serialise(svec_ptr, $e.name::e const&);
+int32_t deserialise(const_svec_ptr, uint32_t, $e.name::e&);
 
 } // namespace cauv
 
@@ -41,7 +43,7 @@ namespace std{
 // don't ask
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, cauv::$e.name const& e)
+    std::basic_ostream<char_T, traits>& os, cauv::$e.name::e const& e)
 {
     switch(e)
     {

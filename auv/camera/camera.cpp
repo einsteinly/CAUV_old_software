@@ -18,7 +18,7 @@ CameraException::CameraException(const std::string& _reason)
 
 ImageCaptureException::ImageCaptureException() : CameraException("Could not open camera device") {}
 
-Camera::Camera(const CameraID id) : m_id(id)
+Camera::Camera(const CameraID::e id) : m_id(id)
 {
 }
 
@@ -26,7 +26,7 @@ Camera::~Camera()
 {
 }
 
-CameraID Camera::id() const
+CameraID::e Camera::id() const
 {
     return m_id;
 }
@@ -73,7 +73,7 @@ void CaptureThread::operator()()
     }
 }
 
-Webcam::Webcam(const CameraID cameraID, const int deviceID)
+Webcam::Webcam(const CameraID::e cameraID, const int deviceID)
     : Camera(cameraID), m_thread_callable(boost::ref(*this))
 {
     //m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);

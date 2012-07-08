@@ -49,11 +49,11 @@ bool Manager::_nameMatches(boost::shared_ptr<const message_T> msg){
 }
 
 // - Static helper functions
-static bool isImageNode(NodeType t){
+static bool isImageNode(NodeType::e t){
     return t == NodeType::GuiOutput;
 }
 
-static bool isInvalid(NodeType t){
+static bool isInvalid(NodeType::e t){
     return t == NodeType::Invalid;
 }
 
@@ -229,7 +229,7 @@ void Manager::onStatusMessage(StatusMessage_ptr m){
 void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
     debug(7) << BashColour::Green << "Manager::" << __func__ << *m;
 
-    typedef std::map<node_id_t, NodeType> node_type_map_t;
+    typedef std::map<node_id_t, NodeType::e> node_type_map_t;
     typedef std::map<node_id_t, FNode::msg_node_input_map_t> node_input_map_t;
     typedef std::map<node_id_t, FNode::msg_node_output_map_t> node_output_map_t;
     typedef std::map<node_id_t, FNode::msg_node_param_map_t> node_param_map_t;
@@ -272,7 +272,7 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
     
     for(j = m->nodeTypes().begin(); j != m->nodeTypes().end(); j++){
         const node_id_t id = j->first;
-        const NodeType type = j->second;
+        const NodeType::e type = j->second;
         i = m_nodes.right().find(id); 
         if(i == m_nodes.right().end()){
             addNode(type, id);
@@ -395,7 +395,7 @@ void Manager::requestRemoveArc(NodeOutput from, NodeInput to){
     m_cauv_node->send(boost::make_shared<RemoveArcMessage>(m_pipeline_name, from, to));
 }
 
-void Manager::requestNode(NodeType const& type,
+void Manager::requestNode(NodeType::e const& type,
                           std::vector<NodeInputArc> const& inputs,
                           std::vector<NodeOutputArc> const& outputs){
     debug() << BashColour::Brown << BashIntensity::Bold << "requestAddNode" << type;
@@ -430,7 +430,7 @@ void Manager::removeNode(node_id_t const& id){
     }
 }
 
-fnode_ptr Manager::addNode(NodeType const& type, node_id_t const& id){
+fnode_ptr Manager::addNode(NodeType::e const& type, node_id_t const& id){
     debug() << BashColour::Green << "addNode:" << type << id;
     fnode_ptr r = NULL;
     if(isInvalid(type)){
@@ -451,7 +451,7 @@ fnode_ptr Manager::addNode(NodeType const& type, node_id_t const& id){
 }
 
 fnode_ptr Manager::addNode(NodeAddedMessage_ptr m){
-    const NodeType type = m->nodeType();
+    const NodeType::e type = m->nodeType();
     const node_id_t id = m->nodeId();
     fnode_ptr r = NULL;
     debug() << BashColour::Green << "addNode:" << type << id;
@@ -509,7 +509,7 @@ void Manager::_layoutSoonIfNothingHappens(){
 
 void Manager::_checkAddImageSource(node_id_t id){
     if(!isInvalid(id) && m_nodes.count(id) &&
-       isImageNode(NodeType(m_nodes[id]->nodeType()))){
+       isImageNode(NodeType::e(m_nodes[id]->nodeType()))){
         boost::shared_ptr<ImageSource> image_src = boost::make_shared<ImageSource>();
         // !!! TODO: include information about which inputs images are associated with
         m_nodes[id]->addImageDisplayOnInput("image_in", image_src);
