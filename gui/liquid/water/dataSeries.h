@@ -23,16 +23,16 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <utility/enum_class.h>
+
 namespace liquid{
 namespace water{
 
-namespace GraphSeriesMode{
-enum e{
+ENUM_CLASS(GraphSeriesMode,char,
     Unlimited,
     Clamp,
     Modulus
-};
-} // 
+);
 
 struct SeriesConfig{
     // control vertical scaling
@@ -42,7 +42,7 @@ struct SeriesConfig{
     float maximum_minimum;
     float minimum_maximum;
     float maximum_maximum;
-    GraphSeriesMode::e mode;
+    GraphSeriesMode mode;
 };
 
 // standard graph configs:

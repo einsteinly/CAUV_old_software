@@ -462,6 +462,9 @@ group zmq_internal
         daemon_id: uint32;
         connect_string : string;
     }
+    message SubscriptionConfirmMarker : 228
+    {
+    }
 }
 
 group membership
@@ -553,10 +556,6 @@ group control
         Ad : float;
         thr : float;
         maxError : float;
-    }
-
-    message StateRequest : 82
-    {
     }
 
     message Script : 102

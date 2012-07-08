@@ -74,7 +74,8 @@ void ImageProcessor::onSonarImageMessage(SonarImageMessage_ptr m){
 }
 
 
-void ImageProcessor::onTelemtryMessage(TelemetryMessage_ptr m){
+void ImageProcessor::onTelemetryMessage(TelemetryMessage_ptr m){
+    debug() << "ImageProcessor::onTelemetry" << *m;
     lock_t l(m_nodes_lock);
     std::set<node_ptr_t>::iterator i;        
     for(i = m_telem_req_nodes.begin(); i != m_telem_req_nodes.end(); i++)
@@ -291,7 +292,7 @@ void ImageProcessor::onGraphRequestMessage(GraphRequestMessage_ptr m){
     if(!_filterMatches(m))
         return;
     try{
-        std::map<node_id, NodeType::e> node_types;
+        std::map<node_id, NodeType> node_types;
         std::map<node_id, Node::msg_node_input_map_t > node_inputs;
         std::map<node_id, Node::msg_node_output_map_t > node_outputs;
         std::map<node_id, Node::msg_node_param_map_t > node_parameters;

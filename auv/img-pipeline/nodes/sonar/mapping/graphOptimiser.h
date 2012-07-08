@@ -30,9 +30,9 @@ struct IncrementalPose{
     // have Eigen::Vector3f as member    
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    float const dx() const{ return x[0]; }
-    float const dy() const{ return x[1]; }
-    float const detheta() const{ return x[2]; }
+    float dx() const{ return x[0]; }
+    float dy() const{ return x[1]; }
+    float detheta() const{ return x[2]; }
     
     IncrementalPose() : x(Eigen::Vector3f::Zero()) { }
     explicit IncrementalPose(Eigen::Vector3f const& v) : x(v) { }
@@ -102,9 +102,9 @@ struct RelativePose{
     // have Eigen::Vector3f as member    
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    float const dx() const{ return x[0]; }
-    float const dy() const{ return x[1]; }
-    float const detheta() const{ return x[2]; }
+    float dx() const{ return x[0]; }
+    float dy() const{ return x[1]; }
+    float dtheta() const{ return x[2]; }
      
     RelativePose() : x(Eigen::Vector3f::Zero()) { }
     explicit RelativePose(Eigen::Vector3f const& v) : x(v) { }
@@ -116,7 +116,26 @@ struct RelativePose{
     Eigen::Matrix4f applyTo(Eigen::Matrix4f const& pose) const{
         return pose * to4dAffine();
     }
+    
+    void saveToFile(std::ostream& os){
+        const float x = dx();
+        const float y = dy();
+        const float theta = dtheta();
+        os.write((char*)&x, sizeof(x));
+        os.write((char*)&y, sizeof(y));
+        os.write((char*)&theta, sizeof(theta));
+    }
 
+    static RelativePose loadFromFile(std::istream& is){
+        float dx;
+        float dy;
+        float dtheta;
+        is.read((char*)&dx, sizeof(dx));
+        is.read((char*)&dy, sizeof(dy));
+        is.read((char*)&dtheta, sizeof(dtheta));
+        return RelativePose(dx, dy, dtheta);
+    }
+    
 };
 
 struct RelativePoseConstraint{

@@ -83,7 +83,7 @@ class FNodeOutput: public QGraphicsWidget,
         }
         virtual ~FNodeOutput(){}
 
-        virtual OutputType::e ioType() const = 0;
+        virtual OutputType ioType() const = 0;
 
         virtual SubType subType() const{
             return -1;
@@ -112,7 +112,7 @@ class FNodeImageOutput: public FNodeOutput{
             #endif // ndef CAUV_DEBUG_DRAW_LAYOUT
         }
 
-        virtual OutputType::e ioType() const{
+        virtual OutputType ioType() const{
             return OutputType::Image;
         }
 
@@ -137,7 +137,7 @@ class FNodeParamOutput: public FNodeOutput{
             #endif // ndef CAUV_DEBUG_DRAW_LAYOUT
         }
 
-        virtual OutputType::e ioType() const{
+        virtual OutputType ioType() const{
             return OutputType::Parameter;
         }
         virtual SubType subType() const{

@@ -44,7 +44,7 @@ class BroadcastFloatNode: public OutputNode{
             
             // parameters:
             registerParamID< float >("float", 0,
-                                                   "the float to draw", Must_Be_New); 
+                                                   "the float to draw", InputSchedType::Must_Be_New); 
             registerParamID<std::string>("name", "unnamed float",
                                          "name for detected set of float");
         }

@@ -69,11 +69,11 @@ class FNodeInput: public liquid::ArcSinkLabel,
 class FNodeImageInput: public FNodeInput{
     public:
         FNodeImageInput(Manager& m, LocalNodeInput const& input, FNode* node); 
-        virtual OutputType::e ioType() const;
+        virtual OutputType ioType() const;
         virtual SubType subType() const;
     
     private:
-        static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType::e const& st);
+        static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType const& st);
 };
 
 class FNodeParamInput: public FNodeInput{
@@ -81,7 +81,7 @@ class FNodeParamInput: public FNodeInput{
     public:
         FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode* node);
         ~FNodeParamInput();
-        virtual OutputType::e ioType() const;
+        virtual OutputType ioType() const;
         virtual SubType subType() const;
 
         virtual void setCollapsed(bool state);
@@ -97,7 +97,7 @@ class FNodeParamInput: public FNodeInput{
         void modelValueChanged(QVariant value);
     
     private:
-        static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType::e const& st);
+        static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType const& st);
 
         void initView();
 

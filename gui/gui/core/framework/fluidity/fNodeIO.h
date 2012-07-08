@@ -39,7 +39,7 @@ class FNodeIO{
         std::string const& id() const{ return m_id; }
         
         virtual SubType subType() const = 0;
-        virtual OutputType::e ioType() const = 0;
+        virtual OutputType ioType() const = 0;
 
     protected:
         FNode* m_node;

@@ -122,11 +122,6 @@ struct CompatibleSubTypes: public boost::static_visitor< std::vector<int32_t> >{
     }
 };
 
-// !!! TODO: remove these and scope as appropriate
-using InputSchedType::Must_Be_New;
-using InputSchedType::May_Be_Old;
-using InputSchedType::Optional;
-
 class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
     public:
         // Public typedefs: used as return types
@@ -174,7 +169,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         typedef boost::shared_ptr<Image> image_ptr_t;
 
         // NB: order here is important, don't change it!
-        // matches cauv::OutputType::e
+        // matches cauv::OutputType
         typedef boost::variant<image_ptr_t, InternalParamValue> output_t;
         
         // visitor to get UID from output_t
@@ -291,8 +286,8 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         typedef boost::shared_ptr<Input> input_ptr;
         struct Input: TestableBase<Input>{
             input_link_t target;
-            InputSchedType::e sched_type;
-            NodeInputStatus::e status;
+            InputSchedType sched_type;
+            NodeInputStatus status;
             InputType input_type;
             mutable InternalParamValue param_value;
             std::set<int32_t> compatible_subtypes;
@@ -300,18 +295,18 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             input_ptr synchronised_with;
             bool isconst;
 
-            Input(InputSchedType::e s,
+            Input(InputSchedType s,
                   bool isconst);
-            Input(InputSchedType::e s,
+            Input(InputSchedType s,
                   ParamValue const& default_value,
                   std::string const& tip,
                   std::vector<int32_t> const& compatible_subtypes);
 
             static input_ptr makeImageInputShared(bool isconst,
-                                                  InputSchedType::e const& st = Must_Be_New);
+                                                  InputSchedType const& st = InputSchedType::Must_Be_New);
             static input_ptr makeParamInputShared(ParamValue const& default_value,
                                                   std::string const& tip,
-                                                  InputSchedType::e const& st = May_Be_Old);
+                                                  InputSchedType const& st = InputSchedType::May_Be_Old);
             void clear();
             image_ptr_t getImage() const;
             // NB: no locks are necessarily held when calling these:
@@ -386,8 +381,8 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
 
     public:
         struct ConstructArgs{
-            Scheduler& sched; ImageProcessor& pl; std::string const& pl_name; NodeType::e type;
-            ConstructArgs(Scheduler& sched, ImageProcessor& pl, std::string const& pl_name, NodeType::e type);
+            Scheduler& sched; ImageProcessor& pl; std::string const& pl_name; NodeType type;
+            ConstructArgs(Scheduler& sched, ImageProcessor& pl, std::string const& pl_name, NodeType type);
         };
         Node(ConstructArgs const& args);
 
@@ -405,7 +400,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          */
         void stop();
 
-        NodeType::e const& type() const;
+        NodeType const& type() const;
         node_id const& id() const;
         std::string const& plName() const;
 
@@ -614,7 +609,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         template<typename T>
         void registerParamID(input_id const& p, T const& default_value,
                              std::string const& tip="",
-                             InputSchedType::e const& st = May_Be_Old){
+                             InputSchedType const& st = InputSchedType::May_Be_Old){
             lock_t l(m_inputs_lock);
             if(m_inputs.count(p)){
                 error() << "Duplicate input/parameter id:" << p;
@@ -662,7 +657,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             _explicitRegisterOutputID<image_ptr_t>(o, default_value);
         }
 
-        void registerInputID(input_id const& i, bool isconst, InputSchedType::e const& st = Must_Be_New);
+        void registerInputID(input_id const& i, bool isconst, InputSchedType const& st = InputSchedType::Must_Be_New);
 
         void requireSyncInputs(input_id const& a, input_id const& b);
 
@@ -687,7 +682,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         bool ensureValidInput();
 
         /* All these functions now consider parameters as inputs (but
-         * parameters are not Must_Be_New (required) inputs by default
+         * parameters are not InputSchedType::Must_Be_New (required) inputs by default
          */
         bool allRequiredInputsAreNew() const; // all includes none
         bool anyRequiredInputsAreNew() const;
@@ -722,11 +717,11 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         void _pushQueueOutputForSync(output_id const& o_id);
         void _popQueueOutputForSync(output_id const& o_id);
 
-        void _statusMessage(NodeStatus::e const&);
+        void _statusMessage(NodeStatus const&);
         void _statusMessage(boost::shared_ptr<Message const>);
         static node_id _newID() throw();
 
-        const NodeType::e m_node_type;
+        const NodeType m_node_type;
         const node_id m_id;
 
         /* maps an input_id (including parameters) to an output of another node

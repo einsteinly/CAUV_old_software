@@ -124,7 +124,7 @@ void RedHerring::setupAutopilot(boost::shared_ptr<AutopilotNode> node){
     // target params
     float min, max; bool wraps; std::string units;
 
-    Controller::e id = boost::get<Controller::e>(node->nodeId());
+    Controller id = boost::get<Controller::e>(node->nodeId());
 
     // params vary for each autopilot
     switch(id){

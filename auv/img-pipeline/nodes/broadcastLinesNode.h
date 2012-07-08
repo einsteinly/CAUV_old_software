@@ -50,7 +50,7 @@ class BroadcastLinesNode: public OutputNode{
             registerParamID< std::vector<Line> >("lines",
                                                  std::vector<Line>(),
                                                  "lines to braodcast",
-                                                 Must_Be_New);
+                                                 InputSchedType::Must_Be_New);
             registerParamID<std::string>("name", "unnamed lines",
                                          "name for detected set of lines");
         }

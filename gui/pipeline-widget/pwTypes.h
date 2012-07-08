@@ -22,16 +22,16 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <utility/enum_class.h>
+
 namespace cauv{
 namespace gui{
 namespace pw{
 
-namespace drawtype_e{
-enum e{
+ENUM_CLASS(drawtype_e,char,
     no_flags = 0x0,
     picking  = 0x1
-};
-} // namespace drawtype_e
+);
 
 class PipelineWidget;
 
@@ -71,13 +71,11 @@ typedef int32_t node_id;
 // Types for OverKey:
 namespace ok{
 
-namespace keystate_e{
-enum e{
+ENUM_CLASS(keystate_e,char,
     released = 0x0,
     pressed = 0x1,
     num_values = 0x2
-};
-} // namespace keystate_e
+);
 
 class Action;
 class Key;

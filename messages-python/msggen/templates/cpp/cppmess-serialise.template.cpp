@@ -30,15 +30,15 @@
 \#include <utility/string.h>
 
 #for $e in $enums
-void cauv::serialise(svec_ptr p, $e.name::e const& e){
+void cauv::serialise(svec_ptr p, $e.name const& e){
     serialise(p, $toCPPType($e.type)(e));
 }
 
-int32_t cauv::deserialise(const_svec_ptr p, uint32_t i, $e.name::e& e){
+int32_t cauv::deserialise(const_svec_ptr p, uint32_t i, $e.name& e){
     int32_t r;
     $toCPPType($e.type) t = 0;
     r = deserialise(p, i, t);
-    e = $e.name::e(t);
+    e = ${e.name}(t);
     return r;
 }
 
@@ -97,7 +97,7 @@ int32_t cauv::deserialise(const_svec_ptr p, uint32_t i, $v.name& v){
 
 
 #for $e in $enums
-std::string cauv::chil($e.name::e const& e){
+std::string cauv::chil($e.name const& e){
     return mkStr() << int32_t(e);
 }
 #end for

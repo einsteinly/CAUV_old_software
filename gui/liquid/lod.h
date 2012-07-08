@@ -32,7 +32,7 @@ class LODCapable{
     protected:
         typedef int must_inherit_LODCapable;
     
-        virtual void setPainterFor(LevelOfDetail::e lod, QPainter* painter) const = 0;
+        virtual void setPainterFor(LevelOfDetail lod, QPainter* painter) const = 0;
 };
 */
 

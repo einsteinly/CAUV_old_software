@@ -342,7 +342,7 @@ void emitPostGenerated(){
     bp::class_<BoundedFloat,
                bp::bases<BoundedFloatBase>,
                boost::shared_ptr<BoundedFloat> 
-              >("BoundedFloat",bp::init<float,float,float,BoundedFloatType::e>())
+              >("BoundedFloat",bp::init<float,float,float,BoundedFloatType>())
         ;
 
     bp::class_<WGS84Coord,
@@ -354,8 +354,11 @@ void emitPostGenerated(){
     bp::class_<Colour,
                bp::bases<ColourBase>,
                boost::shared_ptr<Colour>
-              >("Colour",bp::init<ColourType::e,boost::array<float,4> >())
-        .def("fromRGB", &Colour::fromRGB)
-        .staticmethod("fromRGB")
+              >("Colour",bp::init<ColourType,boost::array<float,4> >())
+        .def("fromRGB", &Colour::fromRGB).staticmethod("fromRGB")
+        .def("fromBGR", &Colour::fromBGR).staticmethod("fromBGR")
+        .def("fromBGRA", &Colour::fromBGRA).staticmethod("fromBGRA")
+        .def("fromARGB", &Colour::fromARGB).staticmethod("fromARGB")
+        .def("fromGrey", &Colour::fromGrey).staticmethod("fromGrey")
         ;
 }

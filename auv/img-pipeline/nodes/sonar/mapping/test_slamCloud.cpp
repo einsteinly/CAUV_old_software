@@ -13,8 +13,11 @@
  */
 
 #include <boost/algorithm/string.hpp>
+#include <boost/program_options.hpp>
  
 #include <pcl/point_types.h>
+
+#include <boost/program_options.hpp>
 
 #include <debug/cauv_debug.h>
 

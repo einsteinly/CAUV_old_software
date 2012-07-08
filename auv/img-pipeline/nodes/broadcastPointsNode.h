@@ -47,7 +47,7 @@ class BroadcastPointsNode: public OutputNode{
             
             // parameters:
             registerParamID< std::vector<floatXY> >("points", std::vector<floatXY>(),
-                                                   "the points to send", Must_Be_New); 
+                                                   "the points to send", InputSchedType::Must_Be_New); 
             registerParamID<std::string>("name", "unnamed points",
                                          "name for detected set of points");
         }

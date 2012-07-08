@@ -20,7 +20,7 @@ def toCPPType(t):
     if isinstance(t, msggenyacc.BaseType):
         return cppTypeMap[t.name]
     elif isinstance(t, msggenyacc.EnumType):
-        return t.enum.name + "::e"
+        return t.enum.name
     elif isinstance(t, msggenyacc.StructType):
         return t.struct.name
     elif isinstance(t, msggenyacc.VariantType):
@@ -37,26 +37,42 @@ def toCPPType(t):
         print "ERROR: " + repr(t) + " is not a type"
         return "ERROR"
 
-def getIncludedTypeNames(types, includestring='"%s.h"'):
-    typeNames = set()
+def isEnum(t):
+    return isinstance(t, msggenyacc.EnumType)
+
+def getIncludes(types, includestring='"%s.h"', fwddeclstring='"%s_fwd.h"'):
+    includes = set()
+    fwddecls = set()
     for t in types:
         if isinstance(t, msggenyacc.StructType):
-            typeNames.add(includestring % t.struct.name)
+            includes.add(includestring % t.struct.name)
+            fwddecls.add(fwddeclstring % t.struct.name)
         elif isinstance(t, msggenyacc.EnumType):
-            typeNames.add(includestring % t.enum.name)
+            includes.add(includestring % t.enum.name)
+            fwddecls.add(fwddeclstring % t.enum.name)
         elif isinstance(t, msggenyacc.VariantType):
-            typeNames.add(includestring % t.variant.name)
+            includes.add(includestring % t.variant.name)
+            fwddecls.add(fwddeclstring % t.variant.name)
         elif isinstance(t, msggenyacc.IncludedType):
-            typeNames.add(t.included.location)
+            includes.add(t.included.location)
+            fwddecls.add(t.included.location)
         elif isinstance(t, msggenyacc.ListType):
-            typeNames = set(["<vector>"]) | typeNames | getIncludedTypeNames([t.valType], includestring)
+            newincludes,newfwddecls = getIncludes([t.valType], includestring, fwddeclstring)
+            includes = set(["<vector>"]) | includes | newincludes
+            fwddecls = set(["<vector>"]) | fwddecls | newfwddecls
         elif isinstance(t, msggenyacc.MapType):
-            typeNames = set(["<map>"]) | typeNames | getIncludedTypeNames([t.keyType, t.valType], includestring)
+            newincludes,newfwddecls = getIncludes([t.keyType, t.valType], includestring, fwddeclstring)
+            includes = set(["<map>"]) | includes | newincludes
+            fwddecls = set(["<map>"]) | fwddecls | newfwddecls
         elif isinstance(t, msggenyacc.ArrayType):
-            typeNames = set(["<boost/array.hpp>"]) | typeNames | getIncludedTypeNames([t.valType], includestring)
+            newincludes,newfwddecls = getIncludes([t.valType], includestring, fwddeclstring)
+            includes = set(["<boost/array.hpp>"]) | includes | newincludes
+            fwddecls = set(["<boost/array.hpp>"]) | fwddecls | newfwddecls
         elif hasattr(t,"__iter__"):
-            typeNames = typeNames | getIncludedTypeNames(t, includestring)
-    return typeNames
+            newincludes,newfwddecls = getIncludes(t, includestring, fwddeclstring)
+            includes = includes | newincludes
+            fwddecls = fwddecls | newfwddecls
+    return includes,fwddecls
 
 def get_output_files(tree):
     OutputFile = collections.namedtuple("OutputFile", ["template_file", "output_file", "search_list"])
@@ -75,34 +91,46 @@ def get_output_files(tree):
                                        group.name.title() + "Group.h",
                                        {"g":group}))
         for message in group.messages:
-            includes = getIncludedTypeNames([f.type for f in message.fields])
+            includes,fwddecls = getIncludes([f.type for f in message.fields])
             output_types.append(OutputFile("cppmess-xmessage.template.h",
                                            message.name + "Message.h",
                                            {"m": message,
                                             "g": group,
-                                            "includes": includes}))
+                                            "includes": includes,
+                                            "fwddecls": fwddecls}))
             output_types.append(OutputFile("cppmess-xmessage.template.cpp",
                                            message.name + "Message.cpp",
                                            {"m": message,
-                                            "g": group}))
+                                            "g": group,
+                                            "includes": includes}))
 
     for struct in tree["structs"]:
-        includes = getIncludedTypeNames([f.type for f in struct.fields])
+        includes,fwddecls = getIncludes([f.type for f in struct.fields])
         output_types.append(OutputFile("cppmess-xstruct.template.h",
                                        struct.name + ".h",
                                        {"s": struct,
                                         "includes": includes}))
+        output_types.append(OutputFile("cppmess-xstruct_fwd.template.h",
+                                       struct.name + "_fwd.h",
+                                       {"s": struct}))
     for enum in tree["enums"]:
         output_types.append(OutputFile("cppmess-xenum.template.h",
                                        enum.name + ".h",
                                        {"e": enum}))
+        output_types.append(OutputFile("cppmess-xenum_fwd.template.h",
+                                       enum.name + "_fwd.h",
+                                       {"e": enum}))
     
     for variant in tree["variants"]:
-        includes = getIncludedTypeNames(variant.types)
+        includes,fwddecls = getIncludes(variant.types)
         output_types.append(OutputFile("cppmess-xvariant.template.h",
                                        variant.name + ".h",
                                        {"v": variant,
                                         "includes": includes}))
+        output_types.append(OutputFile("cppmess-xvariant_fwd.template.h",
+                                       variant.name + "_fwd.h",
+                                       {"v": variant,
+                                        "fwddecls": fwddecls}))
                                     
     output_files = [
         OutputFile("cppmess-message_observers.template.h",   "message_observers.h",   tree),

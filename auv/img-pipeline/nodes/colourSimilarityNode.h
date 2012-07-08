@@ -24,6 +24,7 @@
 #include <opencv2/core/core.hpp>
 
 #include <common/msg_classes/colour.h>
+#include <utility/arrays.h>
 
 #include "../node.h"
 
@@ -54,7 +55,7 @@ class ColourSimilarityNode: public Node{
 
     protected:
         template<typename T, int Channels>
-        static cv::Mat channelSimilarity(const cv::Mat& m, const Colour& colour, float sigma)
+        static cv::Mat channelSimilarity(const cv::Mat& m, const boost::array<float,Channels>& colour, float sigma)
         {
             typedef cv::Vec<T,Channels> pixel_t;
             
@@ -70,7 +71,7 @@ class ColourSimilarityNode: public Node{
                 double sqdist = 0;
                 const pixel_t& pixel = *it;
                 for (int c = 0; c < Channels; ++c)
-                    sqdist += (pixel[c]/255.0 - colour.values[c]) * (pixel[c]/255.0 - colour.values[c]);
+                    sqdist += (pixel[c]/255.0 - colour[c]) * (pixel[c]/255.0 - colour[c]);
 
                 *sit = round(std::exp(-sqdist/(2*sigma*sigma)) * 255);
             }
@@ -82,12 +83,12 @@ class ColourSimilarityNode: public Node{
         {
             int nchannels = m.channels();
 
-            if (nchannels == 3 && (colour.type == ColourType::RGB || colour.type == ColourType::BGR))
-                return channelSimilarity<T,3>(m, colour, sigma);
-            else if (nchannels == 4 && (colour.type == ColourType::ARGB || colour.type == ColourType::BGRA))
-                return channelSimilarity<T,4>(m, colour, sigma);
-            else if (nchannels == 1 && (colour.type == ColourType::Grey))
-                return channelSimilarity<T,1>(m, colour, sigma);
+            if (nchannels == 3)
+                return channelSimilarity<T,3>(m, make_array(colour.b(), colour.g(), colour.r()), sigma);
+            else if (nchannels == 4)
+                return channelSimilarity<T,4>(m, make_array(colour.b(), colour.g(), colour.r(), colour.a()), sigma);
+            else if (nchannels == 1)
+                return channelSimilarity<T,1>(m, make_array(colour.grey()), sigma);
             else {
                 error() << "Cannot use a" << nchannels << "image with" << colour.type;
                 return cv::Mat();

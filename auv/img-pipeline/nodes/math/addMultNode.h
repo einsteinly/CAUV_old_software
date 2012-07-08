@@ -40,7 +40,7 @@ class MathAddMultNode: public Node{
             registerOutputID("A*Afac + B*Bfac", T());
 
             // parameters:
-            registerParamID<T>("A (triggers exec)", T(), "value that must be new for execution", Must_Be_New);
+            registerParamID<T>("A (triggers exec)", T(), "value that must be new for execution", InputSchedType::Must_Be_New);
             registerParamID<float>("Afac", 1);
             registerParamID<T>("B", T());
             registerParamID<float>("Bfac", 1);

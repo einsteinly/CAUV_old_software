@@ -120,7 +120,7 @@ Key::Key(container_ptr_t c, keycode_t const& kc1, keycode_t const& kc2, cauv::gu
 Key::~Key(){
 }
 
-void Key::draw(drawtype_e::e){ 
+void Key::draw(drawtype_e){ 
 }
 
 void Key::draw(Qt::KeyboardModifiers const& mods, cauv::gui::Colour const& mul){
@@ -144,14 +144,14 @@ std::vector<keycode_t> const& Key::keyCodes() const{
     return m_keycodes;
 }
 
-void Key::state(keystate_e::e s){
+void Key::state(keystate_e s){
     if(m_state != s){
         m_state = s;
         m_context->postRedraw(0);
     }
 }
 
-keystate_e::e Key::state() const{
+keystate_e Key::state() const{
     return m_state;
 }
 
@@ -609,7 +609,7 @@ void OverKey::registerKey(keycode_t const& key, modifiers_t const& mods,
     registerKey(binding, act);
 }
 
-void OverKey::draw(drawtype_e::e flags){
+void OverKey::draw(drawtype_e flags){
     if(flags & drawtype_e::picking)
         return;
 

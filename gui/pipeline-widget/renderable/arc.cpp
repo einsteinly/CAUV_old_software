@@ -28,7 +28,7 @@ Arc::Arc(container_ptr_t c, renderable_wkptr_t src, renderable_wkptr_t dst)
 // TODO: all the dynamic casting is a bit iffy: if this is only going to work
 // with nodeoutput/nodeinputs, then that's what should be stored
 
-void Arc::draw(drawtype_e::e flags){
+void Arc::draw(drawtype_e flags){
     if(flags & drawtype_e::picking)
         return;
     if(m_hanging){

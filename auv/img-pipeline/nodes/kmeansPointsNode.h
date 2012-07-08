@@ -71,7 +71,7 @@ class KMeansPointsNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerParamID< std::vector<KeyPoint> >("keypoints", std::vector<KeyPoint>(), "", Must_Be_New);
+            registerParamID< std::vector<KeyPoint> >("keypoints", std::vector<KeyPoint>(), "", InputSchedType::Must_Be_New);
 
             // two outputs:
             registerOutputID("clusters", std::vector<Ellipse>());

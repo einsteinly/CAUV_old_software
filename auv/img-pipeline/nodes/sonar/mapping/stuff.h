@@ -17,7 +17,7 @@
 #include <Eigen/Core>
 
 namespace cauv{
-class TimeStamp;
+struct TimeStamp;
 
 /* difference in floating point seconds */
 double operator-(cauv::TimeStamp const& left, cauv::TimeStamp const& right);

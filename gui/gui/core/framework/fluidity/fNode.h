@@ -62,13 +62,13 @@ class FNode: public liquid::LiquidNode,
         typedef std::map<std::string, FNodeOutput*> str_out_map_t;
 
     public:
-        FNode(Manager& m, node_id_t id, NodeType::e const& type);
+        FNode(Manager& m, node_id_t id, NodeType const& type);
         FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p);
 
         node_id_t id() const{ return m_node_id; }
-        NodeType::e nodeType() const{ return m_type; }
+        NodeType nodeType() const{ return m_type; }
 
-        void setType(NodeType::e const&);
+        void setType(NodeType const&);
         void setInputs(msg_node_input_map_t const&);
         void setInputLinks(msg_node_input_map_t const&);
         void setOutputs(msg_node_output_map_t const&);
@@ -106,7 +106,7 @@ class FNode: public liquid::LiquidNode,
 
     protected:
         node_id_t m_node_id;
-        NodeType::e m_type;
+        NodeType m_type;
     
         str_in_map_t       m_inputs;
         str_inparam_map_t  m_params;

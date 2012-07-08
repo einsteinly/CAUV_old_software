@@ -46,7 +46,7 @@ class DrawEllipsesNode: public Node{
             registerInputID(Image_In_Name, true);
             registerOutputID(Image_Out_Copied_Name);
             registerParamID< std::vector<Ellipse> >(
-                "Ellipses", std::vector<Ellipse>(), "the Ellipses to draw", Must_Be_New
+                "Ellipses", std::vector<Ellipse>(), "the Ellipses to draw", InputSchedType::Must_Be_New
             ); 
         }
 

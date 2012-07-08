@@ -47,7 +47,7 @@ class BroadcastKeypointsNode: public OutputNode{
             
             // parameters:
             registerParamID< std::vector<cauv::KeyPoint> >("keypoints", std::vector<cauv::KeyPoint>(),
-                                                   "the keypoints to draw", Must_Be_New); 
+                                                   "the keypoints to draw", InputSchedType::Must_Be_New); 
             registerParamID<std::string>("name", "unnamed keypoints",
                                          "name for detected set of keypoints");
         }

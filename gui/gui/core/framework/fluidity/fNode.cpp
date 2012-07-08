@@ -108,7 +108,7 @@ class TestLayoutItem: public QGraphicsLayoutItem,
 
 
 // - static functions
-static QString nodeTypeDesc(cauv::NodeType::e const& type){
+static QString nodeTypeDesc(cauv::NodeType const& type){
     std::string enum_name = mkStr() << type;
     return mkQStr() << enum_name.substr(enum_name.rfind(':')+1).c_str();
 }
@@ -122,7 +122,7 @@ static int countLocalInputsWithName(std::string const& name, FNode::msg_node_par
 
 // - FNode
 
-FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
+FNode::FNode(Manager& m, node_id_t id, NodeType const& type)
     : liquid::LiquidNode(F_Node_Style(), NULL), 
       ManagedElement(m),
       m_node_id(id),
@@ -160,7 +160,7 @@ FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
     status(OK);
 }
 
-void FNode::setType(NodeType::e const& type){
+void FNode::setType(NodeType const& type){
     m_type = type;
     m_header->setTitle(nodeTypeDesc(type));
 }

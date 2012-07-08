@@ -32,7 +32,7 @@ class Arc: public Renderable{
         Arc(container_ptr_t c, renderable_wkptr_t src, renderable_wkptr_t dst);
         virtual ~Arc(){ }
 
-        virtual void draw(drawtype_e::e flags); 
+        virtual void draw(drawtype_e flags); 
         virtual bool acceptsMouseEvents();
         
         NodeOutput from(); 

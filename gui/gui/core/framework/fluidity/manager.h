@@ -133,7 +133,7 @@ class Manager: public QObject,
          */
         void requestArc(NodeOutput from, NodeInput to);
         void requestRemoveArc(NodeOutput from, NodeInput to);
-        void requestNode(NodeType::e const& type,
+        void requestNode(NodeType const& type,
                          std::vector<NodeInputArc> const& inputs = std::vector<NodeInputArc>(),
                          std::vector<NodeOutputArc> const& outputs = std::vector<NodeOutputArc>()); 
         void requestRemoveNode(node_id_t const& id);
@@ -149,7 +149,7 @@ class Manager: public QObject,
 
     protected:
         void removeNode(node_id_t const& id);
-        fnode_ptr addNode(NodeType::e const& type, node_id_t const& id);
+        fnode_ptr addNode(NodeType const& type, node_id_t const& id);
         fnode_ptr addNode(NodeAddedMessage_ptr);
         void clearNodes();
     

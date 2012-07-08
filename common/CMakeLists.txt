@@ -1,11 +1,4 @@
-option(CAUV_ZEROMQ_MESSAGING "use zeromq for messaging instead of spread" ON)
-if(CAUV_ZEROMQ_MESSAGING)
-    add_subdirectory(zeromq)
-    add_definitions(-DZEROMQ_MESSAGING)
-else()
-    add_subdirectory(spread)
-endif()
-
+add_subdirectory(zeromq)
 add_subdirectory(msg_classes)
 
 set (
@@ -27,13 +20,8 @@ set (
     boost_signals
     boost_program_options
     special_messages
+    zeromq_msg
 )
-
-if (CAUV_ZEROMQ_MESSAGING)
-    list(APPEND common_links zeromq_msg)
-else()
-    list(APPEND common_links spread_msg)
-endif()
 
 add_library (
     common STATIC

@@ -425,7 +425,7 @@ p_PitchAutopilotParamsMessage = pp.Group(l \
 p_PitchAutopilotParamsMessage.setParseAction(lambda x: messaging.PitchAutopilotParamsMessage(*x[0]))
 p_StateRequestMessage = pp.Group(l \
     + r).streamline()
-p_StateRequestMessage.setParseAction(lambda x: messaging.StateRequestMessage(*x[0]))
+
 p_ScriptMessage = pp.Group(l \
     + p_ScriptExecRequest \
     + r).streamline()

@@ -15,7 +15,7 @@ class Button: public Renderable{
         }
         virtual ~Button(){ }
         
-        virtual void draw(drawtype_e::e){
+        virtual void draw(drawtype_e){
             if(m_pressed)
                 glColor(Colour(1, 1));
             else if(m_mouseover)
@@ -81,7 +81,7 @@ class CloseButton: public Button{
         }
         virtual ~CloseButton(){ }
 
-        virtual void draw(drawtype_e::e flags){
+        virtual void draw(drawtype_e flags){
             Button::draw(flags);
 
             if(m_pressed)
@@ -116,7 +116,7 @@ class ExecButton: public Button{
         }
         virtual ~ExecButton(){ }
 
-        virtual void draw(drawtype_e::e flags){
+        virtual void draw(drawtype_e flags){
             Button::draw(flags);
 
             if(m_pressed)

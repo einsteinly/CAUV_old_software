@@ -85,7 +85,7 @@ def get_output_files(tree):
             requiredArrayTypes.add((t.valType, t.size))
 
     requiredVectorTypes, requiredMapTypes, requiredArrayTypes = addNestedTypes(requiredVectorTypes, requiredMapTypes, requiredArrayTypes)
-    includes = gencpp.getIncludedTypeNames(requiredMapTypes | requiredVectorTypes | requiredArrayTypes, "<generated/types/%s.h>")
+    includes,fwddecls = gencpp.getIncludes(requiredMapTypes | requiredVectorTypes | requiredArrayTypes, "<generated/types/%s.h>")
 
     output_files = []
 
