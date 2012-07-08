@@ -184,33 +184,33 @@ LiquidConditionNode::ConnectionStatus LiquidConditionNode::doAcceptConnection(li
 }
 
 void LiquidConditionNode::ensureConnected(){
-
-    info() << "ensuring condition inputs conencted";
-
     boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
     boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
-    boost::shared_ptr<GroupingNode> ai = pipelines->findOrCreate<GroupingNode>("ai");
-    info() << "got ai";
+
+    info() << "ensure connected condition";
 
     foreach(std::string const& id, m_node->getPipelineIds()) {
 
-        info() << "connecting " << id;
+        info() << "need " << id;
 
-        boost::shared_ptr<Node> node = ai->find<Node>(id);
-        info() << "got fluidity node";
-        ConnectedNode * cn = ConnectedNode::nodeFor(node);
-        qDebug() << "connected node = " << cn;
-        if(!cn) {
-            error() << "Node ConnectedNode not registered for " << id;
-            return;
+        try {
+            boost::shared_ptr<Node> node = pipelines->findFromPath<Node>(QString::fromStdString(id));
+            info() << "got fluidity node" << node->nodePath();
+            ConnectedNode * cn = ConnectedNode::nodeFor(node);
+            qDebug() << "connected node = " << cn;
+            if(!cn) {
+                error() << "Node ConnectedNode not registered for " << id;
+                continue;
+            }
+            liquid::ArcSource * source = cn->getSourceFor(node);
+            if(!source){
+                warning() << id << "does not have an ArcSource";
+                continue;
+            }
+            source->arc()->addTo(m_sink);
+        } catch (std::out_of_range){
+            warning() << "Pipeline node not found for condition";
         }
-        liquid::ArcSource * source = cn->getSourceFor(node);
-        if(!source){
-            warning() << id << "does not have an ArcSource";
-            return;
-        }
-        source->arc()->addTo(m_sink);
-
 
 
         /*

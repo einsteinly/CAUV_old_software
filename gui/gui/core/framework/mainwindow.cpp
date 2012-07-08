@@ -71,8 +71,8 @@ StackWidget::StackWidget(QWidget* parent)
     QVBoxLayout* layout = new QVBoxLayout;
     layout->setSpacing(0);
 
-    layout->addWidget(m_title);
     layout->addWidget(m_stack_widget);
+    layout->addWidget(m_title);
 
     layout->setContentsMargins(0,0,0,0);
     m_stack_widget->setContentsMargins(0,0,0,0);
@@ -306,7 +306,7 @@ void CauvMainWindow::onRun()
     m_actions->scene->registerDropHandler(boost::make_shared<GraphingDropHandler>(m_actions->root));
 
 
-    this->addMessageObserver(boost::make_shared<DebugMessageObserver>(5));
+    this->addMessageObserver(boost::make_shared<DebugMessageObserver>(3));
 
     // always need at least the gui and control group
     // TODO: messages based subscription

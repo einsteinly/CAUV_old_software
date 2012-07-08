@@ -126,6 +126,22 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
             }
         }
 
+
+        template <class T> boost::shared_ptr<T> findFromPath(QString path) const {
+
+            info() << "find" << path.toStdString();
+
+            QStringList pathparts = path.split('/');
+            if(pathparts.length() > 1){
+                QString prefixNode = path;
+                prefixNode.truncate(path.indexOf('/'));
+                boost::shared_ptr<Node> node = find<Node>(nid_t(
+                                prefixNode.toStdString()));
+                return node->findFromPath<T>(path.remove(0, path.indexOf('/')+1));
+            }
+            else return find<T>(nid_t(path.toStdString()));
+        }
+
         template <class T> bool exists(nid_t const& id) const {
             return m_id_map.find(id) != m_id_map.end();
         }

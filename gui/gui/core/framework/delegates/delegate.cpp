@@ -120,7 +120,8 @@ AbstractNodeDelegate::AbstractNodeDelegate(QObject * parent) :
     QStyledItemDelegate(parent),
     m_font("Verdana", 12, 1),
     m_minimumTitleWidth(62),
-    m_titlePen(Qt::black) {
+    m_titlePen(Qt::black),
+    m_updatesWhileEditing(false) {
     m_font.setPixelSize(12);
 }
 
@@ -162,6 +163,16 @@ void AbstractNodeDelegate::paint(QPainter *painter,
     QTextOption to(Qt::AlignVCenter);
     to.setWrapMode(QTextOption::NoWrap);
     painter->drawText(title, name, to);
+}
+
+void AbstractNodeDelegate::setEditorData(QWidget *editor,
+                                         const QModelIndex &index) const {
+    // don't allow updates while editing
+    if(!m_updatesWhileEditing) {
+        if(editor->property("data-initialised").toBool()) return;
+        editor->setProperty("data-initialised", true);
+    }
+    QStyledItemDelegate::setEditorData(editor, index);
 }
 
 void AbstractNodeDelegate::updateEditorGeometry(QWidget *editor,

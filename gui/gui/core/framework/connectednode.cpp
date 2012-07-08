@@ -23,7 +23,7 @@ using namespace cauv::gui;
 using namespace liquid;
 
 
-std::map<boost::shared_ptr<Node>, ConnectedNode*> * ConnectedNode::m_mapping;
+ConnectedNodeMap * ConnectedNode::m_mapping;
 
 
 ConnectedNode::ConnectedNode(boost::shared_ptr<Node> const& node,
@@ -34,10 +34,12 @@ ConnectedNode::ConnectedNode(boost::shared_ptr<Node> const& node,
 }
 
 ConnectedNode::~ConnectedNode(){
+    lock_t(m_mapping->lock);
     unregister(this);
 }
 
 ConnectedNode * ConnectedNode::nodeFor(boost::shared_ptr<Node> const& node) {
+    lock_t(m_mapping->lock);
     if(m_mapping->find(node) != m_mapping->end())
         return (*m_mapping)[node];
     else return NULL;

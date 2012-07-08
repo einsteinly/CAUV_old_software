@@ -89,6 +89,9 @@ public:
                               const QStyleOptionViewItem &option,
                               const QModelIndex &index) const;
 
+    void setEditorData(QWidget *editor,
+                       const QModelIndex &index) const;
+
     virtual void paint(QPainter *painter,
                        const QStyleOptionViewItem &option,
                        const QModelIndex &index) const;
@@ -96,6 +99,7 @@ protected:
     QFont m_font;
     int m_minimumTitleWidth;
     QPen m_titlePen;
+    bool m_updatesWhileEditing;
 };
 
 class SizedDelegate : public AbstractNodeDelegate {

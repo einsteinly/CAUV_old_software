@@ -20,6 +20,7 @@
 
 #include <gui/core/model/paramvalues.h>
 #include <gui/core/model/nodes/groupingnode.h>
+#include <gui/core/model/nodes/vehiclenode.h>
 
 #include <liquid/arcSink.h>
 #include <liquid/arc.h>
@@ -29,15 +30,13 @@
 #include <liquid/nodeHeader.h>
 #include <liquid/shadow.h>
 #include <liquid/button.h>
+#include <liquid/proxyWidget.h>
 
 #include <gui/core/framework/elements/style.h>
 #include <gui/core/model/model.h>
 #include <gui/core/framework/nodepicker.h>
 
 #include <gui/plugins/ai/conditionnode.h>
-
-// !!! inter-plugin dependence:
-#include <gui/plugins/fluidity/fluiditynode.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -48,10 +47,6 @@ AiTaskNode::AiTaskNode(const nid_t id) : BooleanNode(id){
 
 AiTaskNode::~AiTaskNode(){
     info() << "~AiTaskNode()";
-}
-
-void AiTaskNode::addPipeline(boost::shared_ptr<FluidityNode> pipe){
-    m_pipelines.insert(pipe);
 }
 
 void AiTaskNode::addCondition(boost::shared_ptr<AiConditionNode> condition){
@@ -67,12 +62,16 @@ std::set<boost::shared_ptr<AiConditionNode> > AiTaskNode::getConditions(){
     return m_conditions;
 }
 
-void AiTaskNode::removePipeline(boost::shared_ptr<FluidityNode> pipe){
-    m_pipelines.erase(std::find(m_pipelines.begin(), m_pipelines.end(), pipe));
+void AiTaskNode::addPipelineId(std::string pipe){
+    m_pipelineIds.insert(pipe);
 }
 
-std::set<boost::shared_ptr<FluidityNode> > AiTaskNode::getPipelines(){
-    return m_pipelines;
+void AiTaskNode::removePipelineId(std::string pipe){
+    m_pipelineIds.erase(std::find(m_pipelineIds.begin(), m_pipelineIds.end(), pipe));
+}
+
+std::set<std::string> AiTaskNode::getPipelineIds(){
+    return m_pipelineIds;
 }
 
 boost::shared_ptr<Node> AiTaskNode::setDebug(std::string name, ParamValue value){
@@ -168,6 +167,11 @@ LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem
     node->connect(node.get(), SIGNAL(onUpdate(QVariant)), this, SLOT(highlightRunningStatus(QVariant)));
     node->connect(node.get(), SIGNAL(onBranchChanged()), this, SLOT(ensureConnected()));
     node->connect(node.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
+
+    boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
+    boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
+    connect(pipelines.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
+
     highlightRunningStatus(node->get());
 }
 
@@ -218,6 +222,29 @@ void LiquidTaskNode::ensureConnected(){
             return;
         }
         source->arc()->addTo(m_conditionSink);
+    }
+
+
+    boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
+    boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
+    foreach(std::string const& id, m_node->getPipelineIds()) {
+        try {
+            boost::shared_ptr<Node> node = pipelines->findFromPath<Node>(QString::fromStdString(id));
+            ConnectedNode * cn = ConnectedNode::nodeFor(node);
+            qDebug() << "connected node = " << cn;
+            if(!cn) {
+                error() << "Node ConnectedNode not registered for " << id;
+                continue;
+            }
+            liquid::ArcSource * source = cn->getSourceFor(node);
+            if(!source){
+                warning() << id << "does not have an ArcSource";
+                continue;
+            }
+            source->arc()->addTo(m_pipelineSink);
+        } catch (std::out_of_range){
+            warning() << "Pipeline node not found for task";
+        }
     }
 }
 
@@ -272,9 +299,9 @@ std::string LiquidTaskNode::taskId() const{
     return boost::get<std::string>(m_node->nodeId());
 }
 
-bool LiquidTaskNode::willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*) {
+bool LiquidTaskNode::willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink* to_sink) {
     if (dynamic_cast<ConditionSourceDelegate *>(from_source)){
-        return true;
+        return to_sink == m_conditionSink;
     }
     return false;
 }

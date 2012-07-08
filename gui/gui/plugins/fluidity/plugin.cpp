@@ -123,8 +123,6 @@ void FluidityPlugin::initialise(){
         node->subMessage(PipelineDiscoveryResponseMessage());
         node->subMessage(NodeAddedMessage());
     }
-
-    startDiscovery();
 }
 
 void FluidityPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
@@ -146,6 +144,8 @@ void FluidityPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
 
         connect(pipelines.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
                 this, SLOT(setupPipeline(boost::shared_ptr<Node>)));
+
+        startDiscovery();
 
     } catch(std::runtime_error& e) {
         error() << "FluidityPlugin::setupVehicle: Expecting Vehicle Node" << e.what();

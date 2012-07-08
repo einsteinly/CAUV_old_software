@@ -30,6 +30,7 @@ BooleanDelegate::BooleanDelegate(QObject * parent) :
     QItemEditorFactory * factory = new QItemEditorFactory();
     setItemEditorFactory(factory);
     factory->registerEditor(QVariant::Bool, new QItemEditorCreator<OnOffSlider>("checked"));
+    m_updatesWhileEditing = true;
 }
 
 

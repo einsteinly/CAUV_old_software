@@ -18,6 +18,7 @@
 #include <map>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 
 namespace cauv{
 namespace gui{
@@ -25,8 +26,9 @@ namespace gui{
 class ConnectedNode;
 class Node;
 
-typedef std::map<boost::shared_ptr<Node>, ConnectedNode*> ConnectedNodeMap;
-
+struct ConnectedNodeMap : public std::map<boost::shared_ptr<Node>, ConnectedNode*> {
+    boost::mutex lock;
+};
 
 } // namespace gui
 } // namespace cauv

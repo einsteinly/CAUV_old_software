@@ -90,10 +90,6 @@ void NumericDelegate::commit() {
 
 void NumericDelegate::setEditorData(QWidget *editor,
                                     const QModelIndex &index) const{
-    // don't allow updates while editing
-    if(editor->property("data-initialised").toBool()) return;
-    editor->setProperty("data-initialised", true);
-
     QStyledItemDelegate::setEditorData(editor, index);
 
     NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());

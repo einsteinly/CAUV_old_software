@@ -45,7 +45,7 @@ void ColourDelegate::paint(QPainter *painter,
     Colour colour = index.model()->data(index, Qt::EditRole).value<Colour>();
     painter->setBrush(QColor::fromRgbF(colour.r(), colour.g(), colour.b(), colour.a()));
     painter->setPen(QPen(QColor(150,150,150), 2));
-    QRect rect = controlRect(option,index).adjusted(0,2,0,-2);
+    QRect rect = controlRect(option,index).adjusted(3,2,0,-2);
     qreal height = painter->fontMetrics().height()*1.3;
     painter->drawEllipse(QRect(rect.x(), rect.y() + rect.height()/2 - height/2,
                                height, height));
@@ -64,10 +64,6 @@ void ColourDelegate::paint(QPainter *painter,
 
 void ColourDelegate::setEditorData(QWidget *editor,
                                    const QModelIndex &index) const{
-    // don't allow updates while editing
-    if(editor->property("data-initialised").toBool()) return;
-    editor->setProperty("data-initialised", true);
-
     QStyledItemDelegate::setEditorData(editor, index);
 
     Colour colour = index.model()->data(index, Qt::EditRole).value<Colour>();

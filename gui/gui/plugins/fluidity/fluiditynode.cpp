@@ -59,7 +59,13 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
     
     boost::shared_ptr<CauvNode> cauv_node = FluidityPlugin::theCauvNode().lock();
     if(cauv_node){
-        m_view = new f::FView(cauv_node, m_node->nodeName());
+        std::string pipelineName = m_node->nodeName();
+        if(m_node->getParent()->type == nodeType<GroupingNode>()){
+            std::string parentName = m_node->getParent()->nodeName();
+            pipelineName = parentName.append("/").append(pipelineName);
+        }
+
+        m_view = new f::FView(cauv_node, pipelineName);
         m_view->setMode(f::FView::Internal);
         m_contents = new liquid::ProxyWidget(this);
         m_contents->setWidget(m_view);

@@ -18,6 +18,7 @@
 #include <set>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 
 #include <liquid/node.h>
 #include <liquid/style.h>
@@ -48,6 +49,8 @@ public:
     static ConnectedNodeMap * getMap();
 
 protected:
+
+    typedef boost::unique_lock<boost::mutex> lock_t;
 
     void unregister(boost::shared_ptr<Node> const& node);
     void unregister(ConnectedNode* ln);

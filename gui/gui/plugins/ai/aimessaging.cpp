@@ -64,6 +64,10 @@ void AiMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
     foreach(param_map_t::value_type i, m->debugValues()){
         task->setDebug(i.first, i.second);
     }
+
+    foreach(std::string const& pipeline, m->pipelineIds()){
+        task->addPipelineId(pipeline);
+    }
 }
 
 

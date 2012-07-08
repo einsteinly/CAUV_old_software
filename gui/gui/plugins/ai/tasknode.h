@@ -29,8 +29,6 @@
 namespace cauv {
 namespace gui {
 
-// !!! inter-plugin dependence
-class FluidityNode;
 class AiConditionNode;
 
 GENERATE_SIMPLE_NODE(AiMissionNode)
@@ -46,9 +44,9 @@ class AiTaskNode : public BooleanNode {
     void removeCondition(boost::shared_ptr<AiConditionNode> condition);
     std::set<boost::shared_ptr<AiConditionNode> > getConditions();
 
-    void addPipeline(boost::shared_ptr<FluidityNode> pipe);
-    void removePipeline(boost::shared_ptr<FluidityNode> pipe);
-    std::set<boost::shared_ptr<FluidityNode> > getPipelines();
+    void addPipelineId(std::string pipe);
+    void removePipelineId(std::string pipe);
+    std::set<std::string> getPipelineIds();
 
     boost::shared_ptr<Node> setDebug(std::string name, ParamValue value);
     void removeDebug(std::string name);
@@ -70,7 +68,7 @@ class AiTaskNode : public BooleanNode {
 
     protected:
     std::set<boost::shared_ptr<AiConditionNode> > m_conditions;
-    std::set<boost::shared_ptr<FluidityNode> > m_pipelines;
+    std::set<std::string> m_pipelineIds;
     std::map<std::string, boost::shared_ptr<Node> > m_debug;
     std::map<std::string, boost::shared_ptr<Node> > m_staticOptions;
     std::map<std::string, boost::shared_ptr<Node> > m_dynamicOptions;
