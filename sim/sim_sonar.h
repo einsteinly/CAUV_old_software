@@ -1,11 +1,13 @@
 #ifndef CAUV_SIMSONAR
 #define CAUV_SIMSONAR
 
-#include <generated/types/CameraID.h>
 #include <osg/Node>
 #include <osg/Image>
 #include <osgViewer/Viewer>
+
 #include <common/cauv_node.h>
+#include <utility/ratelimit.h>
+#include <generated/types/CameraID.h>
 #include "FixedNodeTrackerManipulator.h"
 
 namespace cauv {

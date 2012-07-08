@@ -1,14 +1,15 @@
-#include <opencv/cv.h>
+#include "sim_sonar.h"
+
+#include <cmath>
+#include <boost/make_shared.hpp>
+
+#include <opencv2/core/core.hpp>
+
 #include <utility/ratelimit.h>
 #include <generated/types/ImageMessage.h>
 #include <generated/types/SonarImageMessage.h>
 #include <common/msg_classes/image.h>
-#include <boost/make_shared.hpp>
 #include <debug/cauv_debug.h>
-
-#include <cmath>
-
-#include "sim_sonar.h"
 
 namespace cauv {
 

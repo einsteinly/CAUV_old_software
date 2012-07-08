@@ -33,6 +33,11 @@ cauv::TimeStamp cauv::now(){
     return r;
 }
 
+double cauv::nowDouble(){
+    const cauv::TimeStamp t = now();
+    return double(t.secs) + double(t.musecs)/1e6;
+}
+
 std::string cauv::now(std::string const& format){
     using namespace boost::posix_time;
     std::ostringstream oss;

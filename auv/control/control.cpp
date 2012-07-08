@@ -259,8 +259,6 @@ MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
     return l;
 }
 
-using namespace Controller;
-
 class ControlLoops : public MessageObserver, public IMUObserver
 {
     public:
@@ -306,33 +304,33 @@ class ControlLoops : public MessageObserver, public IMUObserver
 
         virtual void onTelemetry(const floatYPR& attitude)
         {
-            if (m_controlenabled[Bearing]) {
-                float mv = m_controllers[Bearing].getMV(attitude.yaw);
+            if (m_controlenabled[Controller::Bearing]) {
+                float mv = m_controllers[Controller::Bearing].getMV(attitude.yaw);
                 debug(2) << "Bearing Control: MV = " << mv;
-                m_demand[Bearing].hbow = mv;
-                m_demand[Bearing].hstern = -mv;
+                m_demand[Controller::Bearing].hbow = mv;
+                m_demand[Controller::Bearing].hstern = -mv;
                
-                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Bearing].stateMsg();
-                msg->demand(m_demand[Bearing]);
+                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Controller::Bearing].stateMsg();
+                msg->demand(m_demand[Controller::Bearing]);
                 m_mb->sendMessage(msg, RELIABLE_MSG);
 
-                foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
+                foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Controller::Bearing].extraStateMessages()){
                     m->name("Bearing-" + m->name());
                     m_mb->sendMessage(m, RELIABLE_MSG);
                 }
             }
             
-            if (m_controlenabled[Pitch]) {
-                float mv = m_controllers[Pitch].getMV(attitude.pitch);
+            if (m_controlenabled[Controller::Pitch]) {
+                float mv = m_controllers[Controller::Pitch].getMV(attitude.pitch);
                 debug(2) << "Pitch Control: MV = " << mv;
-                m_demand[Pitch].vbow = -mv;
-                m_demand[Pitch].vstern = mv;
+                m_demand[Controller::Pitch].vbow = -mv;
+                m_demand[Controller::Pitch].vstern = mv;
                 
-                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Pitch].stateMsg();
-                msg->demand(m_demand[Pitch]);
+                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Controller::Pitch].stateMsg();
+                msg->demand(m_demand[Controller::Pitch]);
                 m_mb->sendMessage(msg, RELIABLE_MSG);
                 
-                foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
+                foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Controller::Bearing].extraStateMessages()){
                     m->name("Pitch-" + m->name());
                     m_mb->sendMessage(m, RELIABLE_MSG);
                 }
@@ -347,7 +345,7 @@ class ControlLoops : public MessageObserver, public IMUObserver
 
         virtual void onPressureMessage(PressureMessage_ptr m)
         {
-            if (m_controlenabled[Depth] && m_depthCalibration){
+            if (m_controlenabled[Controller::Depth] && m_depthCalibration){
                 float fore_depth_calibrated = m_depthCalibration->foreOffset() +
                                               m_depthCalibration->foreMultiplier()
                                               * m->fore();
@@ -363,20 +361,20 @@ class ControlLoops : public MessageObserver, public IMUObserver
                 else
                     last_pressure_message_time = now();
                 
-                float mv = m_controllers[Depth].getMV(depth);
+                float mv = m_controllers[Controller::Depth].getMV(depth);
 
-                m_demand[Depth].vbow = mv;
-                m_demand[Depth].vstern = mv;
+                m_demand[Controller::Depth].vbow = mv;
+                m_demand[Controller::Depth].vstern = mv;
 
                 debug(2) << "depth: fwd=" << fore_depth_calibrated
                          << "aft=" << aft_depth_calibrated
                          << "mean=" << depth << ", mv =" << mv;
                 
-                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Depth].stateMsg();
-                msg->demand(m_demand[Depth]);
+                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Controller::Depth].stateMsg();
+                msg->demand(m_demand[Controller::Depth]);
                 m_mb->sendMessage(msg, RELIABLE_MSG);
                 
-                foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
+                foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Controller::Bearing].extraStateMessages()){
                     m->name("Depth-" + m->name());
                     m_mb->sendMessage(m, RELIABLE_MSG);
                 }
@@ -405,11 +403,11 @@ class ControlLoops : public MessageObserver, public IMUObserver
             
             switch(m->motorId())
             {
-                case MotorID::Prop: m_demand[ManualOverride].prop = m->speed(); break;
-                case MotorID::HBow: m_demand[ManualOverride].hbow = m->speed(); break;
-                case MotorID::HStern: m_demand[ManualOverride].hstern = m->speed(); break;
-                case MotorID::VBow: m_demand[ManualOverride].vbow = m->speed(); break;
-                case MotorID::VStern: m_demand[ManualOverride].vstern = m->speed(); break;
+                case MotorID::Prop: m_demand[Controller::ManualOverride].prop = m->speed(); break;
+                case MotorID::HBow: m_demand[Controller::ManualOverride].hbow = m->speed(); break;
+                case MotorID::HStern: m_demand[Controller::ManualOverride].hstern = m->speed(); break;
+                case MotorID::VBow: m_demand[Controller::ManualOverride].vbow = m->speed(); break;
+                case MotorID::VStern: m_demand[Controller::ManualOverride].vstern = m->speed(); break;
                 case MotorID::NumValues: break;
             }
         }
@@ -422,55 +420,55 @@ class ControlLoops : public MessageObserver, public IMUObserver
         virtual void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr m)
         {
             if (m->enabled()) {
-                if (!m_controlenabled[Bearing]) {
-                    m_controlenabled[Bearing] = true;
-                    m_controllers[Bearing].reset();
+                if (!m_controlenabled[Controller::Bearing]) {
+                    m_controlenabled[Controller::Bearing] = true;
+                    m_controllers[Controller::Bearing].reset();
                 }
-                m_controllers[Bearing].target = m->target();
+                m_controllers[Controller::Bearing].target = m->target();
             }
             else {
-                m_controlenabled[Bearing] = false;
+                m_controlenabled[Controller::Bearing] = false;
             }
         }
         virtual void onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr m)
         {
-            m_controllers[Bearing].Kp = m->Kp();
-            m_controllers[Bearing].Ki = m->Ki();
-            m_controllers[Bearing].Kd = m->Kd();
-			m_controllers[Bearing].Ap = m->Ap();
-            m_controllers[Bearing].Ai = m->Ai();
-            m_controllers[Bearing].Ad = m->Ad();
-			m_controllers[Bearing].thr = m->thr();
-            m_controllers[Bearing].scale = m->scale();
-            m_controllers[Bearing].errorMAX = m->maxError();
-            m_controllers[Bearing].reset();
+            m_controllers[Controller::Bearing].Kp = m->Kp();
+            m_controllers[Controller::Bearing].Ki = m->Ki();
+            m_controllers[Controller::Bearing].Kd = m->Kd();
+			m_controllers[Controller::Bearing].Ap = m->Ap();
+            m_controllers[Controller::Bearing].Ai = m->Ai();
+            m_controllers[Controller::Bearing].Ad = m->Ad();
+			m_controllers[Controller::Bearing].thr = m->thr();
+            m_controllers[Controller::Bearing].scale = m->scale();
+            m_controllers[Controller::Bearing].errorMAX = m->maxError();
+            m_controllers[Controller::Bearing].reset();
         }
 
         virtual void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr m)
         {
             if (m->enabled()) {
-                if (!m_controlenabled[Pitch]) {
-                    m_controlenabled[Pitch] = true;
-                    m_controllers[Pitch].reset();
+                if (!m_controlenabled[Controller::Pitch]) {
+                    m_controlenabled[Controller::Pitch] = true;
+                    m_controllers[Controller::Pitch].reset();
                 }
-                m_controllers[Pitch].target = m->target();
+                m_controllers[Controller::Pitch].target = m->target();
             }
             else {
-                m_controlenabled[Pitch] = false;
+                m_controlenabled[Controller::Pitch] = false;
             }
         }
         virtual void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr m)
         {
-            m_controllers[Pitch].Kp = m->Kp();
-            m_controllers[Pitch].Ki = m->Ki();
-            m_controllers[Pitch].Kd = m->Kd();
-			m_controllers[Pitch].Ap = m->Ap();
-            m_controllers[Pitch].Ai = m->Ai();
-            m_controllers[Pitch].Ad = m->Ad();
-			m_controllers[Pitch].thr = m->thr();
-            m_controllers[Pitch].scale = m->scale();
-            m_controllers[Pitch].errorMAX = m->maxError();
-            m_controllers[Pitch].reset();
+            m_controllers[Controller::Pitch].Kp = m->Kp();
+            m_controllers[Controller::Pitch].Ki = m->Ki();
+            m_controllers[Controller::Pitch].Kd = m->Kd();
+			m_controllers[Controller::Pitch].Ap = m->Ap();
+            m_controllers[Controller::Pitch].Ai = m->Ai();
+            m_controllers[Controller::Pitch].Ad = m->Ad();
+			m_controllers[Controller::Pitch].thr = m->thr();
+            m_controllers[Controller::Pitch].scale = m->scale();
+            m_controllers[Controller::Pitch].errorMAX = m->maxError();
+            m_controllers[Controller::Pitch].reset();
         }
 
         virtual void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr m)
@@ -479,28 +477,28 @@ class ControlLoops : public MessageObserver, public IMUObserver
                 if (!m_depthCalibration) {
                     warning() << "depth control will not be effective until calibration factors are set";
                 }
-                if (!m_controlenabled[Depth]) {
-                    m_controlenabled[Depth] = true;
-                    m_controllers[Depth].reset();
+                if (!m_controlenabled[Controller::Depth]) {
+                    m_controlenabled[Controller::Depth] = true;
+                    m_controllers[Controller::Depth].reset();
                 }
-                m_controllers[Depth].target = m->target();
+                m_controllers[Controller::Depth].target = m->target();
             }
             else {
-                m_controlenabled[Depth] = false;
+                m_controlenabled[Controller::Depth] = false;
             }
         }
         virtual void onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr m)
         {
-            m_controllers[Depth].Kp = m->Kp();
-            m_controllers[Depth].Ki = m->Ki();
-            m_controllers[Depth].Kd = m->Kd();
-            m_controllers[Depth].Ap = m->Ap();
-            m_controllers[Depth].Ai = m->Ai();
-            m_controllers[Depth].Ad = m->Ad();
-			m_controllers[Depth].thr = m->thr();
-			m_controllers[Depth].scale = m->scale();
-            m_controllers[Depth].errorMAX = m->maxError();
-            m_controllers[Depth].reset();
+            m_controllers[Controller::Depth].Kp = m->Kp();
+            m_controllers[Controller::Depth].Ki = m->Ki();
+            m_controllers[Controller::Depth].Kd = m->Kd();
+            m_controllers[Controller::Depth].Ap = m->Ap();
+            m_controllers[Controller::Depth].Ai = m->Ai();
+            m_controllers[Controller::Depth].Ad = m->Ad();
+			m_controllers[Controller::Depth].thr = m->thr();
+			m_controllers[Controller::Depth].scale = m->scale();
+            m_controllers[Controller::Depth].errorMAX = m->maxError();
+            m_controllers[Controller::Depth].reset();
         }
 
         virtual void onMotorRampRateMessage(MotorRampRateMessage_ptr m)
