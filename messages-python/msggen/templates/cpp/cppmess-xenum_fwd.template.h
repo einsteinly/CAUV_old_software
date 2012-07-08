@@ -16,8 +16,10 @@
 \#ifndef __CAUV_${e.name.upper()}_FWD_H__
 \#define __CAUV_${e.name.upper()}_FWD_H__
 
+\#include<utility/enum_class.h>
+
 namespace cauv{
-    struct $e.name;
+    ENUM_CLASS_FWD($e.name);
 }
 
 \#endif//__CAUV_${e.name.upper()}_FWD_H__

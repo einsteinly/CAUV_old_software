@@ -15,7 +15,9 @@
 #ifndef __CAUV_UTILITY_ENUMCLASS_H__
 #define __CAUV_UTILITY_ENUMCLASS_H__
 
+#define ENUM_CLASS_NAMESPACE __enums
 #define ENUM_CLASS(NAME, TYPE, VALUES...) \
+    namespace ENUM_CLASS_NAMESPACE {\
     struct NAME { \
         enum _e { VALUES }; \
         NAME() : val() {} \
@@ -39,6 +41,9 @@
     static inline NAME operator&(NAME::_e const& l, NAME::_e const& r){ \
         return NAME(l | r); \
     } \
+    } \
+    using ENUM_CLASS_NAMESPACE::NAME
 
+#define ENUM_CLASS_FWD(NAME) namespace ENUM_CLASS_NAMESPACE { struct NAME; } using ENUM_CLASS_NAMESPACE::NAME
 
 #endif
