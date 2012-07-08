@@ -10,6 +10,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/uuid/uuid.hpp>
 
 #include <xs.hpp>
 
@@ -96,7 +97,7 @@ class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public Message
     connections_t connections;
 
     void send_connect_message(uint32_t pid);
-    void send_subscribed_message (uint32_t pid, MessageType::e type);
+    void send_subscribed_message (const boost::uuids::uuid& node_uuid, MessageType::e type);
     void handle_pub_message(void);
     void handle_sub_message(void);
     void handle_send_message(void);
@@ -109,6 +110,7 @@ class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public Message
     bool daemon_connected;
     boost::thread m_thread;
     int m_group_gen;
+    boost::uuids::uuid id;
 
     bool starting_up;
 };

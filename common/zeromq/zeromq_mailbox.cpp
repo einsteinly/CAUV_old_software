@@ -65,9 +65,9 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     marker_sub[1] = getpid();
     sub.setsockopt(XS_SUBSCRIBE, marker_sub, sizeof(marker_sub));
 
-    uint32_t sub_sub[2];
+    uint32_t sub_sub[1+boost::uuids::uuid::static_size()];
     sub_sub[0] = MessageType::SubscriptionConfirmMarker;
-    sub_sub[1] = getpid();
+    std::copy(id.begin(), id.end(), (boost::uuids::uuid::value_type*)(&sub_sub[1]));
     sub.setsockopt(XS_SUBSCRIBE, sub_sub, sizeof(sub_sub));
 
     std::string daemon_control_str;
@@ -135,6 +135,7 @@ namespace {
     struct SubscriptionMessage {
         bool subscribe; //subscribe or unsubscribe
         uint32_t msg_id;
+        boost::uuids::uuid node_uuid;
     };
 }
 
@@ -152,6 +153,7 @@ void ZeroMQMailbox::leaveGroup(const std::string& groupName) {
     boost::lock_guard<boost::mutex> lock(m_sub_mutex);
     SubscriptionMessage submsg;
     submsg.subscribe = true;
+    std::copy(id.begin(), id.end(), submsg.node_uuid.begin());
     BOOST_FOREACH(uint32_t id, get_ids_for_group(groupName)) {
         submsg.msg_id = id;
         sub_queue_push.send(&submsg, sizeof(submsg));
@@ -163,6 +165,7 @@ void ZeroMQMailbox::subMessage(const Message &msg) {
     SubscriptionMessage submsg;
     submsg.subscribe = true;
     submsg.msg_id = msg.id();
+    std::copy(id.begin(), id.end(), submsg.node_uuid.begin());
     sub_queue_push.send(&submsg, sizeof(submsg));
 }
 
@@ -269,11 +272,11 @@ void ZeroMQMailbox::send_connect_message (uint32_t pid) {
     pub.send(buf.c_str(),buf.size());
 }
 
-void ZeroMQMailbox::send_subscribed_message (uint32_t pid, MessageType::e type) {
+void ZeroMQMailbox::send_subscribed_message (const boost::uuids::uuid& node_uuid, MessageType::e type) {
     std::string buf;
     uint32_t sub_id = MessageType::SubscriptionConfirmMarker;
     buf += std::string(reinterpret_cast<char*>(&sub_id), sizeof(sub_id));
-    buf += std::string(reinterpret_cast<char*>(&pid), sizeof(pid));
+    buf += std::string(reinterpret_cast<const char*>(node_uuid.begin()), boost::uuids::uuid::static_size());
     buf += std::string(reinterpret_cast<char*>(&type), sizeof(type));
     pub.send(buf.c_str(),buf.size());
 }
@@ -357,8 +360,9 @@ void ZeroMQMailbox::handle_pub_message (void) {
                 }
             }
             if (is_sub) {
-                uint32_t pid = getpid();
-                send_subscribed_message(pid, sub_id);
+                boost::uuids::uuid node_uuid;
+                std::copy(&s_vec.second[1], &s_vec.second[1+boost::uuids::uuid::static_size()], id.begin());
+                send_subscribed_message(node_uuid, sub_id);
             }
             break;
         }
