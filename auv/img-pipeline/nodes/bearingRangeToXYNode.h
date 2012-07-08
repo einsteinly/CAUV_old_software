@@ -44,10 +44,10 @@ class BearingRangeToXYNode: public Node{
             m_speed = slow;
 
             // input polar image:
-            registerInputID("polar image", May_Be_Old);
+            registerInputID("polar image", InputSchedType::May_Be_Old);
             // param input:
             registerParamID< std::vector<KeyPoint> >(
-                "keypoints", std::vector<KeyPoint>(), "the KeyPoints to convert", Must_Be_New
+                "keypoints", std::vector<KeyPoint>(), "the KeyPoints to convert", InputSchedType::Must_Be_New
             );
             
             // output

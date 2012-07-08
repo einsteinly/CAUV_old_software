@@ -49,7 +49,7 @@ const QList<QString> LogView::getGroups() const{
     return groups;
 }
 
-void LogView::appendLog(QTextEdit *edit, DebugType::e, std::string message){
+void LogView::appendLog(QTextEdit *edit, DebugType, std::string message){
     edit->append(QString::fromStdString(message));
 }
 

@@ -28,7 +28,7 @@ namespace gui{
 namespace pw{
 
 struct SendAddNodeMessage{
-    SendAddNodeMessage(pw_ptr_t p, NodeType::e const& id)
+    SendAddNodeMessage(pw_ptr_t p, NodeType const& id)
         : m_widget(p), m_id(id){
     }
 
@@ -40,7 +40,7 @@ struct SendAddNodeMessage{
     }
 
     pw_ptr_t m_widget;
-    NodeType::e m_id;
+    NodeType m_id;
 };
 
 boost::shared_ptr<Menu> buildAddNodeMenu(pw_ptr_t p){
@@ -49,8 +49,8 @@ boost::shared_ptr<Menu> buildAddNodeMenu(pw_ptr_t p){
     debug() << "buildAddNodeMenu";
 
     /* this only works if nodes.cpp is compiled in... don't want to do that
-    std::list<NodeType::e> available = NodeFactoryRegister::list();
-    std::list<NodeType::e>::const_iterator i;
+    std::list<NodeType> available = NodeFactoryRegister::list();
+    std::list<NodeType>::const_iterator i;
     for(i = available.begin(); i != available.end(); i++)
         menu_items[toStr(*i)] = boost::make_shared<SendAddNodeMessage>(p, *i);
     */
@@ -58,8 +58,8 @@ boost::shared_ptr<Menu> buildAddNodeMenu(pw_ptr_t p){
      * consecutive
      */
     for(int i = 0; i < NodeType::NumValues; i++)
-        menu_items[toStr((NodeType::e)i)] =
-            boost::make_shared<SendAddNodeMessage>(p, (NodeType::e)i); 
+        menu_items[toStr((NodeType)i)] =
+            boost::make_shared<SendAddNodeMessage>(p, (NodeType)i); 
     
     debug() << __func__ << "returning menu with" << menu_items.size() << "items";
     return boost::make_shared< ListMenu<SendAddNodeMessage> >(p, menu_items);

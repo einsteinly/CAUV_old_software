@@ -20,13 +20,11 @@
 \#include <boost/cstdint.hpp>
 \#include <boost/variant/variant_fwd.hpp>
 \#include <utility/streamops.h>
+\#include <utility/enum_class.h>
 
 namespace cauv{
 
-namespace MessageType
-{
-    enum e
-    {
+ENUM_CLASS(MessageType, uint32_t,
         #set $num_values = 0
         #for $g in $groups
         #for $m in $g.messages
@@ -35,12 +33,11 @@ namespace MessageType
         #end for
         #end for
         NumValues = $num_values
-    };
-} // namespace MessageType
+);
 
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, MessageType::e const& e)
+    std::basic_ostream<char_T, traits>& os, MessageType const& e)
 {
     switch(e)
     {

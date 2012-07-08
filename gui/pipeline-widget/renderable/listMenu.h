@@ -50,7 +50,7 @@ class ListMenuItem: public Renderable{
 
         virtual ~ListMenuItem(){ }
 
-        virtual void draw(drawtype_e::e flags){
+        virtual void draw(drawtype_e flags){
             if(m_pressed)
                 glColor(Colour(0.50, 0.8));
             else if(m_hovered)
@@ -156,7 +156,7 @@ class ListMenu: public Menu{
 
         virtual ~ListMenu(){ }
 
-        virtual void draw(drawtype_e::e flags){
+        virtual void draw(drawtype_e flags){
             typename std::list<item_ptr>::const_iterator i;
             /* menus are above: */
             glTranslatef(0, 0, 0.1);

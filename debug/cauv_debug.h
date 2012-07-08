@@ -91,7 +91,7 @@ class SmartStreamBase : public boost::noncopyable
         typedef stream_t& (*manip_t)(stream_t&);
         
         SmartStreamBase(std::ostream& stream,
-                        BashColour::e col = BashColour::None,
+                        BashColour col = BashColour::None,
                         bool print=true);
 
         virtual ~SmartStreamBase();
@@ -176,7 +176,7 @@ class SmartStreamBase : public boost::noncopyable
         boost::scoped_ptr<lock_t> m_lock;
 #endif
         std::ostream& m_stream;
-        BashColour::e m_col;
+        BashColour m_col;
         bool m_print;
 };
 

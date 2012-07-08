@@ -17,7 +17,7 @@
 #include <debug/cauv_debug.h> 
 #include <utility/bash_cout.h>
 
-static BashColour::e colours[] = {
+static BashColour colours[] = {
     BashColour::Red,
     BashColour::Green,
     BashColour::Cyan,
@@ -29,9 +29,9 @@ struct printDebugStuff{
     void operator()(){
         int i = 0;
         while(true){
-            debug() << colours[i % (sizeof(colours)/sizeof(BashColour::e))]
+            debug() << colours[i % (sizeof(colours)/sizeof(BashColour))]
                     << i << "," << i+1 << "=" << "(" << i
-                    << colours[(i+3) % (sizeof(colours)/sizeof(BashColour::e))]
+                    << colours[(i+3) % (sizeof(colours)/sizeof(BashColour))]
                     << "," << i+1 << ")";
             i++;
             //boost::this_thread::sleep(boost::posix_time::milliseconds(5)); 
@@ -43,9 +43,9 @@ struct printInfoStuff{
     void operator()(){
         int i = 0;
         while(true){
-            info() << colours[i % (sizeof(colours)/sizeof(BashColour::e))]
+            info() << colours[i % (sizeof(colours)/sizeof(BashColour))]
                     << i << "," << i+1 << "=" << "(" << i
-                    << colours[(i+3) % (sizeof(colours)/sizeof(BashColour::e))]
+                    << colours[(i+3) % (sizeof(colours)/sizeof(BashColour))]
                     << "," << i+1 << ")";
             i++;
             //boost::this_thread::sleep(boost::posix_time::milliseconds(5)); 
@@ -57,9 +57,9 @@ struct printErrorStuff{
     void operator()(){
         int i = 0;
         while(true){
-            error() << colours[i % (sizeof(colours)/sizeof(BashColour::e))]
+            error() << colours[i % (sizeof(colours)/sizeof(BashColour))]
                     << i << "," << i+1 << "=" << "(" << i
-                    << colours[(i+3) % (sizeof(colours)/sizeof(BashColour::e))]
+                    << colours[(i+3) % (sizeof(colours)/sizeof(BashColour))]
                     << "," << i+1 << ")";
             i++;
             //boost::this_thread::sleep(boost::posix_time::milliseconds(5));

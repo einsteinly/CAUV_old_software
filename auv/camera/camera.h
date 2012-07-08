@@ -42,12 +42,12 @@ class Camera : public Observable<CameraObserver>
     public:
         virtual ~Camera();
         
-        CameraID::e id() const;
+        CameraID id() const;
     
     protected:
-        CameraID::e m_id;
+        CameraID m_id;
 
-        Camera(const CameraID::e id);
+        Camera(const CameraID id);
         void broadcastImage(const cv::Mat &img);
 };
 

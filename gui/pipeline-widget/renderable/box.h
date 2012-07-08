@@ -28,7 +28,7 @@ class Box: public Draggable{
         }
         virtual ~Box(){ }
 
-        virtual void draw(drawtype_e::e){
+        virtual void draw(drawtype_e){
             if(m_mouseover)
                 glColor4f(1.0, 0.0, 0.0, 0.5);
             else

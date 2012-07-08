@@ -31,7 +31,7 @@ class TexImg;
 class Img: public Resizeable{
     public:
         Img(container_ptr_t c);
-        virtual void draw(drawtype_e::e flags);
+        virtual void draw(drawtype_e flags);
         void display(Image const& img);
 
     private:
@@ -42,7 +42,7 @@ class Img: public Resizeable{
 class ImgNode: public Node{
     public:
         ImgNode(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage const> m);
-        ImgNode(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const& nt);
+        ImgNode(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType const& nt);
         void display(Image const& img);
     
     private:

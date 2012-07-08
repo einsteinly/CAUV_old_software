@@ -14,6 +14,7 @@
 
 #include "node.h"
 
+#include <set>
 #include <algorithm>
 
 #include <utility/time.h>
@@ -26,6 +27,7 @@ using namespace cauv;
 using namespace cauv::imgproc;
 
 // - std set intersection
+namespace std {
 template<typename T>
 std::set<T> operator&(std::set<T> const& l, std::set<T> const& r){
     std::set<T> ret;
@@ -36,6 +38,7 @@ std::set<T> operator&(std::set<T> const& l, std::set<T> const& r){
         if(r.count(*i))
             ret.insert(*i);
     return ret;
+}
 }
 
 // - Nested Class Definitions:
@@ -118,7 +121,7 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
 // (defined in header, it's all inlined)
 
 // - Node::Input
-Node::Input::Input(InputSchedType::e s,
+Node::Input::Input(InputSchedType s,
                    bool isconst)
     : TestableBase<Input>(*this),
       target(),
@@ -130,7 +133,7 @@ Node::Input::Input(InputSchedType::e s,
       isconst(isconst){
 }
 
-Node::Input::Input(InputSchedType::e s,
+Node::Input::Input(InputSchedType s,
                    ParamValue const& default_value,
                    std::string const& tip,
                    std::vector<int32_t> const& compatible_subtypes)
@@ -145,12 +148,12 @@ Node::Input::Input(InputSchedType::e s,
       isconst(true){
 }
 
-Node::input_ptr Node::Input::makeImageInputShared(bool isconst, InputSchedType::e const& st){
+Node::input_ptr Node::Input::makeImageInputShared(bool isconst, InputSchedType const& st){
     return boost::make_shared<Input>(boost::cref(st), isconst);
 }
 
 Node::input_ptr Node::Input::makeParamInputShared(
-    ParamValue const& default_value, std::string const& tip, InputSchedType::e const& st
+    ParamValue const& default_value, std::string const& tip, InputSchedType const& st
 ){
     return boost::make_shared<Input>(
         boost::cref(st), boost::cref(default_value), boost::cref(tip), boost::apply_visitor(CompatibleSubTypes(), default_value)
@@ -294,7 +297,7 @@ const char* Node::Image_Out_Copied_Name = "image out";
 Node::ConstructArgs::ConstructArgs(Scheduler& sched,
                                    ImageProcessor& pl,
                                    std::string const& pl_name,
-                                   NodeType::e type
+                                   NodeType type
 )   : sched(sched), pl(pl), pl_name(pl_name), type(type){
 }
 
@@ -360,7 +363,7 @@ void Node::stop(){
     m_stopped = true;
 }
 
-NodeType::e const& Node::type() const{
+NodeType const& Node::type() const{
     return m_node_type;
 }
 
@@ -514,7 +517,7 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
         throw link_error("setOutput: Parameter <==> Image mismatch");
     }
     const int32_t sub_type = i->second->isParam()?  boost::get<InternalParamValue>(i->second->value()).param.which() : -1;
-    // note that the schedType field (May_Be_Old here) is excluded from the
+    // note that the schedType field (InputSchedType::May_Be_Old here) is excluded from the
     // comparison of LocalNodeInput structures, so the value doesn't matter
     const std::map<LocalNodeInput, ParamValue> params = n->parameters();
     if(i->second->isParam() && !(std::count_if(
@@ -607,7 +610,7 @@ Node::msg_node_output_map_t Node::outputLinks() const{
     foreach(private_out_map_t::value_type const& i, m_outputs){
         msg_node_in_list_t input_list;
         int32_t sub_type = -1;
-        OutputType::e type = OutputType::e(i.second->which());
+        OutputType type = OutputType(i.second->which());
         if(type == OutputType::Parameter)
             sub_type = boost::get<InternalParamValue>(i.second->value()).param.which();
         foreach(output_link_list_t::value_type const& j, i.second->targets)
@@ -653,20 +656,6 @@ int Node::numChildren() const{
     return r;
 }
 
-// enum status mangling:
-static NodeStatus::e& operator|=(NodeStatus::e& l, NodeStatus::e const& r){
-    return l = NodeStatus::e(unsigned(l) | unsigned(r));
-}
-static NodeStatus::e operator|(NodeStatus::e const& l, NodeStatus::e const& r){
-    return NodeStatus::e(unsigned(l) | unsigned(r));
-}
-
-//static NodeIOStatus::e& operator|=(NodeIOStatus::e& l, NodeIOStatus::e const& r){
-//    return l = NodeIOStatus::e(unsigned(l) | unsigned(r));
-//}
-static NodeIOStatus::e operator|(NodeIOStatus::e const& l, NodeIOStatus::e const& r){
-    return NodeIOStatus::e(unsigned(l) | unsigned(r));
-}
 struct isuniquevisitor : boost::static_visitor<bool> {
     bool operator()(const cv::Mat& m) const { return !m.refcount || *m.refcount <= 1; } 
     bool operator()(const NonUniformPolarMat& m) const { return operator()(m.mat); }
@@ -695,13 +684,13 @@ void Node::exec(){
         foreach(private_in_map_t::value_type const& v, m_inputs){
             const input_ptr ip = v.second;
             if(!ip->isParam()){
-                if(!*ip && ip->sched_type != Optional){
+                if(!*ip && ip->sched_type != InputSchedType::Optional){
                     warning() << "exec:" << *this << "no parent or valid input on: " << v.first;
                     clearValidInput(v.first);
                     throw bad_input_error(v.first);
                 }else if(*ip){
                     inputs[v.first] = ip->getImage();
-                    if(!inputs[v.first] && ip->sched_type != Optional){
+                    if(!inputs[v.first] && ip->sched_type != InputSchedType::Optional){
                         warning() << "exec:" << *this << "no output from: " << ip->target << "->" << v.first;
                         throw bad_input_error(v.first);
                     }
@@ -755,7 +744,7 @@ void Node::exec(){
 
     debug(4) << "exec:" << *this << "speed=" << m_speed << ", " << inputs.size() << "inputs";
 
-    NodeStatus::e status = NodeStatus::None;
+    NodeStatus status = NodeStatus::None;
     if(allowQueue()) status |= NodeStatus::AllowQueue;
     _statusMessage(status | NodeStatus::Executing);
     out_map_t outputs(inputs);    
@@ -776,7 +765,7 @@ void Node::exec(){
         }
         // only set data rate if something bad didn't happen:
         m_throughput_counter.success(bits);
-        status = NodeStatus::e(status & ~NodeStatus::Bad);
+        status = NodeStatus(status & ~NodeStatus::Bad);
     }catch(user_attention_error& e){
         // these messages are only expected from nodes (such as file/video
         // input nodes) that are used in interactively for development. Nodes
@@ -970,7 +959,7 @@ void Node::setParam(boost::shared_ptr<const SetNodeParameterMessage>  m){
     setParam(m->paramId(), m->value());
 }
 
-void Node::registerInputID(input_id const& i, bool isconst, InputSchedType::e const& st){
+void Node::registerInputID(input_id const& i, bool isconst, InputSchedType const& st){
     lock_t l(m_inputs_lock);
     if(m_inputs.count(i)){
         error() << "Duplicate input/parameter id:" << i;
@@ -1054,7 +1043,7 @@ void Node::checkAddSched(SchedMode m){
             }
             if(!ensureValidInput()){
                 debug(4) << __func__ << "Cannot enqueue" << *this << ", invalid input"; 
-                NodeStatus::e status = NodeStatus::Bad;
+                NodeStatus status = NodeStatus::Bad;
                 if(execQueued()) status |= NodeStatus::ExecQueued;
                 if(allowQueue()) status |= NodeStatus::AllowQueue;
                 _statusMessage(status);
@@ -1091,7 +1080,7 @@ void Node::checkAddSched(SchedMode m){
 
     if(wait_for_synchronisation){
         debug(2) << __func__ << "Cannot enqueue" << *this << ", synchronisation required";
-        NodeStatus::e status = NodeStatus::WaitingForSync;
+        NodeStatus status = NodeStatus::WaitingForSync;
         if(execQueued()) status |= NodeStatus::ExecQueued;
         if(allowQueue()) status |= NodeStatus::AllowQueue;
         _statusMessage(status);
@@ -1165,7 +1154,7 @@ void Node::clearNewInput(){
 bool Node::allRequiredInputsAreNew() const{
     lock_t m(m_inputs_lock);
     foreach(private_in_map_t::value_type const& i, m_inputs)
-        if(i.second->sched_type == Must_Be_New && i.second->status != NodeInputStatus::New)
+        if(i.second->sched_type == InputSchedType::Must_Be_New && i.second->status != NodeInputStatus::New)
             return false;
     return true;
 }
@@ -1174,9 +1163,9 @@ bool Node::anyRequiredInputsAreNew() const{
     lock_t m(m_inputs_lock);
     bool default_status = true;
     foreach(private_in_map_t::value_type const& i, m_inputs)
-        // any Must_Be_New inputs imply that the node shouldn't execute if
+        // any InputSchedType::Must_Be_New inputs imply that the node shouldn't execute if
         // nothing is new
-        if(i.second->sched_type == Must_Be_New){
+        if(i.second->sched_type == InputSchedType::Must_Be_New){
             default_status = false;
             if(i.second->status == NodeInputStatus::New)
                 return true;
@@ -1215,7 +1204,7 @@ bool Node::ensureValidInput(){
     bool invalid_input = false;
     parents.reserve(m_inputs.size()); 
     foreach(private_in_map_t::value_type& i, m_inputs)
-        if(!*i.second && i.second->sched_type != Optional){
+        if(!*i.second && i.second->sched_type != InputSchedType::Optional){
             invalid_input = true;
             if(i.second->target){
                 parents.push_back(i.second->target);
@@ -1253,7 +1242,7 @@ void Node::clearNewOutputDemanded(output_id const& o){
     m_output_demanded_on.erase(o);
     if(output_demanded_before !=  !!m_output_demanded_on.size())
         _statusMessage(boost::make_shared<OutputStatusMessage>(
-                m_pl_name, m_id, o, NodeIOStatus::e(0)
+                m_pl_name, m_id, o, NodeIOStatus(0)
         ));
 }
 
@@ -1267,7 +1256,7 @@ bool Node::newOutputDemanded() const{
 void Node::setAllowQueue(){
     lock_t l(m_allow_queue_lock);
     m_allow_queue = true;
-    NodeStatus::e status = NodeStatus::AllowQueue;
+    NodeStatus status = NodeStatus::AllowQueue;
     if(execQueued()) status |= NodeStatus::ExecQueued;
     _statusMessage(status);
     l.unlock();
@@ -1277,7 +1266,7 @@ void Node::setAllowQueue(){
 void Node::clearAllowQueue(){
     lock_t l(m_allow_queue_lock);
     m_allow_queue = false;
-    NodeStatus::e status = NodeStatus::e(0);
+    NodeStatus status = NodeStatus(0);
     if(execQueued()) status |= NodeStatus::ExecQueued;
     _statusMessage(status);
 }
@@ -1290,7 +1279,7 @@ bool Node::allowQueue() const{
 void Node::setExecQueued(){
     lock_t l(m_exec_queued_lock);
     m_exec_queued = true;
-    NodeStatus::e status = NodeStatus::ExecQueued;
+    NodeStatus status = NodeStatus::ExecQueued;
     if(allowQueue()) status |= NodeStatus::AllowQueue;
     _statusMessage(status);
 }
@@ -1298,7 +1287,7 @@ void Node::setExecQueued(){
 void Node::clearExecQueued(){
     lock_t l(m_exec_queued_lock);
     m_exec_queued = false;
-    NodeStatus::e status = NodeStatus::e(0);
+    NodeStatus status = NodeStatus(0);
     if(allowQueue()) status |= NodeStatus::AllowQueue;
     _statusMessage(status);
     l.unlock();
@@ -1383,7 +1372,7 @@ void Node::_popQueueOutputForSync(output_id const& o_id){
         error() << "no such output (pop for sync):" << o_id;
 }
 
-void Node::_statusMessage(NodeStatus::e const& status){
+void Node::_statusMessage(NodeStatus const& status){
     if(status & NodeStatus::Bad || m_message_throttle.click())
         m_pl.sendMessage(boost::make_shared<StatusMessage const>(
             m_pl_name, m_id, status, m_throughput_counter.mBitPerSecond(),

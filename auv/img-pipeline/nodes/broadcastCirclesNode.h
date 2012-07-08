@@ -48,7 +48,7 @@ class BroadcastCirclesNode: public OutputNode{
             
             // parameters:
             registerParamID< std::vector<Circle> >(
-                "Circles", std::vector<Circle>(), "Circles to broadcast", Must_Be_New
+                "Circles", std::vector<Circle>(), "Circles to broadcast", InputSchedType::Must_Be_New
             ); 
             registerParamID<std::string>("name",
                                          "unnamed circles",

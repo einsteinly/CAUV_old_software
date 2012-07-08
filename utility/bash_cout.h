@@ -18,10 +18,10 @@
 #include <iomanip>
 #include <ostream>
 
+#include <utility/enum_class.h>
+
 /* bash colours */
-namespace BashColour
-{
-    enum e {
+ENUM_CLASS(BashColour,char,
         None   = 0,
         Black  = 30,
         Red    = 31,
@@ -31,11 +31,8 @@ namespace BashColour
         Purple = 35,
         Cyan   = 36,
         White  = 37
-    };
-}
-namespace BashBackground
-{
-    enum e {
+);
+ENUM_CLASS(BashBackground,char,
         Black   = 40,
         Red     = 41,
         Green   = 42,
@@ -44,27 +41,20 @@ namespace BashBackground
         Magenta = 45,
         Cyan    = 46,
         White   = 47
-    };
-}
-namespace BashControl
-{
-    enum e {
+);
+ENUM_CLASS(BashControl,char,
         Reset  = 0
-    };
-}
-namespace BashIntensity
-{
-    enum e {
+);
+ENUM_CLASS(BashIntensity,char,
         Bold   = 1,
         Faint  = 1,
         Normal = 22
-    };
-}
+);
 
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, BashControl::e const& c)
+    std::basic_ostream<charT, traits>& os, BashControl const& c)
 {
     os << "\033[0" << int(c) << "m";
     return os;
@@ -72,7 +62,7 @@ std::basic_ostream<charT, traits>& operator<<(
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, BashIntensity::e const& c)
+    std::basic_ostream<charT, traits>& os, BashIntensity const& c)
 {
     os << "\033[0" << int(c) << "m";
     return os;
@@ -80,7 +70,7 @@ std::basic_ostream<charT, traits>& operator<<(
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, BashColour::e const& c)
+    std::basic_ostream<charT, traits>& os, BashColour const& c)
 {
     if(c == BashColour::None)
         os << BashControl::Reset;
@@ -91,7 +81,7 @@ std::basic_ostream<charT, traits>& operator<<(
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, BashBackground::e const& c)
+    std::basic_ostream<charT, traits>& os, BashBackground const& c)
 {
     os << "\033[0;" << int(c) << "m";
     return os;

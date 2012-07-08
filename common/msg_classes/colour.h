@@ -30,7 +30,7 @@ class Colour : public ColourBase,
                boost::arithmetic<Colour, float> {
     public:
         Colour() : ColourBase() {}
-        Colour(ColourType::e type, boost::array<float,4> values) : ColourBase(type,values) {}
+        Colour(ColourType type, boost::array<float,4> values) : ColourBase(type,values) {}
 
         float r() const;
         float g() const;

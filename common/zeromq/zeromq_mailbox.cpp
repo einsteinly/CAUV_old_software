@@ -269,7 +269,7 @@ void ZeroMQMailbox::send_connect_message (uint32_t pid) {
     pub.send(buf.c_str(),buf.size());
 }
 
-void ZeroMQMailbox::send_subscribed_message (uint32_t pid, MessageType::e type) {
+void ZeroMQMailbox::send_subscribed_message (uint32_t pid, MessageType type) {
     std::string buf;
     uint32_t sub_id = MessageType::SubscriptionConfirmMarker;
     buf += std::string(reinterpret_cast<char*>(&sub_id), sizeof(sub_id));
@@ -290,7 +290,7 @@ void ZeroMQMailbox::handle_pub_message (void) {
     }
 
     bool is_sub = s_vec.first;
-    MessageType::e sub_id = MessageType::e(s_vec.second[0]);
+    MessageType sub_id = MessageType(s_vec.second[0]);
     
     switch (sub_id) {
         case MessageType::NodeIDMarker: {
@@ -339,7 +339,7 @@ void ZeroMQMailbox::handle_pub_message (void) {
                 error() << "message intended for pid" << pid;
                 return;
             }
-            MessageType::e type = MessageType::e(s_vec.second[2]);
+            MessageType type = MessageType(s_vec.second[2]);
             BOOST_FOREACH(Observable<SubscribeObserver>::observer_ptr_t o, Observable<SubscribeObserver>::m_observers) {
                 o->onSubscribed(type);
             }

@@ -30,7 +30,7 @@ class DrawHistogramNode: public Node{
 
         void init(){
             registerParamID< std::vector<float> >(
-                "histogram", std::vector<float>(), "values to plot", Must_Be_New
+                "histogram", std::vector<float>(), "values to plot", InputSchedType::Must_Be_New
             );
             registerOutputID(Image_Out_Copied_Name);
         }

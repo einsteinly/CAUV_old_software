@@ -44,7 +44,7 @@ namespace cauv {
         virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node);
 
     protected:
-        virtual void appendLog(QTextEdit * edit, DebugType::e type, std::string message);
+        virtual void appendLog(QTextEdit * edit, DebugType type, std::string message);
 
     private:
         Ui::LogView *ui;
