@@ -29,6 +29,7 @@ class pipelineManager(aiProcess):
         self.detector_requests = []
         
         self.pipelines = {}
+        self.created_pls = {}
         self.running_pls = {}
         
         self.load_pl_data()
@@ -165,12 +166,18 @@ class pipelineManager(aiProcess):
                 error('Error saving pipeline %s' %(reqname))
                 error(traceback.format_exc().encode('ascii','ignore'))
             if not self.hold_pls:
-                pl.clear()
+                pl.pause()
         #4
         for reqname in to_add:
-            pl = cauv.pipeline.Model(self.node, 'ai/'+reqname)
-            pl.set(self.pipelines[reqname])
+            if reqname not in self.created_pls:
+                pl = cauv.pipeline.Model(self.node, 'ai/'+reqname)
+                pl.set(self.pipelines[reqname])
+                self.created_pls[reqname] = pl
+            else:
+                pl = self.created_pls[reqname]
+                pl.play()
             self.running_pls[reqname] = pl
+                
 
         """
         def run(self):

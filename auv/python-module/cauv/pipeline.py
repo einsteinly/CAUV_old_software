@@ -274,6 +274,12 @@ class Model(messaging.MessageObserver):
         with open(picklefname, 'wb') as outf:
             saved = self.get(timeout)
             pickle.dump(saved, outf)
+            
+    def pause(self):
+        self.send(messaging.SetPipelineStateMessage(False))
+            
+    def play(self):
+        self.send(messaging.SetPipelineStateMessage(True))
     
     def load(self, picklefname, timeout=3.0):
         '''Load the pipeline from 'picklefname', this will clear any existing pipeline.'''
