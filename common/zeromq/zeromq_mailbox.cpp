@@ -12,6 +12,7 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/thread/locks.hpp>
+#include <boost/uuid/random_generator.hpp>
 
 #include <debug/cauv_debug.h>
 #include <utility/time.h>
@@ -38,6 +39,7 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     m_monitoring(false),
     m_interrupted(false),
     daemon_connected(false),
+    id(boost::uuids::random_generator()()),
     starting_up(true) {
 
     //internal message queues
