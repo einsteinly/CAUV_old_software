@@ -75,8 +75,8 @@ class BufferedMessageObserver: public MessageObserver
     typedef BufferedMessageObserver this_t;
     typedef boost::shared_ptr<boost::thread> thread_ptr_t;
     typedef boost::shared_ptr<BufferingThreadBase> btthread_ptr_t;
-    typedef std::map<MessageType, thread_ptr_t> msgtype_thread_map_t;
-    typedef std::map<MessageType, btthread_ptr_t> msgtype_btthread_map_t;
+    typedef std::map<MessageType::e, thread_ptr_t> msgtype_thread_map_t;
+    typedef std::map<MessageType::e, btthread_ptr_t> msgtype_btthread_map_t;
 
     public:
         virtual ~BufferedMessageObserver();
@@ -97,7 +97,7 @@ class BufferedMessageObserver: public MessageObserver
         #end for
         #end for
 
-        void setDoubleBuffered(MessageType, bool);
+        void setDoubleBuffered(MessageType::e, bool);
 
     // Ideally protected, but boost.python pointer_holder requires puplic
     // default constructor to be available in order to allow pointers to this
@@ -117,12 +117,12 @@ class DynamicObserver: public BufferedMessageObserver
     // blindly cast to the derived message type that they need, but should
     // check the result of the cast first
     typedef void (*callback_f_ptr)(boost::shared_ptr<Message const> m);
-    typedef std::map<MessageType, callback_f_ptr> callback_map_t;
+    typedef std::map<MessageType::e, callback_f_ptr> callback_map_t;
     public:
         DynamicObserver();
         virtual ~DynamicObserver();
         
-        void setCallback(MessageType id, callback_f_ptr f);
+        void setCallback(MessageType::e id, callback_f_ptr f);
 
         #for $g in $groups
         #for $m in $g.messages

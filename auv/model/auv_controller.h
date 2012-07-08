@@ -55,7 +55,7 @@ public:
     void onProcessStatusMessage(ProcessStatusMessage_ptr m);
     void onLocationMessage(LocationMessage_ptr m);
 
-    void sendMotorMessage(MotorID motor, int8_t speed);
+    void sendMotorMessage(MotorID::e motor, int8_t speed);
     void sendDebugLevelMessage(int32_t level);
     template<class T, class S> void sendAutopilotEnabledMessage(boost::shared_ptr<AUV::Autopilot<S> > ap);
     template<class T, class S> void sendAutopilotParamsMessage(boost::shared_ptr<AUV::Autopilot<S> > ap);

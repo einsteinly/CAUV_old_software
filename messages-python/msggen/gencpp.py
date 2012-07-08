@@ -20,7 +20,7 @@ def toCPPType(t):
     if isinstance(t, msggenyacc.BaseType):
         return cppTypeMap[t.name]
     elif isinstance(t, msggenyacc.EnumType):
-        return t.enum.name
+        return t.enum.name + "::e"
     elif isinstance(t, msggenyacc.StructType):
         return t.struct.name
     elif isinstance(t, msggenyacc.VariantType):
@@ -49,7 +49,7 @@ def getIncludes(types, includestring='"%s.h"', fwddeclstring='"%s_fwd.h"'):
             fwddecls.add(fwddeclstring % t.struct.name)
         elif isinstance(t, msggenyacc.EnumType):
             includes.add(includestring % t.enum.name)
-            fwddecls.add(fwddeclstring % t.enum.name)
+            fwddecls.add(includestring % t.enum.name)
         elif isinstance(t, msggenyacc.VariantType):
             includes.add(includestring % t.variant.name)
             fwddecls.add(fwddeclstring % t.variant.name)
@@ -116,9 +116,6 @@ def get_output_files(tree):
     for enum in tree["enums"]:
         output_types.append(OutputFile("cppmess-xenum.template.h",
                                        enum.name + ".h",
-                                       {"e": enum}))
-        output_types.append(OutputFile("cppmess-xenum_fwd.template.h",
-                                       enum.name + "_fwd.h",
                                        {"e": enum}))
     
     for variant in tree["variants"]:

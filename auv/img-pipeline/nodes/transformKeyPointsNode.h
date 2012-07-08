@@ -34,7 +34,7 @@ class TransformKeyPointsNode: public Node{
             registerOutputID("keypoints", std::vector<KeyPoint>());
 
             // parameters:
-            registerParamID("keypoints", std::vector<KeyPoint>(), "keypoints to transform", InputSchedType::Must_Be_New);
+            registerParamID("keypoints", std::vector<KeyPoint>(), "keypoints to transform", Must_Be_New);
             registerParamID("+x", 0.0f);
             registerParamID("+y", 0.0f);
             registerParamID("*x", 1.0f);

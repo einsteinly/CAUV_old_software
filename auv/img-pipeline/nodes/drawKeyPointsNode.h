@@ -52,7 +52,7 @@ class DrawKeyPointsNode: public Node{
             
             // parameters:
             registerParamID< std::vector<KeyPoint> >(
-                "KeyPoints", std::vector<KeyPoint>(), "the KeyPoints to draw", InputSchedType::Must_Be_New
+                "KeyPoints", std::vector<KeyPoint>(), "the KeyPoints to draw", Must_Be_New
             ); 
         }
 

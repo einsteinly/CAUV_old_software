@@ -23,14 +23,14 @@ class SimCamera {
                osg::Vec3d axis3, float angle3,
                std::string window_title,
                unsigned int width,
-               cauv::CauvNode *sim_node, cauv::CameraID id,
+               cauv::CauvNode *sim_node, cauv::CameraID::e id,
                unsigned int max_rate);
     void tick(double timestamp);
     void setup(osg::Node *root);
     static const unsigned int node_mask = 0x1;
     private:
     cauv::CauvNode *sim_node;
-    cauv::CameraID cam_id;
+    cauv::CameraID::e cam_id;
     std::string window_title;
     unsigned int width, height;
     cauv::RateLimiter output_limit;

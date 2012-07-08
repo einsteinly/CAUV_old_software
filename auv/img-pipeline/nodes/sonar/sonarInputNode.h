@@ -112,7 +112,7 @@ class SonarInputNode: public InputNode{
 
         virtual void paramChanged(input_id const& param_id){
             if(param_id == "Sonar ID"){
-                m_sonar_id = SonarID(param<int>("Sonar ID"));
+                m_sonar_id = SonarID::e(param<int>("Sonar ID"));
                 // change message subs as necessary
                 if(m_sonar_id == SonarID::Seasprite){
                     //unsubMessage(SonarImageMessage());
@@ -373,7 +373,7 @@ class SonarInputNode: public InputNode{
         }
 
     private:
-        SonarID m_sonar_id;
+        SonarID::e m_sonar_id;
 
         int m_images_displayed;
         SonarAccumulator m_accumulator;

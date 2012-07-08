@@ -12,9 +12,6 @@
 #include <generated/types/NodeAddedMessage.h>
 #include <generated/types/NodeParametersMessage.h>
 #include <generated/types/ForceExecRequestMessage.h>
-#include <generated/types/SetNodeParameterMessage.h>
-#include <generated/types/RemoveNodeMessage.h>
-#include <generated/types/SetNodeParameterMessage.h>
 
 #include "../pipelineWidget.h"
 #include "text.h"
@@ -62,7 +59,7 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage co
     m_contents.push_back(m_title);
 }
 
-Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType const& nt)
+Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const& nt)
     : Draggable(c), m_pw(pw), m_bbox(), m_node_id(id),
       m_node_type(nt),
       m_title(boost::make_shared<Text>(c, toStr(m_node_type))),
@@ -89,7 +86,7 @@ void Node::initFromMessage(boost::shared_ptr<NodeAddedMessage const>m){
     setInputLinks(m->inputs());
 }
 
-void Node::setType(NodeType const& n){
+void Node::setType(NodeType::e const& n){
     m_node_type = n;
     m_title = boost::make_shared<Text>(m_context, toStr(m_node_type));
     refreshLayout();
@@ -410,7 +407,7 @@ void Node::mouseGoneEvent(){
         Draggable::mouseGoneEvent();
 }
 
-void Node::draw(drawtype_e flags){
+void Node::draw(drawtype_e::e flags){
     if(m_mouseover)
         glColor(m_bg_col & Mouseover_Colour_Hint);
     else
@@ -432,7 +429,7 @@ int Node::id() const{
     return m_node_id;
 }
 
-NodeType Node::type() const{
+NodeType::e Node::type() const{
     return m_node_type;
 }
 

@@ -40,7 +40,7 @@ renderable_ptr_t Container::pick(Point const& p){
     return renderable_ptr_t();
 }
 
-void Container::draw(drawtype_e flags){
+void Container::draw(drawtype_e::e flags){
     renderable_list_t::iterator i;
     for(i = m_contents.begin(); i != m_contents.end(); i++){
         glPushMatrix();

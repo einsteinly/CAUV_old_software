@@ -61,17 +61,17 @@ class Key: public Renderable{
 
         virtual ~Key();
 
-        virtual void draw(drawtype_e);
+        virtual void draw(drawtype_e::e);
         virtual void draw(Qt::KeyboardModifiers const& mods, Colour const& mul);
 
         virtual BBox bbox();
 
         std::vector<keycode_t> const& keyCodes() const;
-        void state(keystate_e s);
-        keystate_e state() const;
+        void state(keystate_e::e s);
+        keystate_e::e state() const;
 
     protected:
-        keystate_e m_state;
+        keystate_e::e m_state;
 
     private:
         void centerText();
@@ -117,7 +117,7 @@ class OverKey: public Renderable,
         void registerKey(KeyBind const&, action_ptr_t);
         void registerKey(keycode_t const&, modifiers_t const&, action_ptr_t);
 
-        void draw(drawtype_e);
+        void draw(drawtype_e::e);
         
         void setLayout(layout_map_t const&);
         

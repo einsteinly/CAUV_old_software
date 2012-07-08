@@ -50,7 +50,7 @@ class BroadcastHistogramNode: public OutputNode{
             registerParamID< std::vector<float> >("histogram",
                                                   std::vector<float>(),
                                                   "histogram to broadcast",
-                                                  InputSchedType::Must_Be_New);
+                                                  Must_Be_New);
             registerParamID<std::string>("name",
                                          "unnamed histogram",
                                          "name for histogram");

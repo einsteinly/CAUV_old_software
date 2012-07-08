@@ -46,7 +46,7 @@ boost::scoped_ptr<boost::mutex> SmartStreamBase::m_mutex(new boost::mutex);
 #endif
 
 
-SmartStreamBase::SmartStreamBase(std::ostream& stream, BashColour col, bool print)
+SmartStreamBase::SmartStreamBase(std::ostream& stream, BashColour::e col, bool print)
     : m_stuffs(), m_manipulators(),
 #if defined(CAUV_DEBUG_MUTEXES)
       // TODO: this seems to be redundant locking? we already hold a per-stream

@@ -26,7 +26,7 @@ namespace bp = boost::python;
 using namespace cauv;
 
 struct enum_pickler : bp::pickle_suite{
-    static boost::python::tuple getinitargs(MessageType const& e){
+    static boost::python::tuple getinitargs(MessageType::e const& e){
         return boost::python::make_tuple(int(e));
     }
 };
@@ -34,7 +34,7 @@ struct enum_pickler : bp::pickle_suite{
 void emitEnums(){
     // MessageType Enum
 
-    bp::enum_<MessageType>("MessageType")
+    bp::enum_<MessageType::e>("MessageType")
         #for $g in $groups
         #for $m in $g.messages
         .value("$m.name", MessageType::$m.name)
@@ -47,7 +47,7 @@ void emitEnums(){
     
     // Generated Enums
 #for $e in $enums
-    bp::enum_<${e.name}>("${e.name}")
+    bp::enum_<${e.name}::e>("${e.name}")
         #for $i, $v in $enumerate($e.values)
         .value("${v.name}", ${e.name}::${v.name})
         #end for

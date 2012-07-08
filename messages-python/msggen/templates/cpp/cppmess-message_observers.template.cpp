@@ -160,7 +160,7 @@ void cauv::BufferedMessageObserver::on${className}Buffered($classPtr) { }
 #end for
 #end for
 
-void cauv::BufferedMessageObserver::setDoubleBuffered(MessageType mt, bool v)
+void cauv::BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
 {
     using boost::thread;
     using boost::make_shared;
@@ -221,7 +221,7 @@ void cauv::BufferedMessageObserver::setDoubleBuffered(MessageType mt, bool v)
 cauv::DynamicObserver::DynamicObserver(){ }
 cauv::DynamicObserver::~DynamicObserver(){ }
         
-void cauv::DynamicObserver::setCallback(MessageType id, callback_f_ptr f)
+void cauv::DynamicObserver::setCallback(MessageType::e id, callback_f_ptr f)
 {
     m_callbacks[id] = f;
 }

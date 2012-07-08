@@ -18,10 +18,10 @@
 #include <iomanip>
 #include <ostream>
 
-#include <utility/enum_class.h>
-
 /* bash colours */
-ENUM_CLASS(BashColour,char,
+namespace BashColour
+{
+    enum e {
         None   = 0,
         Black  = 30,
         Red    = 31,
@@ -31,8 +31,11 @@ ENUM_CLASS(BashColour,char,
         Purple = 35,
         Cyan   = 36,
         White  = 37
-);
-ENUM_CLASS(BashBackground,char,
+    };
+}
+namespace BashBackground
+{
+    enum e {
         Black   = 40,
         Red     = 41,
         Green   = 42,
@@ -41,20 +44,27 @@ ENUM_CLASS(BashBackground,char,
         Magenta = 45,
         Cyan    = 46,
         White   = 47
-);
-ENUM_CLASS(BashControl,char,
+    };
+}
+namespace BashControl
+{
+    enum e {
         Reset  = 0
-);
-ENUM_CLASS(BashIntensity,char,
+    };
+}
+namespace BashIntensity
+{
+    enum e {
         Bold   = 1,
         Faint  = 1,
         Normal = 22
-);
+    };
+}
 
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, BashControl c)
+    std::basic_ostream<charT, traits>& os, BashControl::e const& c)
 {
     os << "\033[" << int(c) << "m";
     return os;
@@ -62,7 +72,7 @@ std::basic_ostream<charT, traits>& operator<<(
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, BashIntensity::_e c)
+    std::basic_ostream<charT, traits>& os, BashIntensity::e const& c)
 {
     os << "\033[" << int(c) << "m";
     return os;
@@ -70,7 +80,7 @@ std::basic_ostream<charT, traits>& operator<<(
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, BashColour const& c)
+    std::basic_ostream<charT, traits>& os, BashColour::e const& c)
 {
     if(c == BashColour::None)
         os << BashControl::Reset;
@@ -81,7 +91,7 @@ std::basic_ostream<charT, traits>& operator<<(
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, BashBackground const& c)
+    std::basic_ostream<charT, traits>& os, BashBackground::e const& c)
 {
     os << "\033[" << int(c) << "m";
     return os;

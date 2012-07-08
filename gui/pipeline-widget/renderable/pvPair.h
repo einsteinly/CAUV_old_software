@@ -81,7 +81,7 @@ class PVPair: public PVPairEditableBase{
         }
         virtual ~PVPair(){ }
 
-        void draw(drawtype_e flags){
+        void draw(drawtype_e::e flags){
             glPushMatrix();
             glTranslatef(m_param->m_pos);
             m_param->draw(flags);
