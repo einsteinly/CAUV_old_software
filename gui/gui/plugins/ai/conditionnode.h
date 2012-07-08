@@ -21,22 +21,19 @@
 #include <liquid/arcSink.h>
 #include <liquid/arcSource.h>
 #include <liquid/arcSourceLabel.h>
+#include <liquid/arcSinkLabel.h>
 
-#include <gui/core/model/node.h>
-
+#include <gui/core/model/nodes/numericnode.h>
 #include <gui/plugins/ai/ainode.h>
 
 namespace cauv {
 namespace gui {
 
-// !!! inter-plugin dependence
-class FluidityNode;
-
 class NodeTreeView;
 
 GENERATE_SIMPLE_NODE(AiConditionTypeNode)
 
-class AiConditionNode : public Node {
+class AiConditionNode : public BooleanNode {
     public:
         AiConditionNode(const nid_t id);
         virtual ~AiConditionNode();
@@ -48,17 +45,17 @@ class AiConditionNode : public Node {
         boost::shared_ptr<Node> setOption(std::string name, ParamValue value);
         void removeOption(std::string name);
         std::map<std::string, boost::shared_ptr<Node> > getOptions();
-        
-        // ideally these should be type safe. Do we want inter-plugin header
-        // dependancies?
-        void addPipeline(boost::shared_ptr<FluidityNode> pipe);
-        void removePipeline(boost::shared_ptr<FluidityNode> pipe);
-        std::set<boost::shared_ptr<Node> > getPipelines();
+
+        void addPipelineId(std::string);
+        void removePipelineId(std::string);
+        std::set<std::string> getPipelineIds();
+
+        void forceSet();
 
     protected:
         std::map<std::string, boost::shared_ptr<Node> > m_debug;
         std::map<std::string, boost::shared_ptr<Node> > m_options;
-        std::set<boost::shared_ptr<Node> > m_pipelines;
+        std::set<std::string > m_pipelineIds;
 };
 
 
@@ -68,15 +65,24 @@ struct ConditionSourceDelegate : public liquid::ArcSourceDelegate{
 };
 
 class LiquidConditionNode :
-        public AiNode
+        public AiNode,
+        public liquid::ConnectionSink
 {
+    Q_OBJECT
+
 public:
     LiquidConditionNode(boost::shared_ptr<AiConditionNode> node, QGraphicsItem *parent = 0);
-    virtual ~LiquidConditionNode();
     virtual void rebuildContents();
     std::string conditionId() const;
 
     virtual liquid::ArcSource * getSourceFor(boost::shared_ptr<Node> const&) const;
+
+    bool willAcceptConnection(liquid::ArcSourceDelegate* from_source);
+    ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source);
+
+protected Q_SLOTS:
+    void highlightStatus(QVariant);
+    void ensureConnected();
 
 protected:
     boost::shared_ptr<AiConditionNode> m_node;
@@ -85,7 +91,10 @@ protected:
 
     liquid::Arc * m_arc;
     liquid::ArcSource * m_arcSource;
-    liquid::ArcSourceLabel * m_arcLabel;
+    liquid::ArcSourceLabel * m_sourceLabel;
+
+    liquid::ArcSink *  m_sink;
+    liquid::ArcSinkLabel *  m_sinkLabel;
 };
 
 

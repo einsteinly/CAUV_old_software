@@ -43,7 +43,8 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
       m_node(node),
       m_contents(NULL),
       m_view(NULL),
-      m_source(new liquid::ArcSource(this, new liquid::Arc(Image_Arc_Style()))),
+      m_source(new liquid::ArcSource(new FluidtySourceDelegate(node),
+                                     new liquid::Arc(Image_Arc_Style()))),
       m_in_window(in_window),
       m_orginal_view_rect(),
       m_zoomed_view_rect(){
@@ -180,7 +181,7 @@ void LiquidFluidityNode::unMaximise(){
 
 
 liquid::ArcSource *  LiquidFluidityNode::getSourceFor(boost::shared_ptr<Node> const&) const{
-    return NULL;
+    return m_source;
 }
 
 

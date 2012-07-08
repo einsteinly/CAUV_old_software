@@ -2,9 +2,9 @@
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
- * 
+ *
  * See license.txt for details.
- * 
+ *
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
@@ -12,27 +12,24 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#include "cauvbasicplugin.h"
+#ifndef __CAUV_GUI_CONNECTED_NODE_MAP_H__
+#define __CAUV_GUI_CONNECTED_NODE_MAP_H__
 
-#include <debug/cauv_debug.h>
+#include <map>
 
-#include <connectednode.h>
+#include <boost/shared_ptr.hpp>
 
-using namespace cauv;
-using namespace cauv::gui;
+namespace cauv{
+namespace gui{
 
-CauvBasicPlugin::~CauvBasicPlugin(){
-    debug(2) << "~CauvBasicPlugin()";
-}
+class ConnectedNode;
+class Node;
 
-void CauvBasicPlugin::initialise(boost::shared_ptr<GuiActions> const& actions, ConnectedNodeMap* m) {
-    m_actions = actions;
+typedef std::map<boost::shared_ptr<Node>, ConnectedNode*> ConnectedNodeMap;
 
-    ConnectedNode::setMap(m);
 
-    initialise();
-}
+} // namespace gui
+} // namespace cauv
 
-void CauvBasicPlugin::shutdown(){
+#endif // ndef __CAUV_GUI_CONNECTED_NODE_MAP_H__
 
-}

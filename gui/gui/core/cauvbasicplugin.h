@@ -26,7 +26,7 @@ namespace cauv {
         public:
             virtual ~CauvBasicPlugin();
 
-            virtual void initialise(boost::shared_ptr<GuiActions> const& actions);
+            virtual void initialise(boost::shared_ptr<GuiActions> const& actions, ConnectedNodeMap*);
 
             virtual void initialise() = 0;
 

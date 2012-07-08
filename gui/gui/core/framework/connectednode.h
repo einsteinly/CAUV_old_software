@@ -25,6 +25,8 @@
 
 #include <gui/core/model/variants.h>
 
+#include <gui/core/framework/connectednodemap.h>
+
 namespace cauv{
 namespace gui{
 
@@ -42,13 +44,15 @@ public:
 
     virtual liquid::ArcSource * getSourceFor(boost::shared_ptr<Node> const&) const = 0;
 
+    static void setMap(ConnectedNodeMap * map);
+    static ConnectedNodeMap * getMap();
+
 protected:
 
     void unregister(boost::shared_ptr<Node> const& node);
     void unregister(ConnectedNode* ln);
-    typedef std::map<boost::shared_ptr<Node>, ConnectedNode*> t_map;
 
-    static t_map m_mapping;
+    static ConnectedNodeMap * m_mapping;
 };
 
 } // namespace gui

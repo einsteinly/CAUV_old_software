@@ -15,26 +15,31 @@
 #ifndef __CAUV_AIMESSAGEGENERATORS_H__
 #define __CAUV_AIMESSAGEGENERATORS_H__
 
+#include <QObject>
+
 #include <gui/core/model/messaging.h>
 
-#include <generated/types/GuiaiGroup.h>
+#include <generated/types/PipelineDiscoveryResponseMessage.h>
+#include <generated/types/NodeAddedMessage.h>
 
 #include <gui/plugins/ai/conditionnode.h>
 
 namespace cauv {
 namespace gui {
 
-class FluidityMessageObserver: public MessageObserver{
+class FluidityMessageObserver: public QObject, public MessageObserver{
+    Q_OBJECT
     public:
         FluidityMessageObserver(boost::shared_ptr< Node > parent);
         virtual ~FluidityMessageObserver();
-        virtual void onScriptStateMessage(ScriptStateMessage_ptr m);
-        virtual void onConditionStateMessage(ConditionStateMessage_ptr m);
+        void onPipelineDiscoveryResponseMessage(PipelineDiscoveryResponseMessage_ptr m);
+        void onNodeAddedMessage(NodeAddedMessage_ptr m);
+        void addPipeline(std::string);
     protected:
         boost::shared_ptr<Node> m_parent;
+Q_SIGNALS:
+        void discoveryMessageReceieved();
 };
-
-
 
 } // namespace gui
 } // namesapce cauv

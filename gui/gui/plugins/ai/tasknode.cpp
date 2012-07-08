@@ -169,11 +169,6 @@ LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem
     highlightRunningStatus(node->get());
 }
 
-LiquidTaskNode::~LiquidTaskNode() {
-    info() << "~LiquidTaskNode()";
-    unregister(this);
-}
-
 void LiquidTaskNode::highlightRunningStatus(QVariant status){
     if(status.toBool()) {
         m_status_highlight->setBrush(QBrush(QColor(92,205,92)));

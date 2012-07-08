@@ -2,9 +2,9 @@
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
- * 
+ *
  * See license.txt for details.
- * 
+ *
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
@@ -18,12 +18,17 @@
 #include <gui/core/cauvbasicplugin.h>
 #include <gui/core/model/node.h>
 
+#include <gui/core/model/nodes/groupingnode.h>
+#include <gui/core/model/nodes/vehiclenode.h>
+
 #include <QObject>
 
 namespace cauv{
 class CauvNode;
 
 namespace gui{
+
+class FluidityNode;
 
 class NodeChildrenExclusionFilter;
 
@@ -33,24 +38,30 @@ class NodeChildrenExclusionFilter;
  * (It would be possible to relax this constraint a little)
  */
 class FluidityPlugin: public QObject,
-                      public CauvBasicPlugin
+        public CauvBasicPlugin
 {
     Q_OBJECT
     Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
 
-    public:
-        FluidityPlugin();
-        virtual const QString name() const;
-        virtual void initialise();
+public:
+    FluidityPlugin();
+    virtual const QString name() const;
+    virtual void initialise();
 
-    public Q_SLOTS:
-        void setupVehicle(boost::shared_ptr<Node> node);
+public Q_SLOTS:
+    void setupVehicle(boost::shared_ptr<Node> node);
+    void setupPipeline(boost::shared_ptr<Node> node);
+    void stopDiscovery();
+    void startDiscovery();
+    void discover();
 
-    private:
-        friend class LiquidFluidityNode;
+private:
+    friend class LiquidFluidityNode;
 
-        // this is set by the first instance of a FluidityPlugin to be initialised.
-        static boost::weak_ptr<CauvNode>& theCauvNode();
+    // this is set by the first instance of a FluidityPlugin to be initialised.
+    static boost::weak_ptr<CauvNode>& theCauvNode();
+
+    QTimer m_discoveryTimer;
 
 };
 

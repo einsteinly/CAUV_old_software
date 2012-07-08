@@ -124,12 +124,18 @@ void AiMessageObserver::onConditionStateMessage(ConditionStateMessage_ptr m){
     boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
     boost::shared_ptr<AiConditionNode> condition = conditions->findOrCreate<AiConditionNode>(m->conditionId());
 
+    condition->update(m->conditionValue());
+
     foreach(param_map_t::value_type i, m->conditionOptions()){
         condition->setOption(i.first, i.second)->setMutable(true);
     }
 
     foreach(param_map_t::value_type i, m->debugValues()){
         condition->setDebug(i.first, i.second);
+    }
+
+    foreach(std::string const& pipeline, m->pipelineIds()){
+        condition->addPipelineId(pipeline);
     }
 }
 

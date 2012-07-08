@@ -12,6 +12,10 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
+
+#ifndef __LIQUID_SHADOW_H__
+#define __LIQUID_SHADOW_H__
+
 #include <QGraphicsObject>
 #include <QBrush>
 
@@ -37,3 +41,4 @@ class Shadow: public QGraphicsObject{
 
 } // namespace liquid
 
+#endif // __LIQUID_SHADOW_H__

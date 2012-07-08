@@ -42,6 +42,7 @@
 
 #include "framework/nodescene.h"
 #include "framework/nodepicker.h"
+#include "framework/connectednode.h"
 
 #include "fluidity/view.h"
 
@@ -262,6 +263,8 @@ void CauvMainWindow::onRun()
 {
     CauvNode::onRun();
 
+    ConnectedNode::setMap(new ConnectedNodeMap());
+
     // data model and network access
     boost::shared_ptr<VehicleRegistry> registry = VehicleRegistry::instance();
     connect(registry.get(), SIGNAL(observerAttached(boost::shared_ptr<MessageObserver>)),
@@ -411,7 +414,7 @@ CauvInterfacePlugin * CauvMainWindow::loadPlugin(QObject *plugin){
     // all plugins must come from CauvInterfacePlugin
     CauvInterfacePlugin * basicPlugin = qobject_cast<CauvInterfacePlugin*>(plugin);
     if(basicPlugin) {
-        basicPlugin->initialise(m_actions);
+        basicPlugin->initialise(m_actions, ConnectedNode::getMap());
     }
 
     return basicPlugin;

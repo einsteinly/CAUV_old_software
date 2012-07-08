@@ -21,6 +21,8 @@
 #include <QtPlugin>
 
 #include <gui/core/framework/guiactions.h>
+#include <gui/core/framework/connectednodemap.h>
+
 
 class QString;
 
@@ -37,7 +39,7 @@ namespace cauv {
         public:
             virtual ~CauvInterfacePlugin() {}
 
-            virtual void initialise(boost::shared_ptr<GuiActions> const&) = 0;
+            virtual void initialise(boost::shared_ptr<GuiActions> const&, ConnectedNodeMap*) = 0;
 
             virtual const QString name() const = 0;
 
@@ -50,6 +52,6 @@ namespace cauv {
     } // namespace gui
 } // namespace cauv
 
-Q_DECLARE_INTERFACE(cauv::gui::CauvInterfacePlugin, "CauvInterfacePlugin/1.2")
+Q_DECLARE_INTERFACE(cauv::gui::CauvInterfacePlugin, "CauvInterfacePlugin/1.3")
 
 #endif // CAUVINTERFACEPLUGIN_H

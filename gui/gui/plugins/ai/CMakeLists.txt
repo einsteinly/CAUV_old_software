@@ -15,6 +15,7 @@ set ( AI_PLUGIN_H
     plugin.h
     ainode.h
     tasknode.h
+    conditionnode.h
 )
 
      

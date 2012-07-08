@@ -85,7 +85,6 @@ class LiquidTaskNode :
     Q_OBJECT
 public:
     LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem *parent = 0);
-    virtual ~LiquidTaskNode();
     void rebuildContents();
     std::string taskId() const;
     void initButtons();

@@ -15,9 +15,7 @@
 #ifndef __LIQUID_ARC_SOURCE_H__
 #define __LIQUID_ARC_SOURCE_H__
 
-#include <QGraphicsObject>
-#include <QGraphicsLayoutItem>
-#include <QGraphicsSceneMouseEvent>
+#include <QtGui>
 
 #include "layout.h"
 #include "connectionSink.h"
@@ -29,8 +27,14 @@ class AbstractArcSink;
 class Arc;
 
 class ArcSourceDelegate{
-    public:
-        virtual ~ArcSourceDelegate(){ }
+public:
+    ArcSourceDelegate(QVariant reference = QVariant()) :
+        m_reference(reference){
+    }
+    virtual ~ArcSourceDelegate(){ }
+    QVariant reference(){ return m_reference; }
+protected:
+    QVariant m_reference;
 };
 
 // okay, so:

@@ -39,8 +39,16 @@ class FView;
 
 GENERATE_SIMPLE_NODE(FluidityNode)
 
-class LiquidFluidityNode: public ConnectedNode,
-                          public liquid::ArcSourceDelegate
+class FluidtySourceDelegate : public liquid::ArcSourceDelegate {
+    public:
+    FluidtySourceDelegate(boost::shared_ptr<FluidityNode> const& node) :
+        liquid::ArcSourceDelegate(QVariant("FluiditySourceDelegate")),
+        m_node(node){}
+    virtual boost::shared_ptr<FluidityNode> node(){ return m_node; }
+    boost::shared_ptr<FluidityNode> m_node;
+};
+
+class LiquidFluidityNode: public ConnectedNode
 {
     Q_OBJECT
 public:
@@ -48,8 +56,6 @@ public:
                        boost::weak_ptr<CauvMainWindow> in_window,
                        QGraphicsItem *parent = 0);
     virtual ~LiquidFluidityNode();
-
-    liquid::AbstractArcSource * source(){ return m_source; }
 
     virtual liquid::ArcSource * getSourceFor(boost::shared_ptr<Node> const&) const;
 

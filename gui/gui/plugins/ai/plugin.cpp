@@ -136,7 +136,6 @@ void AiPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
         boost::shared_ptr<GroupingNode> ai = vehicle->findOrCreate<GroupingNode>("ai");
         boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
         boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
-        boost::shared_ptr<GroupingNode> pipelines = ai->findOrCreate<GroupingNode>("pipelines");
 
         connect(tasks.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
                 this, SLOT(setupTask(boost::shared_ptr<Node>)));
