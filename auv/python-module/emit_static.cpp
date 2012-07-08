@@ -355,7 +355,10 @@ void emitPostGenerated(){
                bp::bases<ColourBase>,
                boost::shared_ptr<Colour>
               >("Colour",bp::init<ColourType::e,boost::array<float,4> >())
-        .def("fromRGB", &Colour::fromRGB)
-        .staticmethod("fromRGB")
+        .def("fromRGB", &Colour::fromRGB).staticmethod("fromRGB")
+        .def("fromBGR", &Colour::fromBGR).staticmethod("fromBGR")
+        .def("fromBGRA", &Colour::fromBGRA).staticmethod("fromBGRA")
+        .def("fromARGB", &Colour::fromARGB).staticmethod("fromARGB")
+        .def("fromGrey", &Colour::fromGrey).staticmethod("fromGrey")
         ;
 }

@@ -161,11 +161,11 @@ class SonarSLAMImpl{
                 const float yaw_rad = m_last_orientation.yaw * M_PI / 180;
                 Eigen::Matrix4f telemetry_rotation = Eigen::Matrix4f::Identity();
                 telemetry_rotation.block<3,3>(0,0) = Eigen::Matrix3f(
-                    Eigen::AngleAxisf(m_cumulative_rotation_guess, Eigen::Vector3f::UnitZ())
+                    Eigen::AngleAxisf(yaw_rad, Eigen::Vector3f::UnitZ())
                 );
+                rotation_guess = last_transform.inverse() * telemetry_rotation;
                 debug() << BashColour::Purple << "cumulative rotation:" << m_cumulative_rotation_guess
                         << "telemetry rotation:" << yaw_rad << "(radians)";
-                rotation_guess = last_transform.inverse() * telemetry_rotation;
             }else{
                 rotation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
                     Eigen::AngleAxisf(m_cumulative_rotation_guess, Eigen::Vector3f::UnitZ())

@@ -30,9 +30,9 @@ struct IncrementalPose{
     // have Eigen::Vector3f as member    
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    float const dx() const{ return x[0]; }
-    float const dy() const{ return x[1]; }
-    float const detheta() const{ return x[2]; }
+    float dx() const{ return x[0]; }
+    float dy() const{ return x[1]; }
+    float detheta() const{ return x[2]; }
     
     IncrementalPose() : x(Eigen::Vector3f::Zero()) { }
     explicit IncrementalPose(Eigen::Vector3f const& v) : x(v) { }
@@ -102,9 +102,9 @@ struct RelativePose{
     // have Eigen::Vector3f as member    
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    float const dx() const{ return x[0]; }
-    float const dy() const{ return x[1]; }
-    float const detheta() const{ return x[2]; }
+    float dx() const{ return x[0]; }
+    float dy() const{ return x[1]; }
+    float detheta() const{ return x[2]; }
      
     RelativePose() : x(Eigen::Vector3f::Zero()) { }
     explicit RelativePose(Eigen::Vector3f const& v) : x(v) { }

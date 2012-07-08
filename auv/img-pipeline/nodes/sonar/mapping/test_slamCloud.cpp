@@ -16,6 +16,8 @@
  
 #include <pcl/point_types.h>
 
+#include <boost/program_options.hpp>
+
 #include <debug/cauv_debug.h>
 
 #include "slamCloud.h"

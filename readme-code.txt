@@ -114,6 +114,7 @@ auv:
         flann,
         cminpack,
         qhull
+    clipper (http://www.angusj.com/delphi/clipper.php)
     gpsd
     watch.py requires:
         psutils (https://code.google.com/p/psutil/)
@@ -129,5 +130,3 @@ gui/gui:
     Qwt 6 (Having earlier versions installed may cause a conflict when trying to make Qwt, needs to be >=rc5)
     Marble (optional) - for the map
     OIS (optional) - for gamepad controls
-
-

@@ -17,7 +17,7 @@ processes = [
         ['{SDIR}/persist.py -rs']
     ),
     Process('fake-gemini', '{BDIR}', node_pid('FakeGem'),  panic,     None,
-        ["sh -c 'sleep 6 && {BDIR}/fake_gemini -e {SDIR}/tests/resources/comp_arena_2d.png -s 0.038 -x -780 -y -400'"]
+        ["sh -c 'sleep 6 && {BDIR}/fake_gemini -e {SDIR}/tests/resources/comp_arena_2d.png -s 0.038 -x -700 -y -400'"]
     ),
 ]
 

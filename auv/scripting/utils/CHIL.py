@@ -1059,7 +1059,7 @@ def testLogCoverage(loops=200):
         l.log(m.DepthCalibrationMessage(0.11111111111111,0.222222222222222,0.33333333333333,0.444444444444444))
         l.log(m.PitchAutopilotEnabledMessage(True, 8.7654321098))
         l.log(m.PitchAutopilotParamsMessage(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9))
-        l.log(m.StateRequestMessage())
+
         l.log(m.ScriptMessage(m.ScriptExecRequest('some script', 0.987654321, 'some id', 0x89012345)))
         l.log(m.MotorRampRateMessage(-123456, -234567))
         l.log(m.SetMotorMapMessage(m.MotorID.VBow, m.MotorMap(-1,-2,3,4)))

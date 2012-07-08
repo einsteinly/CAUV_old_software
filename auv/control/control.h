@@ -52,7 +52,6 @@ class ControlNode : public CauvNode
 		boost::shared_ptr<IMU> m_imu;
         boost::shared_ptr<ControlLoops> m_controlLoops;
         boost::shared_ptr<DeviceControlObserver> m_deviceControl;
-        boost::shared_ptr<StateObserver> m_stateObserver;
         boost::shared_ptr<TelemetryBroadcaster> m_telemetryBroadcaster;
     
         boost::thread m_aliveThread;

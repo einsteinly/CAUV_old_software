@@ -19,4 +19,4 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Crossroads DEFAULT_MSG
     CROSSROADS_LIBRARY CROSSROADS_INCLUDE_DIR)
 
-mark_as_advanced(CROSSROADS_LIBRARY ZERMQ_INCLUDE_DIR)
+mark_as_advanced(CROSSROADS_LIBRARY CROSSROADS_INCLUDE_DIR)

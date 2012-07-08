@@ -6,29 +6,28 @@ import cauv.messaging as messaging
 from utils.timeaverage import TimeAverage
 import time
 import threading
+import math
 
 class detectorOptions(aiDetectorOptions):
-    Bin_Number = 8
-    Bin_Threshold = 0.05
+    Threshold = 0.38
     Required_Pipeline = 'detect_pipe'
-    Histogram_Name = 'pipe-detect'
-    Average_Time = 2
-
+    Float_Name = 'pipe_det'
+    Lines_Name = 'pipe_det'
+    Angular_Discrepancy = 0.5
+    useLines = True
 
 class detector(aiDetector):
-    debug_values = ['detected', 'averageIntensity']
+    debug_values = ['detected', 'colour_trigger']
     def __init__(self, node, opts):
         aiDetector.__init__(self, node, opts)
         self.start_time = time.time()
-        self.intensity = TimeAverage(self.options.Average_Time)
-        self.averageIntensity = 0.0
 
-        if self.options.Required_Pipeline:
-            try:
-                self.request_pl(self.options.Required_Pipeline)
-            except Exception, e:
-                warning('Pipe Detector pipeline request failed: %s' % e)
+        try:
+            self.request_pl(self.options.Required_Pipeline)
+        except Exception, e:
+            warning('Pipe Detector pipeline request failed: %s' % e)
 
+        self.colour_trigger = 0
         self.detected = False
         self.node.join("processing")
 
@@ -38,17 +37,32 @@ class detector(aiDetector):
         else:
             pass
 
-    def onHistogramMessage(self, m):
-        if m.name != self.options.Histogram_Name:
+    def onFloatMessage(self, m):
+        print m
+        if m.name != self.options.Float_Name:
             return
-        tdiff = time.time() - self.start_time
-        self.averageIntensity = self.intensity.update(m.bins[self.options.Bin_Number])
-        debug("Trigger at %g%% (%g%% smoothed), %gs since start" % (
-            (m.bins[self.options.Bin_Number] / self.options.Bin_Threshold) * 100,
-            self.averageIntensity * 100,
-            tdiff
-        ))
-        if self.averageIntensity > self.options.Bin_Threshold and tdiff >= self.options.Average_Time:
+        self.colour_trigger = m.value
+        if not self.options.useLines:
+            if self.colour_trigger > self.options.Threshold:
+                self.detected = True
+            else:
+                self.detected = False
+        
+    def onLinesMessage(self, m):
+        if not self.options.useLines:
+            return
+        if m.name != self.options.Lines_Name:
+            return
+        if not len(m.lines):
+            self.detected = False
+            return
+        initial_angle = m.lines[0].angle
+        for line in m.lines:
+            debug(str(abs(initial_angle-line.angle)%math.pi))
+            if abs(initial_angle-line.angle)%math.pi>self.options.Angular_Discrepancy and abs(initial_angle-line.angle)%math.pi<math.pi-self.options.Angular_Discrepancy:
+                self.detected = False
+                return
+        if self.colour_trigger > self.options.Threshold:
             self.detected = True
             debug ("Detected pipe!")
         else:
@@ -59,4 +73,3 @@ if __name__ == '__main__':
     while True:
         dt.process()
         time.sleep(1)
-

@@ -259,29 +259,6 @@ MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
     return l;
 }
 
-class StateObserver : public MessageObserver, public IMUObserver
-{
-    public:
-        StateObserver(boost::shared_ptr<Mailbox> mb)
-            : m_mb(mb)
-        {
-        }
-        
-        virtual void onTelemetry(const floatYPR& attitude)
-        {
-            m_orientation = attitude;
-        }
-        virtual void onStateRequestMessage(StateRequestMessage_ptr)
-        {
-            m_mb->sendMessage(boost::make_shared<StateMessage>(m_orientation), RELIABLE_MSG);
-        }
-
-    protected:
-        boost::shared_ptr<Mailbox> m_mb;
-        
-        floatYPR m_orientation;
-};
-
 using namespace Controller;
 
 class ControlLoops : public MessageObserver, public IMUObserver
@@ -905,9 +882,6 @@ ControlNode::ControlNode() : CauvNode("Control")
     m_deviceControl = boost::make_shared<DeviceControlObserver>();
     addMessageObserver(m_deviceControl);
     
-    m_stateObserver = boost::make_shared<StateObserver>(mailbox());
-    addMessageObserver(m_stateObserver);
-    
     m_telemetryBroadcaster = boost::make_shared<TelemetryBroadcaster>(mailbox(), false);
     addMessageObserver(m_telemetryBroadcaster);
 }
@@ -1106,7 +1080,6 @@ void ControlNode::onRun()
         m_imu->addObserver(boost::make_shared<DebugIMUObserver>(5));
         m_imu->addObserver(m_telemetryBroadcaster);
         m_imu->addObserver(m_controlLoops);
-        m_imu->addObserver(m_stateObserver);
 
         m_imu->start();
     }

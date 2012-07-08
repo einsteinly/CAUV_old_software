@@ -176,6 +176,14 @@ class default(aiTask):
         (c['stateCondition'], {'state': True}),
         ]
         
+class track_asv(aiTask):
+    class options(taskOptions):
+        script_name = 'track_asv'
+        priority = 0
+    conditions = [
+        (c['stateCondition'], {'state': True}),
+        ]
+        
 class waypoint_demo(aiTask):
     class options(taskOptions):
         script_name = 'waypoint_demo'

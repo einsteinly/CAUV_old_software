@@ -23,6 +23,8 @@ if (CAUV_POINTCLOUDS)
     #endif ()
 
     find_package (PCL REQUIRED COMPONENTS ${REQ_PCL_COMPONENTS})
+    find_package (clipper REQUIRED)
+
 
     #if (CAUV_CLOUD_DUMP)
     #    set (PCL_LIBS ${PCL_COMMON_LIBRARIES}
@@ -50,11 +52,9 @@ if (CAUV_POINTCLOUDS)
         add_definitions(-DCAUV_DUMP_POSE_GRAPH=0)
     endif()
 
-    include_directories (${PCL_INCLUDE_DIRS})
+    include_directories (SYSTEM ${PCL_INCLUDE_DIRS})
     add_definitions (${PCL_DEFINITIONS})
     link_directories (${PCL_LIBRARY_DIRS})
-
-    find_library(CLIPPER_LIBRARY clipper REQUIRED)
 
     set (CONDITIONAL_SOURCE_FILES ${CONDITIONAL_SOURCE_FILES}
         nodes/sonar/sonarSLAM.cpp

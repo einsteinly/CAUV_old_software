@@ -207,7 +207,7 @@ if __name__ == '__main__':
     p.add_argument('--hold_pls', dest='hold_pls', default=False,
                  action='store_true', help="Don't clear pipelines when they've been finished with.")
     p.add_argument('--load_temp', dest='load_temp', default=False,
-                 action='store_true', help="Don't load any temporary files created.")
+                 action='store_true', help="Load any temporary files created.")
     p.add_argument('--freeze_pls', dest='freeze_pls', default=False,
                  action='store_true', help="ignore changes to the pipeline")
     opts, args = p.parse_known_args()
