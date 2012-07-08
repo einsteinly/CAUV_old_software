@@ -36,7 +36,7 @@ bool CauvConsole::isCommandComplete(QString command){
     return false;
 }
 
-void CauvConsole::execCommand(QString command, QString response, DebugType type, bool writeCommand, bool showPrompt){
+void CauvConsole::execCommand(QString command, QString response, DebugType::e type, bool writeCommand, bool showPrompt){
     QConsole::execCommand(command, writeCommand, false);
 
     switch(type) {
@@ -68,8 +68,8 @@ Console::Console() :
     this->setObjectName("GUI Console");
     setWidget(m_console);
     m_console->connect(m_console, SIGNAL(commandReady(QString)), this, SLOT(executeCommand(QString)));
-    connect(this, SIGNAL(responseReceived(int,QString, DebugType)), this, SLOT(onResponse(int,QString,DebugType)));
-    qRegisterMetaType<DebugType>("DebugType");
+    connect(this, SIGNAL(responseReceived(int,QString, DebugType::e)), this, SLOT(onResponse(int,QString,DebugType::e)));
+    qRegisterMetaType<DebugType::e>("DebugType::e");
 
     m_docks[this] = Qt::BottomDockWidgetArea;
 }
@@ -84,7 +84,7 @@ Console::~Console()
     delete ui;
 }
 
-void Console::onResponse(int id, QString response, DebugType level){
+void Console::onResponse(int id, QString response, DebugType::e level){
     try {
         if(!m_requests.at(id).isEmpty()) {
             m_console->execCommand(m_requests[id], response, level, false, true);

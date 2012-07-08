@@ -23,7 +23,7 @@ namespace cauv{
 class Webcam : public Camera
 {
     public:
-        Webcam(const CameraID cameraID, const int deviceID);
+        Webcam(const CameraID::e cameraID, const int deviceID);
         virtual ~Webcam();
     
     protected:

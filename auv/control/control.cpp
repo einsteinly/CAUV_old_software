@@ -25,7 +25,6 @@
 #include <generated/types/GraphableMessage.h>
 #include <generated/types/TelemetryMessage.h>
 #include <generated/types/DebugMessage.h>
-#include <generated/types/Controller.h>
 
 #include <module/module.h>
 
@@ -71,7 +70,7 @@ float operator-(TimeStamp const& l, TimeStamp const& r)
 
 struct PIDControl
 {
-    Controller controlee;
+    Controller::e controlee;
     double target;
     double Kp,Ki,Kd,scale;
     double Ap, Ai, Ad, thr;
@@ -85,7 +84,7 @@ struct PIDControl
     int retain_samples_msecs;
     double last_derr_unsmoothed;
 
-    PIDControl(Controller controlee=Controller::NumValues)
+    PIDControl(Controller::e controlee=Controller::NumValues)
         : controlee(controlee),
           target(0),
           Kp(1), Ki(1), Kd(1), scale(1),
@@ -560,7 +559,7 @@ class ControlLoops : public MessageObserver, public IMUObserver
                 {
                     m_controlenabled[i] = false;
                     m_controllers[i].reset();
-                    m_controllers[i].controlee = (Controller)i;
+                    m_controllers[i].controlee = (Controller::e)i;
                     m_demand[i] = no_demand;
                     
                     boost::shared_ptr<ControllerStateMessage> msg = m_controllers[i].stateMsg();
@@ -585,7 +584,7 @@ class ControlLoops : public MessageObserver, public IMUObserver
             debug() << "Control loop thread exiting";
         }
 
-        int motorMap(float const& demand_value, MotorID mid)
+        int motorMap(float const& demand_value, MotorID::e mid)
         {
             MotorMap m(0, 0, 127, -127);
             switch(mid)
@@ -639,7 +638,7 @@ class ControlLoops : public MessageObserver, public IMUObserver
             sendWithMaxDelta(MotorID::VStern, vstern_value, new_vstern_value, m_max_motor_delta);
         }
 
-        void sendWithMaxDelta(MotorID mid, int& oldvalue, int newvalue, unsigned maxDelta)
+        void sendWithMaxDelta(MotorID::e mid, int& oldvalue, int newvalue, unsigned maxDelta)
         {
             if(unsigned(abs(newvalue - oldvalue)) <= maxDelta)
                 sendIfNew(mid, oldvalue, newvalue);
@@ -649,7 +648,7 @@ class ControlLoops : public MessageObserver, public IMUObserver
                 sendIfNew(mid, oldvalue, oldvalue + maxDelta);
         }
 
-        void sendIfNew(MotorID mid, int& oldvalue, int newvalue)
+        void sendIfNew(MotorID::e mid, int& oldvalue, int newvalue)
         {
             if(newvalue != oldvalue) {
                 oldvalue = newvalue;

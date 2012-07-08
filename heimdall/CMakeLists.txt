@@ -1,4 +1,4 @@
-if(CAUV_ZEROMQ_MESSAGING)
+project (heimdall)
 
 find_package(Crossroads REQUIRED)
 
@@ -16,5 +16,3 @@ target_link_libraries(heimdall
 )
 cauv_install(heimdall)
 depends_on_messages(heimdall)
-
-endif()

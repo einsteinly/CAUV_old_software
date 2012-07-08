@@ -424,16 +424,16 @@ void SonarSLAMNode::init(){
     m_speed = fast;
 
     // inputs:
-    registerParamID("keypoints", kp_vec(), "(xy) keypoints used to update map", InputSchedType::Must_Be_New);
-    registerParamID("training: polar keypoints", kp_vec(), "", InputSchedType::Must_Be_New);
+    registerParamID("keypoints", kp_vec(), "(xy) keypoints used to update map", Must_Be_New);
+    registerParamID("training: polar keypoints", kp_vec(), "", Must_Be_New);
     requireSyncInputs("keypoints", "training: polar keypoints");
     
-    registerInputID("keypoints image", InputSchedType::Optional); // image from which the keypoints came: actually just passed straight back out with the keypoints training data
-    registerParamID("delta theta", float(0), "estimated change in orientation (radians) since last image", InputSchedType::Must_Be_New);
+    registerInputID("keypoints image", Optional); // image from which the keypoints came: actually just passed straight back out with the keypoints training data
+    registerParamID("delta theta", float(0), "estimated change in orientation (radians) since last image", Must_Be_New);
 
     // parameters: may be old
     // Parameters that are really inputs:
-    registerInputID("xy image", /*"image to use for map visualisation (may be unconnected)", */InputSchedType::Optional);
+    registerInputID("xy image", /*"image to use for map visualisation (may be unconnected)", */Optional);
     registerParamID("xy metres/px", float(1), "range conversion for visualisation image");
 
     // Control Parameters:

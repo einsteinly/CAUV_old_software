@@ -12,12 +12,27 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-/***  This is a generated file, do not edit ***/
-\#ifndef __CAUV_${e.name.upper()}_FWD_H__
-\#define __CAUV_${e.name.upper()}_FWD_H__
+#ifndef __CAUV_UTILITY_ARRAYS_H__
+#define __CAUV_UTILITY_ARRAYS_H__
 
-namespace cauv{
-    struct $e.name;
+#define MAX_ARRAY_SIZE 10
+
+#include <boost/array.hpp>
+#include <boost/preprocessor/repetition.hpp>
+
+namespace cauv {
+
+#define MAKE_ARRAY(z, N, unused) \
+template<typename T> \
+boost::array<T,N> make_array(BOOST_PP_ENUM_PARAMS(N,T val)) { \
+    boost::array<T,N> ret = {{ BOOST_PP_ENUM_PARAMS(N,val) }}; \
+    return ret; \
 }
 
-\#endif//__CAUV_${e.name.upper()}_FWD_H__
+BOOST_PP_REPEAT(MAX_ARRAY_SIZE, MAKE_ARRAY, ~)
+
+#undef MAKE_ARRAY
+
+}
+
+#endif

@@ -12,7 +12,7 @@ using namespace cauv;
 
 class DotOnImageObserver : public CameraObserver {
     public:
-        virtual void onReceiveImage(CameraID, const cv::Mat&) {
+        virtual void onReceiveImage(CameraID::e, const cv::Mat&) {
             std::cout << ".";
             std::flush(std::cout);
         }

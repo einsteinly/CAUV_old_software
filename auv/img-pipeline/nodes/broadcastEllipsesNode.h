@@ -48,7 +48,7 @@ class BroadcastEllipsesNode: public OutputNode{
             
             // parameters:
             registerParamID< std::vector<Ellipse> >(
-                "Ellipses", std::vector<Ellipse>(), "Ellipses to broadcast", InputSchedType::Must_Be_New
+                "Ellipses", std::vector<Ellipse>(), "Ellipses to broadcast", Must_Be_New
             ); 
             registerParamID<std::string>("name",
                                          "unnamed ellipses",
