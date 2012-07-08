@@ -1,10 +1,11 @@
-#include <opencv/cv.h>
+#include "sim_camera.h"
+
+#include <opencv2/core/core.hpp>
+#include <boost/make_shared.hpp>
+
 #include <utility/ratelimit.h>
 #include <generated/types/ImageMessage.h>
 #include <common/msg_classes/image.h>
-#include <boost/make_shared.hpp>
-
-#include "sim_camera.h"
 
 namespace cauv {
 

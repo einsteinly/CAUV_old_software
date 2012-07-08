@@ -54,17 +54,17 @@ ENUM_CLASS(BashIntensity,char,
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, BashControl const& c)
+    std::basic_ostream<charT, traits>& os, BashControl c)
 {
-    os << "\033[0" << int(c) << "m";
+    os << "\033[" << int(c) << "m";
     return os;
 }
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, BashIntensity const& c)
+    std::basic_ostream<charT, traits>& os, BashIntensity::_e c)
 {
-    os << "\033[0" << int(c) << "m";
+    os << "\033[" << int(c) << "m";
     return os;
 }
 
@@ -75,7 +75,7 @@ std::basic_ostream<charT, traits>& operator<<(
     if(c == BashColour::None)
         os << BashControl::Reset;
     else
-        os << "\033[0;" << int(c) << "m";
+        os << "\033[" << int(c) << "m";
     return os;
 }
 
@@ -83,7 +83,7 @@ template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
     std::basic_ostream<charT, traits>& os, BashBackground const& c)
 {
-    os << "\033[0;" << int(c) << "m";
+    os << "\033[" << int(c) << "m";
     return os;
 }
 

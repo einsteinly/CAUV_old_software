@@ -11,6 +11,8 @@
 #include <osg/Texture2D>
 #include <osg/TextureRectangle>
 
+#include <debug/cauv_debug.h>
+
 // Some choices for the kind of textures we can use ...
 //#define USE_TEXTURE_RECTANGLE
 
