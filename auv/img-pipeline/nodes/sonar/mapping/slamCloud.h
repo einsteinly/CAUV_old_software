@@ -564,6 +564,8 @@ class SlamCloudGraph{
             
             // update the spatially-sorted datastructure of key-scan locations
             _updateKeyScanLocations();
+
+            saveKeyFramePositions();
         }
 
         void saveKeyScan(cloud_ptr p, std::size_t id){
@@ -615,10 +617,10 @@ class SlamCloudGraph{
             cp.close();
         }
 
-        void saveKeyFramePositions(std::ofstream& f){
+        void saveKeyFramePositions(){
             const TimeStamp timestamp = now();
             std::string fname = mkStr() << m_params.persistance_dir << "/" << timestamp.secs << (timestamp.musecs / 1000) << ".nodes";
-            std::ofstream f(cpn.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+            std::ofstream f(fname.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
 
             for(std::size_t i = 0; i < m_key_scans.size(); i++)
                 saveMat(f, m_key_scans[i]->globalTransform());
