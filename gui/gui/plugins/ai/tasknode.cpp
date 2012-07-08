@@ -158,8 +158,10 @@ LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem
     m_playButton(NULL),
     m_stopButton(NULL),
     m_resetButton(NULL),
-    m_sink(new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(), this)),
-    m_sinkLabel(new liquid::ArcSinkLabel(m_sink, this, "conditions"))
+    m_conditionSink(new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(), this)),
+    m_conditionSinkLabel(new liquid::ArcSinkLabel(m_conditionSink, this, "conditions")),
+    m_pipelineSink(new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(), this)),
+    m_pipelineSinkLabel(new liquid::ArcSinkLabel(m_pipelineSink, this, "pipelines"))
 {
     initButtons();
     rebuildContents();
@@ -215,7 +217,7 @@ void LiquidTaskNode::ensureConnected(){
             warning() << node->nodeName() << "does not have an ArcSource";
             return;
         }
-        source->arc()->addTo(m_sink);
+        source->arc()->addTo(m_conditionSink);
     }
 }
 
@@ -223,7 +225,8 @@ void LiquidTaskNode::rebuildContents(){
 
     // incoming dependencies
 
-    addItem(m_sinkLabel);
+    addItem(m_conditionSinkLabel);
+    addItem(m_pipelineSinkLabel);
 
     /*
     foreach(boost::shared_ptr<AiConditionNode> const& condition, m_node->getConditions()){
@@ -269,14 +272,14 @@ std::string LiquidTaskNode::taskId() const{
     return boost::get<std::string>(m_node->nodeId());
 }
 
-bool LiquidTaskNode::willAcceptConnection(liquid::ArcSourceDelegate* from_source) {
+bool LiquidTaskNode::willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*) {
     if (dynamic_cast<ConditionSourceDelegate *>(from_source)){
         return true;
     }
     return false;
 }
 
-LiquidTaskNode::ConnectionStatus LiquidTaskNode::doAcceptConnection(liquid::ArcSourceDelegate* from_source) {
+LiquidTaskNode::ConnectionStatus LiquidTaskNode::doAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*) {
     if (ConditionSourceDelegate * tn = dynamic_cast<ConditionSourceDelegate *>(from_source)){
         m_node->addCondition(tn->m_node);
         m_node->forceSet();

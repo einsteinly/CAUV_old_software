@@ -177,8 +177,8 @@ ArcSink::~ArcSink(){
     debug(7) << "~ArcSink()"; 
 }
 
-bool ArcSink::willAcceptConnection(ArcSourceDelegate* from_source){
-    return m_connectionDelegate->willAcceptConnection(from_source);
+bool ArcSink::willAcceptConnection(ArcSourceDelegate* from_source, AbstractArcSink * to_sink){
+    return m_connectionDelegate->willAcceptConnection(from_source, to_sink);
 }
 
 void ArcSink::doPresentHighlight(qreal intensity){
@@ -186,8 +186,8 @@ void ArcSink::doPresentHighlight(qreal intensity){
     m_highlight->setOpacity(std::max(intensity, 0.01));
 }
 
-ArcSink::ConnectionStatus ArcSink::doAcceptConnection(ArcSourceDelegate* from_source){
-    return m_connectionDelegate->doAcceptConnection(from_source);
+ArcSink::ConnectionStatus ArcSink::doAcceptConnection(ArcSourceDelegate* from_source, AbstractArcSink* to_sink){
+    return m_connectionDelegate->doAcceptConnection(from_source, to_sink);
 }
 
 // RequiresCutout:
@@ -206,6 +206,8 @@ void ArcSink::setGeometry(QRectF const& rect){
 QSizeF ArcSink::sizeHint(Qt::SizeHint which,
                          const QSizeF&
                          constraint) const{
+    Q_UNUSED(which);
+    Q_UNUSED(constraint)
     return m_rect.size();
 }
 

@@ -55,8 +55,8 @@ class FNodeInput: public liquid::ArcSinkLabel,
         virtual ~FNodeInput();
 
         // ConnectionSink:
-        virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source);
-        virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source);
+        virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink* to_sink);
+        virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink* to_sink);
 
     public:
         void addWidget(QGraphicsWidget* w);
@@ -91,7 +91,7 @@ class FNodeParamInput: public FNodeInput{
         void setEditable(bool editable);
 
         // ConnectionSink:
-        virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source);
+        virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink* to_sink);
 
     protected Q_SLOTS:
         void modelValueChanged(QVariant value);

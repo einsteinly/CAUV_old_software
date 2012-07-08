@@ -33,9 +33,9 @@ class AbstractArcSink: public QGraphicsObject,
         AbstractArcSink(QGraphicsItem * parent = 0);
         virtual ~AbstractArcSink();
 
-        virtual bool willAcceptConnection(ArcSourceDelegate* from_source) = 0;
+        virtual bool willAcceptConnection(ArcSourceDelegate* from_source, AbstractArcSink* to_sink) = 0;
         virtual void doPresentHighlight(qreal intensity) = 0;
-        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source) = 0;
+        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source, AbstractArcSink* to_sink) = 0;
 
         // !!! base QGraphicsItem::setParentItem isn't virtual, so this is
         // probably a bad idea!
@@ -76,7 +76,7 @@ class ArcSink: public AbstractArcSink,
 
         // called whilst a drag operation is in progress to test & highlight
         // things, delegates the question to connectionDelgate
-        virtual bool willAcceptConnection(ArcSourceDelegate* from_source);
+        virtual bool willAcceptConnection(ArcSourceDelegate* from_source, AbstractArcSink* to_sink);
         
         // called whilst a during a drag operation to indicate that this is
         // something that might accept a connection (after willacceptConnection
@@ -87,7 +87,7 @@ class ArcSink: public AbstractArcSink,
 
         // called when the connection is dropped,  delegates the question to
         // connectionDelgate
-        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source);
+        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source, AbstractArcSink* to_sink);
 
         // RequiresCutout:
         virtual QList<CutoutStyle> cutoutGeometry() const;

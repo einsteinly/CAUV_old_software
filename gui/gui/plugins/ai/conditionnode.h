@@ -77,8 +77,8 @@ public:
 
     virtual liquid::ArcSource * getSourceFor(boost::shared_ptr<Node> const&) const;
 
-    bool willAcceptConnection(liquid::ArcSourceDelegate* from_source);
-    ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source);
+    bool willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink* to_sink);
+    ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink* to_sink);
 
 protected Q_SLOTS:
     void highlightStatus(QVariant);

@@ -28,11 +28,11 @@ class ConnectionSink{
         virtual ~ConnectionSink(){ }
 
         // called whilst a drag operation is in progress to test & highlight things
-        virtual bool willAcceptConnection(ArcSourceDelegate* from_source) = 0;
+        virtual bool willAcceptConnection(ArcSourceDelegate* from_source, AbstractArcSink* to_sink) = 0;
 
         // called when the connection is dropped, may return:
         enum ConnectionStatus{Rejected, Accepted, Pending};
-        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source) = 0;
+        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source, AbstractArcSink* to_sink) = 0;
 };
 
 // convenience class
@@ -41,13 +41,15 @@ class RejectingConnectionSink : public ConnectionSink {
         RejectingConnectionSink() : ConnectionSink() {
         }
 
-        virtual bool willAcceptConnection(ArcSourceDelegate* from_source) {
+        virtual bool willAcceptConnection(ArcSourceDelegate* from_source, AbstractArcSink* to_sink) {
             Q_UNUSED(from_source);
+            Q_UNUSED(to_sink);
             return false;
         }
 
-        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source) {
+        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source, AbstractArcSink* to_sink) {
             Q_UNUSED(from_source);
+            Q_UNUSED(to_sink);
             return Rejected;
         }
 };

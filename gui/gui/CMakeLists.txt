@@ -64,7 +64,6 @@ else()
         redherringplugin
         aiplugin
         fluidityplugin
-
     )
 
     # build plugins

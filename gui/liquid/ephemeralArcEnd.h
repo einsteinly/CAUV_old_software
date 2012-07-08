@@ -39,9 +39,9 @@ class EphemeralArcEnd: public AbstractArcSink{
                    QWidget *widget);
         virtual bool contains(QPointF const& point) const;
         
-        virtual bool willAcceptConnection(ArcSourceDelegate*){return false;}
+        virtual bool willAcceptConnection(ArcSourceDelegate*, AbstractArcSink*){return false;}
         virtual void doPresentHighlight(qreal){}
-        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate*){return Rejected;}
+        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate*, AbstractArcSink*){return Rejected;}
 
     Q_SIGNALS:
         void disconnected(AbstractArcSink*);

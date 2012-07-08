@@ -81,7 +81,7 @@ QGraphicsItem* AbstractArcSourceInternal::ultimateParent(){
 }
 
 ConnectionSink::ConnectionStatus AbstractArcSourceInternal::connectTo(AbstractArcSink* sink){
-    const ConnectionSink::ConnectionStatus status = sink->doAcceptConnection(m_sourceDelegate);
+    const ConnectionSink::ConnectionStatus status = sink->doAcceptConnection(m_sourceDelegate, sink);
     if(status == ConnectionSink::Accepted){
         m_arc->addTo(sink);
     }else if(status == ConnectionSink::Pending){
@@ -132,7 +132,7 @@ void AbstractArcSourceInternal::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
         float closest_manhattan_length = std::numeric_limits<float>::max();
         AbstractArcSink *closest = NULL;
         foreach(QGraphicsItem* item, items_at_drop){
-            if((sink = dynamic_cast<AbstractArcSink*>(item)) && sink->willAcceptConnection(m_sourceDelegate)){
+            if((sink = dynamic_cast<AbstractArcSink*>(item)) && sink->willAcceptConnection(m_sourceDelegate, sink)){
                 const float ml = (sink->scenePos() - e->scenePos()).manhattanLength();
                 if(ml < closest_manhattan_length){
                     closest = sink;
@@ -185,7 +185,7 @@ void AbstractArcSourceInternal::checkAndHighlightSinks(QPointF scene_pos){
     debug(5) << near_items.size() << "nearby items";    
     foreach(QGraphicsItem* g, near_items)
         if((k = dynamic_cast<AbstractArcSink*>(g)) &&
-            k->willAcceptConnection(m_sourceDelegate)){
+            k->willAcceptConnection(m_sourceDelegate, k)){
             near_set << k;
             QPointF d = k->scenePos() - scene_pos;
             qreal dl = d.x()*d.x() +d.y()*d.y();

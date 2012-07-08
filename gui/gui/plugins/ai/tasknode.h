@@ -91,8 +91,8 @@ public:
 
     virtual liquid::ArcSource *  getSourceFor(boost::shared_ptr<Node> const&) const;
 
-    virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source);
-    virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source);
+    virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink* to_sink);
+    virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink* to_sink);
 
 public Q_SLOTS:
     void highlightRunningStatus(QVariant status);
@@ -110,8 +110,11 @@ protected:
     liquid::Button * m_stopButton;
     liquid::Button * m_resetButton;
 
-    liquid::ArcSink *  m_sink;
-    liquid::ArcSinkLabel *  m_sinkLabel;
+    liquid::ArcSink *  m_conditionSink;
+    liquid::ArcSinkLabel *  m_conditionSinkLabel;
+
+    liquid::ArcSink *  m_pipelineSink;
+    liquid::ArcSinkLabel *  m_pipelineSinkLabel;
 };
 
 

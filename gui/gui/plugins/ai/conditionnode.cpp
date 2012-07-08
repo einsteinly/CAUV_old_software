@@ -160,7 +160,7 @@ liquid::ArcSource * LiquidConditionNode::getSourceFor(boost::shared_ptr<Node> co
     return m_arcSource;
 }
 
-bool LiquidConditionNode::willAcceptConnection(liquid::ArcSourceDelegate* from_source) {
+bool LiquidConditionNode::willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*) {
     Q_UNUSED(from_source);
     return false; // at the moment pipelines aren't pluggable in the Ai
     /*
@@ -171,7 +171,8 @@ bool LiquidConditionNode::willAcceptConnection(liquid::ArcSourceDelegate* from_s
     return false;*/
 }
 
-LiquidConditionNode::ConnectionStatus LiquidConditionNode::doAcceptConnection(liquid::ArcSourceDelegate* from_source) {
+LiquidConditionNode::ConnectionStatus LiquidConditionNode::doAcceptConnection(liquid::ArcSourceDelegate*,
+                                                                              liquid::AbstractArcSink *) {
     /* QString id = from_source->reference().toString();
     if(id.compare(QString("FluiditySourceDelegate")) == 0){
         FluidtySourceDelegate * tn = static_cast<FluidtySourceDelegate *>(from_source);
