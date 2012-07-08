@@ -58,7 +58,8 @@ class detector(aiDetector):
             return
         initial_angle = m.lines[0].angle
         for line in m.lines:
-            if abs(initial_angle-line.angle)%math.pi<self.options.Angular_Discrepancy or abs(initial_angle-line.angle)%math.pi>math.pi-self.options.Angular_Discrepancy:
+            debug(str(abs(initial_angle-line.angle)%math.pi))
+            if abs(initial_angle-line.angle)%math.pi>self.options.Angular_Discrepancy and abs(initial_angle-line.angle)%math.pi<math.pi-self.options.Angular_Discrepancy:
                 self.detected = False
                 return
         if self.colour_trigger > self.options.Threshold:

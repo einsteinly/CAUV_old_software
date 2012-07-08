@@ -30,7 +30,7 @@ class detectorOptions(aiDetectorOptions):
     Circles_Weight   =  1.6 #
 
 class detector(aiDetector):
-    debug_values = []
+    debug_values = ['confidence', 'circles_confidence', 'colour_confidence_A', 'colour_confidence_B']
     def __init__(self, node, opts):
         aiDetector.__init__(self, node, opts)
         self.circles_messages = {}   # map time received : message
@@ -71,19 +71,19 @@ class detector(aiDetector):
         for t, m in  self.circles_messages.items():
             sightings.append(self.detectionConfidence(m))
         if numcircles:
-            circles_confidence = self.options.Circles_Weight * sum(sightings[:numcircles]) / numcircles
+            self.circles_confidence = self.options.Circles_Weight * sum(sightings[:numcircles]) / numcircles
         else:
-            circles_confidence = 0
-        colour_confidence_A = self.options.Colour_Weight_A * self.colour_detector_A.confidence()
-        colour_confidence_B = self.options.Colour_Weight_B * self.colour_detector_B.confidence()
-        confidence = circles_confidence + colour_confidence_A + colour_confidence_B
+            self.circles_confidence = 0
+        self.colour_confidence_A = self.options.Colour_Weight_A * self.colour_detector_A.confidence()
+        self.colour_confidence_B = self.options.Colour_Weight_B * self.colour_detector_B.confidence()
+        self.confidence = self.circles_confidence + self.colour_confidence_A + self.colour_confidence_B
         info('buoy detector processing %d sightings, confidence=%g (circles=%g,colour_A=%g,colour_B=%g)' % (
-            len(sightings), confidence, circles_confidence, colour_confidence_A, colour_confidence_B
+            len(sightings), self.confidence, self.circles_confidence, self.colour_confidence_A, self.colour_confidence_B
         ))
         debug('mean frac: A=%g B=%g' % (self.colour_detector_A.frac(), self.colour_detector_B.frac()))
-        if confidence >= self.options.Required_Confidence and \
+        if self.confidence >= self.options.Required_Confidence and \
            len(sightings) >= self.options.Required_Sightings:
-            info('buoy detected, confidence = %g, %d sightings' % (confidence, len(sightings)))
+            info('buoy detected, confidence = %g, %d sightings' % (self.confidence, len(sightings)))
             self.detected = True
             #warning('self.detected = True is commented out')
         else:
