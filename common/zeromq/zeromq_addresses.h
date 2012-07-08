@@ -7,9 +7,6 @@
 
 namespace cauv {
 
-#define NODE_MARKER_MSGID 223
-#define DAEMON_MARKER_MSGID 224
-
 typedef std::pair<bool, std::vector<uint32_t> > subscription_vec_t;
 
 std::string gen_subscription_message(subscription_vec_t);

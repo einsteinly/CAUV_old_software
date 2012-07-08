@@ -22,12 +22,7 @@
 #include <utility/string.h>
 #include <common/cauv_logo.h> 
 
-#ifdef ZEROMQ_MESSAGING
 #include <common/zeromq/zeromq_mailbox.h>
-#else
-#include <common/spread/spread_rc_mailbox.h>
-#include <common/spread/mailbox_monitor.h>
-#endif
 
 #include <debug/cauv_debug.h>
 #include <generated/message_observers.h>
@@ -58,11 +53,6 @@ void CauvNode::run(bool synchronous)
     info() << "Version:\n" << Version_Information;
 
     m_running = true;
-#ifndef ZEROMQ_MESSAGING
-    if (m_spread_mailbox) {
-        m_spread_mailbox->connect(MakeString() << m_port << "@" << m_server, m_name);
-    }
-#endif
     if(!synchronous)
         m_event_monitor->startMonitoringAsync();
 
@@ -182,10 +172,6 @@ void CauvNode::addOptions(boost::program_options::options_description& desc,
     namespace po = boost::program_options;
     desc.add_options()
         ("help,h", "Print this help message")
-#ifndef ZEROMQ_MESSAGING
-        ("server,s", po::value<std::string>(&m_server)->default_value("localhost"), "Spread server address for messages")
-        ("port,p", po::value<unsigned int>(&m_port)->default_value(16707), "Spread server port for messages")
-#endif
         ("version,V", "show version information")
     ;
 }
@@ -213,15 +199,9 @@ void CauvNode::stopNode(){
 
 CauvNode::CauvNode(const std::string& name)
     : m_name(name),
-#ifdef ZEROMQ_MESSAGING
       m_zeromq_mailbox(boost::make_shared<ZeroMQMailbox>(name)),
       m_mailbox(m_zeromq_mailbox),
       m_event_monitor(m_zeromq_mailbox),
-#else
-      m_spread_mailbox(boost::make_shared<ReconnectingSpreadMailbox>()),
-      m_mailbox(m_spread_mailbox),
-      m_event_monitor(boost::make_shared<SpreadMailboxEventMonitor>(m_spread_mailbox)),
-#endif
       m_running(false)
 {
     debug::setProgramName(name);
