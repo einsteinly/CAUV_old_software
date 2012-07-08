@@ -58,6 +58,15 @@ else()
     )
     depends_on_messages(gui)
 
+    add_custom_target ( guiall
+        DEPENDS
+        gui
+        redherringplugin
+        aiplugin
+        fluidityplugin
+
+    )
+
     # build plugins
     add_subdirectory(plugins)
 
