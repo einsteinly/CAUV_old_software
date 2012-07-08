@@ -53,7 +53,7 @@ class MergeSimilarLinesNode: public Node{
             // parameters:
             registerParamID< float >("angle epsilon", 0.3f);
             registerParamID< float >("distance epsilon", 0.1f);
-            registerParamID< std::vector<Line> >("lines", std::vector<Line>(), "", Must_Be_New);
+            registerParamID< std::vector<Line> >("lines", std::vector<Line>(), "", InputSchedType::Must_Be_New);
         }
 
     protected:

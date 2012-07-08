@@ -17,18 +17,18 @@
 \#define __CAUV_SERIALMESS_H__
 
 \#include <utility/serialisation-types.h>
+#for $s in $structs
+\#include "${s.name}_fwd.h"
+#end for
 #for $e in $enums
-\#include "${e.name}.h"
+\#include "${e.name}_fwd.h"
 #end for
 #for $v in $variants
-\#include "${v.name}.h"
+\#include "${v.name}_fwd.h"
 #end for
 
 namespace cauv{
 
-#for $s in $structs
-struct $s.name;
-#end for
 #for $t in $included_types
 $t.type $t.name;
 #end for
@@ -40,8 +40,8 @@ int32_t deserialise(const_svec_ptr, uint32_t, $s.name&);
 #end for
 
 #for $e in $enums
-void serialise(svec_ptr, $e.name::e const&);
-int32_t deserialise(const_svec_ptr, uint32_t, $e.name::e&);
+void serialise(svec_ptr, $e.name const&);
+int32_t deserialise(const_svec_ptr, uint32_t, $e.name&);
 #end for
 
 #for $v in $variants
@@ -62,7 +62,7 @@ std::string chil($s.name const&);
 #end for
 
 #for $e in $enums
-std::string chil($e.name::e const&);
+std::string chil($e.name const&);
 #end for
 
 #for $v in $variants

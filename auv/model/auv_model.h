@@ -42,17 +42,17 @@ namespace cauv{
         class Motor : public MutableDataStream<int8_t> {
         public:
 
-            Motor(const MotorID::e &id, const std::string name) : MutableDataStream<int8_t>(name), m_id(id) {
+            Motor(const MotorID &id, const std::string name) : MutableDataStream<int8_t>(name), m_id(id) {
             };
 
-            virtual const MotorID::e &getID();
+            virtual const MotorID &getID();
 
         protected:
-            const MotorID::e &m_id;
+            const MotorID &m_id;
             const std::string m_name;
         };
 
-        typedef boost::unordered_map<MotorID::e, boost::shared_ptr<Motor> > motor_map;
+        typedef boost::unordered_map<MotorID, boost::shared_ptr<Motor> > motor_map;
 
         motor_map motors;
 
@@ -171,7 +171,7 @@ namespace cauv{
      * @author Andy Pritchard
      */
 
-        typedef boost::unordered_map<DebugType::e, boost::shared_ptr<DataStream<std::string> > > logs_map;
+        typedef boost::unordered_map<DebugType, boost::shared_ptr<DataStream<std::string> > > logs_map;
 
         logs_map logs;
 
@@ -210,7 +210,7 @@ namespace cauv{
             boost::shared_ptr< MutableDataStream< int > > width;
         };
 
-        typedef boost::unordered_map<CameraID::e, boost::shared_ptr<Camera> > camera_map;
+        typedef boost::unordered_map<CameraID, boost::shared_ptr<Camera> > camera_map;
 
         camera_map cameras;
 

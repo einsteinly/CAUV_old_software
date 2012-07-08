@@ -16,7 +16,7 @@ SimCamera::SimCamera (osg::Node *track_node,
                       std::string window_title,
                       unsigned int width_,
                       CauvNode *sim_node_,
-                      CameraID::e id,
+                      CameraID id,
                       unsigned int max_rate) :
            sim_node(sim_node_),
            cam_id(id),

@@ -51,9 +51,9 @@ class $className : public Message
 
         #for $f in $m.fields
         const $toCPPType($f.type)& ${f.name}() const;
-        const $toCPPType($f.type)& get_${f.name}() const{ return ${f.name}(); }
+        const $toCPPType($f.type)& get_${f.name}() const;
         void ${f.name}($toCPPType($f.type) const& $f.name);
-        void set_${f.name}($toCPPType($f.type) const& ${f.name}_value){ ${f.name}(${f.name}_value); }
+        void set_${f.name}($toCPPType($f.type) const& ${f.name}_value);
         #if $f.lazy
         void get_${f.name}_inplace($toCPPType($f.type)& $f.name) const;
         #end if
@@ -82,7 +82,7 @@ class $className : public Message
     #end if
 
     #for i, f in $enumerate($m.fields)
-        #if f.lazy
+        #if $f.lazy
         mutable boost::shared_ptr< $toCPPType($f.type) > m_$f.name;
         mutable uint32_t m_lazy_field_${i}_offset;
         #else

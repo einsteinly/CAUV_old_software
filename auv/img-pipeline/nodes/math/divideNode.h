@@ -33,7 +33,7 @@ class MathDivideNode: public Node{
             registerOutputID("A/B", float());
 
             // parameters:
-            registerParamID<T>("A (triggers exec)", T(), "value that must be new for execution", Must_Be_New);
+            registerParamID<T>("A (triggers exec)", T(), "value that must be new for execution", InputSchedType::Must_Be_New);
             registerParamID<T>("B", T());
         }
 

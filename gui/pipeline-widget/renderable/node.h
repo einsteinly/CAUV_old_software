@@ -10,9 +10,11 @@
 #include <debug/cauv_debug.h>
 #include <generated/types/NodeType.h>
 #include <generated/types/ParamValue.h>
+#include <generated/types/NodeOutput_fwd.h>
+#include <generated/types/NodeInput_fwd.h>
+#include <generated/types/LocalNodeInput_fwd.h>
+#include <generated/types/LocalNodeOutput_fwd.h>
 #include <generated/types/SetNodeParameterMessage.h>
-#include <generated/types/GraphRequestMessage.h>
-#include <generated/types/RemoveNodeMessage.h>
 
 #include "../container.h"
 #include "../pwTypes.h"
@@ -23,10 +25,6 @@ namespace cauv{
 
 class NodeAddedMessage;
 class NodeParametersMessage;
-struct NodeOutput;
-struct NodeInput;
-struct LocalNodeInput;
-struct LocalNodeOutput;
 
 namespace gui{
 namespace pw{
@@ -64,11 +62,11 @@ class Node: public Draggable,
         
     public:
         Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage const> m);
-        Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const& nt);
+        Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType const& nt);
         virtual ~Node(){ }
 
         void initFromMessage(boost::shared_ptr<NodeAddedMessage const> m);
-        void setType(NodeType::e const&);
+        void setType(NodeType const&);
         void setInputs(msg_node_input_map_t const&);
         void setInputLinks(msg_node_input_map_t const&);
         void setOutputs(msg_node_output_map_t const&);
@@ -77,7 +75,7 @@ class Node: public Draggable,
         void setParams(boost::shared_ptr<NodeParametersMessage const> m);
         void setParamLinks(msg_node_input_map_t const& inputs);        
 
-        virtual void draw(drawtype_e::e flags);
+        virtual void draw(drawtype_e flags);
         virtual bool mousePressEvent(MouseEvent const&);
         virtual void mouseReleaseEvent(MouseEvent const&);
         virtual void mouseMoveEvent(MouseEvent const&);
@@ -89,7 +87,7 @@ class Node: public Draggable,
         void close();
         void exec();
         int id() const;
-        NodeType::e type() const;
+        NodeType type() const;
         renderable_ptr_t outSocket(std::string const& output_id);
         renderable_ptr_t inSocket(std::string const& input_id);
         arc_ptr_t newArc(renderable_wkptr_t src, renderable_wkptr_t dst);
@@ -130,7 +128,7 @@ class Node: public Draggable,
         BBox m_back;
 
         int m_node_id;
-        NodeType::e m_node_type;
+        NodeType m_node_type;
 
         text_ptr_t m_title;
         renderable_ptr_t m_closebutton;

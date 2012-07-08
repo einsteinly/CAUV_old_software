@@ -15,5 +15,6 @@ target_link_libraries(heimdall
     ${CROSSROADS_LIBRARY}
 )
 cauv_install(heimdall)
+depends_on_messages(heimdall)
 
 endif()

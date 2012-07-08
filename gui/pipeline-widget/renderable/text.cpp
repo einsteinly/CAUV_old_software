@@ -27,7 +27,7 @@ Text::Text(container_ptr_t c, std::string const& text, std::string const& font, 
       m_font(std::make_pair(font, pt)), m_colour(Colour(0)){
 }
 
-void Text::draw(drawtype_e::e){
+void Text::draw(drawtype_e){
     if(!font()) return;
 
     glPushAttrib(GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT |

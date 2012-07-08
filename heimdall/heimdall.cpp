@@ -24,6 +24,8 @@
 #include <utility/daemon.h>
 #include <utility/files.h>
 
+#include <generated/types/message_type.h>
+
 typedef std::set<uint32_t> subscriptions_t;
 typedef std::map<uint32_t,std::pair <unsigned int, unsigned long int> > stats_t;
 typedef std::pair <int, std::string> connection_t;
@@ -175,7 +177,7 @@ void XPubSubPair::pump_message(void) {
     }
     if (xs_msg_size(&message_buf) >= sizeof(uint32_t)) {
         const uint32_t msg_id = *reinterpret_cast<const uint32_t*>(xs_msg_data(&message_buf));
-        if (msg_id == NODE_MARKER_MSGID) {
+        if (msg_id == cauv::MessageType::NodeIDMarker) {
             return;
         }
         stats[msg_id].first++;
@@ -204,7 +206,7 @@ void XPubSubPair::pump_subscription(void) {
                     subs.erase(msg_id);
                 }
             }
-            if (msg_id == NODE_MARKER_MSGID && sub_vec.second.size() == 2) {
+            if (msg_id == cauv::MessageType::NodeIDMarker && sub_vec.second.size() == 2) {
                 //avoid remote PIDs from appearing as local
                 sub_vec.second[1] |= 0x1 << 31;
                 std::string sub_buf = cauv::gen_subscription_message(sub_vec);
@@ -272,7 +274,7 @@ DaemonContext::DaemonContext(const std::string vehicle_name, const std::string w
 
     cauv::subscription_vec_t sub;
     sub.first = true;
-    sub.second.push_back(DAEMON_MARKER_MSGID);
+    sub.second.push_back(cauv::MessageType::DaemonIDMarker);
     sub.second.push_back(daemon_id);
     std::string sub_buf = cauv::gen_subscription_message(sub);
     if(xs_send(local_to_net.xsub.skt, sub_buf.c_str(), sub_buf.size(), 0) < 0) {

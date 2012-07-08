@@ -43,7 +43,7 @@ class EditText: public Menu{
                 m_done_f(m_done_f_arg, *m_txt_prev + *m_txt_post);
         }
         
-        virtual void draw(drawtype_e::e flags){
+        virtual void draw(drawtype_e flags){
             // keep everything nicely in front:
             glTranslatef(0, 0, 0.1);
 

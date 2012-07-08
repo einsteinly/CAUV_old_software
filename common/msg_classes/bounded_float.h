@@ -30,7 +30,7 @@ class BoundedFloat: public BoundedFloatBase{
         BoundedFloat()
             : BoundedFloatBase(){
         }
-        BoundedFloat(float value, float min, float max, BoundedFloatType::e const& t)
+        BoundedFloat(float value, float min, float max, BoundedFloatType const& t)
             : BoundedFloatBase(value, min, max, t){
         }
         operator float() const{

@@ -1,25 +1,32 @@
 #ifndef CAUV_ZMQ_MAILBOX_H
 #define CAUV_ZMQ_MAILBOX_H
 
-#include <common/mailbox.h>
-#include <common/mailbox_monitor.h>
-#include <generated/message_observers.h>
-#include <utility/threadsafe-observable.h>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <xs.hpp>
-
 #include <string>
 #include <map>
 #include <vector>
 #include <set>
 
+#include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+
+#include <xs.hpp>
+
+#include <common/mailbox.h>
+#include <common/mailbox_monitor.h>
+#include <generated/types/message_type.h>
+#include <generated/message_observers.h>
+#include <utility/threadsafe-observable.h>
+
 namespace cauv {
 
-class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public MessageSource, boost::noncopyable {
+class SubscribeObserver {
+    public:
+        virtual void onSubscribed(MessageType messageType) = 0;
+};
+
+class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public MessageSource, public Observable<SubscribeObserver>,  boost::noncopyable {
     public:
     ZeroMQMailbox(const std::string name = "unknown");
     /**
@@ -46,6 +53,10 @@ class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public Message
     virtual void addMessageObserver(boost::shared_ptr<MessageObserver>);
     virtual void removeMessageObserver(boost::shared_ptr<MessageObserver>);
     virtual void clearMessageObservers();
+
+    virtual void addSubscribeObserver(boost::shared_ptr<SubscribeObserver>);
+    virtual void removeSubscribeObserver(boost::shared_ptr<SubscribeObserver>);
+    virtual void clearSubscribeObservers();
 
     private:
     //most internal variables are *not* threadsafe and should only be accessed
@@ -84,13 +95,8 @@ class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public Message
     //xs connections strings that this node has connected to already
     connections_t connections;
 
-    //pushed over sub_queue_push for subscriptions
-    struct SubscriptionMessage {
-        bool subscribe; //subscribe or unsubscribe
-        uint32_t msg_id;
-    };
-
     void send_connect_message(uint32_t pid);
+    void send_subscribed_message (uint32_t pid, MessageType type);
     void handle_pub_message(void);
     void handle_sub_message(void);
     void handle_send_message(void);

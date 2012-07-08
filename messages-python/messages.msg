@@ -462,6 +462,9 @@ group zmq_internal
         daemon_id: uint32;
         connect_string : string;
     }
+    message SubscriptionConfirmMarker : 228
+    {
+    }
 }
 
 group membership

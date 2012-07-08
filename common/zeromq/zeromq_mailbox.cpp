@@ -17,6 +17,7 @@
 #include <utility/time.h>
 #include <utility/files.h>
 
+#include <generated/types/message_type.h>
 #include <generated/types/message.h>
 #include <generated/types/MembershipChangedMessage.h>
 #include <generated/types/DaemonConnectedMessage.h>
@@ -60,9 +61,14 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     sub.setsockopt(XS_RECONNECT_IVL, &reconnect_ival, sizeof(reconnect_ival));
 
     uint32_t marker_sub[2];
-    marker_sub[0] = NODE_MARKER_MSGID;
+    marker_sub[0] = MessageType::NodeIDMarker;
     marker_sub[1] = getpid();
     sub.setsockopt(XS_SUBSCRIBE, marker_sub, sizeof(marker_sub));
+
+    uint32_t sub_sub[2];
+    sub_sub[0] = MessageType::SubscriptionConfirmMarker;
+    sub_sub[1] = getpid();
+    sub.setsockopt(XS_SUBSCRIBE, sub_sub, sizeof(sub_sub));
 
     std::string daemon_control_str;
     daemon_control_str = "ipc://" + ipc_directory + "/daemon/control";
@@ -124,6 +130,14 @@ int ZeroMQMailbox::sendMessage(boost::shared_ptr<const Message> message,
     return sendMessage(message, reliability);
 }
 
+namespace {
+    //pushed over sub_queue_push for subscriptions
+    struct SubscriptionMessage {
+        bool subscribe; //subscribe or unsubscribe
+        uint32_t msg_id;
+    };
+}
+
 void ZeroMQMailbox::joinGroup(const std::string& groupName) {
     boost::lock_guard<boost::mutex> lock(m_sub_mutex);
     SubscriptionMessage submsg;
@@ -183,15 +197,27 @@ bool ZeroMQMailbox::isMonitoring(void) {
 }
 
 void ZeroMQMailbox::addMessageObserver(boost::shared_ptr<MessageObserver> observer) {
-    addObserver(observer);
+    MessageSource::addObserver(observer);
 }
 
 void ZeroMQMailbox::removeMessageObserver(boost::shared_ptr<MessageObserver> observer) {
-    removeObserver(observer);
+    MessageSource::removeObserver(observer);
 }
 
 void ZeroMQMailbox::clearMessageObservers(void) {
-    clearObservers();
+    MessageSource::clearObservers();
+}
+
+void ZeroMQMailbox::addSubscribeObserver(boost::shared_ptr<SubscribeObserver> observer) {
+    Observable<SubscribeObserver>::addObserver(observer);
+}
+
+void ZeroMQMailbox::removeSubscribeObserver(boost::shared_ptr<SubscribeObserver> observer) {
+    Observable<SubscribeObserver>::removeObserver(observer);
+}
+
+void ZeroMQMailbox::clearSubscribeObservers(void) {
+    Observable<SubscribeObserver>::clearObservers();
 }
 
 ZeroMQMailbox::pids_t ZeroMQMailbox::scan_ipc_dir(std::string dir) {
@@ -236,10 +262,19 @@ ZeroMQMailbox::pids_t ZeroMQMailbox::scan_ipc_dir(std::string dir) {
 
 void ZeroMQMailbox::send_connect_message (uint32_t pid) {
     std::string buf;
-    uint32_t sub_id = NODE_MARKER_MSGID;
+    uint32_t sub_id = MessageType::NodeIDMarker;
     buf += std::string(reinterpret_cast<char*>(&sub_id), sizeof(sub_id));
-    buf += std::string(reinterpret_cast<char*>(&pid), sizeof(sub_id));
+    buf += std::string(reinterpret_cast<char*>(&pid), sizeof(pid));
     buf += sub_bind;
+    pub.send(buf.c_str(),buf.size());
+}
+
+void ZeroMQMailbox::send_subscribed_message (uint32_t pid, MessageType type) {
+    std::string buf;
+    uint32_t sub_id = MessageType::SubscriptionConfirmMarker;
+    buf += std::string(reinterpret_cast<char*>(&sub_id), sizeof(sub_id));
+    buf += std::string(reinterpret_cast<char*>(&pid), sizeof(pid));
+    buf += std::string(reinterpret_cast<char*>(&type), sizeof(type));
     pub.send(buf.c_str(),buf.size());
 }
 
@@ -255,54 +290,78 @@ void ZeroMQMailbox::handle_pub_message (void) {
     }
 
     bool is_sub = s_vec.first;
-    uint32_t sub_id = s_vec.second[0];
-
-    if (sub_id == NODE_MARKER_MSGID && s_vec.second.size() == 2) {
-        uint32_t pid = s_vec.second[1];
-        if (is_sub) {
-            debug(3) << "pid" << pid << "connected";
-            if (send_connect_pids.count(pid)) {
-                debug(3) << "sending connection for pid" << pid;
-                send_connect_message(pid);
-                send_connect_pids.erase(pid);
+    MessageType sub_id = MessageType(s_vec.second[0]);
+    
+    switch (sub_id) {
+        case MessageType::NodeIDMarker: {
+            if (s_vec.second.size() == 2) {
+                uint32_t pid = s_vec.second[1];
+                if (is_sub) {
+                    debug(3) << "pid" << pid << "connected";
+                    if (send_connect_pids.count(pid)) {
+                        debug(3) << "sending connection for pid" << pid;
+                        send_connect_message(pid);
+                        send_connect_pids.erase(pid);
+                    }
+                    boost::shared_ptr<MembershipChangedMessage> change_msg = 
+                        boost::make_shared<MembershipChangedMessage>("unknown");
+                    BOOST_FOREACH(MessageSource::observer_ptr_t o, MessageSource::m_observers) {
+                        o->onMembershipChangedMessage(change_msg);
+                    }
+                }
             }
-            boost::shared_ptr<MembershipChangedMessage> change_msg = 
-                boost::make_shared<MembershipChangedMessage>("unknown");
-            BOOST_FOREACH(observer_ptr_t o, m_observers) {
-                o->onMembershipChangedMessage(change_msg);
+            break;
+        }
+        case MessageType::DaemonIDMarker: {
+            if (s_vec.second.size() == 2) {
+                uint32_t daemon_id = s_vec.second[1];
+                debug() << "connected to daemon" << daemon_id;
+                daemon_connected = true;
+
+                //since the only expected reconnection is with the daemon, increase
+                //reconnect interval greatly to reduce CPU usage with lots of dead
+                //connections
+                int reconnect_ival = 10000;
+                sub.setsockopt(XS_RECONNECT_IVL, &reconnect_ival, sizeof(reconnect_ival));
+
+                boost::shared_ptr<DaemonConnectedMessage> connect_msg =
+                    boost::make_shared<DaemonConnectedMessage>(daemon_id);
+                BOOST_FOREACH(MessageSource::observer_ptr_t o, MessageSource::m_observers) {
+                    o->onDaemonConnectedMessage(connect_msg);
+                }
             }
+            break;
         }
-    }
-
-    if (sub_id == DAEMON_MARKER_MSGID && s_vec.second.size() == 2) {
-        uint32_t daemon_id = s_vec.second[1];
-        debug() << "connected to daemon" << daemon_id;
-        daemon_connected = true;
-
-        //since the only expected reconnection is with the daemon, increase
-        //reconnect interval greatly to reduce CPU usage with lots of dead
-        //connections
-        int reconnect_ival = 10000;
-        sub.setsockopt(XS_RECONNECT_IVL, &reconnect_ival, sizeof(reconnect_ival));
-
-        boost::shared_ptr<DaemonConnectedMessage> connect_msg =
-            boost::make_shared<DaemonConnectedMessage>(daemon_id);
-        BOOST_FOREACH(observer_ptr_t o, m_observers) {
-            o->onDaemonConnectedMessage(connect_msg);
+        case MessageType::SubscriptionConfirmMarker: {
+            uint32_t pid = s_vec.second[1];
+            if (pid != (uint32_t)getpid()) {
+                error() << "received subscribed message not intended for this pid!";
+                error() << "message intended for pid" << pid;
+                return;
+            }
+            MessageType type = MessageType(s_vec.second[2]);
+            BOOST_FOREACH(Observable<SubscribeObserver>::observer_ptr_t o, Observable<SubscribeObserver>::m_observers) {
+                o->onSubscribed(type);
+            }
+            break;
         }
-        return;
-    }
-
-    if (s_vec.second.size() > 1) {
-        return;
-    }
-    boost::lock_guard<boost::mutex> lock(m_pub_map_mutex);
-    if (is_sub) {
-        debug(5) << "remote subscribed to message id" << sub_id;
-        publications.insert(sub_id);
-    } else {
-        debug(5) << "remote unsubscribed from message id" << sub_id;
-        publications.erase(sub_id);
+        default: {
+            {
+                boost::lock_guard<boost::mutex> lock(m_pub_map_mutex);
+                if (is_sub) {
+                    debug(5) << "remote subscribed to message id" << sub_id;
+                    publications.insert(sub_id);
+                } else {
+                    debug(5) << "remote unsubscribed from message id" << sub_id;
+                    publications.erase(sub_id);
+                }
+            }
+            if (is_sub) {
+                uint32_t pid = getpid();
+                send_subscribed_message(pid, sub_id);
+            }
+            break;
+        }
     }
 }
 
@@ -319,23 +378,28 @@ void ZeroMQMailbox::handle_sub_message(void) {
 
     uint32_t msg_id = *reinterpret_cast<uint32_t*>(data);
 
-    if (msg_id == NODE_MARKER_MSGID) {
-        uint32_t pid = *(reinterpret_cast<uint32_t*>(data) + 1);
-        if (pid != (uint32_t)getpid()) {
-            warning() << "received connect message not intended for this pid!";
-            warning() << "message intended for pid" << pid;
-            return;
+    switch (msg_id) {
+        case MessageType::NodeIDMarker: {
+            uint32_t pid = *(reinterpret_cast<uint32_t*>(data) + 1);
+            if (pid != (uint32_t)getpid()) {
+                error() << "received connect message not intended for this pid!";
+                error() << "message intended for pid" << pid;
+                return;
+            }
+            std::string connect_str(data + sizeof(uint32_t) * 2, inc_message.size() - sizeof(uint32_t) * 2);
+            debug(3) << "connecting to" << connect_str;
+            pub.connect(connect_str.c_str());
+            connections.insert(connect_str);
+            break;
         }
-        std::string connect_str(data + sizeof(uint32_t) * 2, inc_message.size() - sizeof(uint32_t) * 2);
-        debug(3) << "connecting to" << connect_str;
-        pub.connect(connect_str.c_str());
-        connections.insert(connect_str);
-        return;
+        default: {
+            byte *dataptr = reinterpret_cast<byte*>(inc_message.data());
+            //!!! Seems like the copy involved here could be avoided somehow...
+            notifyObservers(boost::make_shared<const svec_t>(dataptr,dataptr + inc_message.size()));
+            break;
+        }
     }
 
-    byte *dataptr = reinterpret_cast<byte*>(inc_message.data());
-    //!!! Seems like the copy involved here could be avoided somehow...
-    notifyObservers(boost::make_shared<const svec_t>(dataptr,dataptr + inc_message.size()));
 }
 
 void ZeroMQMailbox::handle_send_message(void) {

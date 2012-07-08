@@ -36,7 +36,7 @@ class Renderable{
             return l.m_sort_key < r.m_sort_key;
         }
 
-        virtual void draw(drawtype_e::e flags) = 0;
+        virtual void draw(drawtype_e flags) = 0;
 
         /* overload to receive mouse events
          */

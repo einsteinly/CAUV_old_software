@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 import cauv.node
-from cauv import control, sonar
+from cauv import control
 from cauv.debug import debug, warning, error, info
 
 import time
@@ -46,7 +46,6 @@ class auvControl(aiProcess):
     def __init__(self, opts):
         aiProcess.__init__(self, 'auv_control')
         self.auv = slightlyModifiedAUV(self.node)
-        self.sonar = sonar.Sonar(self.node)
         self.auv.depth_disabled = False
         
         self.control_state = {}
@@ -77,13 +76,6 @@ class auvControl(aiProcess):
                 warning('Script %s tried to move auv, but only script %s should be working' %(task_id, self.current_task))
         else:
             debug('Function not called as paused or disabled.', 5)
-
-    @force_calling_process
-    @external_function
-    def sonar_command(self, command, *args, **kwargs):
-        task_id = kwargs.pop('calling_process')
-        if self.enabled.is_set() and self.current_task == task_id:
-            getattr(self.sonar, command)(*args, **kwargs)
             
     #GENERAL FUNCTIONS (that could be called from anywhere)
     @external_function

@@ -42,7 +42,7 @@ AUV::AUV()
     cameras[CameraID::Sonar] = boost::make_shared< Sonar > ("Sonar");
 }
 
-const MotorID::e& AUV::Motor::getID() {
+const MotorID& AUV::Motor::getID() {
     return m_id;
 }
 

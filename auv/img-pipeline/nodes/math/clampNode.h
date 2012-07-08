@@ -37,7 +37,7 @@ class ClampNode: public Node{
             m_speed = fast;
 
             // input:
-            registerParamID<T>("Value", T(), "changing value", Must_Be_New);
+            registerParamID<T>("Value", T(), "changing value", InputSchedType::Must_Be_New);
             registerParamID<T>("Min", T(), "changing value");
             registerParamID<T>("Max", T(), "changing value");
 

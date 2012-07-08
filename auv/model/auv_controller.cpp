@@ -95,7 +95,7 @@ AUVController::AUVController(boost::shared_ptr<AUV>auv): m_auv(auv){
     auv->scripts.scriptExec->onSet.connect(boost::bind( &AUVController::sendScriptMessage, this, _1));
 }
 
-void AUVController::sendMotorMessage(MotorID::e motor, int8_t speed){
+void AUVController::sendMotorMessage(MotorID motor, int8_t speed){
     onMessageGenerated(boost::make_shared<MotorMessage>(motor, speed));
 }
 
