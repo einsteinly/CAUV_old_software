@@ -8,7 +8,7 @@ enum ImageEncodingType: int8 { RAW_uint8_1 }
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
 enum CameraID: int8 { Forward = 1, Down = 2, Up = 3, Sonar = 4, File = 5, GemSonar = 6 }
 enum SonarID: int8 { Seasprite = 1, Gemini = 2 }
-enum LightID: int8 { Forward = 1, Down = 2, TO_FIX_NUMVALUES = 5 }
+enum LightID: int8 { Forward = 1, Down = 2, Strobe = 3, }
 enum NodeType : int8 {
     Invalid,
     Copy,
@@ -174,6 +174,44 @@ enum ColourType : int8 {
     ARGB,
     BGRA,
     Grey,
+}
+
+enum PCBStatus : int8 {
+    OK = 0,
+    Alarm = 1,    // fault indicated by unusual data (e.g. spurious pressure reading)
+    Error = 2,    // a fault that may affect behaviour, but which should not abort the mission
+    Critical = 3, // requires immediate action or damage will be caused (e.g.  short)
+    Fatal = 4,    // use for genuinely fatal errors: pressure vessel flooding, all motors dead, etc...
+}
+
+enum BoardID : int16 {
+    MainControl = 10,
+    MotorSupervisor = 11,
+    FrontPressureSensor = 12,
+    RearPressureSensor = 13,
+    ComputerSupervisor = 16,
+    //FrontLightsControl = ???
+    //MidLightsControl = ???
+    //AudioProcessing = ???
+}
+
+enum PowerControl {
+    PowerOff = 0,
+    PowerOn  = 1,
+    Reset    = 2,
+}
+
+enum BatteryLocation {
+    Left = 0,
+    Right = 1,
+}
+
+// used for temperature
+enum Component {
+    FrontPressureBoard
+    RearPressureBoard
+    MainControlBoard
+    // !!! TODO: other temperatures
 }
 
 struct floatYPR
@@ -822,6 +860,85 @@ group processing
     }
 }
 
+group can_control
+{
+    message MotorControl : 400
+    {
+        prop : int8;
+        hbow : int8;
+        vbow : int8;
+        hstern : int8;
+        vstern : int8;
+    }
+
+    message LightContol : 150
+    {
+        lightId: LightID;
+        intensity : uint8;     // 0 (off) -> 255 (max)
+        duty_cycle : uint8;    // 0 (off) -> 255 (always on)
+        cycle_period : uint16; // milliseconds
+    }
+
+    message PowerControl : 401
+    {
+        channel : PowerChannel;
+        command : PowerControl;
+    }
+}
+
+group can_status
+{
+
+    message BatteryStatus : 152
+    {
+        pack_id : uint16; // 64k enough?
+        pack_charge  : uint16; // mV
+        pack_voltage : uint16; // mV
+        pack_location : BatteryLocation;
+    }
+
+    // lots more info is available from the bms...
+
+    message PowerStatus : 
+    {
+        // values should be averaged over the most recent time-period (however
+        // often messages are sent)
+        channel : PowerChannel;
+        voltage : float; // V
+        current : float; // A
+        power   : float; // W
+    }
+   
+    message Alive : 40
+    {
+        board  : BoardID;
+        status : PCBStatus;
+        info   : string;
+    }
+
+    message Pressure : 50
+    {
+        fore : uint16;
+        aft  : uint16;
+    }
+    
+    // Barracuda has independent and asynchronous pressure sensors...
+    message ForePressure : 51
+    {
+        pressure uint16;
+    }
+
+    message AftPressure : 52
+    {
+        pressure uint16;
+    }
+
+    message Temperature : 403
+    {
+        location : Component;
+    }
+}
+
 group gui
 {
     message ControllerState : 100
@@ -940,23 +1057,6 @@ group pl_gui
     }
 }
 
-
-group mcb
-{
-    message Alive : 40
-    {
-    }
-}
-
-group pressure
-{
-    message Pressure : 50
-    {
-        fore : uint16;
-        aft : uint16;
-    }
-}
-
 group ai
 {
     message AI : 200
@@ -1051,22 +1151,6 @@ group guiai
     }
 }
 
-group external
-{
-    message Light : 150
-    {
-        lightId: LightID;
-        intensity : uint8;
-    }
-    message CuttingDevice : 151
-    {
-        strength : uint8;
-    }
-    message BatteryStatus : 152
-    {
-        voltage : uint16;
-    }
-}
 group simulation
 {
     message SimPosition : 800
