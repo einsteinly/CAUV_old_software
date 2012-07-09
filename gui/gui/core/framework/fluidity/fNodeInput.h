@@ -55,8 +55,8 @@ class FNodeInput: public liquid::ArcSinkLabel,
         virtual ~FNodeInput();
 
         // ConnectionSink:
-        virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source);
-        virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source);
+        virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*);
+        virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*);
 
     public:
         void addWidget(QGraphicsWidget* w);

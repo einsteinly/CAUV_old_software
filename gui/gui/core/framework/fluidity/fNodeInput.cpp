@@ -69,7 +69,7 @@ void FNodeInput::removeWidget(QGraphicsWidget* w){
     hLayout()->removeItem(w);
 }
 
-bool FNodeInput::willAcceptConnection(liquid::ArcSourceDelegate* from_source){
+bool FNodeInput::willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*){
     FNodeOutput* output = dynamic_cast<FNodeOutput*>(from_source);
     debug(7) << "fNodeInput::willAcceptConnection from_source=" << from_source << output
              << (output && (output->ioType() == ioType() && output->subType() == subType() && output->node() != node()));
@@ -79,7 +79,7 @@ bool FNodeInput::willAcceptConnection(liquid::ArcSourceDelegate* from_source){
                output->node() != node();
     return false;
 }
-FNodeInput::ConnectionStatus FNodeInput::doAcceptConnection(liquid::ArcSourceDelegate* from_source){
+FNodeInput::ConnectionStatus FNodeInput::doAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*){
     FNodeOutput* output = dynamic_cast<FNodeOutput*>(from_source);
     debug() << "FNodeInput::doAcceptConnection:" << output;
     if(output &&

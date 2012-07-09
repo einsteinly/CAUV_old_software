@@ -64,6 +64,8 @@ std::set<boost::shared_ptr<AiConditionNode> > AiTaskNode::getConditions(){
 
 void AiTaskNode::addPipelineId(std::string pipe){
     m_pipelineIds.insert(pipe);
+    Q_EMIT onUpdate();
+    Q_EMIT structureChanged();
 }
 
 void AiTaskNode::removePipelineId(std::string pipe){
@@ -165,7 +167,6 @@ LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem
     initButtons();
     rebuildContents();
     node->connect(node.get(), SIGNAL(onUpdate(QVariant)), this, SLOT(highlightRunningStatus(QVariant)));
-    node->connect(node.get(), SIGNAL(onBranchChanged()), this, SLOT(ensureConnected()));
     node->connect(node.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
 
     boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();

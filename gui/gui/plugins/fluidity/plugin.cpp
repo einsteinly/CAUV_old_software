@@ -182,6 +182,7 @@ void FluidityPlugin::setupPipeline(boost::shared_ptr<Node> node){
         }
     } else if(boost::shared_ptr<FluidityNode> fn = boost::dynamic_pointer_cast<FluidityNode>(node)){
         LiquidFluidityNode * liquidNode = new LiquidFluidityNode(fn, m_actions->window);
+        connect(liquidNode, SIGNAL(closed(LiquidNode*)), this, SLOT(nodeClosed(liquid::LiquidNode*)));
         m_actions->scene->addItem(liquidNode);
     }
 }
@@ -189,6 +190,12 @@ void FluidityPlugin::setupPipeline(boost::shared_ptr<Node> node){
 boost::weak_ptr<CauvNode>& FluidityPlugin::theCauvNode(){
     static boost::weak_ptr<CauvNode> the_cauv_node;
     return the_cauv_node;
+}
+
+void FluidityPlugin::nodeClosed(liquid::LiquidNode * node) {
+    if(LiquidFluidityNode * task = dynamic_cast<LiquidFluidityNode*>(node)){
+        task->fluidityNode()->getParent()->removeChild(task->fluidityNode()->nodeId());
+    }
 }
 
 

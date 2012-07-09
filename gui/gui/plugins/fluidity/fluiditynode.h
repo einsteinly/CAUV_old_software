@@ -59,6 +59,8 @@ public:
 
     virtual liquid::ArcSource * getSourceFor(boost::shared_ptr<Node> const&) const;
 
+    boost::shared_ptr<FluidityNode> fluidityNode();
+
 public Q_SLOTS:
     void beginMaximise();
     void zoomIn(int percent);

@@ -21,6 +21,8 @@
 #include <gui/core/model/nodes/groupingnode.h>
 #include <gui/core/model/nodes/vehiclenode.h>
 
+#include <liquid/node.h>
+
 #include <QObject>
 
 namespace cauv{
@@ -54,6 +56,7 @@ public Q_SLOTS:
     void stopDiscovery();
     void startDiscovery();
     void discover();
+    void nodeClosed(liquid::LiquidNode * node);
 
 private:
     friend class LiquidFluidityNode;

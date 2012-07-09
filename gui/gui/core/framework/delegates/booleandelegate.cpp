@@ -38,7 +38,13 @@ void BooleanDelegate::paint(QPainter *painter,
                             const QStyleOptionViewItem &option,
                             const QModelIndex &index) const
 {
-    AbstractNodeDelegate::paint(painter, option, index);
+    QRect title = titleRect(option, index);
+    int width = controlRect(option, index).width();
+    title = title.adjusted(width+2, 0, width+2, 0);
+    QStyleOptionViewItem modifiedOptions = option;
+    modifiedOptions.rect = title;
+
+    AbstractNodeDelegate::paint(painter, modifiedOptions, index);
 
     BooleanNode * node = dynamic_cast<BooleanNode*>((Node*)index.internalPointer());
     if (node) {
@@ -73,13 +79,13 @@ void BooleanDelegate::commit() {
 
 QSize BooleanDelegate::sizeHint(const QStyleOptionViewItem & option,
                                 const QModelIndex &index) const{
-    return QSize(titleRect(option, index).size().width() + 65 , 25);
+    return QSize(titleRect(option, index).size().width() + controlRect(option,index).width(),
+                 controlRect(option,index).height());
 }
 
 
-QRect BooleanDelegate::controlRect(const QStyleOptionViewItem &option,
-                  const QModelIndex &index) const{
-    QRect rect = AbstractNodeDelegate::controlRect(option, index);
-    rect.setSize(QSize(65, 25));
-    return rect;
+QRect BooleanDelegate::controlRect(const QStyleOptionViewItem & option,
+                  const QModelIndex &) const{
+    QRect rect = option.rect;
+    return QRect(rect.x() + 10, rect.y(), 65, 25);
 }

@@ -96,6 +96,8 @@ std::map<std::string, boost::shared_ptr<Node> > AiConditionNode::getOptions(){
 
 void AiConditionNode::addPipelineId(std::string id){
     m_pipelineIds.insert(id);
+    Q_EMIT onUpdate();
+    Q_EMIT structureChanged();
 }
 void AiConditionNode::removePipelineId(std::string id){
     m_pipelineIds.erase(std::find(m_pipelineIds.begin(), m_pipelineIds.end(), id));

@@ -191,4 +191,7 @@ liquid::ArcSource *  LiquidFluidityNode::getSourceFor(boost::shared_ptr<Node> co
 }
 
 
+boost::shared_ptr<FluidityNode> LiquidFluidityNode::fluidityNode(){
+    return m_node;
+}
 
