@@ -105,6 +105,11 @@ class SlamCloudLocation{
             return r;
         }
 
+        void addConstraintTo(location_ptr p, RelativePose const& r){
+            m_constrained_to.push_back(p);
+            m_constraints.push_back(r);
+        }
+
         static pose_constraint_ptr addConstraintBetween(location_ptr from,
                                                         location_ptr to,
                                                         Eigen::Matrix4f from_to_to){
@@ -417,7 +422,7 @@ class SlamCloudPart: public SlamCloudLocation,
                 float y = 0;
                 float z = 0;
                 float response = 0;
-                std::size_t idx = 0;
+                //std::size_t idx = 0;
                 f.read((char*)&x, sizeof(x));
                 f.read((char*)&y, sizeof(y));
                 // no z

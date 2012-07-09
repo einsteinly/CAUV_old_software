@@ -623,16 +623,6 @@ class SlamCloudGraph{
         
         // key-scans must be loaded first
         void loadKeyScanPositions(){
-            /*const TimeStamp timestamp = now();
-            std::string fname = mkStr() << m_params.persistence_dir << "/" << timestamp.secs << (timestamp.musecs / 1000) << ".nodes";
-            std::ofstream f(fname.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
-
-            for(std::size_t i = 0; i < m_key_scans.size(); i++)
-                saveMat(f, m_key_scans[i]->globalTransform());
-
-            f.close();
-            */
-            
             bf::path persistence_dir(m_params.persistence_dir);
             bf::path latest_file;
             
@@ -661,7 +651,7 @@ class SlamCloudGraph{
                 for(i = 0; i < m_key_scans.size() && f; i++){
                     std::size_t id;
                     Eigen::Matrix4f m;
-                    f.read((char*)&i, sizeof(i));
+                    f.read((char*)&id, sizeof(id));
                     loadMat(f, m);
                     if(id != i)
                         throw std::runtime_error("cannot load persistent state: id mismatch!");
@@ -681,17 +671,23 @@ class SlamCloudGraph{
         }
 
         void loadKeyScanConstraints(cloud_ptr parent, std::size_t parent_id){
-            /*
-            for(std::size_t i = 0; i < constraints.size(); i++){
-                std::string fname = mkStr() << m_params.persistence_dir << "/" << parent_id<< ".constraints";
-                std::ifstream f(fname.c_str(), std::ios::in | std::ios::binary);
-                
+            std::string fname = mkStr() << m_params.persistence_dir << "/" << parent_id<< ".constraints";
+            std::ifstream f(fname.c_str(), std::ios::in | std::ios::binary);
+            
+            while(f){
                 std::size_t child_id;
                 f.read((char*)&child_id, sizeof(child_id));
-                RelativePose rp = RelativePose::laodFromFile(f);
-                f.close();
+                cloud_ptr child = m_key_scans.at(child_id);
+                RelativePose r;
+                if(f){
+                    r = RelativePose::loadFromFile(f);
+                }
+                if(f){
+                    child->addConstraintTo(parent, r);
+                    boost::shared_ptr<RelativePoseConstraint> pc = boost::make_shared<RelativePoseConstraint>(r, parent, child);
+                    m_key_constraints.push_back(pc);
+                }
             }
-            */
         }
 
         void saveIntermediatePose(cloud_ptr p, std::size_t id){
@@ -742,6 +738,7 @@ class SlamCloudGraph{
             
             for(std::size_t id = 0; id < m_key_scans.size(); id++){
                 m_key_scans.push_back(loadKeyScan(id));
+                m_all_scans.push_back(m_key_scans.back());
                 m_key_scan_indicies[m_key_scans.back()] = m_key_scans.size()-1;
             }
             
@@ -750,6 +747,8 @@ class SlamCloudGraph{
         }
 
         void loadIntermediatePoses(){
+            
+            //m_all_scans.push_back(...);
             
         }
         
@@ -939,8 +938,8 @@ class SlamCloudGraph{
             return 1e-6 * std::fabs(ClipperLib::Area(clipper_poly_a));
         }
 
-        /* judge how good initial cloud is by a combination of the number of
-         * features, and how well it matches with itself, or something.
+        /* TODO: judge how good initial cloud is by a combination of the number
+         * of features, and how well it matches with itself, or something.
          */
         bool cloudIsGoodEnoughForInitialisation(cloud_ptr p) const{
             const bool enough_points = (p->size() > m_params.min_initial_points);
