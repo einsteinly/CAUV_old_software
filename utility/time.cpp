@@ -21,7 +21,7 @@
 cauv::TimeStamp::TimeStamp(int32_t const& secs, int32_t const& musecs) :
     secs(secs), musecs(musecs) {}
 
-cauv::TimeStamp::TimeStamp(void) {}
+cauv::TimeStamp::TimeStamp(void) : secs(0), musecs(0) {}
 
 cauv::TimeStamp cauv::now(){
     cauv::TimeStamp r;

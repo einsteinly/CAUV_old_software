@@ -16,15 +16,23 @@
 #include <boost/lexical_cast.hpp>
 #include <debug/cauv_debug.h>
 
+//imported from embedded_software. Needs to be synced
+#define CXX_HACKY_HACK
+#include "frames.h"
+#undef CXX_HACKY_HACK
+
 static const std::string delimiter("\xc0\x1d\xbe\xef");
+
+#define CAN_SERIAL_ID 255
 
 class SerialPort {
     public:
-    SerialPort(std::string file, unsigned int baudrate = 112500);
+    SerialPort(std::string file, unsigned int baudrate = 115200);
     void read_avail();
 
     int fd;
     std::vector<int> write_fds;
+    std::vector<int> can_fds;
     private:
     enum {
         DELIMITING,
@@ -48,10 +56,23 @@ SerialPort::SerialPort(std::string file, unsigned int) :
     termios term;
     tcgetattr(fd, &term);
     cfsetspeed(&term, B115200);
+
     term.c_cflag &= ~CSIZE;
     term.c_cflag |= CS8;
-    term.c_lflag &= ~ECHO;
-    term.c_iflag &= ~(IXON | IXOFF);
+    term.c_cflag &= ~CRTSCTS;
+    term.c_lflag &= ~(ECHO | ECHOE | ECHONL | ICANON | IEXTEN | ISIG);
+    term.c_iflag &=  ~(IGNBRK | BRKINT | PARMRK | ISTRIP
+                     | INLCR | IGNCR | ICRNL | IXON | IXOFF | IXANY | INPCK );
+
+    term.c_oflag &= ~(OCRNL | ONLCR | ONLRET |
+                      ONOCR | OFILL | OLCUC | OPOST);
+
+    term.c_cc[VMIN] = 1;
+    term.c_cc[VTIME] = 0;
+
+    term.c_cflag |= (CLOCAL | CREAD);
+
+    tcflush(fd, TCIOFLUSH); 
     tcsetattr(fd, TCSANOW, &term);
 }
 
@@ -61,6 +82,12 @@ void SerialPort::next_buffer_len(uint16_t len) {
         buffer = std::string(len, '\0');
     }
     buf_fill_len = len;
+}
+
+template <class T>
+T msg_from_frame(can_frame_t &frame) {
+    T msg;
+    memcpy(&msg.frame, &frame, sizeof(frame));
 }
 
 void SerialPort::read_avail() {
@@ -75,13 +102,15 @@ void SerialPort::read_avail() {
             data_len++;
             if (c == delimiter[buf_pos]) {
                 buf_pos++;
+            } else {
+                buf_pos = 0;
             }
         }
         next_buffer_len(header_len);
         if (data_len > delimiter.size()) {
-            std::cout << "synchronized in " << data_len << " steps" << std::endl;
+            debug() << "synchronized in " << data_len << " steps";
         }
-        //std::cout << "delimited" << std::endl;
+        debug(7) << "delimited" << std::endl;
         state = HEADER;
     }
     ret = read(fd, &buffer[buf_pos], buf_fill_len - buf_pos);
@@ -94,23 +123,40 @@ void SerialPort::read_avail() {
     if (state == HEADER) {
         serial_id = buffer[0];
         data_len = *(uint16_t*)&buffer[1];
-        //std::cout << "len: " << data_len << std::endl;
         next_buffer_len(data_len);
         state = DATA;
         return;
     }
     if (state == DATA) {
-        if (serial_id < write_fds.size()) {
+        if (serial_id == CAN_SERIAL_ID) {
+            if (buf_pos > sizeof(can_frame_t)) {
+                warning() << "Wrong size buffer (" << buf_pos << ") for can frame!" << std::endl;
+            } else {
+                can_frame_t frame;
+                memset(&frame, 0, sizeof(frame));
+                memcpy(&frame, &buffer[0], buf_pos);
+                debug(2) << "CAN frame: id: " << frame.id << " len: " << (int)frame.len << std::endl;
+                for (unsigned int ii = 0; ii < frame.len; ii++) {
+                    debug(5) << (unsigned int)frame.data[ii] << " ";
+                }
+                for (unsigned int ii = 0; ii < can_fds.size(); ii++) {
+                    write(can_fds[ii], &delimiter[0], delimiter.size());
+                    write(can_fds[ii], (uint8_t*)&frame, sizeof(frame));
+                }
+            }
+        } else if (serial_id < write_fds.size()) {
             int ret = write(write_fds[serial_id], &buffer[0], buf_pos);
             if (ret != buf_pos) {
-                std::cout << "incomplete write" << std::endl;
+                debug(3) << "incomplete write" << std::endl;
             }
+        } else {
+            warning() << "Unknown serial id: " << serial_id << std::endl;
         }
         boost::crc_32_type goddammit_boost;
         goddammit_boost.process_bytes(&buffer[0], buf_pos);
         crc = goddammit_boost.checksum() & 0xffff;
         //std::cout << buf_pos << std::endl;
-        int val = -1, last_val = -1;
+        //int val = -1, last_val = -1;
         for (unsigned int ii = 0; ii < buf_pos; ii++) {
             /*val = (int)*(uint8_t*)&buffer[ii];
             if (last_val != -1 && val != last_val + 1) {
@@ -120,7 +166,7 @@ void SerialPort::read_avail() {
             std::cout << val << " ";*/
             //std::cout << (int)buffer[ii] << " ";
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
         next_buffer_len(sizeof(uint16_t));
         state = CRC;
         return;
@@ -128,9 +174,9 @@ void SerialPort::read_avail() {
     if (state == CRC) {
         uint16_t recvd_crc = *(uint16_t*)&buffer[0];
         if (recvd_crc != crc) {
-            std::cout << "got: " << recvd_crc << " expected: " << crc << std::endl; 
-            std::cout << "len: " << data_len << std::endl; 
-            std::cout << "id: " << (int)serial_id << std::endl;
+            error() << "got: " << recvd_crc << " expected: " << crc << std::endl; 
+            error() << "len: " << data_len << std::endl; 
+            error() << "id: " << (int)serial_id << std::endl;
         }
         state = DELIMITING;
         data_len = 0;
@@ -142,11 +188,12 @@ void SerialPort::read_avail() {
 class Pty {
     public:
     Pty(std::string name);
-    void read_avail();
+    virtual void read_avail();
     int fd;
     int write_fd;
     char ser_id;
-    private:
+    protected:
+    void write_buf(const char* buf, uint16_t len);
     std::string buffer;
 }; 
 
@@ -165,8 +212,24 @@ Pty::Pty(std::string name) :
     cfsetspeed(&term, B115200);
     term.c_cflag &= ~CSIZE;
     term.c_cflag |= CS8;
-    term.c_lflag &= ~ECHO;
+    term.c_cflag &= ~CRTSCTS;
+    term.c_lflag &= ~(ECHO | ECHOE | ECHONL | ICANON | IEXTEN | ISIG);
+    term.c_iflag &=  ~(IGNBRK | BRKINT | PARMRK | ISTRIP
+                     | INLCR | IGNCR | ICRNL | IXON | IXOFF | IXANY | INPCK );
+
+    term.c_oflag &= ~(OCRNL | ONLCR | ONLRET |
+                      ONOCR | OFILL | OLCUC | OPOST);
+
+    term.c_cc[VMIN] = 1;
+    term.c_cc[VTIME] = 0;
+
+    term.c_cflag |= (CLOCAL | CREAD);
+
+    tcflush(slave, TCIOFLUSH); 
+    tcflush(master, TCIOFLUSH); 
     tcsetattr(slave, TCSANOW, &term);
+    tcsetattr(master, TCSANOW, &term);
+    fcntl(fd, F_SETFL, FNDELAY);
 }
 
 void Pty::read_avail() {
@@ -174,7 +237,10 @@ void Pty::read_avail() {
     if (ret <= 0) {
         return;
     }
-    uint16_t len = ret; 
+    write_buf(&buffer[0], ret);
+}
+
+void Pty::write_buf(const char *buf, uint16_t len) {
     boost::crc_32_type goddammit_boost;
     goddammit_boost.process_bytes(&buffer[0], len);
     uint16_t crc = goddammit_boost.checksum() & 0xffff;
@@ -182,8 +248,53 @@ void Pty::read_avail() {
         write(write_fd, &delimiter[0], delimiter.size());
         write(write_fd, &ser_id, 1);
         write(write_fd, (char*)&len, sizeof(len));
-        write(write_fd, &buffer[0], len);
+        write(write_fd, buf, len);
         write(write_fd, (char*)&crc, sizeof(crc));
+    }
+}
+
+class CANPty : public Pty { 
+    public:
+    CANPty(std::string name);
+    virtual void read_avail();
+    private:
+    enum {
+        DELIMITING,
+        READING
+    } state;
+    unsigned int buf_pos;
+};
+
+CANPty::CANPty (std::string name) :
+    Pty(name), state(DELIMITING), buf_pos(0) {
+} 
+
+void CANPty::read_avail() {
+    if (state == DELIMITING) {
+        while(buf_pos < delimiter.size()) {
+            char c;
+            int ret = read(fd, &c, sizeof(c));
+            if (ret <= 0) {
+                return;
+            }
+            if (c == delimiter[buf_pos]) {
+                buf_pos++;
+            } else {
+                buf_pos = 0;
+            }
+        }
+        buf_pos = 0;
+        state = READING;
+    } else if (state == READING) {
+        int ret = read(fd, &buffer[0], sizeof(can_frame_t) - buf_pos); 
+        if (ret >= 0) {
+            buf_pos += ret;
+        } 
+        if (buf_pos < sizeof(can_frame_t)) {
+            return;
+        }
+        write_buf(&buffer[0], sizeof(can_frame_t));
+        state = DELIMITING;
     }
 }
 
@@ -224,6 +335,14 @@ int main(int argc, char **argv) {
         ptys.push_back(pty);
         fd_vect.push_back(p);
     }
+    CANPty can(port_prefix + "CAN");
+    serial.can_fds.push_back(can.fd);
+    can.write_fd = serial.fd;
+    can.ser_id = 255;
+    pollfd p;
+    p.fd = can.fd;
+    p.events = POLLIN;
+    fd_vect.push_back(p);
     while(true) {
         int ret = poll(fd_vect.data(), fd_vect.size(), 1000); 
         if (fd_vect[0].revents & POLLIN) {
@@ -233,6 +352,9 @@ int main(int argc, char **argv) {
             if (fd_vect[ii + 1].revents & POLLIN) {
                 ptys[ii].read_avail();
             }
+        }
+        if (fd_vect[n_ports + 1].revents & POLLIN) {
+            can.read_avail();
         }
     }
 }

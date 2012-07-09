@@ -13,9 +13,11 @@
  */
 
 #ifndef __CAUV_IMU_OBSERVER_H__
-#define	__CAUV_IMU_OBSERVER_H__
+#define __CAUV_IMU_OBSERVER_H__
 
+#include <utility/observable.h>
 #include <generated/types/floatYPR.h>
+#include <boost/noncopyable.hpp>
 
 namespace cauv{
 
@@ -27,11 +29,9 @@ class IMUObserver
 
 class IMU : public Observable<IMUObserver>, boost::noncopyable
 {
-	public:
-        virtual ~IMU() { }	
+    public:
+        virtual ~IMU() { }
         virtual void start () = 0;
-        
-
 };
 
 } // namespace cauv

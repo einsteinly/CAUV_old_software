@@ -16,6 +16,8 @@
 
 #include <generated/types/TimeStamp.h>
 
+//TODO: merge this into time.h (there's a conflicting definition in control
+//which returns milliseconds instead of seconds
 double cauv::operator-(cauv::TimeStamp const& left, cauv::TimeStamp const& right){
     const double dsecs = left.secs - right.secs;
     const double dmusecs = left.musecs - right.musecs;

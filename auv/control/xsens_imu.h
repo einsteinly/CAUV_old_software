@@ -13,10 +13,11 @@
  */
 
 #ifndef __CAUV_XSENS_IMU_H__
-#define	__CAUV_XSENS_IMU_H__
+#define __CAUV_XSENS_IMU_H__
 
 #include <boost/thread.hpp>
 #include <boost/noncopyable.hpp>
+#include <generated/message_observers.h>
 
 #include <xsens/cmt3.h>
 
@@ -26,7 +27,7 @@
 
 namespace cauv{
 
-class XsensIMU : public IMU
+class XsensIMU : public IMU, public MessageObserver
 {
     public:
         XsensIMU(int id);
@@ -38,6 +39,7 @@ class XsensIMU : public IMU
 
         void start();
 
+        virtual void onCalibrateNoRotationMessage(CalibrateNoRotationMessage_ptr m);
     protected:
         xsens::Cmt3 m_cmt3;
         CmtPortInfo m_port;
