@@ -59,7 +59,7 @@ struct CloudGraphParams{
         min_scan_consensus(2),
         scan_consensus_tolerance(0.3),
         rotation_scale(4),
-        persistance_dir("."){
+        persistence_dir("."){
     }
 
     float overlap_threshold; // a fraction (0--1.0)
@@ -81,7 +81,7 @@ struct CloudGraphParams{
     // rotation_scale * (rotation_A - rotation_B) >= keyframe_spacing
     float rotation_scale;
     
-    std::string persistance_dir;
+    std::string persistence_dir;
 };
 
 template<typename PointT>
@@ -161,12 +161,20 @@ class SlamCloudGraph{
             m_n_failed_bad = 0;
         }
 
+        void load(){
+            reset();
+            loadKeyFrames();
+            loadIntermediatePoses();
+        }
+
         int graphOptimisationsCount() const{
             return m_graph_optimisation_count;
         }
 
         void setParams(CloudGraphParams params){
             m_params = params;
+            // !!! FIXME
+            std::system(std::string(mkStr() << "mkdir -p" << m_params.persistence_dir).c_str());
         }
 
         void setParams(float overlap_threshold,
@@ -569,17 +577,17 @@ class SlamCloudGraph{
         }
 
         void saveKeyScan(cloud_ptr p, std::size_t id){
-            std::string kfn = mkStr() << m_params.persistance_dir << "/" << id << ".keyframe";
+            std::string kfn = mkStr() << m_params.persistence_dir << "/" << id << ".keyframe";
             std::ofstream kf(kfn.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
             p->saveToFile(kf);
             kf.close();
             
-            std::string cfn = mkStr() << m_params.persistance_dir << "/" << id << ".constraints";
+            std::string cfn = mkStr() << m_params.persistence_dir << "/" << id << ".constraints";
             std::ofstream cf(cfn.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
             cf << std::flush;
             cf.close();
 
-            std::string cpn = mkStr() << m_params.persistance_dir << "/" << id << ".relposes";
+            std::string cpn = mkStr() << m_params.persistence_dir << "/" << id << ".relposes";
             std::ofstream cp(cpn.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
             cp << std::flush;
             cp.close();
@@ -590,25 +598,42 @@ class SlamCloudGraph{
 
             for(std::size_t i = 0; i < constraints.size(); i++){
                 const std::size_t parent_id = m_key_scan_indicies[constrained_to[i]];
-                std::string fname = mkStr() << m_params.persistance_dir << "/" << parent_id<< ".constraints";
+                std::string fname = mkStr() << m_params.persistence_dir << "/" << parent_id<< ".constraints";
                 std::ofstream f(fname.c_str(), std::ios::out | std::ios::binary | std::ios::app);
             
-                f.write((char*)&id, id);
+                f.write((char*)&id, sizeof(id));
                 constraints[i].saveToFile(f);
                 
                 f.close();
             }
         }
+        
+        cloud_ptr loadKeyScan(std::size_t id){
+            std::string kfn = mkStr() << m_params.persistence_dir << "/" << id << ".keyframe";
+            std::ifstream kf(kfn.c_str(), std::ios::in | std::ios::binary);
+            cloud_ptr p = cloud_t::loadFromFile(kf);
+            kf.close();
 
-        static void saveMat(std::ofstream& f, Eigen::Matrix4f const& m){
-            for(int i = 0; i < 4; i++)
-                for(int j = 0; j < 4; j++)
-                    f.write(reinterpret_cast<const char*>(&m(i,j)), sizeof(m(i,j)));
+            return p;
+        }
+
+        void loadKeyScanConstraints(cloud_ptr parent, std::size_t parent_id){
+            /*
+            for(std::size_t i = 0; i < constraints.size(); i++){
+                std::string fname = mkStr() << m_params.persistence_dir << "/" << parent_id<< ".constraints";
+                std::ifstream f(fname.c_str(), std::ios::in | std::ios::binary);
+                
+                std::size_t child_id;
+                f.read((char*)&child_id, sizeof(child_id));
+                RelativePose rp = RelativePose::laodFromFile(f);
+                f.close();
+            }
+            */
         }
 
         void saveIntermediatePose(cloud_ptr p, std::size_t id){
             std::size_t parent_id = m_key_scan_indicies[p->relativeTo()];
-            std::string cpn = mkStr() << m_params.persistance_dir << "/" << parent_id << ".relposes";
+            std::string cpn = mkStr() << m_params.persistence_dir << "/" << parent_id << ".relposes";
             std::ofstream cp(cpn.c_str(), std::ios::out | std::ios::binary | std::ios::app);
             cp.write((char*)&id, sizeof(id));
             TimeStamp t = p->time();
@@ -619,13 +644,26 @@ class SlamCloudGraph{
 
         void saveKeyFramePositions(){
             const TimeStamp timestamp = now();
-            std::string fname = mkStr() << m_params.persistance_dir << "/" << timestamp.secs << (timestamp.musecs / 1000) << ".nodes";
+            std::string fname = mkStr() << m_params.persistence_dir << "/" << timestamp.secs << (timestamp.musecs / 1000) << ".nodes";
             std::ofstream f(fname.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
 
             for(std::size_t i = 0; i < m_key_scans.size(); i++)
                 saveMat(f, m_key_scans[i]->globalTransform());
 
             f.close();
+        }
+        
+        void loadKeyFrames(){
+            /*list dir
+            foreach keyscan id
+                loadKeyScan(id)
+            foreach keyscan id
+                loadKeyScanConstraints(id)
+            loadKeyScanPositions()*/
+        }
+
+        void loadIntermediatePoses(){
+            
         }
         
 
@@ -888,7 +926,6 @@ class SlamCloudGraph{
             locfile.close();
             debug() << "pose dump complete";
         }
-
 
         // - private data
         CloudGraphParams m_params;
