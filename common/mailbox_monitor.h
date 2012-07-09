@@ -1,10 +1,16 @@
 #ifndef CAUV_MAILBOX_MONITOR_H
 #define CAUV_MAILBOX_MONITOR_H
 #include <boost/shared_ptr.hpp>
+#include <generated/types/message_type.h>
 
 namespace cauv {
 
 class MessageObserver;
+
+class SubscribeObserver {
+    public:
+        virtual void onSubscribed(MessageType::e messageType) = 0;
+};
 
 class MailboxEventMonitor {
     public:
@@ -21,6 +27,10 @@ class MailboxEventMonitor {
     virtual void addMessageObserver(boost::shared_ptr<MessageObserver>) = 0;
     virtual void removeMessageObserver(boost::shared_ptr<MessageObserver>) = 0;
     virtual void clearMessageObservers() = 0;
+
+    virtual void addSubscribeObserver(boost::shared_ptr<SubscribeObserver>) = 0;
+    virtual void removeSubscribeObserver(boost::shared_ptr<SubscribeObserver>) = 0;
+    virtual void clearSubscribeObservers() = 0;
 };
 
 } //namespace cauv

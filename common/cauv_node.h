@@ -21,6 +21,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include "mailbox.h"
+#include "mailbox_monitor.h"
 
 
 namespace boost {
@@ -62,9 +63,14 @@ class CauvNode
         void joinGroup(std::string const& group);
         void subMessage(const Message &message);
         void unSubMessage(const Message &message);
+
         void addMessageObserver(boost::shared_ptr<MessageObserver>);
         void removeMessageObserver(boost::shared_ptr<MessageObserver>);
         void clearMessageObservers();
+
+        void addSubscribeObserver(boost::shared_ptr<SubscribeObserver>);
+        void removeSubscribeObserver(boost::shared_ptr<SubscribeObserver>);
+        void clearSubscribeObservers();
 
         int send(boost::shared_ptr<const Message> message,
                  MessageReliability reliability = RELIABLE_MSG);

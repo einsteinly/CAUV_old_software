@@ -22,11 +22,6 @@
 
 namespace cauv {
 
-class SubscribeObserver {
-    public:
-        virtual void onSubscribed(MessageType::e messageType) = 0;
-};
-
 class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public MessageSource, public Observable<SubscribeObserver>,  boost::noncopyable {
     public:
     ZeroMQMailbox(const std::string name = "unknown");
