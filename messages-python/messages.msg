@@ -619,7 +619,8 @@ group control
         motor : MotorID;
         mapping : MotorMap;
     }
-
+    
+    // redherring only
     message ResetMCB : 85
     {
     }

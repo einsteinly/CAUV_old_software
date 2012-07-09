@@ -871,8 +871,21 @@ class NotRootException : public std::exception
 
 ControlNode::ControlNode() : CauvNode("Control")
 {
-    joinGroup("control");
-    joinGroup("external");
+    subMessage(MotorControlMessage());
+    subMessage(LightControlMessage());
+    subMessage(PowerControlMessage());
+    subMessage(CuttingDeviceMessage());
+    subMessage(StateMessageMessage());
+    subMessage(MotorMessage());
+    subMessage(BearingAutopilotEnabledMessage());
+    subMessage(DepthAutopilotEnabledMessage());
+    subMessage(PitchAutopilotEnabledMessage());
+    subMessage(BearingAutopilotParamsMessage());
+    subMessage(DepthAutopilotParamsMessage());
+    subMessage(PitchAutopilotParamsMessage());
+    subMessage(MotorRampRateMessage());
+    subMessage(SetMotorMapMessage());
+    subMessage(CalibrateNoRotationMessage());
 
     m_controlLoops = boost::make_shared<ControlLoops>(mailbox());
     addMessageObserver(m_controlLoops);
