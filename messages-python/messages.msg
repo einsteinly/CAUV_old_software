@@ -135,6 +135,10 @@ enum NodeIOStatus : int8 {
     Valid = 2,
     Demanded = 4
 }
+enum PipelineState : int8 {
+    Play,
+    Pause,
+}
 enum OutputType : int8 {
     Image = 0,
     Parameter = 1
@@ -774,6 +778,12 @@ group pipeline
         lazy nodeParams : map<int32, map<LocalNodeInput, ParamValue> >;
     }
 
+    message SetPipelineState : 16
+    {
+        pipelineName : string;
+        pipelineState : PipelineState;
+    }
+
     message SetNodeParameter : 8
     {
         pipelineName : string;
@@ -1124,12 +1134,12 @@ group guiai
         dynamicScriptOptions : map<string, ParamValue>;
         staticScriptOptions : map<string, ParamValue>;
         isCurrentlyRunning : bool;
+        pipelineIds : list<string>;
     }
     message ScriptState : 207
     {
         taskId : string;
         debugValues : map<string, ParamValue>;
-        pipelineIds : list<string>;
     }
     message AddCondition : 208
     {

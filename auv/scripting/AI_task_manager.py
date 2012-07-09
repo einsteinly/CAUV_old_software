@@ -226,9 +226,10 @@ class taskManager(aiProcess):
         self.node.send(messaging.TaskStateMessage(task.id,
                 task.conditions.keys(),
                 task.get_options(),
-                task.get_dynamic_options_as_params(),
-                task.get_static_options_as_params(),
-                task.active))
+                task.get_dynamic_options(),
+                task.get_static_options(),
+                task.active,
+                ['ai/'+pl for pl in task.script_options._pipelines]))
     def gui_update_condition(self, condition):
         if not condition._suppress_reporting: #eg detector conditions
             self.node.send(messaging.ConditionStateMessage(condition.id,
@@ -336,20 +337,27 @@ class taskManager(aiProcess):
         
     #add/remove/modify/reg tasks
     def create_task(self, task_type, default_conditions=True):
+        """
+        this just creates an object, needs to be run if creating the actual task object
+        """
         #create task of named type
         debug("Creating task of type %s" %str(task_type))
         task = task_type()
         task.register(self)
         if default_conditions:
             task.add_default_conditions(self)
-        #self.gui_update_task(task) skip here since is already sent by updating task options
+        self.gui_update_task(task)
         return task.id
 
     def register_task(self, task):
+        """
+        needs to be run everytime a task is added to the tm, eg if loaded form file
+        """
         #give the task an id
         task_id = task.__class__.__name__+str(self.task_nid)
         self.task_nid += 1
         self.tasks[task_id] = task
+        self.update_pipelines()
         return task_id
 
     def remove_task(self, task_id):
@@ -360,6 +368,13 @@ class taskManager(aiProcess):
         if self.current_task and task_id == self.current_task.id:
             self.stop_script()
         self.gui_remove_task(task_id)
+        self.update_pipelines()
+        
+    def update_pipelines(self):
+        pipelines = []
+        for task_id, task in self.tasks.iteritems():
+            self.ai.pl_manager.set_task_pls(task_id, task.script_options._pipelines)
+            debug("{}".format(task.script_options._pipelines), 3)
 
     def set_task_options(self, task_id, task_options={}, script_options={}, condition_ids=[]):
         debug("Setting options %s on task %s" %(str((task_options, script_options, condition_ids)), task_id))
@@ -420,7 +435,7 @@ class taskManager(aiProcess):
         #mark task not active
         if self.current_task:
             self.current_task.active = False
-            self.ai.pl_manager.drop_task_pls(self.current_task.id)
+            self.ai.pl_manager.stop_task_pls(self.current_task.id)
             self.gui_update_task(self.current_task)
             self.current_task = None
             self.current_priority = -1
@@ -455,16 +470,13 @@ class taskManager(aiProcess):
         self.current_task = task
         #inform auv control that script is running
         self.ai.auv_control.set_current_task_id(task.id)
+        #inform pl manager
+        self.ai.pl_manager.start_task_pls(task.id)
         #set priority
         self.current_priority = task.options.running_priority
         self.current_task.active = True
         #update task status to gui
-        self.node.send(messaging.TaskStateMessage(task.id,
-                task.conditions.keys(),
-                task.get_options(),
-                task.get_dynamic_options(),
-                task.get_static_options(),
-                task.active))
+        self.gui_update_task(task)
         
     #--function run by periodic loop--
     @event.repeat_event(TASK_CHECK_INTERVAL, True)

@@ -108,7 +108,7 @@ class detectionControl(aiProcess):
                 self.ai.task_manager.on_detector_state_change(detector_id, detector.detected)
                 detector._detected_past = detector.detected
             self.node.send(messaging.ConditionStateMessage(detector_id, detector.options.get_options_as_params(),
-                           detector.get_debug_values(), ['ai/'+pl for pl in detector._pipelines], detector.detected))
+                           detector.get_debug_values(), ['ai/'+pl for pl in detector.options._pipelines], detector.detected))
 
     @event.repeat_event(5, True)
     def force_reeval(self):
@@ -117,8 +117,8 @@ class detectionControl(aiProcess):
     def detectors_changed(self):
         pipelines = []
         for detector in self.running_detectors.values():
-            pipelines.extend(detector._pipelines)
-            debug("{}".format(detector._pipelines), 3)
+            pipelines.extend(detector.options._pipelines)
+            debug("{}".format(detector.options._pipelines), 3)
         self.ai.pl_manager.set_detector_pls(pipelines)
         self.ai.task_manager.on_list_of_detectors(self.running_detectors.keys())
 

@@ -125,13 +125,18 @@ class aiProcess(event.EventLoop, messaging.MessageObserver):
 
 class aiOptionsBase(type):
     def __new__(cls, name, bases, attrs):
-        new_attrs = {'_option_classes':{}}
+        new_attrs = {'_option_classes':{}, '_pipelines':tuple()}
         #add in 'inherited' options from parent class
         for base in bases:
             for key, attr in base.__dict__.iteritems():
                 #but don't overwrite values
                 if not key in attrs:
                     attrs[key] = attr
+        #filter out pipeline info and set (use tuple to avoid overriding if possible)
+        if 'Meta' in attrs:
+            meta_data = attrs.pop('Meta')
+            if hasattr(meta_data, 'pipelines'):
+                attrs['_pipelines'] = tuple(meta_data.pipelines)
         for key, value in attrs.iteritems():
             #don't process 'system' values
             if not key[0] == '_':
@@ -354,7 +359,7 @@ class aiScriptOptionsBase(aiOptionsBase):
     def __new__(cls, name, bases, attrs):
         attrs['_dynamic'] = []
         if 'Meta' in attrs:
-            meta_data = attrs.pop('Meta')
+            meta_data = attrs['Meta']
             if hasattr(meta_data, 'dynamic'):
                 attrs['_dynamic'] = meta_data.dynamic
                 for d in attrs['_dynamic']:
@@ -401,7 +406,6 @@ class aiScript(aiProcess):
         self.die_flag = threading.Event() #for any subthreads
         self.exit_confirmed = threading.Event()
         self.pl_confirmed = threading.Event()
-        self._requested_pls = []
         self.task_name = task_name
         self.options = script_opts
         self.auv = fakeAUV(self)
@@ -412,22 +416,11 @@ class aiScript(aiProcess):
         self.reporting_thread.start()
     #image pipeline stuff
     def request_pl(self, pl_name, timeout=10):
-        self.pl_confirmed.clear()
-        self.ai.pl_manager.request_pl('script', self.task_name, pl_name)
-        self._requested_pls.append('ai/'+pl_name)
-        return self.pl_confirmed.wait(timeout)
+        raise NotImplementedError("This feature has been removed, pipelines should be requested by placing them in the requested pipelines list")
     def drop_pl(self, pl_name):
-        self.ai.pl_manager.drop_pl('script', self.task_name, pl_name)
-        try:
-            self._requested_pls.remove('ai/'+pl_name)
-        except ValueError:
-            error("Can't remove a pipeline that hasn't been requested")
+        raise NotImplementedError("Removed for new pipeline management system.")
     def drop_all_pl(self):
-        self.ai.pl_manager.drop_all_pls('script', self.task_name)
-        self._requested_pls = []
-    @external_function
-    def confirm_pl_request(self):
-        self.pl_confirmed.set()
+        raise NotImplementedError("Removed for new pipeline management system.")
     #option stuff
     @external_function
     def set_option(self, option_name, option_value):
@@ -470,7 +463,7 @@ class aiScript(aiProcess):
         if error_attrs:
             warning("Could not get/encode attributes %s, skipping from debug value report" %str(error_attrs))
         try:
-            self.node.send(messaging.ScriptStateMessage(self.task_name,debug,self._requested_pls))
+            self.node.send(messaging.ScriptStateMessage(self.task_name,debug))
         except Exception as e:
             traceback.print_exc()
     def report_loop(self):
@@ -502,18 +495,17 @@ class aiDetector(messaging.MessageObserver):
     debug_values = []
     def __init__(self, node, opts):
         messaging.MessageObserver.__init__(self)
-        self._pipelines = []
         self.options = opts
         self.node = node
         self.node.addObserver(self)
         self.detected = False
         self._detected_past = False
     def request_pl(self, name):
-        self._pipelines.append(name)
+        raise NotImplementedError("pipeline management changed")
     def drop_pl(self, name):
-        self._pipelines.remove(name)
+        raise NotImplementedError("pipeline management changed")
     def drop_all_pl(self):
-        self._pipelines = []
+        raise NotImplementedError("pipeline management changed")
     def process(self):
         """
         This should define a method to do any intensive (ie not on message) processing

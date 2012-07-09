@@ -64,10 +64,6 @@ void AiMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
     foreach(param_map_t::value_type i, m->debugValues()){
         task->setDebug(i.first, i.second);
     }
-
-    foreach(std::string const& pipeline, m->pipelineIds()){
-        task->addPipelineId(pipeline);
-    }
 }
 
 
@@ -96,6 +92,9 @@ void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
         task->setTaskOption(i.first, i.second)->setMutable(true);
     }
 
+    foreach(std::string const& pipeline, m->pipelineIds()){
+        task->addPipelineId(pipeline);
+    }
 
     boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
     foreach(std::string const& id, m->conditionIds()){
