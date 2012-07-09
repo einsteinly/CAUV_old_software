@@ -18,30 +18,34 @@
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <QDockWidget>
-#include <QPushButton>
 #include <QString>
 
 #include <debug/cauv_debug.h>
+
+#include <gui/core/model/registry.h>
 
 #include "gamepad/playstationinput.h"
 #include "gamepad/xboxinput.h"
 #include "cauvgamepad.h"
 
 using namespace cauv;
+using namespace cauv::gui;
 
 const QString GamepadPlugin::name() const{
     return QString("Gamepad");
 }
 
-const QList<QString> GamepadPlugin::getGroups() const{
-    QList<QString> groups;
-    groups.push_back(QString("gui"));
-    return groups;
+void GamepadPlugin::initialise(){
+    foreach(boost::shared_ptr<Vehicle> vehicle, VehicleRegistry::instance()->getVehicles()){
+        setVehicle(vehicle);
+    }
+
+    connect(VehicleRegistry::instance().get(), SIGNAL(vehicleAdded(boost::shared_ptr<Vehicle>)),
+            this, SLOT(setVehicle(boost::shared_ptr<Vehicle>)));
 }
 
-void GamepadPlugin::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
-    CauvBasicPlugin::initialise(auv, node);
+
+void GamepadPlugin::setVehicle(boost::shared_ptr<Vehicle> vehicle){
 
     try {
         info() << "found" << GamepadInput::getNumDevices() << "gamepads";
@@ -58,12 +62,12 @@ void GamepadPlugin::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<Cau
                 if(vendor.find("xbox") != vendor.npos){
                     info() << "detected as an xbox controller";
                     boost::shared_ptr<XBoxInput> controller(new XBoxInput(i->second));
-                    gi = new CauvGamepad(controller, m_auv);
+                    gi = new CauvGamepad(controller, vehicle);
                 } else {
                     // assume its a playstation controller
                     info() << "assuming playstation controller";
                     boost::shared_ptr<PlaystationInput> controller(new PlaystationInput(i->second));
-                    gi = new CauvGamepad(controller, m_auv);
+                    gi = new CauvGamepad(controller, vehicle);
                 }
 
                 gi->setParent(this);
@@ -72,7 +76,10 @@ void GamepadPlugin::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<Cau
 
     } catch (char const* ex){
         error() << ex;
+    } catch (std::runtime_error ex){
+        error() << ex.what();
     }
 }
+
 
 Q_EXPORT_PLUGIN2(cauv_gamepadplugin, GamepadPlugin)

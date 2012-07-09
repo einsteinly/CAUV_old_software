@@ -33,7 +33,7 @@
 #include "util.h"
 #include "renderable.h"
 #include "buildMenus.h"
-#include "graphviz.h"
+#include "utility/graphviz.h"
 #include "renderable/overKey.h"
 #include "renderable/box.h"
 #include "renderable/node.h"
@@ -445,12 +445,12 @@ void PipelineWidget::postRedraw(float delay){
             debug(3) << "PipelineWidget::postRedraw re-draw signal with delay=" << delay;
         }else{
             debug(3) << "PipelineWidget::postRedraw emitting re-draw signal";
-            emit redrawPosted();
+            Q_EMIT redrawPosted();
         }
     }else{
         if(!m_redraw_posted){
             m_redraw_posted = true;
-            emit redrawPosted();
+            Q_EMIT redrawPosted();
         }else{
             debug(3) << BashColour::Red << "PipelineWidget::postRedraw NOT emitting re-draw signal";
         }

@@ -1,54 +1,138 @@
-project (guicpp-core)
+project (gui-core)
 
+# required packages
 find_package (Qt4 REQUIRED)
 
-# using both Qt slots and Boost signals so need no keywords
-add_definitions(-DQT_NO_KEYWORDS)
+set ( GUI_CORE_AUX_DIRS
+    framework
+    controller
+    model
+    utils
+    widgets
+)
+
+# include files
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} )
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/framework)
 
 # generated files includes
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/framework)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/widgets)
 
 # for <common/includesstuff> etc
 include_directories (${AUV_SOURCE_DIR})
 
-# for <gui/core/stuff>
-include_directories(${gui_SOURCE_DIR})
+# for <gui/core/...>
+include_directories (${guis_SOURCE_DIR})
 
-
-set ( GUICPP_CORE_SRCS
-    datastreamdragging.cpp
+set ( GUI_CORE_SRCS
+    nodedragging.cpp
     cauvbasicplugin.cpp
+
     widgets/videoscreen.cpp
+    widgets/neutralspinbox.cpp
+    widgets/graphbar.cpp
+    widgets/onoff.cpp
+
+    model/node.cpp
+    model/variants.cpp
+    model/model.cpp
+    model/registry.cpp
+    model/messaging.cpp
+    model/paramvalues.cpp
+    model/utils/datarecorder.cpp
+    model/utils/sampler.cpp
+
+    framework/nodepicker.cpp
+    framework/mainwindow.cpp
+    framework/nodescene.cpp
+    framework/style.cpp
+    framework/connectednode.cpp
+
+    framework/delegates/delegate.cpp
+    framework/delegates/booleandelegate.cpp
+    framework/delegates/numericdelegate.cpp
+    framework/delegates/colourdelegate.cpp
+
+    framework/elements/style.cpp
+
+    framework/fluidity/fNode.cpp
+    framework/fluidity/view.cpp 
+    framework/fluidity/managedElement.cpp
+    framework/fluidity/manager.cpp
+    framework/fluidity/fNodeInput.cpp
+    framework/fluidity/videoWidget.cpp
     )
 
-set ( GUICPP_CORE_UIS
+set ( GUI_CORE_UIS
     widgets/videoscreen.ui
+    framework/nodepicker.ui
+    framework/mainwindow.ui
     )
 
-set ( GUICPP_CORE_H
+set ( GUI_CORE_H
+    nodedragging.h
+
     widgets/videoscreen.h
+    widgets/neutralspinbox.h
+    widgets/graphbar.h
+    widgets/onoff.h
+
+    model/node.h
+    model/model.h
+    model/registry.h
+    model/singleItemModel.h
+    model/nodes/numericnode.h
+    model/nodes/stringnode.h
+    model/nodes/imagenode.h
+    model/nodes/vehiclenode.h
+    model/nodes/autopilotnode.h
+    model/nodes/sonarnode.h
+    model/nodes/colournode.h
+    model/messaging.h
+    model/utils/sampler.h
+
+    framework/nodepicker.h
+    framework/mainwindow.h
+    framework/style.h
+
+    framework/delegates/delegate.h
+    framework/delegates/booleandelegate.h
+    framework/delegates/numericdelegate.h
+    framework/delegates/colourdelegate.h
+
+    framework/fluidity/view.h
+    framework/fluidity/manager.h
+    framework/fluidity/fNode.h
+    framework/fluidity/fNodeOutput.h
+    framework/fluidity/fNodeInput.h
+    framework/fluidity/menu.h
+    framework/fluidity/imageSource.h
+    framework/fluidity/videoWidget.h
     )
 
-set ( GUICPP_CORE_RCC
+set ( GUI_CORE_RCC
+    ../resources.qrc
     )
 
-qt4_wrap_ui (GUICPP_CORE_UIS_H ${GUICPP_CORE_UIS})
-qt4_wrap_cpp (GUICPP_CORE_MOC_H ${GUICPP_CORE_H})
-qt4_add_resources(GUICPP_CORE_RCC_H ${GUICPP_CORE_RCC})
+qt4_wrap_ui (GUI_CORE_UIS_H ${GUI_CORE_UIS})
+qt4_wrap_cpp (GUI_CORE_MOC_H ${GUI_CORE_H})
+qt4_add_resources(GUI_CORE_RCC_H ${GUI_CORE_RCC})
 
-add_library ( guicpp-core SHARED
-        ${GUICPP_CORE_SRCS}
-        ${GUICPP_CORE_UIS_H}
-        ${GUICPP_CORE_MOC_H}
-        ${GUICPP_CORE_RCC_H}
+add_library ( gui-core SHARED
+        ${GUI_CORE_SRCS}
+        ${GUI_CORE_UIS_H}
+        ${GUI_CORE_MOC_H}
+        ${GUI_CORE_RCC_H}
     )
 
-cauv_install( guicpp-core )
+cauv_install( gui-core )
 
-target_link_libraries ( guicpp-core
+target_link_libraries ( gui-core
         cauv_debug
+        liquid
         common
-        model
         ${QT_LIBRARIES}
     )
-depends_on_messages(guicpp-core)
+depends_on_messages(gui-core)

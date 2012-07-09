@@ -19,13 +19,21 @@
 #include "gamepad/gamepadinput.h"
 
 #include <debug/cauv_debug.h>
-#include <model/auv_model.h>
+#include <gui/core/model/model.h>
+
+#include <gui/core/model/nodes/numericnode.h>
+#include <gui/core/model/nodes/groupingnode.h>
+#include <gui/core/model/nodes/vehiclenode.h>
 #include <utility/foreach.h>
 
 using namespace cauv;
+using namespace cauv::gui;
 
-CauvGamepad::CauvGamepad(boost::shared_ptr<XBoxInput> controller, boost::shared_ptr<AUV> auv) :
-        m_auv(auv), m_gamepadInput(controller), m_timer(new QTimer()), m_bearingRate(0.f), m_pitchRate(0.f),
+CauvGamepad::CauvGamepad(boost::shared_ptr<XBoxInput> controller, boost::shared_ptr<Vehicle> auv) :
+        m_auv(auv), m_gamepadInput(controller), m_timer(new QTimer()),
+        m_autopilots(auv->findOrCreate<GroupingNode>("autopilots")),
+        m_motors(auv->findOrCreate<GroupingNode>("motors")),
+        m_bearingRate(0.f), m_pitchRate(0.f),
         m_forwardSpeed(0.f), m_strafeSpeed(0.f), m_depthRate(0.f), m_dirty(false), m_autopilotControl(true)
 {
     // right hand pad buttons
@@ -48,7 +56,7 @@ CauvGamepad::CauvGamepad(boost::shared_ptr<XBoxInput> controller, boost::shared_
 }
 
 
-CauvGamepad::CauvGamepad(boost::shared_ptr<PlaystationInput> controller, boost::shared_ptr<AUV> auv) :
+CauvGamepad::CauvGamepad(boost::shared_ptr<PlaystationInput> controller, boost::shared_ptr<Vehicle> auv) :
         m_auv(auv), m_gamepadInput(controller), m_timer(new QTimer()), m_bearingRate(0.f), m_pitchRate(0.f),
         m_forwardSpeed(0.f), m_strafeSpeed(0.f), m_depthRate(0.f), m_dirty(false), m_autopilotControl(true)
 {
@@ -160,32 +168,40 @@ void CauvGamepad::down(bool go){
 void CauvGamepad::stop(bool){
 
     // disable all the autopilots
-    foreach(AUV::autopilot_map::value_type i, m_auv->autopilots){
-        i.second->enabled->set(false);
-        i.second->set(0);
+    foreach(boost::shared_ptr<Node> const& node, m_autopilots->getChildren()){
+        node->find<NumericNode<bool> >("enabled")->set(false);
     }
 
     // stop all the motors
-    foreach(AUV::motor_map::value_type i, m_auv->motors){
-        i.second->set(0);
+    foreach(boost::shared_ptr<NumericNode<int> > const& node, m_motors->getChildrenOfType<NumericNode<int> >()){
+        node->set(0);
     }
 }
 
 
 void CauvGamepad::update(){
 
+    boost::shared_ptr<NumericNode<float> > bearing = m_autopilots->findOrCreate<NumericNode<bool> >(Controller::Bearing)->findOrCreate<NumericNode<float> >("target");
+    boost::shared_ptr<NumericNode<float> > pitch = m_autopilots->findOrCreate<NumericNode<bool> >(Controller::Pitch)->findOrCreate<NumericNode<float> >("target");
+    boost::shared_ptr<NumericNode<float> > depth = m_autopilots->findOrCreate<NumericNode<bool> >(Controller::Depth)->findOrCreate<NumericNode<float> >("target");
+
+    boost::shared_ptr<NumericNode<int> > hSternMotor = m_motors->findOrCreate<NumericNode<int> >(MotorID::HStern);
+    boost::shared_ptr<NumericNode<int> > hBowMotor = m_motors->findOrCreate<NumericNode<int> >(MotorID::HBow);
+    boost::shared_ptr<NumericNode<int> > prop = m_motors->findOrCreate<NumericNode<int> >(MotorID::Prop);
+
     // update bearing
     if(m_autopilotControl){
         // using the autopilots to do bearing, so just change the target at the specified rate, with
         // a little dead zone to stop spamming fo messages
         const float bearingRateScale = 3.f;
-        if(m_autopilotControl && !(m_bearingRate < 0.2f && m_bearingRate > -0.2f))
-            m_auv->autopilots["bearing"]->set(m_auv->autopilots["bearing"]->latest() + (m_bearingRate * bearingRateScale));
+        if(m_autopilotControl && !(m_bearingRate < 0.2f && m_bearingRate > -0.2f)) {
+            bearing->set(bearing->get() + (m_bearingRate * bearingRateScale));
+        }
 
         // include strafing demands too
         if(m_dirty) {
-            m_auv->motors[MotorID::HStern]->set(m_strafeSpeed * m_strafeSpeed * m_strafeSpeed * 127);
-            m_auv->motors[MotorID::HBow]->set(m_strafeSpeed * m_strafeSpeed * m_strafeSpeed * 127);
+            hSternMotor->set(m_strafeSpeed * m_strafeSpeed * m_strafeSpeed * 127);
+            hBowMotor->set(m_strafeSpeed * m_strafeSpeed * m_strafeSpeed * 127);
         }
     } else {
         if(m_dirty) {
@@ -194,23 +210,25 @@ void CauvGamepad::update(){
             float hBow = (m_strafeSpeed + m_bearingRate);
             float hStern = (m_strafeSpeed - m_bearingRate);
 
-            m_auv->motors[MotorID::HStern]->set(hStern * hStern * hStern * 127);
-            m_auv->motors[MotorID::HBow]->set(hBow * hBow * hBow * 127);
+            hSternMotor->set(hStern * hStern * hStern * 127);
+            hBowMotor->set(hBow * hBow * hBow * 127);
         }
     }
 
     //update pitch
     const float pitchRateScale = 1.f;
-    if(m_autopilotControl && !(m_pitchRate < 0.2f && m_pitchRate > -0.2f)) // dead zone
-        m_auv->autopilots["pitch"]->set(m_auv->autopilots["pitch"]->latest() + (m_pitchRate * pitchRateScale));
+    if(m_autopilotControl && !(m_pitchRate < 0.2f && m_pitchRate > -0.2f)) { // dead zone
+        pitch->set(pitch->get() + (m_pitchRate * pitchRateScale));
+    }
 
     //update depth
-    if(!(m_depthRate < 0.02f && m_depthRate > -0.02f)) // dead zone
-        m_auv->autopilots["depth"]->set(m_auv->autopilots["depth"]->latest() + m_depthRate);
+    if(!(m_depthRate < 0.02f && m_depthRate > -0.02f)) { // dead zone
+        depth->set(depth->get() + m_depthRate);
+    }
 
     // update prop
     if(m_dirty) // only send messages if the gamepad has been touched
-        m_auv->motors[MotorID::Prop]->set(m_forwardSpeed * m_forwardSpeed * m_forwardSpeed * 127);    
+        prop->set(m_forwardSpeed * m_forwardSpeed * m_forwardSpeed * 127);
 
     m_dirty = false; // reset the flag to say we've made the changes
 }

@@ -1,5 +1,7 @@
 project (pipeline-widget)
 
+find_package (OpenCV REQUIRED)
+
 # FTGL (for text rendering)
 find_package (FTGL REQUIRED)
 include_directories (${FTGL_INCLUDE_DIRS})
