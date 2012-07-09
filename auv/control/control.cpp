@@ -16,15 +16,15 @@
 #include <generated/types/TimeStamp.h>
 #include <generated/types/MotorDemand.h>
 #include <generated/types/ControlGroup.h>
-#include <generated/types/McbGroup.h>
-#include <generated/types/ExternalGroup.h>
-#include <generated/types/PressureGroup.h>
+#include <generated/types/Can_ControlGroup.h>
+#include <generated/types/Can_StatusGroup.h>
 #include <generated/types/StateMessage.h>
 #include <generated/types/ControllerStateMessage.h>
 #include <generated/types/MotorStateMessage.h>
 #include <generated/types/GraphableMessage.h>
 #include <generated/types/TelemetryMessage.h>
 #include <generated/types/DebugMessage.h>
+#include <generated/types/RedHerringBatteryStatusMessage.h>
 
 #include <module/module.h>
 
@@ -698,7 +698,7 @@ class DeviceControlObserver : public MessageObserver
             m_imu = imu;
         }
         
-        virtual void onLightMessage(LightMessage_ptr m)
+        virtual void onLightControlMessage(LightControlMessage_ptr m)
         {
             if (m_mcb) {
                 debug(2) << "Forwarding Light Message:" << *m;
@@ -840,7 +840,7 @@ class MCBForwardingObserver : public BufferedMessageObserver
                 m_last_pressure_sent = now();
             }
         }
-        virtual void onBatteryStatusMessage(BatteryStatusMessage_ptr m)
+        virtual void onRedHerringBatteryStatusMessage(RedHerringBatteryStatusMessage_ptr m)
         {
             if(now() - m_last_battery_sent > m_battery_min_msecs){
                 debug(5) << "MCBForwardingObserver: Forwarding battery status message:" << *m;
@@ -871,8 +871,21 @@ class NotRootException : public std::exception
 
 ControlNode::ControlNode() : CauvNode("Control")
 {
-    joinGroup("control");
-    joinGroup("external");
+    subMessage(MotorControlMessage());
+    subMessage(LightControlMessage());
+    subMessage(PowerControlMessage());
+    subMessage(CuttingDeviceMessage());
+    subMessage(StateMessage());
+    subMessage(MotorMessage());
+    subMessage(BearingAutopilotEnabledMessage());
+    subMessage(DepthAutopilotEnabledMessage());
+    subMessage(PitchAutopilotEnabledMessage());
+    subMessage(BearingAutopilotParamsMessage());
+    subMessage(DepthAutopilotParamsMessage());
+    subMessage(PitchAutopilotParamsMessage());
+    subMessage(MotorRampRateMessage());
+    subMessage(SetMotorMapMessage());
+    subMessage(CalibrateNoRotationMessage());
 
     m_controlLoops = boost::make_shared<ControlLoops>(mailbox());
     addMessageObserver(m_controlLoops);
@@ -1043,8 +1056,8 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     if(vm.count("simulation")){
         m_telemetryBroadcaster->setSimulationMode(true);
         m_controlLoops->setSimulationMode(true);
-        joinGroup("pressure");
-        joinGroup("state");
+        subMessage(PressureMessage());
+        subMessage(StateMessage());
     }
     
     return 0;

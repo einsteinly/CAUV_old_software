@@ -846,19 +846,19 @@ p_ScriptControlMessage = pp.Group(l \
     + p_ScriptCommand \
     + r).streamline()
 p_ScriptControlMessage.setParseAction(lambda x: messaging.ScriptControlMessage(*x[0]))
-p_LightMessage = pp.Group(l \
+p_LightControlMessage = pp.Group(l \
     + p_LightID + c \
     + p_int \
     + r).streamline()
-p_LightMessage.setParseAction(lambda x: messaging.LightMessage(*x[0]))
+p_LightControlMessage.setParseAction(lambda x: messaging.LightControlMessage(*x[0]))
 p_CuttingDeviceMessage = pp.Group(l \
     + p_int \
     + r).streamline()
 p_CuttingDeviceMessage.setParseAction(lambda x: messaging.CuttingDeviceMessage(*x[0]))
-p_BatteryStatusMessage = pp.Group(l \
+p_RedHerringBatteryStatusMessage = pp.Group(l \
     + p_int \
     + r).streamline()
-p_BatteryStatusMessage.setParseAction(lambda x: messaging.BatteryStatusMessage(*x[0]))
+p_RedHerringBatteryStatusMessage.setParseAction(lambda x: messaging.RedHerringBatteryStatusMessage(*x[0]))
 p_SimPositionMessage = pp.Group(l \
     + p_float + c \
     + p_float + c \
@@ -1034,11 +1034,11 @@ def parseMessage(s):
     elif msgid == 216:
         return p_ScriptControlMessage.parseString(s[msgstart:])[0]
     elif msgid == 150:
-        return p_LightMessage.parseString(s[msgstart:])[0]
+        return p_LightControlMessage.parseString(s[msgstart:])[0]
     elif msgid == 151:
         return p_CuttingDeviceMessage.parseString(s[msgstart:])[0]
     elif msgid == 152:
-        return p_BatteryStatusMessage.parseString(s[msgstart:])[0]
+        return p_RedHerringBatteryStatusMessage.parseString(s[msgstart:])[0]
     elif msgid == 800:
         return p_SimPositionMessage.parseString(s[msgstart:])[0]
     else:

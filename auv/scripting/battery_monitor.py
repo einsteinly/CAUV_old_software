@@ -85,16 +85,16 @@ class messageLogger(messaging.BufferedMessageObserver):
         self.light_log = dict([(x,[(time.time(),0)]) for x in light_ids])
         self.battery_log_lock = dict([(x,threading.Lock()) for x in battery_ids])
         self.battery_log = dict([(x,[(time.time(),0)]) for x in battery_ids])
-    def onBatteryStatusMessage(self, m):
+    def onRedHerringBatteryStatusMessage(self, m):
         info('Battery Voltage: %gV' % (m.voltage * voltage_conversion))
         with self.battery_log_lock['Main']:
             self.battery_log['Main'].append((time.time(),m.voltage * voltage_conversion))
     def onMotorStateMessage(self, m):
         with self.motor_demand_log_lock[str(m.motorId)]:
             self.motor_demand_log[str(m.motorId)].append((time.time(),m.speed))
-    def onLightMessage(self, m):
+    def onLightControlMessage(self, m):
         with self.light_log_lock[str(m.lightId)]:
-            self.light_log[str(m.lightId)].append((time.time(),m.intensity))
+            self.light_log[str(m.lightId)].append((time.time(),m.intensity*m.duty_cycle/255.0))
         
 loggers_dict = {
                 'm' : (messageLogger,),

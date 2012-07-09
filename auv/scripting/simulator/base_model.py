@@ -205,7 +205,7 @@ class Model(messaging.MessageObserver):
         # Derived classes should implement this, and send (when appropriate):
         #   PressureMessage
         #   StateMessage
-        #   and optionally: BatteryStatusMessage
+        #   and optionally: RedHerringBatteryStatusMessage
         # This base class ensures that this function will be called at least 10
         # times per second, with cached motor states if nothing has changed.
         #
