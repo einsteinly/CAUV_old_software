@@ -67,10 +67,13 @@ ZeroMQMailbox::ZeroMQMailbox(std::string name) :
     marker_sub[1] = getpid();
     sub.setsockopt(XS_SUBSCRIBE, marker_sub, sizeof(marker_sub));
 
-    uint32_t sub_sub[1+boost::uuids::uuid::static_size()];
-    sub_sub[0] = MessageType::SubscriptionConfirmMarker;
-    std::copy(id.begin(), id.end(), (boost::uuids::uuid::value_type*)(&sub_sub[1]));
-    sub.setsockopt(XS_SUBSCRIBE, sub_sub, sizeof(sub_sub));
+    struct {
+        uint32_t marker;
+        boost::uuids::uuid id;
+    } sub_sub;
+    sub_sub.marker = MessageType::SubscriptionConfirmMarker;
+    sub_sub.id = id;
+    sub.setsockopt(XS_SUBSCRIBE, &sub_sub, sizeof(sub_sub));
 
     std::string daemon_control_str;
     daemon_control_str = "ipc://" + ipc_directory + "/daemon/control";
@@ -137,7 +140,6 @@ namespace {
     struct SubscriptionMessage {
         bool subscribe; //subscribe or unsubscribe
         uint32_t msg_id;
-        boost::uuids::uuid node_uuid;
     };
 }
 
@@ -155,7 +157,6 @@ void ZeroMQMailbox::leaveGroup(const std::string& groupName) {
     boost::lock_guard<boost::mutex> lock(m_sub_mutex);
     SubscriptionMessage submsg;
     submsg.subscribe = true;
-    std::copy(id.begin(), id.end(), submsg.node_uuid.begin());
     BOOST_FOREACH(uint32_t id, get_ids_for_group(groupName)) {
         submsg.msg_id = id;
         sub_queue_push.send(&submsg, sizeof(submsg));
@@ -167,7 +168,6 @@ void ZeroMQMailbox::subMessage(const Message &msg) {
     SubscriptionMessage submsg;
     submsg.subscribe = true;
     submsg.msg_id = msg.id();
-    std::copy(id.begin(), id.end(), submsg.node_uuid.begin());
     sub_queue_push.send(&submsg, sizeof(submsg));
 }
 
@@ -274,12 +274,19 @@ void ZeroMQMailbox::send_connect_message (uint32_t pid) {
     pub.send(buf.c_str(),buf.size());
 }
 
-void ZeroMQMailbox::send_subscribed_message (const boost::uuids::uuid& node_uuid, MessageType::e type) {
+struct SubscriptionConfirmMessage {
+    uint32_t marker;
+    boost::uuids::uuid id;
+    uint32_t msg_id;
+};
+
+void ZeroMQMailbox::send_subscribed_message (const boost::uuids::uuid& node_uuid, uint32_t type) {
     std::string buf;
-    uint32_t sub_id = MessageType::SubscriptionConfirmMarker;
-    buf += std::string(reinterpret_cast<char*>(&sub_id), sizeof(sub_id));
-    buf += std::string(reinterpret_cast<const char*>(node_uuid.begin()), boost::uuids::uuid::static_size());
-    buf += std::string(reinterpret_cast<char*>(&type), sizeof(type));
+    SubscriptionConfirmMessage msg;
+    msg.marker = MessageType::SubscriptionConfirmMarker;
+    msg.id = node_uuid;
+    msg.msg_id = type;
+    buf += std::string(reinterpret_cast<char*>(&msg), sizeof(msg));
     pub.send(buf.c_str(),buf.size());
 }
 
@@ -338,33 +345,22 @@ void ZeroMQMailbox::handle_pub_message (void) {
             break;
         }
         case MessageType::SubscriptionConfirmMarker: {
-            uint32_t pid = s_vec.second[1];
-            if (pid != (uint32_t)getpid()) {
-                error() << "received subscribed message not intended for this pid!";
-                error() << "message intended for pid" << pid;
-                return;
-            }
-            MessageType::e type = MessageType::e(s_vec.second[2]);
-            BOOST_FOREACH(Observable<SubscribeObserver>::observer_ptr_t o, Observable<SubscribeObserver>::m_observers) {
-                o->onSubscribed(type);
+            debug(3) << "received subscription confirmation request";
+
+            if (is_sub && s_vec.second.size()*sizeof(uint32_t) == sizeof(SubscriptionConfirmMessage)) {
+                SubscriptionConfirmMessage* m = reinterpret_cast<SubscriptionConfirmMessage*>(&s_vec.second[0]);
+                send_subscribed_message(m->id, m->msg_id);
             }
             break;
         }
         default: {
-            {
-                boost::lock_guard<boost::mutex> lock(m_pub_map_mutex);
-                if (is_sub) {
-                    debug(5) << "remote subscribed to message id" << sub_id;
-                    publications.insert(sub_id);
-                } else {
-                    debug(5) << "remote unsubscribed from message id" << sub_id;
-                    publications.erase(sub_id);
-                }
-            }
+            boost::lock_guard<boost::mutex> lock(m_pub_map_mutex);
             if (is_sub) {
-                boost::uuids::uuid node_uuid;
-                std::copy(&s_vec.second[1], &s_vec.second[1+boost::uuids::uuid::static_size()], id.begin());
-                send_subscribed_message(node_uuid, sub_id);
+                debug(5) << "remote subscribed to message id" << sub_id;
+                publications.insert(sub_id);
+            } else {
+                debug(5) << "remote unsubscribed from message id" << sub_id;
+                publications.erase(sub_id);
             }
             break;
         }
@@ -398,6 +394,16 @@ void ZeroMQMailbox::handle_sub_message(void) {
             connections.insert(connect_str);
             break;
         }
+        case MessageType::SubscriptionConfirmMarker: {
+            // TODO: check uuid
+            SubscriptionConfirmMessage* m = reinterpret_cast<SubscriptionConfirmMessage*>(data);
+            MessageType::e type = MessageType::e(m->msg_id);
+            debug(3) << "received subscription confirmation for" << type;
+            BOOST_FOREACH(Observable<SubscribeObserver>::observer_ptr_t o, Observable<SubscribeObserver>::m_observers) {
+                o->onSubscribed(type);
+            }
+            break;
+        }
         default: {
             byte *dataptr = reinterpret_cast<byte*>(inc_message.data());
             //!!! Seems like the copy involved here could be avoided somehow...
@@ -424,6 +430,15 @@ void ZeroMQMailbox::handle_subscription_message(void) {
         debug(2) << "subscribing to message id" << sub_msg.msg_id;
         if (subscriptions[sub_msg.msg_id] == 0) {
             sub.setsockopt(XS_SUBSCRIBE,&sub_msg.msg_id, sizeof(sub_msg.msg_id));
+
+            // Also send a subscription confirmation request
+            // (FIXME: Massively abusing XS_SUBSCRIBE here)
+            SubscriptionConfirmMessage subconf_msg;
+            subconf_msg.marker = MessageType::SubscriptionConfirmMarker;
+            subconf_msg.id = id;
+            subconf_msg.msg_id = sub_msg.msg_id;
+
+            sub.setsockopt(XS_SUBSCRIBE,&subconf_msg, sizeof(subconf_msg));
         }
         subscriptions[sub_msg.msg_id]++;
     } else {
