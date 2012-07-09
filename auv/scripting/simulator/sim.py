@@ -7,7 +7,7 @@
 # and sends:
 #   PressureMessage (simulating the pressure sensors)
 #   StateMessage (simulating the xsens orientation information)
-#   BatteryStatusMessage (maybe..)
+#   RedHerringBatteryStatus (maybe..)
 #
 # for debug and simulation purposes, it also sends:
 #   SimPositionMessage (exact position in simulated environment)

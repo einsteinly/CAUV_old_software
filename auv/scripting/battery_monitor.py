@@ -85,7 +85,7 @@ class messageLogger(messaging.BufferedMessageObserver):
         self.light_log = dict([(x,[(time.time(),0)]) for x in light_ids])
         self.battery_log_lock = dict([(x,threading.Lock()) for x in battery_ids])
         self.battery_log = dict([(x,[(time.time(),0)]) for x in battery_ids])
-    def onBatteryStatusMessage(self, m):
+    def onRedHerringBatteryStatus(self, m):
         info('Battery Voltage: %gV' % (m.voltage * voltage_conversion))
         with self.battery_log_lock['Main']:
             self.battery_log['Main'].append((time.time(),m.voltage * voltage_conversion))
