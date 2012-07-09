@@ -25,7 +25,7 @@
 #include <generated/types/GraphableMessage.h>
 #include <generated/types/TelemetryMessage.h>
 #include <generated/types/DebugMessage.h>
-#include <generated/types/RedherringBatteryStatusMessage.h>
+#include <generated/types/RedHerringBatteryStatusMessage.h>
 
 #include <module/module.h>
 

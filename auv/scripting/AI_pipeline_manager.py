@@ -217,6 +217,8 @@ if __name__ == '__main__':
                  action='store_true', help="Load any temporary files created.")
     p.add_argument('--freeze_pls', dest='freeze_pls', default=False,
                  action='store_true', help="ignore changes to the pipeline")
+    p.add_argument('--simulation', dest='simulation', default=False,
+                 action='store_true', help="replace relevent nodes with net input")
     opts, args = p.parse_known_args()
     pm = pipelineManager(opts)
     try:
