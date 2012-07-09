@@ -885,7 +885,7 @@ group can_control
         vstern : int8;
     }
 
-    message LightContol : 150
+    message LightControl : 150
     {
         lightId: LightID;
         intensity : uint8;     // 0 (off) -> 255 (max)
@@ -897,6 +897,12 @@ group can_control
     {
         channel : PowerChannel;
         command : PowerControl;
+    }
+    
+    // reinstated for compatibility
+    message CuttingDevice : 151
+    {
+        strength : uint8;
     }
 }
 
@@ -932,19 +938,19 @@ group can_status
 
     message Pressure : 50
     {
-        fore : uint16;
-        aft  : uint16;
+        fore : uint16; // arbitrary calibration (red herring pressure sensors)
+        aft  : uint16; // arbitrary calibration (red herring pressure sensors)
     }
     
     // Barracuda has independent and asynchronous pressure sensors...
     message ForePressure : 51
     {
-        pressure : uint16;
+        pressure : uint16; // millibars (1000 ~ 1 atmosphere)
     }
 
     message AftPressure : 52
     {
-        pressure : uint16;
+        pressure : uint16; // millibars (1000 ~ 1 atmosphere)
     }
 
     message Temperature : 403
