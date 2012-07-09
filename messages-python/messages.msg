@@ -195,23 +195,28 @@ enum BoardID : int16 {
     //AudioProcessing = ???
 }
 
-enum PowerControl {
+enum PowerControl : int8 {
     PowerOff = 0,
     PowerOn  = 1,
     Reset    = 2,
 }
 
-enum BatteryLocation {
+enum BatteryLocation : int8 {
     Left = 0,
     Right = 1,
 }
 
 // used for temperature
-enum Component {
-    FrontPressureBoard
-    RearPressureBoard
-    MainControlBoard
+enum Component : int8 {
+    FrontPressureBoard,
+    RearPressureBoard,
+    MainControlBoard,
     // !!! TODO: other temperatures
+}
+
+enum PowerChannel : int8 {
+    // TODO: descriptive values for each independent PCB power channel
+    SomeValue
 }
 
 struct floatYPR
@@ -344,6 +349,7 @@ struct GeminiTemperatures
 }
 struct MotorDemand
 {
+    //values : map<MotorID, float>;
     prop: float;
     hbow: float;
     vbow: float;
@@ -757,6 +763,14 @@ group pipeline
     message ClearPipeline : 7
     {
         pipelineName : string;
+    }
+
+    message SetPipeline : 15
+    {
+        pipelineName    : string;
+        lazy nodeTypes  : map<int32, NodeType>;
+        lazy nodeConnections : map<int32, map<LocalNodeInput, NodeOutput> >;
+        lazy nodeParams : map<int32, map<LocalNodeInput, ParamValue> >;
     }
 
     message SetNodeParameter : 8

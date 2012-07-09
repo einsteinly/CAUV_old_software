@@ -380,6 +380,10 @@ class SonarSLAMImpl{
             return boost::make_shared<LocationMessage>(coord, m_graph.speed());
         }
 
+        void load(){
+            m_graph.load();
+        }
+
     private:
         SlamCloudGraph<pt_t> m_graph;
         
@@ -438,6 +442,9 @@ void SonarSLAMNode::init(){
 
     // Control Parameters:
     registerParamID("clear", bool(false), "true => discard accumulated point cloud");
+    registerParamID("load map", bool(false), "if set to true, the persistent map will be loaded (and current state discarded), and then the parameter will be reset to false");
+    registerParamID("map dir", std::string("/tmp/cauv/slam/persistence"), "directory for map persistent state (saving and loading)");
+
     ///*unused*/ registerParamID("map merge alpha", float(5), "alpha-hull parameter for map merging");
     registerParamID("score threshold", float(2), "keypoint set will be rejected if mean distance error is greater than this");
     registerParamID("weight test", float(5), "keypoints with weights greater than this will be used for registration");
@@ -500,7 +507,7 @@ void SonarSLAMNode::onTelemetry(boost::shared_ptr<TelemetryMessage const> m){
 void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     typedef std::vector<KeyPoint> kp_vec;
 
-    bool clear = param<bool>("clear");
+    const bool clear = param<bool>("clear");
     if(clear)
         m_impl->reset();
     
@@ -520,6 +527,8 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
         throw std::runtime_error("training keypoints do not correspond to keypoints");
     
     // The rest of the parameters
+    const bool load_map     = param<bool>("load map");
+    const std::string map_dir = param<std::string>("map dir");
     const int   max_iters   = param<int>("max iters");
     const float euclidean_fitness   = param<float>("euclidean fitness");
     const float transform_eps       = param<float>("transform eps");
@@ -564,10 +573,14 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     params.max_considered_overlaps = max_matches;
     params.min_scan_consensus = require_match_consensus;
     params.scan_consensus_tolerance = consensus_tolerance;
+    params.persistence_dir = map_dir;
     //params.rotation_scale = 4;
 
     m_impl->setGraphProperties(params);
     m_impl->setVisProperties(vis_res, vis_origin, vis_size/vis_res[0]);
+
+    if(load_map)
+        m_impl->load();
 
     image_ptr_t xy_image = inputs["xy image"];
 
@@ -657,5 +670,9 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     r["training: keypoints"] = training_keypoints;
     r["training: keypoints image"] = inputs["keypoints image"];
     r["training: goodness"] = scan->keyPointGoodness();
+
+    // set load map back to false once it has been set to true
+    if(load_map)
+        setParam("load map", false);
 }
 

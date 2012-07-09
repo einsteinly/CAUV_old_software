@@ -376,7 +376,9 @@ class SlamCloudPart: public SlamCloudLocation,
         base_cloud_t const& rejectedPoints() const{
             return m_rejected_points_cloud;
         }
-
+        
+        // note that the transformation is not saved: the transformations of
+        // key frames are saved separately each time they change.
         void saveToFile(std::ofstream& f){
             uint32_t x = Keyframe_Serialise_Version;        
             f.write((char*)&x, sizeof(x));
@@ -396,15 +398,18 @@ class SlamCloudPart: public SlamCloudLocation,
                 //f.write((char*)&idx, sizeof(idx));
             }
         }
-
-        static SlamCloudPart<PointT> loadFromFile(std::ifstream& f){
+        
+        /* only load keypoints, constraints must be loaded externally, as must
+         * m_relative_transformation.
+         */
+        static boost::shared_ptr< SlamCloudPart<PointT> > loadFromFile(std::ifstream& f){
             uint32_t x = 0;
             f.read((char*)&x, sizeof(x));
             if(x != Keyframe_Serialise_Version)
                 throw std::runtime_error("unknown map version");
             TimeStamp t;
             f.read((char*)&t, sizeof(t));
-            SlamCloudPart r(t);
+            boost::shared_ptr< SlamCloudPart<PointT> > r = boost::make_shared<SlamCloudPart<PointT> >(t);
             std::size_t s = 0;
             f.read(s, sizeof(s));
             for(std::size_t i = 0; i < s; i++){
@@ -418,9 +423,9 @@ class SlamCloudPart: public SlamCloudLocation,
                 // no z
                 f.read((char*)&response, sizeof(response));
                 //f.read((char*)&idx, sizeof(idx));
-                r.push_back(PointT(x, y, z), response, i);
+                r->push_back(PointT(x, y, z), response, i);
             }
-
+            return r;
         }
 
         // this type derives from something with an Eigen::Matrix4f as a
