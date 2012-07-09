@@ -18,11 +18,13 @@
 #include <vector>
 #include <fstream>
 #include <ios>
+#include <algorithm>
 
 #include <sys/types.h>
 #include <unistd.h>
 
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/filesystem.hpp>
 
 #include <pcl/point_cloud.h>
 
@@ -45,6 +47,8 @@
 
 namespace cauv{
 namespace imgproc{
+
+namespace bf = boost::filesystem;
 
 struct CloudGraphParams{
     // default constructor sets sensible defaults:
@@ -163,7 +167,7 @@ class SlamCloudGraph{
 
         void load(){
             reset();
-            loadKeyFrames();
+            loadKeyScans();
             loadIntermediatePoses();
         }
 
@@ -573,7 +577,7 @@ class SlamCloudGraph{
             // update the spatially-sorted datastructure of key-scan locations
             _updateKeyScanLocations();
 
-            saveKeyFramePositions();
+            saveKeyScanPositions();
         }
 
         void saveKeyScan(cloud_ptr p, std::size_t id){
@@ -616,6 +620,65 @@ class SlamCloudGraph{
 
             return p;
         }
+        
+        // key-scans must be loaded first
+        void loadKeyScanPositions(){
+            /*const TimeStamp timestamp = now();
+            std::string fname = mkStr() << m_params.persistence_dir << "/" << timestamp.secs << (timestamp.musecs / 1000) << ".nodes";
+            std::ofstream f(fname.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+
+            for(std::size_t i = 0; i < m_key_scans.size(); i++)
+                saveMat(f, m_key_scans[i]->globalTransform());
+
+            f.close();
+            */
+            
+            bf::path persistence_dir(m_params.persistence_dir);
+            bf::path latest_file;
+            
+            if(bf::exists(persistence_dir) &&
+               bf::is_directory(persistence_dir)){
+                std::vector<bf::path> sorted_paths;
+                std::copy(bf::directory_iterator(persistence_dir), bf::directory_iterator(), std::back_inserter(sorted_paths));
+                std::sort(sorted_paths.begin(), sorted_paths.end());
+                // use the last one sorted by name (== sorted by time)
+                for(std::vector<bf::path>::reverse_iterator i = sorted_paths.rbegin(); i != sorted_paths.rend(); i++){
+                    if(i->extension().string() == ".nodes"){
+                        latest_file = *i;
+                        break;
+                    }
+                }
+                if(sorted_paths.size()){
+                    latest_file = sorted_paths.back();
+                }
+            }else{
+                error() << "cannot load persistent state: directory does not exist";
+            }
+
+            if(bf::exists(latest_file)){
+                std::ifstream f(latest_file.string().c_str(), std::ios::in | std::ios::binary);
+                std::size_t i;
+                for(i = 0; i < m_key_scans.size() && f; i++){
+                    std::size_t id;
+                    Eigen::Matrix4f m;
+                    f.read((char*)&i, sizeof(i));
+                    loadMat(f, m);
+                    if(id != i)
+                        throw std::runtime_error("cannot load persistent state: id mismatch!");
+                    m_key_scans[i]->setRelativeTransform(m);
+                }
+                if(!f){
+                    for(; i < m_key_scans.size(); i++){
+                        m_key_scan_indicies.erase(m_key_scans.back());
+                        m_key_scans.pop_back();
+                    }
+                    warning() << "fewer key scans in position file than there are saved keyscans";
+                }
+            }else{
+                error() << "cannot load persistent state: no keyframe position files";
+            }
+            
+        }
 
         void loadKeyScanConstraints(cloud_ptr parent, std::size_t parent_id){
             /*
@@ -642,24 +705,48 @@ class SlamCloudGraph{
             cp.close();
         }
 
-        void saveKeyFramePositions(){
+        void saveKeyScanPositions(){
             const TimeStamp timestamp = now();
             std::string fname = mkStr() << m_params.persistence_dir << "/" << timestamp.secs << (timestamp.musecs / 1000) << ".nodes";
             std::ofstream f(fname.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
 
-            for(std::size_t i = 0; i < m_key_scans.size(); i++)
+            for(std::size_t i = 0; i < m_key_scans.size(); i++){
+                f.write((char*)&i, sizeof(i));
                 saveMat(f, m_key_scans[i]->globalTransform());
+            }
 
             f.close();
         }
         
-        void loadKeyFrames(){
-            /*list dir
-            foreach keyscan id
-                loadKeyScan(id)
-            foreach keyscan id
-                loadKeyScanConstraints(id)
-            loadKeyScanPositions()*/
+        void loadKeyScans(){
+            // List directory to find all the key-scan ids:
+            
+            bf::path persistence_dir(m_params.persistence_dir);
+
+            std::set<std::size_t> keyframe_ids;
+
+            if(bf::exists(persistence_dir) &&
+               bf::is_directory(persistence_dir)){
+                bf::directory_iterator i(persistence_dir);
+                for(; i != bf::directory_iterator(); i++){
+                    if(i->path().extension().string() == ".keyframe")
+                        keyframe_ids.insert(fromStr<std::size_t>(i->path().stem().generic_string().c_str()));
+                }
+            }else{
+                error() << "cannot load persistent state: directory does not exist";
+            }
+            
+            // !!! FIXME this should munge IDs if the positions file doesn't quite
+            // match up with the directory listing
+            loadKeyScanPositions();
+            
+            for(std::size_t id = 0; id < m_key_scans.size(); id++){
+                m_key_scans.push_back(loadKeyScan(id));
+                m_key_scan_indicies[m_key_scans.back()] = m_key_scans.size()-1;
+            }
+            
+            for(std::size_t id = 0; id < m_key_scans.size(); id++)
+                loadKeyScanConstraints(m_key_scans[id], id);
         }
 
         void loadIntermediatePoses(){

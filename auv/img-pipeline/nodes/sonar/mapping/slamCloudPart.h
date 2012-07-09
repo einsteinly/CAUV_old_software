@@ -411,7 +411,7 @@ class SlamCloudPart: public SlamCloudLocation,
             f.read((char*)&t, sizeof(t));
             boost::shared_ptr< SlamCloudPart<PointT> > r = boost::make_shared<SlamCloudPart<PointT> >(t);
             std::size_t s = 0;
-            f.read(s, sizeof(s));
+            f.read((char*)&s, sizeof(s));
             for(std::size_t i = 0; i < s; i++){
                 float x = 0;
                 float y = 0;
@@ -443,6 +443,8 @@ class SlamCloudPart: public SlamCloudLocation,
             m_meanvar_invalid = true;
         }
 
+        template< class T, class A1 >
+        friend boost::shared_ptr< T > boost::make_shared(A1 const & a1);
 
         SlamCloudPart(TimeStamp const& t)
             : SlamCloudLocation(t),

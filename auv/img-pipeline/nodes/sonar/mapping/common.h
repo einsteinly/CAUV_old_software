@@ -56,6 +56,12 @@ inline static void saveMat(std::ofstream& f, Eigen::Matrix4f const& m){
             f.write((char*)&m(i,j), sizeof(m(i,j)));
 }
 
+void loadMat(std::ifstream& f, Eigen::Matrix4f& m){
+    for(int i = 0; i < 4; i++)
+        for(int j = 0; j < 4; j++)
+            f.read((char*)&m(i,j), sizeof(m(i,j)));
+}
+
 } // namespace imgproc
 } // namespace cauv
 
