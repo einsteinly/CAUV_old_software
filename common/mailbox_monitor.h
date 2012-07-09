@@ -1,10 +1,11 @@
 #ifndef CAUV_MAILBOX_MONITOR_H
 #define CAUV_MAILBOX_MONITOR_H
 #include <boost/shared_ptr.hpp>
+#include <generated/types/message_type.h>
 
 namespace cauv {
 
-class MessageObserver
+class MessageObserver;
 
 class SubscribeObserver {
     public:

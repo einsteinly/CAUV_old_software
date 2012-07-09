@@ -21,6 +21,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include "mailbox.h"
+#include "mailbox_monitor.h"
 
 
 namespace boost {
