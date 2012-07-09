@@ -19,14 +19,12 @@ class pipelineManager(aiProcess):
         self.disable_gui = opts.disable_gui 
         self.freeze = opts.freeze_pls
         #TODO restore pipelines requested by scripts
-        if opts.restore:
-            self.requests = {'script':{}, 'other':{}}
-        else:
-            self.requests = {'script':{}, 'other':{}}
         self.hold_pls = opts.hold_pls
         self.load_temp = opts.load_temp
+        self.simulation = opts.simulation
 
         self.detector_requests = []
+        self.task_requests = {}
         
         self.pipelines = {}
         self.created_pls = {}
@@ -73,6 +71,12 @@ class pipelineManager(aiProcess):
         #load pipeline
         try:
             pl_state = cauv.pipeline.Model.loadFile(open(filename))
+            #check node types
+            for node_id, node in pl_state.nodes.iteritems():
+                if node.type in (messaging.NodeType.FileInput, messaging.NodeType.DirectCameraInput):
+                    warning("Pipeline contains a testing input, this probably wasn't intended, please fix !!!")
+                elif node.type == messaging.NodeType.NetInput:
+                    warning("Pipeline contains a testing input, this probably wasn't intended, please fix !!!")
         except:
             error('Error loading pipeline %s (%s)' %(name, filename))
             error(traceback.format_exc().encode('ascii','ignore'))
@@ -86,59 +90,30 @@ class pipelineManager(aiProcess):
 
     @external_function
     @event.event_func
-    def request_pl(self, requestor_type, requestor_name, requested_pl):
-        #VERY IMPORTANT: make sure requestor_name is same as process_name
-        if not requestor_type in self.requests:
-            error('Invalid requestor type %s, named %s' %(requestor_type, requestor_name))
-            return
-        if not requested_pl in self.pipelines:
-            error('Non-existant pipeline %s requested' %(requested_pl,))
-            return
-            #update request info
-        if requestor_name in self.requests[requestor_type]:
-            self.requests[requestor_type][requestor_name].append(requested_pl)
-        else:
-            self.requests[requestor_type][requestor_name] = [requested_pl]
-        self.eval_state()
-        #confirm request (atm only scripts)
-        if requestor_type == 'script':
-            getattr(self.ai, requestor_name).confirm_pl_request()
-
-    @external_function
-    @event.event_func
-    def drop_pl(self, requestor_type, requestor_name, requested_pl):
-        if not requestor_type in self.requests:
-            error('Invalid type in requested drop pl')
-        elif not requestor_name in self.requests[requestor_type]:
-            error('Requestor does not have any pipelines to drop')
-        elif not requested_pl in self.requests[requestor_type][requestor_name]:
-            error('Requestor has not requested this pipeline %s' %(requested_pl,))
-        elif not requested_pl in self.pipelines:
-            warning('Could not drop request %s, may have left things in the pipeline.' %(requested_pl, ))
-        else:
-            self.requests[requestor_type][requestor_name].remove(requested_pl)
-            self.eval_state()
-
-    @external_function
-    @event.event_func
-    def drop_all_pls(self, requestor_type, requestor_name):
-        try:
-            self.requests[requestor_type][requestor_name] = []
-            self.eval_state()
-        except KeyError:
-            error('Could not drop pls, requestor type %s invalid' %(requestor_type,))
-    @external_function
-    def drop_task_pls(self, task_id):
-        self.requests['script'][task_id] = []
-        self.eval_state()
-
-    @external_function
-    @event.event_func
     def set_detector_pls(self, req_list):
         if set(req_list) != set(self.detector_requests):
             self.detector_requests = req_list
             debug("Setting detector requests to {}".format(self.detector_requests))
             self.eval_state()
+
+    @external_function
+    @event.event_func
+    def set_task_pls(self, task_id, req_list):
+        self.task_requests[task_id] = req_list
+        self.eval_state()
+            
+    @external_function
+    @event.event_func
+    def start_task_pls(self, task_id):
+        for pl_name in self.task_requests[task_id]:
+            self.created_pls[pl_name].play()
+            
+    @external_function
+    @event.event_func
+    def stop_task_pls(self, task_id):
+        for pl_name in self.task_requests[task_id]:
+            if not pl_name in self.detector_requests:
+                self.created_pls[pl_name].pause()
 
     def eval_state(self):
         """
@@ -149,35 +124,40 @@ class pipelineManager(aiProcess):
         """
         #1
         files_requested = set(self.detector_requests)
-        for requestors in self.requests.itervalues():
-            for requests in requestors.itervalues():
-                files_requested.update(requests)
-        files_in_use = set(self.running_pls.keys())
+        for task_id, pl_names in self.task_requests.iteritems():
+            files_requested.update(set(pl_names))
+        files_in_use = set(self.created_pls.keys())
         to_remove = files_in_use.difference(files_requested)
         to_add = files_requested.difference(files_in_use)
         #2
         debug("State: running_pls: {}, to_remove: {}, to add: {}".format(
                files_in_use, to_remove, to_add))
         for reqname in to_remove:
-            pl = self.running_pls.pop(reqname) #remove from running_list
+            try:
+                self.running_pls.pop(reqname) #remove from running_list
+            except KeyError:
+                pass
+            try:
+                pl = self.created_pls.pop(reqname) #remove from running_list
+            except KeyError:
+                error('Tried to remove non-existant pipeline %s' %reqname)
+                continue
             try:
                 pl.save('pipelines/temp/temp__'+reqname+'.pipe')
             except Exception:
                 error('Error saving pipeline %s' %(reqname))
                 error(traceback.format_exc().encode('ascii','ignore'))
             if not self.hold_pls:
-                pl.pause()
+                pl.clear()
         #4
         for reqname in to_add:
-            if reqname not in self.created_pls:
-                pl = cauv.pipeline.Model(self.node, 'ai/'+reqname)
-                pl.set(self.pipelines[reqname])
-                self.created_pls[reqname] = pl
+            pl = cauv.pipeline.Model(self.node, 'ai/'+reqname)
+            pl.set(self.pipelines[reqname])
+            self.created_pls[reqname] = pl
+            if not reqname in self.detector_requests:
+                pl.pause()
             else:
-                pl = self.created_pls[reqname]
-                pl.play()
-            self.running_pls[reqname] = pl
-                
+                self.running_pls[reqname] = pl
 
         """
         def run(self):

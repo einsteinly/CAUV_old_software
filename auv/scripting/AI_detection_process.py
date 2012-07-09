@@ -117,8 +117,8 @@ class detectionControl(aiProcess):
     def detectors_changed(self):
         pipelines = []
         for detector in self.running_detectors.values():
-            pipelines.extend(detector._pipelines)
-            debug("{}".format(detector._pipelines), 3)
+            pipelines.extend(detector.options._pipelines)
+            debug("{}".format(detector.options._pipelines), 3)
         self.ai.pl_manager.set_detector_pls(pipelines)
         self.ai.task_manager.on_list_of_detectors(self.running_detectors.keys())
 

@@ -1124,12 +1124,12 @@ group guiai
         dynamicScriptOptions : map<string, ParamValue>;
         staticScriptOptions : map<string, ParamValue>;
         isCurrentlyRunning : bool;
+        pipelinesIds : list<string>;
     }
     message ScriptState : 207
     {
         taskId : string;
         debugValues : map<string, ParamValue>;
-        pipelineIds : list<string>;
     }
     message AddCondition : 208
     {
