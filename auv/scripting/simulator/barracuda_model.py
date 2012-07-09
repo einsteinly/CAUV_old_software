@@ -229,7 +229,7 @@ class Model(base_model.Model):
             ypr.yaw + random.gauss(0, 0.5),
             ypr.pitch + random.gauss(0, 0.5),
             ypr.roll + random.gauss(0, 0.5)
-        ))
+        )
 
     def sendStateMessages(self):
         # send:
@@ -250,7 +250,7 @@ class Model(base_model.Model):
         orientation = base_model.orientationToYPR(self.orientation)
         
         # make sure control can deal with pressure message ordering
-        if random % 2:
+        if random.randint(0,1) == 1:
             self.node.send(messaging.ForePressureMessage(self.addPressureNoise(pressure)))
             self.node.send(messaging.AftPressureMessage(self.addPressureNoise(pressure)))
         else:
