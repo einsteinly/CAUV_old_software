@@ -787,9 +787,6 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         
         /* keep track of the amount of data being processed */
         cauv::ThroughputCounter m_throughput_counter;
-
-        /* most recent time taken */
-        int32_t m_time_taken;
         
         /* don't send status messages too frequently! */
         RateLimiter m_message_throttle;

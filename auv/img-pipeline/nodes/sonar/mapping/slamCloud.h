@@ -63,7 +63,8 @@ struct CloudGraphParams{
         min_scan_consensus(2),
         scan_consensus_tolerance(0.3),
         rotation_scale(4),
-        persistence_dir("."){
+        persistence_dir("."),
+        read_only(true){
     }
 
     float overlap_threshold; // a fraction (0--1.0)
@@ -86,6 +87,7 @@ struct CloudGraphParams{
     float rotation_scale;
     
     std::string persistence_dir;
+    bool read_only;
 };
 
 template<typename PointT>
@@ -596,6 +598,8 @@ class SlamCloudGraph{
         }
 
         void saveKeyScan(cloud_ptr p, std::size_t id){
+            if(m_params.read_only)
+                return;
             std::string kfn = mkStr() << m_params.persistence_dir << "/" << id << ".keyframe";
             std::ofstream kf(kfn.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
             std::size_t idx_in_all = m_key_scan_indices_in_all[p];
@@ -720,6 +724,8 @@ class SlamCloudGraph{
         }
 
         void saveIntermediatePose(cloud_ptr p, std::size_t id){
+            if(m_params.read_only)
+                return;
             std::size_t parent_id = m_key_scan_indices[p->relativeTo()];
             std::string cpn = mkStr() << m_params.persistence_dir << "/" << parent_id << ".relposes";
             std::ofstream cp(cpn.c_str(), std::ios::out | std::ios::binary | std::ios::app);
@@ -751,6 +757,8 @@ class SlamCloudGraph{
         }
 
         void saveKeyScanPositions(){
+            if(m_params.read_only)
+                return;
             const TimeStamp timestamp = now();
             std::string fname = mkStr() << m_params.persistence_dir << "/" << timestamp.secs << (timestamp.musecs / 1000) << ".nodes";
             std::ofstream f(fname.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
