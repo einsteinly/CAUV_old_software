@@ -25,6 +25,7 @@
 #include <generated/types/GraphableMessage.h>
 #include <generated/types/TelemetryMessage.h>
 #include <generated/types/DebugMessage.h>
+#include <generated/types/RedherringBatteryStatusMessage.h>
 
 #include <module/module.h>
 
@@ -840,7 +841,7 @@ class MCBForwardingObserver : public BufferedMessageObserver
                 m_last_pressure_sent = now();
             }
         }
-        virtual void onRedHerringBatteryStatus(RedHerringBatteryStatus_ptr m)
+        virtual void onRedHerringBatteryStatusMessage(RedHerringBatteryStatusMessage_ptr m)
         {
             if(now() - m_last_battery_sent > m_battery_min_msecs){
                 debug(5) << "MCBForwardingObserver: Forwarding battery status message:" << *m;
@@ -875,7 +876,7 @@ ControlNode::ControlNode() : CauvNode("Control")
     subMessage(LightControlMessage());
     subMessage(PowerControlMessage());
     subMessage(CuttingDeviceMessage());
-    subMessage(StateMessageMessage());
+    subMessage(StateMessage());
     subMessage(MotorMessage());
     subMessage(BearingAutopilotEnabledMessage());
     subMessage(DepthAutopilotEnabledMessage());

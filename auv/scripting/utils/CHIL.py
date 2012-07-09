@@ -1145,7 +1145,7 @@ def testLogCoverage(loops=200):
         l.log(m.AIlogMessage())
         l.log(m.LightControlMessage())
         l.log(m.CuttingDeviceMessage())
-        l.log(m.RedHerringBatteryStatus())
+        l.log(m.RedHerringBatteryStatusMessage())
     l.close()
 
 def testLinearPWA():

@@ -221,7 +221,7 @@ class Model(base_model.Model):
         # send:
         #   PressureMessage
         #   StateMessage
-        #   should maybe also send RedHerringBatteryStatus
+        #   should maybe also send RedHerringBatteryStatusMessage
         # 
         # These should match the DepthCalibration message used:
         depth_offset = -9.48232

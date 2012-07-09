@@ -753,10 +753,10 @@ p_CuttingDeviceMessage = pp.Group(l \
     + p_int \
     + r).streamline()
 p_CuttingDeviceMessage.setParseAction(lambda x: messaging.CuttingDeviceMessage(*x[0]))
-p_RedHerringBatteryStatus = pp.Group(l \
+p_RedHerringBatteryStatusMessage = pp.Group(l \
     + p_int \
     + r).streamline()
-p_RedHerringBatteryStatus.setParseAction(lambda x: messaging.RedHerringBatteryStatus(*x[0]))
+p_RedHerringBatteryStatusMessage.setParseAction(lambda x: messaging.RedHerringBatteryStatusMessage(*x[0]))
 p_SimPositionMessage = pp.Group(l \
     + p_float + c \
     + p_float + c \
@@ -906,7 +906,7 @@ def parseMessage(s):
     elif msgid == 151:
         return p_CuttingDeviceMessage.parseString(s[msgstart:])[0]
     elif msgid == 152:
-        return p_RedHerringBatteryStatus.parseString(s[msgstart:])[0]
+        return p_RedHerringBatteryStatusMessage.parseString(s[msgstart:])[0]
     elif msgid == 800:
         return p_SimPositionMessage.parseString(s[msgstart:])[0]
     else:
