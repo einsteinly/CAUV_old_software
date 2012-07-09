@@ -191,7 +191,7 @@ class Pty {
     virtual void read_avail();
     int fd;
     int write_fd;
-    char ser_id;
+    uint8_t ser_id;
     protected:
     void write_buf(const char* buf, uint16_t len);
     std::string buffer;
@@ -285,16 +285,20 @@ void CANPty::read_avail() {
         }
         buf_pos = 0;
         state = READING;
+        debug() << "CAN Delimited";
     } else if (state == READING) {
-        int ret = read(fd, &buffer[0], sizeof(can_frame_t) - buf_pos); 
+        can_frame_t frame;
+        int ret = read(fd, ((char*)&frame) + buf_pos, sizeof(frame) - buf_pos); 
         if (ret >= 0) {
             buf_pos += ret;
         } 
-        if (buf_pos < sizeof(can_frame_t)) {
+        if (buf_pos < sizeof(frame)) {
             return;
         }
-        write_buf(&buffer[0], sizeof(can_frame_t));
+        debug() << "Write CAN frame id: " << frame.id;
+        write_buf((char*)&frame, sizeof(frame));
         state = DELIMITING;
+        buf_pos = 0;
     }
 }
 

@@ -85,11 +85,14 @@ void ArmMcb::read_loop() {
 void ArmMcb::setMotorState(MotorDemand &state) {
     motor_cmd_msg_t cmd; 
     cmd.m.id = motor_cmd_MSG_CAN_ID;
+    cmd.m.len = 6;
     cmd.m.fwd_left = state.prop;
     cmd.m.fwd_right = state.prop;
     cmd.m.vert_fore = state.vbow;
     cmd.m.vert_aft = state.vstern;
     cmd.m.horz_fore = state.hbow;
     cmd.m.horz_fore = state.vbow; 
+    write(fd, &delimiter[0], delimiter.size());
+    write(fd, &cmd.frame, sizeof(cmd.frame));
     debug(3) << state;
 }
