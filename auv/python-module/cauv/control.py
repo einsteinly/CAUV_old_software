@@ -261,7 +261,7 @@ class AUV(messaging.MessageObserver):
         self.checkLightValue(value)
         self.__node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
 
-    def strobe(self, value, duty_cycle=16, cycle_period=2000):
+    def strobe(self, value, duty_cycle=8, cycle_period=2000):
         '''Set the forwards light power. Value range 0-255, duty cycle 0=off 255=on 127=50% on 50% off, cycle_period=milliseconds/cycle'''
         self.checkLightValue(value)
         self.__node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
