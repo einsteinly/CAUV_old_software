@@ -30,6 +30,7 @@
 #include <gui/core/model/registry.h>
 
 #include <generated/types/GuiaiGroup.h>
+#include <generated/types/message_type.h>
 
 #include "aimessaging.h"
 #include "ainode.h"
@@ -62,14 +63,13 @@ void AiPlugin::initialise(){
     boost::shared_ptr<CauvNode> node = m_actions->node.lock();
     if(node) {
         node->joinGroup("guiai");
-        // !!!! FIXME: is there a race condition here between joining the
-        // group, and sending the state request message? (if it gets received
-        // before we've subscribed to the responses, then the responses won't
-        // be sent)
-
-        //!!! todo: this should be sent more often than just at startup
-        //!!! maybe on membership change?
-        node->send(boost::make_shared<RequestAIStateMessage>());
+        node->subMessage(ConditionStateMessage());
+        node->subMessage(ConditionRemovedMessage());
+        node->subMessage(TaskTypesMessage());
+        node->subMessage(ConditionTypesMessage());
+        node->subMessage(TaskRemovedMessage());
+        node->subMessage(TaskStateMessage());
+        node->subMessage(ScriptStateMessage()); // LEAVE THIS ONE LAST!
     } else error() << "AiPlugin failed to lock cauv node";
 
     connect(m_actions->view, SIGNAL(keyPressed(int,Qt::KeyboardModifiers)),
@@ -79,6 +79,9 @@ void AiPlugin::initialise(){
     m_actions->nodes->registerDelegate(nodeType<AiTaskNode>(), boost::make_shared<BooleanDelegate>());
     m_actions->nodes->registerListFilter(m_filter);
 
+    if(boost::shared_ptr<CauvNode> node = m_actions->node.lock()) {
+        //node->addSubscriptionObserver()
+    } else error() << "Failed to lock CauvNode while setting up vehicle ai";
 }
 
 void AiPlugin::keyPressed(int key,Qt::KeyboardModifiers){
@@ -237,6 +240,16 @@ void AiPlugin::nodeClosed(liquid::LiquidNode * node) {
         if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()){
             cauvNode->send(boost::make_shared<RemoveConditionMessage>(
                                cond->conditionId()));
+        }
+    }
+}
+
+void AiPlugin::onSubscribed(MessageType::e messageType){
+    if(messageType == MessageType::ScriptState){
+        if(boost::shared_ptr<CauvNode> node = m_actions->node.lock()) {
+            node->send(boost::make_shared<RequestAIStateMessage>());
+        } else {
+            error() << "Failed to lock CauvNode in AiPLugin";
         }
     }
 }
