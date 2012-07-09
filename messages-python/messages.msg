@@ -211,7 +211,8 @@ enum Component : int8 {
     FrontPressureBoard,
     RearPressureBoard,
     MainControlBoard,
-    // !!! TODO: other temperatures
+    // !!! TODO: other temperatures (GeminiXXX, GeminiYYY, SecoCPU, SecoGPU, PandaCPU, INS, LBatteryCell1, LBatteryCell2 ...)
+    // which come from places other than the can bus
 }
 
 enum PowerChannel : int8 {

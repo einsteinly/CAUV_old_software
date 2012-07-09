@@ -72,6 +72,12 @@ class SlamCloudLocation{
             _checkAlignment();
         }
 
+        template<typename PointT>
+        SlamCloudLocation(TimeStamp const& t, boost::shared_ptr<SlamCloudPart<PointT> > const& relative_to, Eigen::Matrix4f const& rel_tr)
+            : m_relative_to(relative_to), m_relative_transformation(rel_tr), m_time(t){
+            _checkAlignment();
+        }
+
         virtual ~SlamCloudLocation(){
         }
 

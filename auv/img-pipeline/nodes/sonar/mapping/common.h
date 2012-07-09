@@ -15,10 +15,7 @@
 #ifndef __CAUV_SONAR_SLAM_COMMON_H__
 #define __CAUV_SONAR_SLAM_COMMON_H__
 
-#include <Eigen/Dense>
-
 #include <vector>
-#include <fstream>
 
 #include <boost/shared_ptr.hpp>
 
@@ -47,20 +44,6 @@ typedef boost::shared_ptr<RelativePoseConstraint> pose_constraint_ptr;
 
 typedef std::vector<location_ptr> location_vec;
 typedef std::vector<pose_constraint_ptr> constraint_vec;
-
-
-// will find a home for this later
-inline static void saveMat(std::ofstream& f, Eigen::Matrix4f const& m){
-    for(int i = 0; i < 4; i++)
-        for(int j = 0; j < 4; j++)
-            f.write((char*)&m(i,j), sizeof(m(i,j)));
-}
-
-inline static void loadMat(std::ifstream& f, Eigen::Matrix4f& m){
-    for(int i = 0; i < 4; i++)
-        for(int j = 0; j < 4; j++)
-            f.read((char*)&m(i,j), sizeof(m(i,j)));
-}
 
 } // namespace imgproc
 } // namespace cauv

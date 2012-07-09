@@ -132,7 +132,8 @@ class SlamCloudGraph{
               m_graph_optimisation_count(0),
               m_dump_pose_history(CAUV_DUMP_POSE_GRAPH),
               m_key_scans(),
-              m_key_scan_indicies(),
+              m_key_scan_indices(),
+              m_key_scan_indices_in_all(),
               m_key_scan_locations(new KDTreeCachingCloud<PointT>()),
               m_n_passed_good(0),
               m_n_passed_bad(0),
@@ -154,7 +155,8 @@ class SlamCloudGraph{
 
         void reset(){
             m_key_scans.clear();
-            m_key_scan_indicies.clear();
+            m_key_scan_indices.clear();
+            m_key_scan_indices_in_all.clear();
             m_all_scans.clear();
             m_key_constraints.clear();
             m_graph_optimisation_count = 0;
@@ -214,6 +216,9 @@ class SlamCloudGraph{
             TimeStamp const& t,
             Eigen::Matrix4f const& rotation_guess_relative_to_last_scan
         ) const{
+            if(lastScanIsOld())
+                return rotation_guess_relative_to_last_scan;
+
             switch(m_all_scans.size()){
                 case 0:
                     return rotation_guess_relative_to_last_scan;
@@ -263,6 +268,14 @@ class SlamCloudGraph{
             }
         }
 
+        bool lastScanIsOld() const{
+            if(m_all_scans.size()){
+                if(m_all_scans.back()->time() - now() > 60.0)
+                    return true;
+            }
+            return false;
+        }
+
         floatXYZ speed() const{
             if(m_all_scans.size() >= 2){
                 location_vec::const_reverse_iterator i = m_all_scans.rbegin();
@@ -309,7 +322,8 @@ class SlamCloudGraph{
                            Eigen::Matrix4f& transformation){
             if(!m_key_scans.size()){
                 if(cloudIsGoodEnoughForInitialisation(p)){
-                    m_key_scan_indicies[p] = m_key_scans.size();
+                    m_key_scan_indices[p] = m_key_scans.size();
+                    m_key_scan_indices_in_all[p] = m_all_scans.size();
                     m_key_scans.push_back(p);
                     m_all_scans.push_back(p);
                     //transformation = Eigen::Matrix4f::Identity();
@@ -551,7 +565,8 @@ class SlamCloudGraph{
             // frame
             p->setRelativeTransform(transformation);
             p->setRelativeToNone();
-            m_key_scan_indicies[p] = m_key_scans.size();
+            m_key_scan_indices[p] = m_key_scans.size();
+            m_key_scan_indices_in_all[p] = m_key_scans.size();
             m_key_scans.push_back(p);
             m_key_scan_locations->push_back(PointT(xyr_space_loc));
             m_all_scans.push_back(p);
@@ -583,6 +598,8 @@ class SlamCloudGraph{
         void saveKeyScan(cloud_ptr p, std::size_t id){
             std::string kfn = mkStr() << m_params.persistence_dir << "/" << id << ".keyframe";
             std::ofstream kf(kfn.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+            std::size_t idx_in_all = m_key_scan_indices_in_all[p];
+            kf.write((char*)&idx_in_all, sizeof(idx_in_all));
             p->saveToFile(kf);
             kf.close();
             
@@ -601,7 +618,7 @@ class SlamCloudGraph{
             assert(constrained_to.size() == constraints.size());
 
             for(std::size_t i = 0; i < constraints.size(); i++){
-                const std::size_t parent_id = m_key_scan_indicies[constrained_to[i]];
+                const std::size_t parent_id = m_key_scan_indices[constrained_to[i]];
                 std::string fname = mkStr() << m_params.persistence_dir << "/" << parent_id<< ".constraints";
                 std::ofstream f(fname.c_str(), std::ios::out | std::ios::binary | std::ios::app);
             
@@ -615,9 +632,19 @@ class SlamCloudGraph{
         cloud_ptr loadKeyScan(std::size_t id){
             std::string kfn = mkStr() << m_params.persistence_dir << "/" << id << ".keyframe";
             std::ifstream kf(kfn.c_str(), std::ios::in | std::ios::binary);
+            std::size_t idx_in_all;
+            kf.read((char*)&idx_in_all, sizeof(idx_in_all));
             cloud_ptr p = cloud_t::loadFromFile(kf);
             kf.close();
-
+            if(id != m_key_scans.size())
+                throw std::runtime_error("keyscan indices do not match up");
+            m_key_scans.push_back(p);
+            m_key_scan_indices[p] = id;
+            m_key_scan_indices_in_all[p] = idx_in_all;
+            
+            if(m_all_scans.size() < idx_in_all)
+                m_all_scans.resize(10+1.5*idx_in_all);
+            m_all_scans[idx_in_all] = p;
             return p;
         }
         
@@ -659,11 +686,12 @@ class SlamCloudGraph{
                 }
                 if(!f){
                     for(; i < m_key_scans.size(); i++){
-                        m_key_scan_indicies.erase(m_key_scans.back());
+                        m_key_scan_indices.erase(m_key_scans.back());
                         m_key_scans.pop_back();
                     }
                     warning() << "fewer key scans in position file than there are saved keyscans";
                 }
+                f.close();
             }else{
                 error() << "cannot load persistent state: no keyframe position files";
             }
@@ -688,10 +716,11 @@ class SlamCloudGraph{
                     m_key_constraints.push_back(pc);
                 }
             }
+            f.close();
         }
 
         void saveIntermediatePose(cloud_ptr p, std::size_t id){
-            std::size_t parent_id = m_key_scan_indicies[p->relativeTo()];
+            std::size_t parent_id = m_key_scan_indices[p->relativeTo()];
             std::string cpn = mkStr() << m_params.persistence_dir << "/" << parent_id << ".relposes";
             std::ofstream cp(cpn.c_str(), std::ios::out | std::ios::binary | std::ios::app);
             cp.write((char*)&id, sizeof(id));
@@ -699,6 +728,26 @@ class SlamCloudGraph{
             cp.write((char*)&t, sizeof(t));
             saveMat(cp, p->relativeTransform());
             cp.close();
+        }
+
+        void loadIntermediatePosesForParent(std::size_t parent_id){
+            std::string fn = mkStr() << m_params.persistence_dir << "/" << parent_id << ".relposes";
+            std::ifstream f(fn.c_str(), std::ios::in | std::ios::binary);
+            
+            cloud_ptr parent = m_key_scans.at(parent_id);
+            while(f){
+                std::size_t child_id;
+                f.read((char*)&child_id, sizeof(child_id));
+                TimeStamp t;
+                f.read((char*)&t, sizeof(t));
+                Eigen::Matrix4f tr;
+                loadMat(f, tr);
+                location_ptr l = boost::make_shared<SlamCloudLocation>(t, m_key_scans[parent_id], tr);
+                if(m_all_scans.size() < child_id)
+                    m_all_scans.resize(10+1.5*child_id);
+                m_all_scans[child_id] = l;
+            }
+            f.close();
         }
 
         void saveKeyScanPositions(){
@@ -738,8 +787,7 @@ class SlamCloudGraph{
             
             for(std::size_t id = 0; id < m_key_scans.size(); id++){
                 m_key_scans.push_back(loadKeyScan(id));
-                m_all_scans.push_back(m_key_scans.back());
-                m_key_scan_indicies[m_key_scans.back()] = m_key_scans.size()-1;
+                m_key_scan_indices[m_key_scans.back()] = m_key_scans.size()-1;
             }
             
             for(std::size_t id = 0; id < m_key_scans.size(); id++)
@@ -747,9 +795,8 @@ class SlamCloudGraph{
         }
 
         void loadIntermediatePoses(){
-            
-            //m_all_scans.push_back(...);
-            
+            for(std::size_t i = 0; i < m_key_scans.size(); i++)
+                loadIntermediatePosesForParent(i);
         }
         
 
@@ -1025,7 +1072,10 @@ class SlamCloudGraph{
         bool m_dump_pose_history;
         
         cloud_vec m_key_scans;
-        std::map<location_ptr, std::size_t> m_key_scan_indicies;
+
+        // meh, quite ugly:
+        std::map<location_ptr, std::size_t> m_key_scan_indices;
+        std::map<location_ptr, std::size_t> m_key_scan_indices_in_all;
 
         // each point in this cloud is a key scan (same order as m_key_scans):
         // x,y,z map to x,y,m_rotation_scale*rotation 
