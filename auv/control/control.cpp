@@ -840,7 +840,7 @@ class MCBForwardingObserver : public BufferedMessageObserver
                 m_last_pressure_sent = now();
             }
         }
-        virtual void onBatteryStatusMessage(BatteryStatusMessage_ptr m)
+        virtual void onRedHerringBatteryStatus(RedHerringBatteryStatus_ptr m)
         {
             if(now() - m_last_battery_sent > m_battery_min_msecs){
                 debug(5) << "MCBForwardingObserver: Forwarding battery status message:" << *m;

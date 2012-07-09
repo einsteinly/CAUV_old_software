@@ -909,7 +909,7 @@ group can_control
 group can_status
 {
 
-    message BatteryStatus : 152
+    message BatteryStatus : 404
     {
         pack_id : uint16; // 64k enough?
         pack_charge  : uint16; // mV
@@ -957,6 +957,12 @@ group can_status
     {
         location : Component;
     }
+
+    // reinstated for reherring compatibility
+    message RedHerringBatteryStatus : 152
+     {
+         voltage : uint16;
+     }
 }
 
 group gui

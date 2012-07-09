@@ -233,9 +233,9 @@ class Model(base_model.Model):
 
     def sendStateMessages(self):
         # send:
-        #   PressureMessage
+        #   ForePressureMessage
+        #   AftPressureMessage
         #   StateMessage
-        #   should maybe also send BatteryStatusMessage
         # 
         # These should match the DepthCalibration message used:
         # Barracuda pressure
