@@ -933,11 +933,11 @@ p_ScriptControlMessage = pp.Group(l \
     + p_ScriptCommand \
     + r).streamline()
 p_ScriptControlMessage.setParseAction(lambda x: messaging.ScriptControlMessage(*x[0]))
-p_LightMessage = pp.Group(l \
+p_LightControlMessage = pp.Group(l \
     + p_LightID + c \
     + p_int \
     + r).streamline()
-p_LightMessage.setParseAction(lambda x: messaging.LightMessage(*x[0]))
+p_LightControlMessage.setParseAction(lambda x: messaging.LightControlMessage(*x[0]))
 p_CuttingDeviceMessage = pp.Group(l \
     + p_int \
     + r).streamline()
@@ -1125,7 +1125,7 @@ def parseMessage(s):
     elif msgid == 216:
         return p_ScriptControlMessage.parseString(s[msgstart:])[0]
     elif msgid == 150:
-        return p_LightMessage.parseString(s[msgstart:])[0]
+        return p_LightControlMessage.parseString(s[msgstart:])[0]
     elif msgid == 151:
         return p_CuttingDeviceMessage.parseString(s[msgstart:])[0]
     elif msgid == 152:

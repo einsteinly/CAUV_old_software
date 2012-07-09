@@ -251,15 +251,20 @@ class AUV(messaging.MessageObserver):
         self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.VStern, value))
         
-    def forwardlights(self, value):
-        '''Set the forwards light power. Range 0-255'''
+    def forwardlights(self, value, duty_cycle=255, cycle_period=1000):
+        '''Set the forwards light power. Value range 0-255, duty cycle 0=off 255=on 127=50% on 50% off, cycle_period=milliseconds/cycle'''
         self.checkLightValue(value)
-        self.__node.send(messaging.LightMessage(messaging.LightID.Forward, value))
+        self.__node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
         
-    def downlights(self, value):
-        '''Set the downwards light power. Range 0-255'''
+    def downlights(self, value, duty_cycle=255, cycle_period=1000):
+        '''Set the forwards light power. Value range 0-255, duty cycle 0=off 255=on 127=50% on 50% off, cycle_period=milliseconds/cycle'''
         self.checkLightValue(value)
-        self.__node.send(messaging.LightMessage(messaging.LightID.Down, value))
+        self.__node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
+
+    def strobe(self, value, duty_cycle=16, cycle_period=2000):
+        '''Set the forwards light power. Value range 0-255, duty cycle 0=off 255=on 127=50% on 50% off, cycle_period=milliseconds/cycle'''
+        self.checkLightValue(value)
+        self.__node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
         
     def checkLightValue(self, value):
         '''Raise an error if 'value' is not in the range accepted for light control.'''

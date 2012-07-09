@@ -698,7 +698,7 @@ class DeviceControlObserver : public MessageObserver
             m_imu = imu;
         }
         
-        virtual void onLightMessage(LightMessage_ptr m)
+        virtual void onLightControlMessage(LightControlMessage_ptr m)
         {
             if (m_mcb) {
                 debug(2) << "Forwarding Light Message:" << *m;
