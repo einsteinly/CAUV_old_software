@@ -16,7 +16,6 @@ import time
 
 class scriptOptions(aiScriptOptions):
     #Pipeline details
-    follow_pipeline_file  = 'follow_pipe2'
     ellipses_name = 'pipe'
     lines_name = 'pipe'
     turns = 3
@@ -43,6 +42,7 @@ class scriptOptions(aiScriptOptions):
             'ready_timeout', 'lost_timeout',
             'prop_speed', 'average_time',
         ]
+        pipelines = ['follow_pipe2']
 
 
 class script(aiScript):
@@ -200,7 +200,6 @@ class script(aiScript):
         # a few false positives
         self.log('Attempting to align over the pipe.')
         follow_pipe_file = self.options.follow_pipeline_file
-        self.request_pl(follow_pipe_file)
         
         # now we wait for messages allowing us to work out how to align with
         # the pipe, but if this is taking too long then just give up as we've
@@ -209,7 +208,6 @@ class script(aiScript):
         if not self.ready.wait(self.options.ready_timeout):
             self.log('Pipeline follower could not position itself over the pipe (timed out).')
             error("Took too long to become ready, aborting")
-            self.drop_pl(follow_pipe_file)
             return 'ABORT'
         
         for i in range(self.options.turns):
@@ -219,7 +217,6 @@ class script(aiScript):
             if not self.followPipeUntil(self.pipeEnded):
                 self.log('Lost the pipeline...')
                 error("Pipeline lost on pass %d" %(i,))
-                self.drop_pl(follow_pipe_file)
                 return 'LOST'
                 
             debug('Reached end of pipe, turning (turn %i)')
@@ -228,7 +225,6 @@ class script(aiScript):
             self.auv.bearingAndWait((self.auv.current_bearing+180)%360)
             self.enabled = True
         
-        self.drop_pl(follow_pipe_file)
         self.log('Finished following the pipe.')
         info('Finished pipe following')
         return 'SUCCESS'

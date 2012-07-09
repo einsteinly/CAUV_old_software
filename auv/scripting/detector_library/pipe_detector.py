@@ -10,22 +10,18 @@ import math
 
 class detectorOptions(aiDetectorOptions):
     Threshold = 0.38
-    Required_Pipeline = 'detect_pipe'
     Float_Name = 'pipe_det'
     Lines_Name = 'pipe_det'
     Angular_Discrepancy = 0.5
     useLines = True
+    class Meta:
+        pipelines = ['detect_pipe']
 
 class detector(aiDetector):
     debug_values = ['detected', 'colour_trigger']
     def __init__(self, node, opts):
         aiDetector.__init__(self, node, opts)
         self.start_time = time.time()
-
-        try:
-            self.request_pl(self.options.Required_Pipeline)
-        except Exception, e:
-            warning('Pipe Detector pipeline request failed: %s' % e)
 
         self.colour_trigger = 0
         self.detected = False
