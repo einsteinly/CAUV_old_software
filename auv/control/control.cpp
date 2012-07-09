@@ -17,8 +17,8 @@
 #include <generated/types/MotorDemand.h>
 #include <generated/types/ControlGroup.h>
 #include <generated/types/McbGroup.h>
-#include <generated/types/ExternalGroup.h>
-#include <generated/types/PressureGroup.h>
+#include <generated/types/Can_ControlGroup.h>
+#include <generated/types/Can_StatusGroup.h>
 #include <generated/types/StateMessage.h>
 #include <generated/types/ControllerStateMessage.h>
 #include <generated/types/MotorStateMessage.h>
