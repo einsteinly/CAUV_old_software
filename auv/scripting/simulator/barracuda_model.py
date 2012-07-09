@@ -4,6 +4,7 @@
 import operator
 import datetime
 import math
+import random
 
 # Third Party Modules
 import numpy as np # BSD-type license
@@ -220,6 +221,16 @@ class Model(base_model.Model):
             self.sendStateMessages()
             self.last_state_sent = self.relativeTime()
 
+    def addPressureNoise(self, pressure):
+        return pressure + random.gauss(0, 10)
+    
+    def addOrientationNoise(self, ypr):
+        return messaging.floatYPR(
+            ypr.yaw + random.gauss(0, 0.5),
+            ypr.pitch + random.gauss(0, 0.5),
+            ypr.roll + random.gauss(0, 0.5)
+        ))
+
     def sendStateMessages(self):
         # send:
         #   PressureMessage
@@ -227,6 +238,7 @@ class Model(base_model.Model):
         #   should maybe also send BatteryStatusMessage
         # 
         # These should match the DepthCalibration message used:
+        # Barracuda pressure
         depth_offset = -9.48232
         depth_mult = 0.010395
         depth = float(-self.displacement[2])
@@ -236,9 +248,15 @@ class Model(base_model.Model):
             pressure = 0
         
         orientation = base_model.orientationToYPR(self.orientation)
-        #print 'pressure=', pressure, 'orientation=', orientation
-        self.node.send(messaging.PressureMessage(pressure, pressure))
-        self.node.send(messaging.StateMessage(orientation))
+        
+        # make sure control can deal with pressure message ordering
+        if random % 2:
+            self.node.send(messaging.ForePressureMessage(self.addPressureNoise(pressure)))
+            self.node.send(messaging.AftPressureMessage(self.addPressureNoise(pressure)))
+        else:
+            self.node.send(messaging.AftPressureMessage(self.addPressureNoise(pressure)))
+            self.node.send(messaging.ForePressureMessage(self.addPressureNoise(pressure)))
+        self.node.send(messaging.StateMessage(self.addOrientationNoise(self.orientationNoise())))
 
 
 

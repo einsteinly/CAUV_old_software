@@ -92,9 +92,9 @@ class messageLogger(messaging.BufferedMessageObserver):
     def onMotorStateMessage(self, m):
         with self.motor_demand_log_lock[str(m.motorId)]:
             self.motor_demand_log[str(m.motorId)].append((time.time(),m.speed))
-    def onLightMessage(self, m):
+    def onLightControlMessage(self, m):
         with self.light_log_lock[str(m.lightId)]:
-            self.light_log[str(m.lightId)].append((time.time(),m.intensity))
+            self.light_log[str(m.lightId)].append((time.time(),m.intensity*m.duty_cycle/255.0))
         
 loggers_dict = {
                 'm' : (messageLogger,),

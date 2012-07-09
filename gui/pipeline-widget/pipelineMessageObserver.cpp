@@ -130,6 +130,12 @@ void PipelineGuiMsgObs::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m)
         }
         n->setType(i->second);
 
+        node_output_map_t::const_iterator oi = m->nodeOutputs().find(i->first);
+        if(oi == m->nodeOutputs().end())
+            error() << __func__ << __LINE__;
+        else
+            n->setOutputs(oi->second);
+
         node_param_map_t::const_iterator pi = m->nodeParams().find(i->first);
         if(pi == m->nodeParams().end())
             error() << __func__ << __LINE__;
