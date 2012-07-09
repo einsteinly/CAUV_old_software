@@ -122,6 +122,28 @@ void CauvNode::clearMessageObservers()
         error() << "CauvNode::clearObservers: no mailbox monitor";
 }
 
+void CauvNode::addSubscribeObserver(boost::shared_ptr<SubscribeObserver> o)
+{
+    if(m_event_monitor)
+        m_event_monitor->addSubscribeObserver(o);
+    else
+        error() << "CauvNode::addSubscribeObserver: no mailbox monitor";
+}
+void CauvNode::removeSubscribeObserver(boost::shared_ptr<SubscribeObserver> o)
+{
+    if(m_event_monitor)
+        m_event_monitor->removeSubscribeObserver(o);
+    else
+        error() << "CauvNode::removeSubscribeObserver: no mailbox monitor";
+}
+void CauvNode::clearSubscribeObservers()
+{
+    if(m_event_monitor)
+        m_event_monitor->clearSubscribeObservers();
+    else
+        error() << "CauvNode::clearObservers: no mailbox monitor";
+}
+
 int CauvNode::send(boost::shared_ptr<const Message> m, MessageReliability rel)
 {
     if(m_mailbox)
