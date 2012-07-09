@@ -40,6 +40,7 @@ if (CAUV_USE_DC1394)
         ${libdc1394_LIBRARIES}
     )
 endif()
+
 depends_on_messages(camera_server)
 cauv_install(camera_server)
 

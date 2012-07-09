@@ -1,14 +1,18 @@
 
-add_executable(mcb_bridge
-    mcb_bridge.cpp
-)
+option(CAUV_BUILD_MCB_BRIDGE "True if the MCB bridge shoudl be built" ON)
 
-target_link_libraries(mcb_bridge
-    utility
-    cauv_debug
+if(CAUV_BUILD_MCB_BRIDGE)
+    add_executable(mcb_bridge
+        mcb_bridge.cpp
+    )
 
-    boost_program_options
-    util
-)
+    target_link_libraries(mcb_bridge
+        utility
+        cauv_debug
 
-cauv_install(mcb_bridge)
+        boost_program_options
+        util
+    )
+
+    cauv_install(mcb_bridge)
+endif()

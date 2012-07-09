@@ -27,35 +27,37 @@ namespace OIS {
 }
 
 namespace cauv{
+    namespace gui {
 
-    class GamepadInput : public QObject, public OIS::JoyStickListener
-    {
-        Q_OBJECT
+        class GamepadInput : public QObject, public OIS::JoyStickListener
+        {
+            Q_OBJECT
 
-        public Q_SLOTS:
-        void processEvents();
+            public Q_SLOTS:
+            void processEvents();
 
-    public:
-        explicit GamepadInput(const std::string vendor = "");
+        public:
+            explicit GamepadInput(const std::string vendor = "");
 
-        static OIS::DeviceList listDevices();
-        static int getNumDevices();
+            static OIS::DeviceList listDevices();
+            static int getNumDevices();
 
-        virtual bool buttonPressed( const OIS::JoyStickEvent &arg, int button );
-        virtual bool buttonReleased( const OIS::JoyStickEvent &arg, int button );
-        virtual bool axisMoved( const OIS::JoyStickEvent &arg, int axis );
-        virtual bool povMoved( const OIS::JoyStickEvent &arg, int pov );
-        virtual bool vector3Moved( const OIS::JoyStickEvent &arg, int index);
+            virtual bool buttonPressed( const OIS::JoyStickEvent &arg, int button );
+            virtual bool buttonReleased( const OIS::JoyStickEvent &arg, int button );
+            virtual bool axisMoved( const OIS::JoyStickEvent &arg, int axis );
+            virtual bool povMoved( const OIS::JoyStickEvent &arg, int pov );
+            virtual bool vector3Moved( const OIS::JoyStickEvent &arg, int index);
 
-    protected:
-        static OIS::InputManager *m_input_manager;
-        OIS::JoyStick *m_controller;
+        protected:
+            static OIS::InputManager *m_input_manager;
+            OIS::JoyStick *m_controller;
 
-        static OIS::InputManager* getInputSystem();
+            static OIS::InputManager* getInputSystem();
 
-        virtual void handleNonBuffered() const;
-    };
+            virtual void handleNonBuffered() const;
+        };
 
+    } // namespace gui
 } // namespace cauv
 
 #endif // GAMEPADINPUT_H

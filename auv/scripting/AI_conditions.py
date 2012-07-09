@@ -63,6 +63,8 @@ class stateCondition(aiCondition):
                 self.options.state = options['state']
         except KeyError:
             pass
+    def get_debug_values(self):
+        return {'state':self.options.state}
     def get_state(self):
         return self.options.state
         

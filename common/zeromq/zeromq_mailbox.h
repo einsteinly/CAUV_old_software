@@ -97,7 +97,7 @@ class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public Message
     connections_t connections;
 
     void send_connect_message(uint32_t pid);
-    void send_subscribed_message (const boost::uuids::uuid& node_uuid, MessageType::e type);
+    void send_subscribed_message (const boost::uuids::uuid& node_uuid, uint32_t type);
     void handle_pub_message(void);
     void handle_sub_message(void);
     void handle_send_message(void);

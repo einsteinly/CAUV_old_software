@@ -1,5 +1,27 @@
 <RCC>
     <qresource prefix="/">
         <file>resources/icon.png</file>
+        <file>resources/icons/collapse_button.hover.png</file>
+        <file>resources/icons/collapse_button.pressed.png</file>
+        <file>resources/icons/collapse_button.png</file>
+        <file>resources/icons/dup_button.hover.png</file>
+        <file>resources/icons/dup_button.pressed.png</file>
+        <file>resources/icons/dup_button.png</file>
+        <file>resources/icons/reexec_button.hover.png</file>
+        <file>resources/icons/reexec_button.pressed.png</file>
+        <file>resources/icons/reexec_button.png</file>
+        <file>resources/icons/x_button.hover.png</file>
+        <file>resources/icons/x_button.pressed.png</file>
+        <file>resources/icons/x_button.png</file>
+        <file>resources/icons/maximise_button.hover.png</file>
+        <file>resources/icons/maximise_button.pressed.png</file>
+        <file>resources/icons/maximise_button.png</file>
+        <file>resources/stylesheet.qss</file>
+        <file>resources/icons/play_button.hover.png</file>
+        <file>resources/icons/play_button.png</file>
+        <file>resources/icons/play_button.pressed.png</file>
+        <file>resources/icons/stop_button.hover.png</file>
+        <file>resources/icons/stop_button.png</file>
+        <file>resources/icons/stop_button.pressed.png</file>
     </qresource>
 </RCC>

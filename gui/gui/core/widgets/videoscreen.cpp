@@ -22,14 +22,11 @@
 #include <QImage>
 #include <QSize>
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-
 #include <debug/cauv_debug.h>
 #include <common/msg_classes/image.h>
 
 using namespace cauv;
-
+using namespace cauv::gui;
 
 VideoScreen::VideoScreen(const QString name, QWidget *parent) :
         QWidget(parent), m_new_image(0), m_current_image(0), ui(new Ui::VideoScreen())
@@ -44,13 +41,13 @@ VideoScreen::~VideoScreen(){
 }
 
 
-void VideoScreen::setImage(const Image &img){
+void VideoScreen::setImage(const image_t &img){
 
     // take a deep copy of the image before it's deleted
     // it will be used in a different thread so we can't
     // just keep a pointer
     if(m_updateMutex.try_lock()) {
-        boost::scoped_ptr<Image> newImage(new Image(img));
+        boost::scoped_ptr<BaseImage> newImage(new BaseImage(*(img.get())));
         m_new_image.swap(newImage);
 
         update();
@@ -103,36 +100,14 @@ void VideoScreen::paintEvent(QPaintEvent*) {
     m_updateMutex.lock();
 
     if(m_new_image.get()) {
-        // replace the old image
-        m_current_image.swap(m_new_image);
+        m_qImage->loadFromData(&(m_new_image->bytes()[0]), m_new_image->bytes().size(), "jpg");
         m_new_image.reset();
-        m_updateMutex.unlock();
-
-        // convert the new one
-        try {
-            cv::Mat mat = m_current_image->mat();
-            int channels = mat.channels();
-            if(channels == 1) {
-                cv::Mat result;
-                cv::cvtColor(mat, result,CV_GRAY2RGB);
-                mat = result;
-            }
-            else if(channels == 3) {
-                cv::cvtColor(mat, mat, CV_BGR2RGB);
-            }
-
-            boost::scoped_ptr<QImage> replacement(new QImage((const unsigned char*)(mat.data), mat.cols, mat.rows, QImage::Format_RGB888));
-            m_qImage.swap(replacement);
-
-        } catch (cv::Exception ex){
-            error() << "cv::Exception thrown in " << __FILE__ << "on line" << __LINE__ << " " << ex.msg;
-        }
-    } else {
         m_updateMutex.unlock();
     }
 
     QPainter p(this);
-    if(m_qImage.get())
+    if(m_qImage.get()) {
         p.drawImage(rect(), *m_qImage.get());
+    }
     p.end();
 }
