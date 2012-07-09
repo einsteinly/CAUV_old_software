@@ -1,11 +1,14 @@
 #ifndef CAUV_SIMCAMERA_H
 #define CAUV_SIMCAMERA_H
 
-#include <generated/types/CameraID.h>
 #include <osg/Node>
 #include <osg/Image>
 #include <osgViewer/Viewer>
+
 #include <common/cauv_node.h>
+#include <utility/ratelimit.h>
+#include <generated/types/CameraID.h>
+
 #include "FixedNodeTrackerManipulator.h"
 #include "attenuator.h"
 
@@ -30,7 +33,7 @@ class SimCamera {
     cauv::CameraID::e cam_id;
     std::string window_title;
     unsigned int width, height;
-    RateLimiter output_limit;
+    cauv::RateLimiter output_limit;
     osg::ref_ptr<osgViewer::Viewer> viewer;
     osg::ref_ptr<osg::Image> image;
     osg::ref_ptr<osg::Camera> camera;

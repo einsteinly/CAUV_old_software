@@ -24,6 +24,7 @@
 #include <opencv2/core/core.hpp>
 
 #include <common/msg_classes/colour.h>
+#include <utility/arrays.h>
 
 #include "../node.h"
 
@@ -55,7 +56,7 @@ class MixValueNode: public Node{
 
     protected:
         template<typename T, int Channels>
-        static void channelMix(float a, cv::Mat& m, float b, const Colour& colour)
+        static void channelMix(float a, cv::Mat& m, float b, const boost::array<float,Channels>& colour)
         {
             typedef cv::Vec<T,Channels> pixel_t;
             cv::Mat_<float> similarityMat(m.rows, m.cols);
@@ -68,7 +69,7 @@ class MixValueNode: public Node{
                 // .. and all channels per pixel (assume images are bgr(a))
                 pixel_t& pixel = *it;
                 for (int c = 0; c < Channels; ++c)
-                    pixel[c] = clamp_cast<T>(a*pixel[c] + b*255.0f*colour.values[c]); 
+                    pixel[c] = clamp_cast<T>(a*pixel[c] + b*255.0f*colour[c]); 
             }
         }
         template<typename T>
@@ -76,12 +77,12 @@ class MixValueNode: public Node{
         {
             int nchannels = m.channels();
 
-            if (nchannels == 3 && (colour.type == ColourType::RGB || colour.type == ColourType::BGR))
-                channelMix<T,3>(a, m, b, colour);
-            else if (nchannels == 4 && (colour.type == ColourType::ARGB || colour.type == ColourType::BGRA))
-                channelMix<T,4>(a, m, b, colour);
-            else if (nchannels == 1 && (colour.type == ColourType::Grey))
-                channelMix<T,1>(a, m, b, colour);
+            if (nchannels == 3)
+                channelMix<T,3>(a, m, b, make_array(colour.b(), colour.g(), colour.r()));
+            else if (nchannels == 4)
+                channelMix<T,4>(a, m, b, make_array(colour.b(), colour.g(), colour.r(), colour.a()));
+            else if (nchannels == 1)
+                channelMix<T,1>(a, m, b, make_array(colour.grey()));
             else {
                 error() << "Cannot use a" << nchannels << "image with" << colour.type;
             }

@@ -13,6 +13,7 @@
  */
 
 #include <boost/algorithm/string.hpp>
+#include <boost/program_options.hpp>
  
 #include <pcl/point_types.h>
 

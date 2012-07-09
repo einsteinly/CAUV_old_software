@@ -21,6 +21,10 @@
 \#include <utility/serialisation.h>
 \#include <debug/cauv_debug.h>
 
+#for $i in $includes
+\#include ${i}
+#end for
+
 using namespace cauv;
 
 #set $className = $m.name + "Message"
@@ -103,6 +107,7 @@ const $toCPPType($f.type)& cauv::$className::${f.name}() const{
     return m_${f.name};
     #end if
 }
+const $toCPPType($f.type)& cauv::$className::get_${f.name}() const{ return ${f.name}(); }
 void cauv::$className::${f.name}($toCPPType($f.type) const& $f.name){
     #if $f.lazy
     *m_$f.name = $f.name;
@@ -110,6 +115,7 @@ void cauv::$className::${f.name}($toCPPType($f.type) const& $f.name){
     m_$f.name = $f.name;
     #end if
 }
+void cauv::$className::set_${f.name}($toCPPType($f.type) const& ${f.name}_value){ ${f.name}(${f.name}_value); }
 
 #if $f.lazy
 void cauv::$className::get_${f.name}_inplace($toCPPType($f.type) &$f.name) const {

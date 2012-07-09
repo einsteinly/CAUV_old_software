@@ -29,11 +29,11 @@ namespace cauv{
 namespace gui{
 
 // !!! synchronise with pipeline
-namespace NodeIOType{
-enum e{
+namespace NodeIOType {
+enum e {
     Image, Parameter
 };
-}// namespace NodeIOType
+}
 
 class NodeInput: public QGraphicsPathItem,
                  public QGraphicsLayoutItem,

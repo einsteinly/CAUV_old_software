@@ -32,7 +32,7 @@ enum e{
     Clamp,
     Modulus
 };
-} // 
+}
 
 struct SeriesConfig{
     // control vertical scaling

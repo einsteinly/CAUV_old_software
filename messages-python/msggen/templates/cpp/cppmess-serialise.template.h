@@ -17,18 +17,18 @@
 \#define __CAUV_SERIALMESS_H__
 
 \#include <utility/serialisation-types.h>
+#for $s in $structs
+\#include "${s.name}_fwd.h"
+#end for
 #for $e in $enums
 \#include "${e.name}.h"
 #end for
 #for $v in $variants
-\#include "${v.name}.h"
+\#include "${v.name}_fwd.h"
 #end for
 
 namespace cauv{
 
-#for $s in $structs
-struct $s.name;
-#end for
 #for $t in $included_types
 $t.type $t.name;
 #end for

@@ -42,7 +42,7 @@ static QPainterPath pathForGeometry(liquid::NodeStyle const& s,
 */
 
 NodeInput::NodeInput(liquid::NodeStyle const& style,
-                     NodeIOType::e const& type,
+                     NodeIOType const& type,
                      bool required,
                      QGraphicsItem *parent)
     : QGraphicsPathItem(parent),

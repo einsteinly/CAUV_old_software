@@ -16,6 +16,7 @@
 #define __CAUV_SONAR_SLAM_CLOUD_PART_H__
 
 #include <vector>
+#include <fstream>
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
@@ -45,6 +46,7 @@ namespace imgproc{
 // - SLAM Clouds
 class SlamCloudLocation{
     public:
+        typedef std::vector< RelativePose, Eigen::aligned_allocator<RelativePose> > rel_pose_vec;
 
         SlamCloudLocation(TimeStamp const& t)
             : m_relative_to(),
@@ -126,8 +128,10 @@ class SlamCloudLocation{
         Eigen::Matrix4f const& relativeTransform() const{ return m_relative_transformation; }
         location_ptr relativeTo() const{ return m_relative_to; }
         TimeStamp const& time() const{ return m_time; }
-
+        
+        // !!! constrainedTo should be in constraints
         location_vec const& constrainedTo() const{ return m_constrained_to; }
+        rel_pose_vec const& constraints() const{ return m_constraints; }
 
         // (relatively) expensive: use sparingly
         typedef std::vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f> > v3f_vec;
@@ -158,7 +162,6 @@ class SlamCloudLocation{
             #endif
         }
 
-        typedef std::vector< RelativePose, Eigen::aligned_allocator<RelativePose> > rel_pose_vec;
     
         location_ptr    m_relative_to;
         Eigen::Matrix4f m_relative_transformation;
@@ -275,6 +278,9 @@ class SlamCloudPart: public SlamCloudLocation,
             }
             const float m_thr;
         };
+            
+        enum {Keyframe_Serialise_Version = 1};
+
         // NB: this function converts from OpenCV image-space keypoints (y-axis
         // downwards) to a y-axis upwards convention
         template<typename Callable>
@@ -371,6 +377,52 @@ class SlamCloudPart: public SlamCloudLocation,
             return m_rejected_points_cloud;
         }
 
+        void saveToFile(std::ofstream& f){
+            uint32_t x = Keyframe_Serialise_Version;        
+            f.write((char*)&x, sizeof(x));
+            const TimeStamp t = time();
+            f.write((char*)&t, sizeof(t));
+            const std::size_t s = size();
+            f.write((char*)&s, sizeof(s));
+            for(std::size_t i = 0; i < s; i++){
+                const float x = KDTreeCachingCloud<PointT>::operator[](i).x;
+                const float y = KDTreeCachingCloud<PointT>::operator[](i).y;
+                const float response = m_point_descriptors[i];
+                // don't need to save the indices
+                //const std::size_t idx = m_keypoint_indices[i];
+                f.write((char*)&x, sizeof(x));
+                f.write((char*)&y, sizeof(y));
+                f.write((char*)&response, sizeof(response));
+                //f.write((char*)&idx, sizeof(idx));
+            }
+        }
+
+        static SlamCloudPart<PointT> loadFromFile(std::ifstream& f){
+            uint32_t x = 0;
+            f.read((char*)&x, sizeof(x));
+            if(x != Keyframe_Serialise_Version)
+                throw std::runtime_error("unknown map version");
+            TimeStamp t;
+            f.read((char*)&t, sizeof(t));
+            SlamCloudPart r(t);
+            std::size_t s = 0;
+            f.read(s, sizeof(s));
+            for(std::size_t i = 0; i < s; i++){
+                float x = 0;
+                float y = 0;
+                float z = 0;
+                float response = 0;
+                std::size_t idx = 0;
+                f.read((char*)&x, sizeof(x));
+                f.read((char*)&y, sizeof(y));
+                // no z
+                f.read((char*)&response, sizeof(response));
+                //f.read((char*)&idx, sizeof(idx));
+                r.push_back(PointT(x, y, z), response, i);
+            }
+
+        }
+
         // this type derives from something with an Eigen::Matrix4f as a
         // member:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -384,6 +436,24 @@ class SlamCloudPart: public SlamCloudLocation,
         
         void invalidateMeanVarCache(){
             m_meanvar_invalid = true;
+        }
+
+
+        SlamCloudPart(TimeStamp const& t)
+            : SlamCloudLocation(t),
+              KDTreeCachingCloud<PointT>(),
+              m_point_descriptors(),
+              m_keypoint_indices(),
+              m_rejected_keypoint_indices(),
+              m_keypoint_goodness(),
+              m_local_convexhull_verts(),
+              m_local_convexhull_cloud(),
+              m_local_convexhull_invalid(true),
+              m_global_convexhull_cloud(),
+              m_global_convexhull_invalid(true),
+              m_rejected_points_cloud(),
+              m_mean(Eigen::Vector3f::Zero()),
+              m_covar(Eigen::Matrix3f::Zero()){
         }
 
     private:

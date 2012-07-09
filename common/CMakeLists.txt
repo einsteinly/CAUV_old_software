@@ -20,13 +20,8 @@ set (
     boost_signals
     boost_program_options
     special_messages
+    zeromq_msg
 )
-
-if (CAUV_ZEROMQ_MESSAGING)
-    list(APPEND common_links zeromq_msg)
-else()
-    list(APPEND common_links spread_msg)
-endif()
 
 add_library (
     common STATIC

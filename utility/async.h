@@ -120,7 +120,8 @@ class AsyncService{
         void callAfterMicroseconds(function_t foo, uint32_t microseconds){
             callAfterTime(foo, boost::posix_time::microseconds(microseconds));
         }
-
+        
+        /* should be called callAfterDelay... */
         template<typename Time>
         void callAfterTime(function_t foo, Time time){
             //debug() << "callback setup:" << &foo << time;

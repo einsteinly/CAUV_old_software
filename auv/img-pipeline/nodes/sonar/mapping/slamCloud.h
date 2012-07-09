@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <fstream>
+#include <ios>
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -57,7 +58,8 @@ struct CloudGraphParams{
         max_considered_overlaps(3),
         min_scan_consensus(2),
         scan_consensus_tolerance(0.3),
-        rotation_scale(4){
+        rotation_scale(4),
+        persistance_dir("."){
     }
 
     float overlap_threshold; // a fraction (0--1.0)
@@ -78,6 +80,8 @@ struct CloudGraphParams{
     // new keyframe if:
     // rotation_scale * (rotation_A - rotation_B) >= keyframe_spacing
     float rotation_scale;
+    
+    std::string persistance_dir;
 };
 
 template<typename PointT>
@@ -123,6 +127,8 @@ class SlamCloudGraph{
             : m_params(params),
               m_graph_optimisation_count(0),
               m_dump_pose_history(CAUV_DUMP_POSE_GRAPH),
+              m_key_scans(),
+              m_key_scan_indicies(),
               m_key_scan_locations(new KDTreeCachingCloud<PointT>()),
               m_n_passed_good(0),
               m_n_passed_bad(0),
@@ -144,6 +150,7 @@ class SlamCloudGraph{
 
         void reset(){
             m_key_scans.clear();
+            m_key_scan_indicies.clear();
             m_all_scans.clear();
             m_key_constraints.clear();
             m_graph_optimisation_count = 0;
@@ -290,6 +297,7 @@ class SlamCloudGraph{
                            Eigen::Matrix4f& transformation){
             if(!m_key_scans.size()){
                 if(cloudIsGoodEnoughForInitialisation(p)){
+                    m_key_scan_indicies[p] = m_key_scans.size();
                     m_key_scans.push_back(p);
                     m_all_scans.push_back(p);
                     //transformation = Eigen::Matrix4f::Identity();
@@ -434,52 +442,20 @@ class SlamCloudGraph{
 
             p->setRelativeTransform(rel_transformation);
             p->setRelativeTo(parent_map_cloud);
-            // set the returned transformation (if there are other constraints,
-            // then we set this again after graph optimisation)
-            transformation = p->globalTransform();
             
             // this scan is a key scan if it is more than a minimum distance
             // from other key-scans
-            const Eigen::Vector3f xyr = xyScaledTFromMat(p->globalTransform());
-            const PointT xyr_space_loc = PointT(xyr[0], xyr[1], xyr[2]);
-            const float squared_keyframe_spacing = m_params.keyframe_spacing * m_params.keyframe_spacing;
-            if(m_key_scan_locations->nearestSquaredDist(xyr_space_loc) > squared_keyframe_spacing){
-                // key scans are transformed to global coordinate
-                // frame
-                p->setRelativeTransform(p->globalTransform());
-                p->setRelativeToNone();
-                m_key_scans.push_back(p);
-                m_key_scan_locations->push_back(PointT(xyr_space_loc));
-                m_all_scans.push_back(p);
-                debug() << "key frame at:"
-                        << transformation.block<3,1>(0, 3).transpose()
-                        << ":" << std::sqrt(squared_keyframe_spacing)
-                        << "m from previous scans";
-
-                // If this is a new key scan, we need to re-run the graph
-                // optimiser:
-
-                // convert relative positions into incremental position
-                // constraints
-                constraint_vec new_constraints = addConstraintsFromTransformations(
-                    p, transformations.rbegin(), transformations.rend()
-                ); 
-                
-                // do the optimisation, hint at which constraints are new so
-                // they can be prioritised
-                graph_optimiser.optimiseGraph(m_key_constraints, new_constraints);
-                m_graph_optimisation_count++;
-                transformation = p->globalTransform();
-                debug() << "post-optimisation, key frame at:"
-                        << transformation.block<3,1>(0, 3).transpose();
-                _updateKeyScanLocations();
+            if(shouldBeKeyScan(p)){
+                addKeyScan(p, transformations, graph_optimiser);
+                saveKeyScan(p, m_key_scans.size()-1);
             }else{
                 // discard all the point data for non-key scans
                 m_all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
                 debug() << "non-key frame at"
                         << transformation.block<3,1>(0,3).transpose();
+                saveIntermediatePose(p, m_all_scans.size()-1);
             }
-
+            transformation = p->globalTransform();
 
             // Set keypoint goodness for training:
             // !!! TODO: this should ideally include more than just points from the direct parent
@@ -544,6 +520,115 @@ class SlamCloudGraph{
 
     private:
         // - private methods
+        bool shouldBeKeyScan(cloud_ptr p){
+            const Eigen::Vector3f xyr = xyScaledTFromMat(p->globalTransform());
+            const PointT xyr_space_loc = PointT(xyr[0], xyr[1], xyr[2]);
+            const float squared_keyframe_spacing = m_params.keyframe_spacing * m_params.keyframe_spacing;
+            if(m_key_scan_locations->nearestSquaredDist(xyr_space_loc) > squared_keyframe_spacing)
+                return true;
+            return false;
+        }
+
+        void addKeyScan(cloud_ptr p,
+                        cloud_constraint_map const& transformations,
+                        GraphOptimiser const& graph_optimiser){
+            const Eigen::Matrix4f transformation = p->globalTransform();
+            const Eigen::Vector3f xyr = xyScaledTFromMat(transformation);
+            const PointT xyr_space_loc = PointT(xyr[0], xyr[1], xyr[2]);
+            // key scans are transformed to global coordinate
+            // frame
+            p->setRelativeTransform(transformation);
+            p->setRelativeToNone();
+            m_key_scan_indicies[p] = m_key_scans.size();
+            m_key_scans.push_back(p);
+            m_key_scan_locations->push_back(PointT(xyr_space_loc));
+            m_all_scans.push_back(p);
+            debug() << "key frame at:"
+                    << Eigen::Vector3f(transformation.block<3,1>(0, 3)).transpose()
+                    << "m from previous scans";
+
+            // need to re-run the graph optimiser:
+
+            // convert relative positions into incremental position
+            // constraints
+            constraint_vec new_constraints = addConstraintsFromTransformations(
+                p, transformations.rbegin(), transformations.rend()
+            ); 
+            
+            // do the optimisation, hint at which constraints are new so
+            // they can be prioritised
+            graph_optimiser.optimiseGraph(m_key_constraints, new_constraints);
+            m_graph_optimisation_count++;
+            debug() << "post-optimisation, key frame at:"
+                    << Eigen::Vector3f(transformation.block<3,1>(0, 3)).transpose();
+            
+            // update the spatially-sorted datastructure of key-scan locations
+            _updateKeyScanLocations();
+
+            saveKeyFramePositions();
+        }
+
+        void saveKeyScan(cloud_ptr p, std::size_t id){
+            std::string kfn = mkStr() << m_params.persistance_dir << "/" << id << ".keyframe";
+            std::ofstream kf(kfn.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+            p->saveToFile(kf);
+            kf.close();
+            
+            std::string cfn = mkStr() << m_params.persistance_dir << "/" << id << ".constraints";
+            std::ofstream cf(cfn.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+            cf << std::flush;
+            cf.close();
+
+            std::string cpn = mkStr() << m_params.persistance_dir << "/" << id << ".relposes";
+            std::ofstream cp(cpn.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+            cp << std::flush;
+            cp.close();
+            
+            SlamCloudLocation::rel_pose_vec constraints = p->constraints();
+            location_vec constrained_to = p->constrainedTo();
+            assert(constrained_to.size() == constraints.size());
+
+            for(std::size_t i = 0; i < constraints.size(); i++){
+                const std::size_t parent_id = m_key_scan_indicies[constrained_to[i]];
+                std::string fname = mkStr() << m_params.persistance_dir << "/" << parent_id<< ".constraints";
+                std::ofstream f(fname.c_str(), std::ios::out | std::ios::binary | std::ios::app);
+            
+                f.write((char*)&id, id);
+                constraints[i].saveToFile(f);
+                
+                f.close();
+            }
+        }
+
+        static void saveMat(std::ofstream& f, Eigen::Matrix4f const& m){
+            for(int i = 0; i < 4; i++)
+                for(int j = 0; j < 4; j++)
+                    f.write(reinterpret_cast<const char*>(&m(i,j)), sizeof(m(i,j)));
+        }
+
+        void saveIntermediatePose(cloud_ptr p, std::size_t id){
+            std::size_t parent_id = m_key_scan_indicies[p->relativeTo()];
+            std::string cpn = mkStr() << m_params.persistance_dir << "/" << parent_id << ".relposes";
+            std::ofstream cp(cpn.c_str(), std::ios::out | std::ios::binary | std::ios::app);
+            cp.write((char*)&id, sizeof(id));
+            TimeStamp t = p->time();
+            cp.write((char*)&t, sizeof(t));
+            saveMat(cp, p->relativeTransform());
+            cp.close();
+        }
+
+        void saveKeyFramePositions(){
+            const TimeStamp timestamp = now();
+            std::string fname = mkStr() << m_params.persistance_dir << "/" << timestamp.secs << (timestamp.musecs / 1000) << ".nodes";
+            std::ofstream f(fname.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+
+            for(std::size_t i = 0; i < m_key_scans.size(); i++)
+                saveMat(f, m_key_scans[i]->globalTransform());
+
+            f.close();
+        }
+        
+
         /* Find the best consensus amongst a set of possible transformations
          *
          * !!!! TODO: use consensus-weighted score instead?
@@ -817,6 +902,7 @@ class SlamCloudGraph{
         bool m_dump_pose_history;
         
         cloud_vec m_key_scans;
+        std::map<location_ptr, std::size_t> m_key_scan_indicies;
 
         // each point in this cloud is a key scan (same order as m_key_scans):
         // x,y,z map to x,y,m_rotation_scale*rotation 
