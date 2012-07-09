@@ -913,7 +913,7 @@ group can_status
 
     // lots more info is available from the bms...
 
-    message PowerStatus : 
+    message PowerStatus : 153
     {
         // values should be averaged over the most recent time-period (however
         // often messages are sent)
@@ -939,12 +939,12 @@ group can_status
     // Barracuda has independent and asynchronous pressure sensors...
     message ForePressure : 51
     {
-        pressure uint16;
+        pressure : uint16;
     }
 
     message AftPressure : 52
     {
-        pressure uint16;
+        pressure : uint16;
     }
 
     message Temperature : 403
