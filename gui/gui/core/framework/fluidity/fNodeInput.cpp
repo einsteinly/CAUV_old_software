@@ -237,7 +237,7 @@ void FNodeParamInput::setEditable(bool editable){
     m_model_node->setMutable(editable);
 }
 
-bool FNodeParamInput::willAcceptConnection(liquid::ArcSourceDelegate* from_source){
+bool FNodeParamInput::willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink *){
     FNodeOutput* output = dynamic_cast<FNodeOutput*>(from_source);
     debug(7) << "FNodeParamInput::willAcceptConnection from_source=" << from_source << output
              << (output && (output->ioType() == ioType() && m_compatible_subtypes.count(output->subType()) && output->node() != node()));

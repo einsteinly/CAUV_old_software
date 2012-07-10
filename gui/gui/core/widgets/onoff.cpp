@@ -85,7 +85,7 @@ void OnOffSlider::mousePressEvent(QMouseEvent *e){
     e->accept();
 }
 
-void OnOffSlider::paintEvent(QPaintEvent * e)
+void OnOffSlider::paintEvent(QPaintEvent *)
  {
     StyleOptionOnOff option;
     option.initFrom(this);

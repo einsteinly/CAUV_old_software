@@ -189,7 +189,7 @@ void LiquidConditionNode::ensureConnected(){
 
     foreach(std::string const& id, m_node->getPipelineIds()) {
         try {
-            boost::shared_ptr<Node> node = pipelines->findFromPath(QString::fromStdString(id));
+            boost::shared_ptr<Node> node = pipelines->findFromPath<Node>(QString::fromStdString(id));
             ConnectedNode * cn = ConnectedNode::nodeFor(node);
             if(!cn) {
                 error() << "Node ConnectedNode not registered for " << id;

@@ -31,6 +31,9 @@ ColourDelegate::ColourDelegate(QObject * parent) :
 QWidget * ColourDelegate::createEditor(QWidget *parent,
                                        const QStyleOptionViewItem &option,
                                        const QModelIndex &index) const {
+    Q_UNUSED(parent);
+    Q_UNUSED(option);
+    Q_UNUSED(index);
     return new ColourDialog();
 }
 
@@ -74,7 +77,7 @@ void ColourDelegate::setEditorData(QWidget *editor,
 
 
 
-QSize ColourDelegate::sizeHint(const QStyleOptionViewItem &option,
+QSize ColourDelegate::sizeHint(const QStyleOptionViewItem & option,
                                const QModelIndex &) const{
     return QSize(120, option.fontMetrics.height()*2);
 }

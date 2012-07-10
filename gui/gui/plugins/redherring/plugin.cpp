@@ -71,14 +71,14 @@ void RedHerring::initialise() {
     // telemetry
     boost::shared_ptr<GroupingNode> telemetry = findOrCreate<GroupingNode>("telemetry");
     attachObserver(telemetry, boost::make_shared<MessageHandler<GroupingNode, TelemetryMessage> >(telemetry));
-    telemetry->findOrCreate<NumericNode<float> >("yaw")->setMin(0);
-    telemetry->findOrCreate<NumericNode<float> >("yaw")->setMax(360);
+    telemetry->findOrCreate<NumericNode<float> >("yaw")->typedSetMin(0);
+    telemetry->findOrCreate<NumericNode<float> >("yaw")->typedSetMax(360);
     telemetry->findOrCreate<NumericNode<float> >("yaw")->setWraps(true);
-    telemetry->findOrCreate<NumericNode<float> >("pitch")->setMin(-180);
-    telemetry->findOrCreate<NumericNode<float> >("pitch")->setMax(180);
+    telemetry->findOrCreate<NumericNode<float> >("pitch")->typedSetMin(-180);
+    telemetry->findOrCreate<NumericNode<float> >("pitch")->typedSetMax(180);
     telemetry->findOrCreate<NumericNode<float> >("pitch")->setWraps(true);
-    telemetry->findOrCreate<NumericNode<float> >("roll")->setMin(-180);
-    telemetry->findOrCreate<NumericNode<float> >("roll")->setMax(180);
+    telemetry->findOrCreate<NumericNode<float> >("roll")->typedSetMin(-180);
+    telemetry->findOrCreate<NumericNode<float> >("roll")->typedSetMax(180);
     telemetry->findOrCreate<NumericNode<float> >("roll")->setWraps(true);
     telemetry->findOrCreate<NumericNode<float> >("depth");
     boost::shared_ptr<GroupingNode> pressure = telemetry->findOrCreate<GroupingNode>("pressure");
