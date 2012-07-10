@@ -26,7 +26,7 @@ class QuickSegmentNode: public OutputNode{
             m_speed = fast;
             
             // one input:
-            registerInputID("image", true);
+            registerInputID("image", Const);
             
             // one output:
             registerOutputID("mask");

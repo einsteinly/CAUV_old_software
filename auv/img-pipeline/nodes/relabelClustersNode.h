@@ -42,7 +42,7 @@ class RelabelClustersNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("labels", false);
+            registerInputID("labels", NonConst);
 
             // two outputs:
             registerOutputID("clusters", std::vector<Colour>());

@@ -25,7 +25,7 @@ class HistogramNode: public Node{
             m_speed = fast;
             
             //One input
-            registerInputID("image_in", true);
+            registerInputID("image_in", Const);
             
             //Output histogram
             registerOutputID("histogram", std::vector<float>());

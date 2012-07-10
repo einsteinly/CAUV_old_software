@@ -39,7 +39,7 @@ class SplitYUVNode: public Node{
             m_speed = fast;
 
             // input:
-            registerInputID("image", true);
+            registerInputID("image", Const);
             
             // outputs:
             registerOutputID("Y");

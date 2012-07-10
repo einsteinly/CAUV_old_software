@@ -26,8 +26,8 @@ class CopyNodeMask: public Node{
             m_speed = fast;
 
             // two input:
-            registerInputID("image", true);
-            registerInputID("mask", true);
+            registerInputID("image", Const);
+            registerInputID("mask", Const);
             
             // output:
             registerOutputID(Image_Out_Copied_Name, image_ptr_t());

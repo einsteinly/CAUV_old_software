@@ -40,7 +40,7 @@ class ConvertColourNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image in", true);
+            registerInputID("image in", Const);
             
             // one output
             registerOutputID("image out", image_ptr_t());

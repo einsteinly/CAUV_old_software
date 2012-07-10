@@ -38,7 +38,7 @@ class GaussianBlurNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image", false);
+            registerInputID("image", Const);
 
             // one output
             registerOutputID("image (not copied)");

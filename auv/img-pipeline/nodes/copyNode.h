@@ -42,7 +42,7 @@ class CopyNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image", true);
+            registerInputID("image", Const);
             
             // output:
             registerOutputID("image copy", image_ptr_t());

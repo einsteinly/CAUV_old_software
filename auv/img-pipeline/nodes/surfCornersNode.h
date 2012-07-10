@@ -48,7 +48,7 @@ class SURFCornersNode: public Node{
             m_speed = fast;
             
             // one input:
-            registerInputID(Image_In_Name, true);
+            registerInputID(Image_In_Name, Const);
             
             // one output:
             registerOutputID("corners (KeyPoint)", std::vector<KeyPoint>());
