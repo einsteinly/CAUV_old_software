@@ -1,6 +1,10 @@
+# Standard Library
 import os
 import errno
 import collections
+import subprocess
+
+# CAUV
 import utils.zmqfuncs
 from cauv.debug import debug, info, warning, error
 
@@ -33,6 +37,17 @@ def zmq_daemon_pid(ipc_dir = None, vehicle_name = None):
             return pid;
         except utils.zmqfuncs.Timeout:
             return None
+    return get_pid
+
+def search_pid(program_name):
+    def get_pid():
+        # this could be improved...
+        ps = subprocess.Popen(['ps -opid,command -A', 'aux'], stdout=subprocess.PIPE).communicate()[0]
+        processes = ps.split('\n')
+        for p in processes:
+            if p.find(program_name) != -1:
+                return int(p.strip().split()[0])
+        return None
     return get_pid
 
 def restart(n_times = 0):

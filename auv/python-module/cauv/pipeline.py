@@ -345,7 +345,11 @@ class Model(messaging.MessageObserver):
     
     def set(self, state, timeout=3.0, clear=True):
         '''Set the state of the image pipeline based on 'state'.'''
-        #NOTE PLEASE MAKE SURE ANY CHANGES ARE REFLECTED IN AI_PIPELINE_MANAGER (since it overides this method)
+        nodeTypes = {node_id: messaging.NodeType(node.type) for (node_id, node) in state.nodes.iteritems()}
+        nodeArcs = {node_id: {key: messaging.NodeOutput(output[0], output[1], messaging.OutputType(0), 0) for key, output in node.inarcs.iteritems()} for (node_id, node) in state.nodes.iteritems()}
+        nodeParams = {node_id: node.params for (node_id, node) in state.nodes.iteritems()}
+        self.send(messaging.SetPipelineMessage(self.pipeline_name, nodeTypes, nodeArcs, nodeParams))
+        """
         debug("Setting pipeline %s." %(self.pipeline_name))
         if clear: self.clear()
         id_map = {}
@@ -422,6 +426,7 @@ class Model(messaging.MessageObserver):
             #    (other, input) = node.outarcs[output]
             #    if other != 0:
             #        print 'set outarc:', id_map[id], output, other, input
+            """
    
     def send(self, msg):
         '''Send a message to the pipeline group.'''
