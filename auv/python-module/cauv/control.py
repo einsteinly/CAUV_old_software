@@ -76,6 +76,7 @@ class AUV(messaging.MessageObserver):
             See also:
                 calibrateForSaltWater()
                 calibrateForFreshWater()
+                autoCalibrateDepth()
         '''
         if aftOffset is None:
             aftOffset = foreOffset
@@ -89,12 +90,23 @@ class AUV(messaging.MessageObserver):
         self.send(messaging.DepthCalibrationMessage(foreOffset, foreMultiplier, aftOffset, aftMultiplier))
 
     def calibrateForSaltWater(self):
-        '''Set the depth calibration for seawater.'''
+        '''Redherring calibration: Set the depth calibration for seawater.'''
         self.calibrateDepth(-912.2/96.2, 1.0/96.2)
 
     def calibrateForFreshWater(self):
-        '''Set the depth calibration for fresh water.'''
+        '''Redherring calibration: Set the depth calibration for fresh water.'''
         self.calibrateDepth(-928.0/86.5, 1.0/86.5)
+        
+    def autoCalibrateDepth(self, surfacePressure = 1000.0, waterDensity = 1025.0):
+        '''Barracuda calibration: Set the depth calibration for barracuda.'''
+        #pressure = (depth - fore_offset) / fore_mult
+        #so depth = (pressure*fore_mult)+fore_offset
+        #at 0, 0=surfacePressure*fore_mult+fore_offset, so foreoffset = -surfacePressure/fore_mult
+        #fore_mult = depth/pressure
+        fore_mult = 1/(waterDensity*9.81)
+        fore_offset = -surfacePressure / (waterDensity*9.81)
+        
+        self.calibrateDepth(fore_offset, fore_mult)
 
     def depth(self, depth):
         '''Set a depth (metres) and activate the depth control loop, or deactivate depth control if 'None' is passed.'''

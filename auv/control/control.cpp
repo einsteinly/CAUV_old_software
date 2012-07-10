@@ -66,16 +66,17 @@ MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
 }
 
 ControlLoops::ControlLoops(boost::shared_ptr<Mailbox> mb)
-: prop_value(0), hbow_value(0), vbow_value(0),
-    hstern_value(0), vstern_value(0), m_max_motor_delta(255),
-    m_motor_updates_per_second(5), m_mb(mb)
+: m_motor_values(0, 0, 0, 0, 0),
+  m_max_motor_delta(255),
+  m_motor_updates_per_second(5),
+  m_mb(mb)
 {
-    const MotorMap def(5, -5, 127, -127);
-    prop_map = def;
-    hbow_map = def;
-    vbow_map = def;
-    hstern_map = def;
-    vstern_map = def;
+    const MotorMap def(0, 0, 127, -127);
+    m_prop_map = def;
+    m_hbow_map = def;
+    m_vbow_map = def;
+    m_hstern_map = def;
+    m_vstern_map = def;
 }
 
 ControlLoops::~ControlLoops()
@@ -268,11 +269,11 @@ void ControlLoops::onSetMotorMapMessage(SetMotorMapMessage_ptr m)
     switch(m->motor())
     {
         default:
-        case MotorID::Prop: prop_map = m->mapping(); break;
-        case MotorID::HBow: hbow_map = m->mapping(); break;
-        case MotorID::VBow: vbow_map = m->mapping(); break;
-        case MotorID::HStern: hstern_map = m->mapping(); break;
-        case MotorID::VStern: vstern_map = m->mapping(); break;
+        case MotorID::Prop: m_prop_map = m->mapping(); break;
+        case MotorID::HBow: m_hbow_map = m->mapping(); break;
+        case MotorID::VBow: m_vbow_map = m->mapping(); break;
+        case MotorID::HStern: m_hstern_map = m->mapping(); break;
+        case MotorID::VStern: m_vstern_map = m->mapping(); break;
     }
     debug() << "Set motor mapping:" << m->motor() << ":" << m->mapping();
 
@@ -322,11 +323,11 @@ int ControlLoops::motorMap(float const& demand_value, MotorID::e mid)
     switch(mid)
     {
         default:
-        case MotorID::Prop: m = prop_map; break;
-        case MotorID::HBow: m = hbow_map; break;
-        case MotorID::VBow: m = vbow_map; break;
-        case MotorID::HStern: m = hstern_map; break;
-        case MotorID::VStern: m = vstern_map; break;
+        case MotorID::Prop: m = m_prop_map; break;
+        case MotorID::HBow: m = m_hbow_map; break;
+        case MotorID::VBow: m = m_vbow_map; break;
+        case MotorID::HStern: m = m_hstern_map; break;
+        case MotorID::VStern: m = m_vstern_map; break;
     }
     /*
      *        -127                           0                            127
@@ -352,7 +353,7 @@ int ControlLoops::motorMap(float const& demand_value, MotorID::e mid)
     return clamp(-127, ret, 127);
 }
 
-int applyDelta(int &oldValue, int newValue, unsigned int maxDelta) {
+int applyDelta(int oldValue, int newValue, unsigned int maxDelta) {
     int ret = 0;
     if(unsigned(abs(newValue - oldValue)) <= maxDelta) {
         ret = newValue;
@@ -361,7 +362,6 @@ int applyDelta(int &oldValue, int newValue, unsigned int maxDelta) {
     } else {
         ret = oldValue + maxDelta;
     }
-    oldValue = newValue;
     return ret;
 }
 
@@ -372,33 +372,49 @@ void ControlLoops::updateMotorControl()
     //
     // Maybe not, reading/writing ints is atomic. 
     MotorDemand total_demand(0,0,0,0,0);
-    for(int i = 0; i < Controller::NumValues; i++) {
-        if(m_control_enabled[i]) {
+    for(int i = 0; i < Controller::NumValues; i++)
+        if(m_control_enabled[i])
             total_demand += m_demand[i];
-        }
-    }
     
     MotorDemand mapped_demand;
 
-    mapped_demand.prop = motorMap(total_demand.prop, MotorID::Prop);
-    mapped_demand.hbow = motorMap(total_demand.hbow, MotorID::HBow);
-    mapped_demand.vbow = motorMap(total_demand.vbow, MotorID::VBow);
+    mapped_demand.prop   = motorMap(total_demand.prop, MotorID::Prop);
+    mapped_demand.hbow   = motorMap(total_demand.hbow, MotorID::HBow);
+    mapped_demand.vbow   = motorMap(total_demand.vbow, MotorID::VBow);
     mapped_demand.hstern = motorMap(total_demand.hstern, MotorID::HStern);
     mapped_demand.vstern = motorMap(total_demand.vstern, MotorID::VStern);
 
-    mapped_demand.prop = applyDelta(prop_value, mapped_demand.prop, m_max_motor_delta);
-    mapped_demand.hbow = applyDelta(hbow_value, mapped_demand.hbow, m_max_motor_delta);
-    mapped_demand.vbow = applyDelta(vbow_value, mapped_demand.vbow, m_max_motor_delta);
-    mapped_demand.hstern = applyDelta(hstern_value, mapped_demand.hstern, m_max_motor_delta);
-    mapped_demand.vstern = applyDelta(vstern_value, mapped_demand.vstern, m_max_motor_delta);
+    mapped_demand.prop   = applyDelta(m_motor_values.prop, mapped_demand.prop, m_max_motor_delta);
+    mapped_demand.hbow   = applyDelta(m_motor_values.hbow, mapped_demand.hbow, m_max_motor_delta);
+    mapped_demand.vbow   = applyDelta(m_motor_values.vbow, mapped_demand.vbow, m_max_motor_delta);
+    mapped_demand.hstern = applyDelta(m_motor_values.hstern, mapped_demand.hstern, m_max_motor_delta);
+    mapped_demand.vstern = applyDelta(m_motor_values.vstern, mapped_demand.vstern, m_max_motor_delta);
 
     m_mcb->setMotorState(mapped_demand);
-    m_mb->sendMessage(boost::make_shared<MotorStateMessage>(MotorID::Prop, prop_value), RELIABLE_MSG);
-    m_mb->sendMessage(boost::make_shared<MotorStateMessage>(MotorID::HBow, hbow_value), RELIABLE_MSG);
-    m_mb->sendMessage(boost::make_shared<MotorStateMessage>(MotorID::VBow, vbow_value), RELIABLE_MSG);
-    m_mb->sendMessage(boost::make_shared<MotorStateMessage>(MotorID::HStern, hstern_value), RELIABLE_MSG);
-    m_mb->sendMessage(boost::make_shared<MotorStateMessage>(MotorID::VStern, vstern_value), RELIABLE_MSG);
+    
+    sendIfChangedOrOld(m_motor_values, mapped_demand);
+
+    m_motor_values = mapped_demand;
 }
+
+void ControlLoops::sendIfChangedOrOld(MotorDemand const& old_values, MotorDemand const& new_values)
+{
+    sendIfChangedOrOld(MotorID::Prop, old_values.prop, new_values.prop);
+    sendIfChangedOrOld(MotorID::HBow, old_values.hbow, new_values.hbow);
+    sendIfChangedOrOld(MotorID::HStern, old_values.hstern, new_values.hstern);
+    sendIfChangedOrOld(MotorID::VBow, old_values.vbow, new_values.vbow);
+    sendIfChangedOrOld(MotorID::VStern, old_values.vstern, new_values.vstern);
+}
+
+void ControlLoops::sendIfChangedOrOld(MotorID::e mid, int old_value, int new_value)
+{
+    if(new_value != old_value || m_ticks_since_send[mid] >= 51 || m_ticks_since_send[mid] == 0) {
+        m_ticks_since_send[mid] = 1;
+        m_mb->sendMessage(boost::make_shared<MotorStateMessage>(mid, new_value), RELIABLE_MSG);
+    }
+    m_ticks_since_send[mid]++;
+}
+
 
 namespace cauv{
 class TelemetryBroadcaster : public IMUObserver, public MCBObserver
@@ -490,6 +506,9 @@ ControlNode::ControlNode() : CauvNode("Control")
     subMessage(MotorRampRateMessage());
     subMessage(SetMotorMapMessage());
     subMessage(CalibrateNoRotationMessage());
+    subMessage(PressureMessage());
+    subMessage(ForePressureMessage());
+    subMessage(AftPressureMessage());
 
     m_controlLoops = boost::make_shared<ControlLoops>(mailbox());
     m_telemetryBroadcaster = boost::make_shared<TelemetryBroadcaster>(mailbox());
@@ -655,6 +674,8 @@ void ControlNode::onRun()
     if (m_mcb) {
         m_controlLoops->set_mcb(m_mcb);
         
+        addMessageObserver(boost::make_shared<DebugMessageObserver>(2));
+
         m_mcb->addObserver(m_telemetryBroadcaster);
         m_mcb->addObserver(m_controlLoops);
         
