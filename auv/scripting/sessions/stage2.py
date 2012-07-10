@@ -1,7 +1,7 @@
 import socket
 
 from utils.watchfuncs import *
-import stage1
+import sessions.stage1
 
 
 if socket.gethostname() == 'barracuda-seco':
@@ -12,13 +12,11 @@ if socket.gethostname() == 'barracuda-seco':
         Process('gpsd',            '{SDIR}',    node_pid('py-gps'),           restart(3),   None,    ['{SDIR}/gpsd.py']),
         Process('gemini_node 17',  '/',         node_pid('Gemini'),           restart(),    None,    ['{BDIR}/gemini_node{D} 17']),
     ]
-elif socket.gethostname() == 'barracuda-arm':
+else:
     # processes running on the panda board only 
     processes = [
         #Process(), ??
     ]
-
-processes = stage1.get_processes() + processes
 
 def get_processes(args):
     return processes
