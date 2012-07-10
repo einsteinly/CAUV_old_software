@@ -20,25 +20,25 @@ using namespace cauv::gui;
 /* Motor message handling */
 
 boost::shared_ptr<const Message> MessageHandler<MotorNode, MotorStateMessage>::generate() {
-    return boost::make_shared<MotorMessage>(boost::get<MotorID::e>(m_node->nodeId()), (int8_t) m_node->get());
+    return boost::make_shared<MotorMessage>(boost::get<MotorID::e>(m_node->nodeId()), (int8_t) m_node->typedGet());
 }
 
 void MessageHandler<MotorNode, MotorStateMessage>::onMotorStateMessage(MotorStateMessage_ptr message){
     if(message->motorId() == boost::get<MotorID::e>(m_node->nodeId())){
-        m_node->update(message->speed());
+        m_node->typedUpdate((int)message->speed());
     }
 }
 
 /* Autopilot message handling */
 
 template<class T> boost::shared_ptr<const Message> generateAutopilotEnabledMessage(boost::shared_ptr<AutopilotNode> node){
-    return boost::make_shared<T>(node->get(), node->findOrCreate<NumericNode<float> >("target")->get());
+    return boost::make_shared<T>(node->typedGet(), node->findOrCreate<NumericNode<float> >("target")->typedGet());
 }
 
 template<class T> void updateAutopilotNode(boost::shared_ptr<AutopilotNode> node,
                                            boost::shared_ptr<const T> message){
     node->update(message->enabled());
-    node->findOrCreate<NumericNode<float> >("target")->update(message->target());
+    node->findOrCreate<NumericNode<float> >("target")->typedUpdate(message->target());
 }
 
 void MessageHandler<AutopilotNode, DepthAutopilotEnabledMessage>::onDepthAutopilotEnabledMessage(
@@ -70,10 +70,10 @@ boost::shared_ptr<const Message> MessageHandler<AutopilotNode, BearingAutopilotE
 
 
 template<class T> boost::shared_ptr<const Message> generateAutopilotParamsMessage(boost::shared_ptr<AutopilotParamsNode> node){
-    return boost::make_shared<T>(node->kP()->get(), node->kI()->get(), node->kD()->get(),
-                                 node->scale()->get(),
-                                 node->aP()->get(), node->aI()->get(), node->aD()->get(),
-                                 node->thr()->get(), node->maxError()->get());
+    return boost::make_shared<T>(node->kP()->typedGet(), node->kI()->typedGet(), node->kD()->typedGet(),
+                                 node->scale()->typedGet(),
+                                 node->aP()->typedGet(), node->aI()->typedGet(), node->aD()->typedGet(),
+                                 node->thr()->typedGet(), node->maxError()->typedGet());
 }
 
 template<class T> void updateAutopilotParamsNode(boost::shared_ptr<AutopilotParamsNode> node,
@@ -121,44 +121,44 @@ void MessageHandler<AutopilotNode, ControllerStateMessage>::onControllerStateMes
     if(boost::get<Controller::e>(m_node->nodeId()) == message->contoller()){
         boost::shared_ptr<GroupingNode> state = m_node->findOrCreate<GroupingNode>("state");
         boost::shared_ptr<GroupingNode> demands = state->findOrCreate<GroupingNode>("demands");
-        demands->findOrCreate<NumericNode<float> >(MotorID::Prop)->update(message->demand().prop);
-        demands->findOrCreate<NumericNode<float> >(MotorID::HBow)->update(message->demand().hbow);
-        demands->findOrCreate<NumericNode<float> >(MotorID::HStern)->update(message->demand().hstern);
-        demands->findOrCreate<NumericNode<float> >(MotorID::VBow)->update(message->demand().vbow);
-        demands->findOrCreate<NumericNode<float> >(MotorID::VStern)->update(message->demand().vstern);
-        state->findOrCreate<NumericNode<float> >("Kp")->update(message->kp());
-        state->findOrCreate<NumericNode<float> >("Ki")->update(message->ki());
-        state->findOrCreate<NumericNode<float> >("Kd")->update(message->kd());
-        state->findOrCreate<NumericNode<float> >("error")->update(message->error());
-        state->findOrCreate<NumericNode<float> >("derror")->update(message->derror());
-        state->findOrCreate<NumericNode<float> >("ierror")->update(message->ierror());
-        state->findOrCreate<NumericNode<float> >("mv")->update(message->mv());
+        demands->findOrCreate<NumericNode<float> >(MotorID::Prop)->typedUpdate(message->demand().prop);
+        demands->findOrCreate<NumericNode<float> >(MotorID::HBow)->typedUpdate(message->demand().hbow);
+        demands->findOrCreate<NumericNode<float> >(MotorID::HStern)->typedUpdate(message->demand().hstern);
+        demands->findOrCreate<NumericNode<float> >(MotorID::VBow)->typedUpdate(message->demand().vbow);
+        demands->findOrCreate<NumericNode<float> >(MotorID::VStern)->typedUpdate(message->demand().vstern);
+        state->findOrCreate<NumericNode<float> >("Kp")->typedUpdate(message->kp());
+        state->findOrCreate<NumericNode<float> >("Ki")->typedUpdate(message->ki());
+        state->findOrCreate<NumericNode<float> >("Kd")->typedUpdate(message->kd());
+        state->findOrCreate<NumericNode<float> >("error")->typedUpdate(message->error());
+        state->findOrCreate<NumericNode<float> >("derror")->typedUpdate(message->derror());
+        state->findOrCreate<NumericNode<float> >("ierror")->typedUpdate(message->ierror());
+        state->findOrCreate<NumericNode<float> >("mv")->typedUpdate(message->mv());
     }
 }
 
 /* Calibration messages handling */
 
 boost::shared_ptr<const Message> MessageHandler<GroupingNode, DepthCalibrationMessage>::generate() {
-    float aftMultiplier = m_node->findOrCreate<NumericNode<float> >("aftMultiplier")->get();
-    float aftOffset =  m_node->findOrCreate<NumericNode<float> >("aftOffset")->get();
-    float foreMultiplier = m_node->findOrCreate<NumericNode<float> >("foreMultiplier")->get();
-    float foreOffset = m_node->findOrCreate<NumericNode<float> >("foreOffset")->get();
+    float aftMultiplier = m_node->findOrCreate<NumericNode<float> >("aftMultiplier")->typedGet();
+    float aftOffset =  m_node->findOrCreate<NumericNode<float> >("aftOffset")->typedGet();
+    float foreMultiplier = m_node->findOrCreate<NumericNode<float> >("foreMultiplier")->typedGet();
+    float foreOffset = m_node->findOrCreate<NumericNode<float> >("foreOffset")->typedGet();
     return boost::make_shared<DepthCalibrationMessage>(foreOffset, foreMultiplier, aftOffset, aftMultiplier);
 }
 
 void MessageHandler<GroupingNode, DepthCalibrationMessage>::onDepthCalibrationMessage(
         DepthCalibrationMessage_ptr message){
-    m_node->findOrCreate<NumericNode<float> >("aftMultiplier")->update(message->aftMultiplier());
-    m_node->findOrCreate<NumericNode<float> >("aftOffset")->update(message->aftOffset());
-    m_node->findOrCreate<NumericNode<float> >("foreMultiplier")->update(message->foreMultiplier());
-    m_node->findOrCreate<NumericNode<float> >("foreOffset")->update(message->foreOffset());
+    m_node->findOrCreate<NumericNode<float> >("aftMultiplier")->typedUpdate(message->aftMultiplier());
+    m_node->findOrCreate<NumericNode<float> >("aftOffset")->typedUpdate(message->aftOffset());
+    m_node->findOrCreate<NumericNode<float> >("foreMultiplier")->typedUpdate(message->foreMultiplier());
+    m_node->findOrCreate<NumericNode<float> >("foreOffset")->typedUpdate(message->foreOffset());
 }
 
 
 /* Debug messages handling */
 
 boost::shared_ptr<const Message> MessageHandler<NumericNode<int>, DebugLevelMessage>::generate() {
-    return boost::make_shared<DebugLevelMessage>(m_node->get());
+    return boost::make_shared<DebugLevelMessage>(m_node->typedGet());
 }
 
 void MessageHandler<NumericNode<int>, DebugLevelMessage>::onDebugLevelMessage (
@@ -171,25 +171,25 @@ void MessageHandler<NumericNode<int>, DebugLevelMessage>::onDebugLevelMessage (
 
 void MessageHandler<GroupingNode, TelemetryMessage>::onTelemetryMessage (
         TelemetryMessage_ptr message){
-    m_node->findOrCreate<NumericNode<float> >("yaw")->update(message->orientation().yaw);
-    m_node->findOrCreate<NumericNode<float> >("pitch")->update(message->orientation().pitch);
-    m_node->findOrCreate<NumericNode<float> >("roll")->update(message->orientation().roll);
-    m_node->findOrCreate<NumericNode<float> >("depth")->update(message->depth());
+    m_node->findOrCreate<NumericNode<float> >("yaw")->typedUpdate(message->orientation().yaw);
+    m_node->findOrCreate<NumericNode<float> >("pitch")->typedUpdate(message->orientation().pitch);
+    m_node->findOrCreate<NumericNode<float> >("roll")->typedUpdate(message->orientation().roll);
+    m_node->findOrCreate<NumericNode<float> >("depth")->typedUpdate(message->depth());
 }
 
 void MessageHandler<GroupingNode, PressureMessage>::onPressureMessage (
         PressureMessage_ptr message){
-    m_node->findOrCreate<NumericNode<unsigned int> >("fore")->update(message->fore());
-    m_node->findOrCreate<NumericNode<unsigned int> >("aft")->update(message->aft());
+    m_node->findOrCreate<NumericNode<unsigned int> >("fore")->typedUpdate(message->fore());
+    m_node->findOrCreate<NumericNode<unsigned int> >("aft")->typedUpdate(message->aft());
 }
 
 void MessageHandler<GroupingNode, BatteryUseMessage>::onBatteryUseMessage (
         BatteryUseMessage_ptr message){
-    m_node->findOrCreate<NumericNode<float> >("current")->update(message->estimate_current());
-    m_node->findOrCreate<NumericNode<float> >("total")->update(message->estimate_total());
-    m_node->findOrCreate<NumericNode<float> >("remaining")->update(message->fraction_remaining() * 100.f);
-    m_node->findOrCreate<NumericNode<float> >("remaining")->setMin(0);
-    m_node->findOrCreate<NumericNode<float> >("remaining")->setMax(100);
+    m_node->findOrCreate<NumericNode<float> >("current")->typedUpdate(message->estimate_current());
+    m_node->findOrCreate<NumericNode<float> >("total")->typedUpdate(message->estimate_total());
+    m_node->findOrCreate<NumericNode<float> >("remaining")->typedUpdate(message->fraction_remaining() * 100.f);
+    m_node->findOrCreate<NumericNode<float> >("remaining")->typedSetMin(0);
+    m_node->findOrCreate<NumericNode<float> >("remaining")->typedSetMax(100);
     m_node->findOrCreate<NumericNode<float> >("remaining")->setUnits("%");
     m_node->findOrCreate<NumericNode<float> >("remaining")->setInverted(true);
 }
@@ -197,9 +197,9 @@ void MessageHandler<GroupingNode, BatteryUseMessage>::onBatteryUseMessage (
 void MessageHandler<GroupingNode, ProcessStatusMessage>::onProcessStatusMessage (
         ProcessStatusMessage_ptr message){
     boost::shared_ptr<GroupingNode> process = m_node->findOrCreate<GroupingNode>(message->process());
-    process->findOrCreate<NumericNode<float> >("cpu")->update(message->cpu());
-    process->findOrCreate<NumericNode<float> >("mem")->update(message->mem());
-    process->findOrCreate<NumericNode<unsigned int> >("threads")->update(message->threads());
+    process->findOrCreate<NumericNode<float> >("cpu")->typedUpdate(message->cpu());
+    process->findOrCreate<NumericNode<float> >("mem")->typedUpdate(message->mem());
+    process->findOrCreate<NumericNode<unsigned int> >("threads")->typedUpdate(message->threads());
     process->findOrCreate<StringNode>("status")->update(message->status());
 }
 
@@ -211,7 +211,7 @@ void MessageHandler<ImageNode, ImageMessage>::onImageMessage (
     if(boost::get<CameraID::e>(m_node->nodeId()) == message->source()) {
         boost::shared_ptr<BaseImage> shared_image= boost::make_shared<BaseImage>();
         message->get_image_inplace(*shared_image);
-        m_node->update(shared_image);
+        m_node->typedUpdate(shared_image);
     }
 }
 
@@ -225,19 +225,19 @@ void NodeGenerator<ImageNode, ImageMessage>::onImageMessage (
 
 void MessageHandler<SonarNode, SonarControlMessage>::onSonarControlMessage(
         SonarControlMessage_ptr message){
-    m_node->direction()->update(message->direction());
-    m_node->width()->update(message->width());
-    m_node->gain()->update(message->gain());
-    m_node->range()->update(message->range());
-    m_node->rangeRes()->update(message->rangeRes());
-    m_node->angularRes()->update((unsigned int)message->angularRes());
+    m_node->direction()->typedUpdate(message->direction());
+    m_node->width()->typedUpdate(message->width());
+    m_node->gain()->typedUpdate(message->gain());
+    m_node->range()->typedUpdate(message->range());
+    m_node->rangeRes()->typedUpdate(message->rangeRes());
+    m_node->angularRes()->typedUpdate((unsigned int)message->angularRes());
 }
 
 boost::shared_ptr<const Message> MessageHandler<SonarNode, SonarControlMessage>::generate() {
     return boost::make_shared<SonarControlMessage>(
-                m_node->direction()->get(), m_node->width()->get(),
-                m_node->gain()->get(), m_node->range()->get(),
-                m_node->rangeRes()->get(), m_node->angularRes()->get());
+                m_node->direction()->typedGet(), m_node->width()->typedGet(),
+                m_node->gain()->typedGet(), m_node->range()->typedGet(),
+                m_node->rangeRes()->typedGet(), m_node->angularRes()->typedGet());
 }
 
 

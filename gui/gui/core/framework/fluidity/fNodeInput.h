@@ -91,7 +91,7 @@ class FNodeParamInput: public FNodeInput{
         void setEditable(bool editable);
 
         // ConnectionSink:
-        virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source);
+        virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink* to_sink);
 
     protected Q_SLOTS:
         void modelValueChanged(QVariant value);

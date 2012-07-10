@@ -127,7 +127,7 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
         }
 
 
-        template <class T = Node> boost::shared_ptr<T> findFromPath(QString path) const {
+        template <class T> boost::shared_ptr<T> findFromPath(QString path) const {
             QStringList pathparts = path.split('/');
             if(pathparts.length() > 1){
                 QString prefixNode = path;

@@ -37,7 +37,7 @@ namespace cauv {
             }
 
         public Q_SLOTS:
-            virtual void update(image_t const& value){
+            virtual void typedUpdate(image_t const& value){
                 Node::update(QVariant::fromValue<image_t>(value));
             }
         };

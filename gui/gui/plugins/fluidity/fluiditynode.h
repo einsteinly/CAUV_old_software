@@ -55,7 +55,6 @@ public:
     LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
                        boost::weak_ptr<CauvMainWindow> in_window,
                        QGraphicsItem *parent = 0);
-    virtual ~LiquidFluidityNode();
 
     virtual liquid::ArcSource * getSourceFor(boost::shared_ptr<Node> const&) const;
 

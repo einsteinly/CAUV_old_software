@@ -31,6 +31,9 @@ ColourDelegate::ColourDelegate(QObject * parent) :
 QWidget * ColourDelegate::createEditor(QWidget *parent,
                                        const QStyleOptionViewItem &option,
                                        const QModelIndex &index) const {
+    Q_UNUSED(parent);
+    Q_UNUSED(option);
+    Q_UNUSED(index);
     return new ColourDialog();
 }
 
@@ -50,15 +53,45 @@ void ColourDelegate::paint(QPainter *painter,
     painter->drawEllipse(QRect(rect.x(), rect.y() + rect.height()/2 - height/2,
                                height, height));
     painter->setPen(Qt::black);
-    QString text("%1 %2 %3 %4");
-    text = text.arg(QString::number(colour.r(), 'f', 2)).
-            arg(QString::number(colour.g(), 'f', 2)).
-            arg(QString::number(colour.b(), 'f', 2)).
-            arg(QString::number(colour.a(), 'f', 2));
+    QFont font = painter->font();
+    int channels = 3;
+    if (colour.type == ColourType::Grey)
+        channels = 1;
+    int margin = rect.height()*0.1;
+    int lineHeight = (rect.height()-margin-margin)/channels;
+    font.setPixelSize(lineHeight);
+    rect.setHeight(lineHeight);
+    rect = rect.adjusted(0, margin, 0, margin);
+    painter->setFont(font);
     rect = rect.adjusted(height+4,0,0,0);
-    QTextOption to(Qt::AlignVCenter);
-    to.setWrapMode(QTextOption::NoWrap);
-    painter->drawText(rect, text, to);
+    for(int i = 0; i < channels; i ++){
+
+        QString text("%1");
+        switch(i){
+        case 0:
+            painter->setPen(Qt::red);
+            text = text.arg(QString::number(colour.r(), 'f', 2));
+        break;
+        case 1:
+            painter->setPen(Qt::green);
+            text = text.arg(QString::number(colour.g(), 'f', 2));
+        break;
+        case 2:
+            painter->setPen(Qt::blue);
+            text = text.arg(QString::number(colour.b(), 'f', 2));
+        break;
+        default:
+            painter->setPen(Qt::black);
+            text = text.arg(QString::number(colour.a(), 'f', 2));
+        break;
+        }
+
+        QTextOption to(Qt::AlignVCenter);
+        to.setWrapMode(QTextOption::NoWrap);
+        painter->drawText(rect, text, to);
+
+        rect = rect.adjusted(0,lineHeight,0,lineHeight);
+    }
     painter->restore();
 }
 
@@ -74,7 +107,7 @@ void ColourDelegate::setEditorData(QWidget *editor,
 
 
 
-QSize ColourDelegate::sizeHint(const QStyleOptionViewItem &option,
+QSize ColourDelegate::sizeHint(const QStyleOptionViewItem & option,
                                const QModelIndex &) const{
     return QSize(120, option.fontMetrics.height()*2);
 }

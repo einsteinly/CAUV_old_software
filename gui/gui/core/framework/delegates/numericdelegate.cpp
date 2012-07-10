@@ -101,6 +101,7 @@ void NumericDelegate::setEditorData(QWidget *editor,
             neutral->setWrapping(node->getWraps());
             neutral->setNeutral(node->getNeutral().toInt());
             neutral->setInverted(node->isInverted());
+            neutral->setValue(node->asNumber().toInt());
         }
 
         if(NeutralDoubleSpinBox * neutral = qobject_cast<NeutralDoubleSpinBox*>(editor)){
@@ -110,6 +111,7 @@ void NumericDelegate::setEditorData(QWidget *editor,
             neutral->setNeutral(node->getNeutral().toDouble());
             neutral->setDecimals(node->getPrecision());
             neutral->setInverted(node->isInverted());
+            neutral->setValue(node->asNumber().toDouble());
         }
     }
 }

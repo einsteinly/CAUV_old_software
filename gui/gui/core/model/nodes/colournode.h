@@ -30,55 +30,10 @@ public:
         qRegisterMetaType<Colour>("Colour");
         m_value = QVariant::fromValue<Colour>(Colour());
     }
-/*
-    static Colour qColorToColour(TypedQColor colour) {
-        switch (colour.colorType()) {
-        case ColourType::RGB:
-            //return Colour::fromRGB(colour.redF(), colour.greenF(), colour.blueF());
-        case ColourType::ARGB:
-            //return Colour::fromRGBA(colour.redF(), colour.greenF(), colour.blueF(), colour.alphaF());
-        case ColourType::BGR:
-            //return Colour::fromBGR(colour.redF(), colour.greenF(), colour.blueF());
-        case ColourType::BGRA:
-            //return Colour::fromBGRA(colour.redF(), colour.greenF(), colour.blueF(), colour.alphaF());
-        case ColourType::Grey:
-            break;
-        default:
-            break;
-            //return Colour::fromGrey(colour.value());
-        }
-        return Colour();
-    }
-
-    static QColor colorToQColour(Colour const& colour) {
-        QColor c;
-
-                switch(colour.type){
-                    case ColourType::Grey:
-                        c = TypedQColor::fromHsv(0, 0, colour.grey());
-
-                    case ColourType::RGB:
-                    case ColourType::ARGB:
-                    case ColourType::BGR:
-                    case ColourType::BGRA: {
-                        c = TypedQColor::fromHsv(0, 0, colour.grey());
-
-                    default:
-                        warning() << "colorToQColour() - Unknown colour format";
-                        c = TypedQColor::fromHsv(0, 0, colour.grey());
-
-        return c;
-    }
-
-*/
 
 public Q_SLOTS:
-    virtual void update(Colour const& value){
+    virtual void typedUpdate(Colour const& value){
         Node::update(QVariant::fromValue<Colour>(value));
-    }
-
-    virtual void update(QColor const& value){
-        //update(qColorToColour(value));
     }
 };
 } //namespace gui

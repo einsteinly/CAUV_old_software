@@ -147,7 +147,7 @@ namespace cauv {
                 m_value = QVariant::fromValue(T());
             }
 
-            virtual T get() {
+            virtual T typedGet() {
                 return m_value.value<T>();
             }
 
@@ -171,11 +171,19 @@ namespace cauv {
                 return value;
             }
 
-            virtual bool set(QVariant const& value) {
-                return set(value.value<T>());
+            virtual void update(QVariant const& value) {
+                return NumericNodeBase::update(value.value<T>());
             }
 
-            virtual bool set(T const& value){
+            virtual void typedUpdate(T const& value){
+                return NumericNodeBase::update(QVariant::fromValue(value));
+            }
+
+            virtual bool set(QVariant const& value) {
+                return typedSet(value.value<T>());
+            }
+
+            virtual bool typedSet(T const& value){
                 debug() << "NumericNode::set() cleaning value";
 
                 QVariant minV = getMin();
@@ -202,26 +210,22 @@ namespace cauv {
                 return NumericNodeBase::set(QVariant::fromValue(cleanVal));
             }
 
-            virtual void setMin(T min){
+            virtual void typedSetMin(T min){
                 NumericNodeBase::setMin(QVariant::fromValue(min));
             }
 
-            virtual void setMax(T max){
+            virtual void typedSetMax(T max){
                 NumericNodeBase::setMax(QVariant::fromValue(max));
             }
 
-            virtual void setNeutral(T neutral){
+            virtual void typedSetNeutral(T neutral){
                 NumericNodeBase::setNeutral(QVariant::fromValue(neutral));
             }
 
+            // todo: I think this isn't required now...
             virtual QVariant asNumber(){
                 return get();
             }
-
-        private:
-            void setMin(QVariant const&){}
-            void setMax(QVariant const&){}
-            void setNeutral(QVariant const&){}
         };
 
 
@@ -233,37 +237,32 @@ namespace cauv {
                 m_value = QVariant::fromValue(BoundedFloat());
             }
 
-            virtual void update(BoundedFloat const& value){
-                info() << "update(BoundedFloat) - " << value.value;
-                setMax(value);
-                setMin(value);
-                setWraps(value);
+            virtual void typedUpdate(BoundedFloat const& value){
+                typedSetMax(value);
+                typedSetMin(value);
+                typedSetWraps(value);
                 NumericNodeBase::update(QVariant::fromValue(value));
             }
 
             virtual void update(QVariant const& value) {
-                info() << "update(QVariant)";
-                update(value.value<BoundedFloat>());
+                typedUpdate(value.value<BoundedFloat>());
             }
 
-            virtual bool set(BoundedFloat const& value){
-                info() << "set(BoundedFloat) - " << value.value;
-                return set(QVariant::fromValue(value));
+            virtual bool typedSet(BoundedFloat const& value){
+                return NumericNodeBase::set(QVariant::fromValue(value));
             }
 
-            virtual bool set(float const& value){
-                info() << "set(double)";
+            virtual bool typedSet(float const& value){
                 BoundedFloat boundedValue;
                 boundedValue.value = value;
                 boundedValue.max = getMax().value<float>();
                 boundedValue.min = getMin().value<float>();
-                return set(boundedValue);
+                return typedSet(boundedValue);
             }
 
             virtual bool set(QVariant const& value) {
-                info() << "set(QVariant)";
                 if(value.userType() != qMetaTypeId<BoundedFloat>()){
-                    return set(value.value<float>());
+                    return typedSet(value.value<float>());
                 }
                 else return NumericNodeBase::set(value);
             }
@@ -272,19 +271,15 @@ namespace cauv {
                 return get().value<BoundedFloat>().value;
             }
 
-        private:
-            virtual void setMin(BoundedFloat value){
-                info() << "setMin(BoundedFloat)" << value.min;
+            virtual void typedSetMin(BoundedFloat value){
                 NumericNodeBase::setMin(value.min);
             }
 
-            virtual void setMax(BoundedFloat value){
-                info() << "setMax(BoundedFloat)" << value.max;
+            virtual void typedSetMax(BoundedFloat value){
                 NumericNodeBase::setMax(value.max);
             }
 
-            virtual void setWraps(BoundedFloat value){
-                info() << "setWraps(BoundedFloat)" << value.type;
+            virtual void typedSetWraps(BoundedFloat value){
                 NumericNodeBase::setWraps(value.type==BoundedFloatType::Wraps);
             }
         };

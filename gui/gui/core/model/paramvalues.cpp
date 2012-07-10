@@ -29,14 +29,14 @@ ParamValueToNode::ParamValueToNode(const nid_t id) :
 template <> boost::shared_ptr<Node> ParamValueToNode::operator()(int & operand) const
 {
     boost::shared_ptr<NumericNode<int> > node = boost::make_shared<NumericNode<int> >(m_id);
-    node->update(operand);
+    node->typedUpdate(operand);
     return node;
 }
 
 template <> boost::shared_ptr<Node> ParamValueToNode::operator()(float & operand) const
 {
     boost::shared_ptr<NumericNode<float> > node = boost::make_shared<NumericNode<float> >(m_id);
-    node->update(operand);
+    node->typedUpdate(operand);
     return node;
 }
 
@@ -50,20 +50,20 @@ template <> boost::shared_ptr<Node> ParamValueToNode::operator()(std::string & o
 template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand) const
 {
     boost::shared_ptr<BooleanNode> node = boost::make_shared<BooleanNode>(m_id);
-    node->update(operand);
+    node->typedUpdate(operand);
     return node;
 }
 
 template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & operand) const
 {
     boost::shared_ptr<NumericNode<BoundedFloat> > node = boost::make_shared<NumericNode<BoundedFloat> >(m_id);
-    node->update(operand);
+    node->typedUpdate(operand);
     return node;
 }
 
 template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & operand) const
 {
     boost::shared_ptr<ColourNode> node = boost::make_shared<ColourNode>(m_id);
-    node->update(operand);
+    node->typedUpdate(operand);
     return node;
 }
