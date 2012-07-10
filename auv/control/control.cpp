@@ -655,6 +655,7 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
         setBarracudaMCB(vm["port"].as<std::string>());
     }
 
+#if 0
     if (vm.count("depth-offset") && vm.count("depth-scale")) {
         float offset = vm["depth-offset"].as<float>();
         float scale  = vm["depth-scale"].as<float>();
@@ -663,6 +664,7 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     else if (vm.count("depth-offset") || vm.count("depth-scale")) {
         warning() << "Need both offset and depth for calibration; ignoring calibration input";   
     }
+#endif
 
     return 0;
 }
