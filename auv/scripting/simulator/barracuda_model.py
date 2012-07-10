@@ -222,7 +222,7 @@ class Model(base_model.Model):
             self.last_state_sent = self.relativeTime()
 
     def addPressureNoise(self, pressure):
-        return pressure + random.gauss(0, 10)
+        return int(pressure + random.gauss(0, 10))
     
     def addOrientationNoise(self, ypr):
         return messaging.floatYPR(
@@ -256,7 +256,7 @@ class Model(base_model.Model):
         else:
             self.node.send(messaging.AftPressureMessage(self.addPressureNoise(pressure)))
             self.node.send(messaging.ForePressureMessage(self.addPressureNoise(pressure)))
-        self.node.send(messaging.StateMessage(self.addOrientationNoise(self.orientationNoise())))
+        self.node.send(messaging.StateMessage(self.addOrientationNoise(orientation)))
 
 
 
