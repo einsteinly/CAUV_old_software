@@ -215,12 +215,21 @@ enum Component : int8 {
     FrontPressureBoard,
     RearPressureBoard,
     MainControlBoard,
-    // !!! TODO: other temperatures
+    // !!! TODO: other temperatures (GeminiXXX, GeminiYYY, SecoCPU, SecoGPU, PandaCPU, INS, LBatteryCell1, LBatteryCell2 ...)
+    // which come from places other than the can bus
 }
 
 enum PowerChannel : int8 {
-    // TODO: descriptive values for each independent PCB power channel
-    SomeValue
+    PandaBoard,
+    SECOBoard,
+    ForeCan, // !!! one of these includes the MCB
+    AftCan,  // !!! one of these includes the MCB
+    Gemini,
+    SeaSprite,
+    Antenna,
+    MotorControl,
+    IMU,
+    Ethernet,
 }
 
 struct floatYPR
@@ -935,9 +944,10 @@ group can_status
         // values should be averaged over the most recent time-period (however
         // often messages are sent)
         channel : PowerChannel;
-        voltage : float; // V
-        current : float; // A
-        power   : float; // W
+        voltage : int16; // mV
+        current : int16; // mA
+        power   : int16; // mW
+        state   : bool;  // 1 = on, 0 = off
     }
    
     message Alive : 40

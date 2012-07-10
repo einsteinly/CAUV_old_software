@@ -10,6 +10,7 @@
 #include <xsens/cmtpacket.h>
 
 #include <generated/types/floatYPR.h>
+#include <generated/types/CalibrateNoRotationMessage.h>
 #include <utility/foreach.h>
 #include <debug/cauv_debug.h>
 
@@ -27,10 +28,7 @@ const char* XsensException::what() const throw ()
     return message.c_str();
 }
 
-
-
 XsensIMU::XsensIMU(int id)
-
 {
     memset(&m_port, 0, sizeof(CmtPortInfo));
     std::snprintf(m_port.m_portName, sizeof(m_port.m_portName), "/dev/ttyUSB%d", id);
@@ -191,4 +189,8 @@ void XsensIMU::readThread()
 }
 
 
+void XsensIMU::onCalibrateNoRotationMessage(CalibrateNoRotationMessage_ptr m)
+{
+    calibrateNoRotation(m->duration());
+}
 

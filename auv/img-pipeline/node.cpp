@@ -119,7 +119,7 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
 
 // - Node::Input
 Node::Input::Input(InputSchedType::e s,
-                   bool isconst)
+                   ConstQualifier isconst)
     : TestableBase<Input>(*this),
       target(),
       sched_type(s),
@@ -142,10 +142,10 @@ Node::Input::Input(InputSchedType::e s,
       param_value(default_value),
       compatible_subtypes(compatible_subtypes.begin(), compatible_subtypes.end()),
       tip(tip),
-      isconst(true){
+      isconst(Const){
 }
 
-Node::input_ptr Node::Input::makeImageInputShared(bool isconst, InputSchedType::e const& st){
+Node::input_ptr Node::Input::makeImageInputShared(ConstQualifier isconst, InputSchedType::e const& st){
     return boost::make_shared<Input>(boost::cref(st), isconst);
 }
 
@@ -249,7 +249,7 @@ bool Node::Input::isParam() const{
     return input_type == InType_Parameter;
 }
 
-bool Node::Input::isConst() const{
+bool Node::Input::constQualifier() const{
     return isconst;
 }
 
@@ -710,7 +710,7 @@ void Node::exec(){
                     bits += inputs[v.first]->bits();
             }
             // Check if we need to make a copy of this input so that we can modify it
-            if (!ip->isConst()) {
+            if (ip->constQualifier() == NonConst) {
                 output_link_list_t siblingLinks = ip->target.node->linksOnOutput(ip->target.id);
                 bool needCopy = false;
                 if (siblingLinks.size() != 1)
@@ -970,7 +970,7 @@ void Node::setParam(boost::shared_ptr<const SetNodeParameterMessage>  m){
     setParam(m->paramId(), m->value());
 }
 
-void Node::registerInputID(input_id const& i, bool isconst, InputSchedType::e const& st){
+void Node::registerInputID(input_id const& i, ConstQualifier isconst, InputSchedType::e const& st){
     lock_t l(m_inputs_lock);
     if(m_inputs.count(i)){
         error() << "Duplicate input/parameter id:" << i;

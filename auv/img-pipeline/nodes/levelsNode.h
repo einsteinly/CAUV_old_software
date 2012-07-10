@@ -43,7 +43,7 @@ class LevelsNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image", false);
+            registerInputID("image", NonConst);
 
             // one output
             registerOutputID("image (not copied)");

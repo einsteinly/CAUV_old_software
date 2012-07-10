@@ -18,7 +18,7 @@ class BlobNode: public Node{
         void init(){
             m_speed = slow;
 
-            registerInputID("image (not copied)", false); // must be matrix of a single channel
+            registerInputID("image (not copied)", NonConst); // must be matrix of a single channel
 
             registerOutputID("blobs", std::vector<Circle>());
 

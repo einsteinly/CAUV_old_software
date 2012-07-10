@@ -35,7 +35,7 @@ class BearingRangeCropNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("polar image", true);
+            registerInputID("polar image", Const);
             
             // one output
             registerOutputID("polar image");

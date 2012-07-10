@@ -30,7 +30,7 @@ class NopNode: public Node{
             m_speed = fast;
 
             // input:
-            registerInputID(Image_In_Name, true);
+            registerInputID(Image_In_Name, Const);
 
             // outputs:
             registerOutputID(Image_Out_Name);

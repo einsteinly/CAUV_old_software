@@ -25,7 +25,9 @@ class ThresholdMaskNode: public Node{
             m_speed = fast;
 
             // one input
-            registerInputID("channel (not copied)", false); // must be matrix of a single channel
+            // !!! FIXME: convention is to put (not copied) on the output...
+            // but anyway copying is automatic now
+            registerInputID("channel (not copied)", NonConst); // must be matrix of a single channel
 
             // one output
             registerOutputID("output mask");

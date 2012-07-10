@@ -72,6 +72,12 @@ class SlamCloudLocation{
             _checkAlignment();
         }
 
+        template<typename PointT>
+        SlamCloudLocation(TimeStamp const& t, boost::shared_ptr<SlamCloudPart<PointT> > const& relative_to, Eigen::Matrix4f const& rel_tr)
+            : m_relative_to(relative_to), m_relative_transformation(rel_tr), m_time(t){
+            _checkAlignment();
+        }
+
         virtual ~SlamCloudLocation(){
         }
 
@@ -103,6 +109,11 @@ class SlamCloudLocation{
             m_constraints.push_back(r);
             
             return r;
+        }
+
+        void addConstraintTo(location_ptr p, RelativePose const& r){
+            m_constrained_to.push_back(p);
+            m_constraints.push_back(r);
         }
 
         static pose_constraint_ptr addConstraintBetween(location_ptr from,
@@ -411,13 +422,13 @@ class SlamCloudPart: public SlamCloudLocation,
             f.read((char*)&t, sizeof(t));
             boost::shared_ptr< SlamCloudPart<PointT> > r = boost::make_shared<SlamCloudPart<PointT> >(t);
             std::size_t s = 0;
-            f.read(s, sizeof(s));
+            f.read((char*)&s, sizeof(s));
             for(std::size_t i = 0; i < s; i++){
                 float x = 0;
                 float y = 0;
                 float z = 0;
                 float response = 0;
-                std::size_t idx = 0;
+                //std::size_t idx = 0;
                 f.read((char*)&x, sizeof(x));
                 f.read((char*)&y, sizeof(y));
                 // no z
@@ -443,6 +454,8 @@ class SlamCloudPart: public SlamCloudLocation,
             m_meanvar_invalid = true;
         }
 
+        template< class T, class A1 >
+        friend boost::shared_ptr< T > boost::make_shared(A1 const & a1);
 
         SlamCloudPart(TimeStamp const& t)
             : SlamCloudLocation(t),

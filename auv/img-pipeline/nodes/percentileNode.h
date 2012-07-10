@@ -38,7 +38,7 @@ class PercentileNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image", true);
+            registerInputID("image", Const);
 
             // output parameters:
             registerOutputID("value", Colour::fromRGB(0,0,0));

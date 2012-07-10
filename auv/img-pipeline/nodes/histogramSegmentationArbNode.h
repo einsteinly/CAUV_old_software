@@ -27,7 +27,7 @@ class HistogramSegmentationArbNode: public OutputNode{
             m_speed = fast;
             
             //One input
-            registerInputID("image_in", true);
+            registerInputID("image_in", Const);
             
             //One output
             registerOutputID("Pixels");

@@ -47,7 +47,7 @@ class FirstAboveThresholdNode: public Node{
             m_speed = fast;
             
             // one input:
-            registerInputID(Image_In_Name, true);
+            registerInputID(Image_In_Name, Const);
             
             // one output
             registerOutputID("points", ret_vec());

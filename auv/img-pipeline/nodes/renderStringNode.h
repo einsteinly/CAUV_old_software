@@ -40,7 +40,7 @@ class RenderStringNode: public Node{
         void init(){
             // fast node:
             m_speed = fast;
-            registerInputID("image_in", false);
+            registerInputID("image_in", NonConst);
             registerOutputID("image_out (not copied)"); 
             registerParamID<std::string>("string", std::string(), "string to render");
             registerParamID<int>("position: x", 0, "");

@@ -40,9 +40,9 @@ class CombineRGBNode: public Node{
             m_speed = fast;
 
             // inputs:
-            registerInputID("R", true);
-            registerInputID("G", true);
-            registerInputID("B", true);
+            registerInputID("R", Const);
+            registerInputID("G", Const);
+            registerInputID("B", Const);
             
             // output:
             registerOutputID("image", image_ptr_t());
