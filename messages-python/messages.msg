@@ -1114,6 +1114,10 @@ group ai
     {
         msg : string;
     }
+    message AIKeepAlive : 199
+    {
+        managerId : string;
+    }
 }
 group guiai
 {

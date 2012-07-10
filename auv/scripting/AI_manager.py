@@ -3,6 +3,8 @@ import subprocess
 import time
 import argparse
 import threading
+from uuid import uuid1
+
 import utils.watch as watch
 import utils.watchfuncs as wf
 
@@ -47,20 +49,28 @@ processes = [
 class AImanager(object):
     def __init__(self, opts):
         self.processes = []
+        self.node = Node('AI_manager')
+        self.id = str(uuid1())
+        
         for process, pass_args in processes:
             if process.name in opts['disable']:
                 continue
             #'clever' code alert
             process.cmds[0] = process.cmds[0] + ' ' + \
-                            ' '.join(('--{}={}'.format(x, opts[x]) if not isinstance(opts[x],bool) else 
+                              ' '.join(('--{}={}'.format(x, opts[x]) if not isinstance(opts[x],bool) else 
                                       ('--' + x if opts[x] else '')
-                                      for x in opts if x in pass_args))
+                                      for x in opts if x in pass_args)) + \
+                              ' --manager_id=' + self.id
             self.processes.append(process)
         self.watcher = watch.Watcher(self.processes, detach=opts['donotdetach'])
 
     #Overrides EventLoop definition, so no event loop used in this class
     def run(self):
-        self.watcher.monitor(2)
+        while True:
+            for p in self.watcher.processes:
+                p.tick()
+            self.node.send(messaging.AIKeepAliveMessage(self.id))
+            time.sleep(2)
 
 parser = argparse.ArgumentParser(description="Manage a group of AI processes")
 parser.add_argument('--disable', action='append', default=[], help="disable process by name")
