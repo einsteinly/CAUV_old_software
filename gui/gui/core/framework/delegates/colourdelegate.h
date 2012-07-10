@@ -35,17 +35,22 @@ public:
     ColourDialog(QWidget * parent = 0) : QColorDialog(parent){
     }
 
+    ColourType::e type;
+
 public Q_SLOTS:
     void setColour(Colour c){
+        type = c.type;
         setCurrentColor(QColor::fromRgbF(c.r(), c.g(), c.b(), c.a()));
     }
 
     Colour colour() const {
         QColor c = currentColor();
-        return Colour::fromARGB(c.alphaF(),
-                                c.redF(),
-                                c.greenF(),
-                                c.blueF());
+        Colour colour = Colour::fromARGB(c.alphaF(),
+                                         c.redF(),
+                                         c.greenF(),
+                                         c.blueF());
+        colour.type = type;
+        return colour;
     }
 };
 
