@@ -77,7 +77,7 @@ Iyy = Ixx / 4
 Ixx_water = Izz_water = Ixx / 2
 Iyy_water = Iyy / 10 # much less added water mass in the roll direction
 
-Seabotix_Max_Thrust = 11.0 # N, used in Force_Per_Unit_Thrust only
+Seabotix_Max_Thrust = 18.0 # N, used in Force_Per_Unit_Thrust only
 Force_Per_Unit_Vector_Thrust = Seabotix_Max_Thrust / 127.0 # N
 Force_Per_Unit_Prop_Thrust = 2 * Seabotix_Max_Thrust / 127.0 # N
 Max_Yaw_Moment   = 1.5*Seabotix_Max_Thrust*2
