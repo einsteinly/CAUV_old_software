@@ -43,7 +43,7 @@ class MixValueNode: public Node{
             m_speed = fast;
 
             // inputs:
-            registerInputID("image", false);
+            registerInputID("image", NonConst);
 
             // one output
             registerOutputID("image (not copied)");

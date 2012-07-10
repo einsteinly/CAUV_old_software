@@ -33,7 +33,7 @@ class DelayNode: public Node{
             m_speed = fast;
 
             // input:
-            registerInputID(Image_In_Name, true);
+            registerInputID(Image_In_Name, Const);
 
             // parameters
             registerParamID<int>(Delay_Param_Name, 1,

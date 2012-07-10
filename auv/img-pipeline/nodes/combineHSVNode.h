@@ -40,9 +40,9 @@ class CombineHSVNode: public Node{
             m_speed = fast;
 
             // inputs:
-            registerInputID("H", true);
-            registerInputID("S", true);
-            registerInputID("V", true);
+            registerInputID("H", Const);
+            registerInputID("S", Const);
+            registerInputID("V", Const);
             
             // output:
             registerOutputID("image", image_ptr_t());

@@ -42,7 +42,7 @@ class GlobalMaximumNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image_in", true);
+            registerInputID("image_in", Const);
             
             // one output
             registerOutputID("keypoints", std::vector<KeyPoint>());

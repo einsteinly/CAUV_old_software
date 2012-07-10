@@ -53,7 +53,8 @@ class ThrottleNode: public Node{
             m_speed = asynchronous;
 
             // input:
-            registerInputID(Image_In_Name, true);
+            // !!! NonConst because it passes it through?
+            registerInputID(Image_In_Name, Const);
 
             // outputs:
             registerOutputID(Image_Out_Name);

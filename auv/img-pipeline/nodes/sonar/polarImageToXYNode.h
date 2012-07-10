@@ -34,7 +34,7 @@ class PolarImageToXYNode: public Node{
             m_speed = slow;
 
             // input polar image:
-            registerInputID("polar image", true);
+            registerInputID("polar image", Const);
             registerOutputID("image", image_ptr_t());
 
             registerParamID("Resolution", int(400), "resolution of conversion");

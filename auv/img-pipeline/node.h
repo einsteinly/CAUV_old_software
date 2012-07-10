@@ -244,6 +244,9 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         };
 
         typedef _OutMap out_map_t;
+        
+        // used to tag inputs to aid automatic copying
+        enum ConstQualifier{NonConst, Const};        
 
     private:
         // Private types and typedefs: only used internally
@@ -286,6 +289,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         friend std::basic_ostream<char_T, traits>& operator<<(
             std::basic_ostream<char_T, traits>& os, Node::link_target<T_ID> const& l);
 
+
         typedef link_target<output_id> input_link_t;
         struct Input;
         typedef boost::shared_ptr<Input> input_ptr;
@@ -298,16 +302,16 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             std::set<int32_t> compatible_subtypes;
             std::string tip;
             input_ptr synchronised_with;
-            bool isconst;
+            ConstQualifier isconst;
 
             Input(InputSchedType::e s,
-                  bool isconst);
+                  ConstQualifier isconst);
             Input(InputSchedType::e s,
                   ParamValue const& default_value,
                   std::string const& tip,
                   std::vector<int32_t> const& compatible_subtypes);
 
-            static input_ptr makeImageInputShared(bool isconst,
+            static input_ptr makeImageInputShared(ConstQualifier isconst,
                                                   InputSchedType::e const& st = Must_Be_New);
             static input_ptr makeParamInputShared(ParamValue const& default_value,
                                                   std::string const& tip,
@@ -319,7 +323,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             InternalParamValue getParam(bool& did_change, UID const&) const;
             bool valid() const;
             bool isParam() const;
-            bool isConst() const;
+            bool constQualifier() const;
             
             UID latestUIDSharedWithSync() const;            
             bool synchronisedInputAvailable() const;
@@ -662,7 +666,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             _explicitRegisterOutputID<image_ptr_t>(o, default_value);
         }
 
-        void registerInputID(input_id const& i, bool isconst, InputSchedType::e const& st = Must_Be_New);
+        void registerInputID(input_id const& i, ConstQualifier isconst, InputSchedType::e const& st = Must_Be_New);
 
         void requireSyncInputs(input_id const& a, input_id const& b);
 
@@ -787,9 +791,6 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         
         /* keep track of the amount of data being processed */
         cauv::ThroughputCounter m_throughput_counter;
-
-        /* most recent time taken */
-        int32_t m_time_taken;
         
         /* don't send status messages too frequently! */
         RateLimiter m_message_throttle;

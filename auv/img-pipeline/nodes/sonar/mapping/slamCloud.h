@@ -18,11 +18,13 @@
 #include <vector>
 #include <fstream>
 #include <ios>
+#include <algorithm>
 
 #include <sys/types.h>
 #include <unistd.h>
 
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/filesystem.hpp>
 
 #include <pcl/point_cloud.h>
 
@@ -46,6 +48,8 @@
 namespace cauv{
 namespace imgproc{
 
+namespace bf = boost::filesystem;
+
 struct CloudGraphParams{
     // default constructor sets sensible defaults:
     CloudGraphParams() :
@@ -59,7 +63,8 @@ struct CloudGraphParams{
         min_scan_consensus(2),
         scan_consensus_tolerance(0.3),
         rotation_scale(4),
-        persistence_dir("."){
+        persistence_dir("."),
+        read_only(true){
     }
 
     float overlap_threshold; // a fraction (0--1.0)
@@ -82,6 +87,7 @@ struct CloudGraphParams{
     float rotation_scale;
     
     std::string persistence_dir;
+    bool read_only;
 };
 
 template<typename PointT>
@@ -128,7 +134,8 @@ class SlamCloudGraph{
               m_graph_optimisation_count(0),
               m_dump_pose_history(CAUV_DUMP_POSE_GRAPH),
               m_key_scans(),
-              m_key_scan_indicies(),
+              m_key_scan_indices(),
+              m_key_scan_indices_in_all(),
               m_key_scan_locations(new KDTreeCachingCloud<PointT>()),
               m_n_passed_good(0),
               m_n_passed_bad(0),
@@ -150,7 +157,8 @@ class SlamCloudGraph{
 
         void reset(){
             m_key_scans.clear();
-            m_key_scan_indicies.clear();
+            m_key_scan_indices.clear();
+            m_key_scan_indices_in_all.clear();
             m_all_scans.clear();
             m_key_constraints.clear();
             m_graph_optimisation_count = 0;
@@ -163,7 +171,7 @@ class SlamCloudGraph{
 
         void load(){
             reset();
-            loadKeyFrames();
+            loadKeyScans();
             loadIntermediatePoses();
         }
 
@@ -174,7 +182,7 @@ class SlamCloudGraph{
         void setParams(CloudGraphParams params){
             m_params = params;
             // !!! FIXME
-            std::system(std::string(mkStr() << "mkdir -p" << m_params.persistence_dir).c_str());
+            std::system(std::string(mkStr() << "mkdir -p " << m_params.persistence_dir).c_str());
         }
 
         void setParams(float overlap_threshold,
@@ -210,6 +218,9 @@ class SlamCloudGraph{
             TimeStamp const& t,
             Eigen::Matrix4f const& rotation_guess_relative_to_last_scan
         ) const{
+            if(lastScanIsOld())
+                return rotation_guess_relative_to_last_scan;
+
             switch(m_all_scans.size()){
                 case 0:
                     return rotation_guess_relative_to_last_scan;
@@ -259,6 +270,14 @@ class SlamCloudGraph{
             }
         }
 
+        bool lastScanIsOld() const{
+            if(m_all_scans.size()){
+                if(m_all_scans.back()->time() - now() > 60.0)
+                    return true;
+            }
+            return false;
+        }
+
         floatXYZ speed() const{
             if(m_all_scans.size() >= 2){
                 location_vec::const_reverse_iterator i = m_all_scans.rbegin();
@@ -305,8 +324,10 @@ class SlamCloudGraph{
                            Eigen::Matrix4f& transformation){
             if(!m_key_scans.size()){
                 if(cloudIsGoodEnoughForInitialisation(p)){
-                    m_key_scan_indicies[p] = m_key_scans.size();
+                    m_key_scan_indices[p] = m_key_scans.size();
+                    m_key_scan_indices_in_all[p] = m_all_scans.size();
                     m_key_scans.push_back(p);
+                    saveKeyScan(p, 0);
                     m_all_scans.push_back(p);
                     //transformation = Eigen::Matrix4f::Identity();
                     transformation = guess;
@@ -547,7 +568,8 @@ class SlamCloudGraph{
             // frame
             p->setRelativeTransform(transformation);
             p->setRelativeToNone();
-            m_key_scan_indicies[p] = m_key_scans.size();
+            m_key_scan_indices[p] = m_key_scans.size();
+            m_key_scan_indices_in_all[p] = m_key_scans.size();
             m_key_scans.push_back(p);
             m_key_scan_locations->push_back(PointT(xyr_space_loc));
             m_all_scans.push_back(p);
@@ -573,12 +595,16 @@ class SlamCloudGraph{
             // update the spatially-sorted datastructure of key-scan locations
             _updateKeyScanLocations();
 
-            saveKeyFramePositions();
+            saveKeyScanPositions();
         }
 
         void saveKeyScan(cloud_ptr p, std::size_t id){
+            if(m_params.read_only)
+                return;
             std::string kfn = mkStr() << m_params.persistence_dir << "/" << id << ".keyframe";
             std::ofstream kf(kfn.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+            std::size_t idx_in_all = m_key_scan_indices_in_all[p];
+            kf.write((char*)&idx_in_all, sizeof(idx_in_all));
             p->saveToFile(kf);
             kf.close();
             
@@ -592,12 +618,16 @@ class SlamCloudGraph{
             cp << std::flush;
             cp.close();
             
+            // !!!! FIXME: working here: p->constraints() is always empty
+            // because constraints are stored on the parent, and at this point
+            // p has no children (since it is the newest pose itself)
             SlamCloudLocation::rel_pose_vec constraints = p->constraints();
             location_vec constrained_to = p->constrainedTo();
             assert(constrained_to.size() == constraints.size());
-
+        
+            debug() << "scan" << id << "has" << constraints.size() << "constraints";
             for(std::size_t i = 0; i < constraints.size(); i++){
-                const std::size_t parent_id = m_key_scan_indicies[constrained_to[i]];
+                const std::size_t parent_id = m_key_scan_indices[constrained_to[i]];
                 std::string fname = mkStr() << m_params.persistence_dir << "/" << parent_id<< ".constraints";
                 std::ofstream f(fname.c_str(), std::ios::out | std::ios::binary | std::ios::app);
             
@@ -611,28 +641,97 @@ class SlamCloudGraph{
         cloud_ptr loadKeyScan(std::size_t id){
             std::string kfn = mkStr() << m_params.persistence_dir << "/" << id << ".keyframe";
             std::ifstream kf(kfn.c_str(), std::ios::in | std::ios::binary);
+            std::size_t idx_in_all;
+            kf.read((char*)&idx_in_all, sizeof(idx_in_all));
             cloud_ptr p = cloud_t::loadFromFile(kf);
             kf.close();
-
+            if(id != m_key_scans.size())
+                throw std::runtime_error("keyscan indices do not match up");
+            m_key_scans.push_back(p);
+            m_key_scan_indices[p] = id;
+            m_key_scan_indices_in_all[p] = idx_in_all;
+            
+            if(m_all_scans.size() < idx_in_all)
+                m_all_scans.resize(10+1.5*idx_in_all);
+            m_all_scans[idx_in_all] = p;
             return p;
+        }
+        
+        // key-scans must be loaded first
+        void loadKeyScanPositions(){
+            bf::path persistence_dir(m_params.persistence_dir);
+            bf::path latest_file;
+            
+            if(bf::exists(persistence_dir) &&
+               bf::is_directory(persistence_dir)){
+                std::vector<bf::path> sorted_paths;
+                std::copy(bf::directory_iterator(persistence_dir), bf::directory_iterator(), std::back_inserter(sorted_paths));
+                std::sort(sorted_paths.begin(), sorted_paths.end());
+                // use the last one sorted by name (== sorted by time)
+                for(std::vector<bf::path>::reverse_iterator i = sorted_paths.rbegin(); i != sorted_paths.rend(); i++){
+                    if(i->extension().string() == ".nodes"){
+                        latest_file = *i;
+                        break;
+                    }
+                }
+                if(sorted_paths.size()){
+                    latest_file = sorted_paths.back();
+                }
+            }else{
+                error() << "cannot load persistent state: directory does not exist";
+            }
+
+            if(bf::exists(latest_file)){
+                std::ifstream f(latest_file.string().c_str(), std::ios::in | std::ios::binary);
+                std::size_t i;
+                for(i = 0; i < m_key_scans.size() && f; i++){
+                    std::size_t id;
+                    Eigen::Matrix4f m;
+                    f.read((char*)&id, sizeof(id));
+                    loadMat(f, m);
+                    if(id != i)
+                        throw std::runtime_error("cannot load persistent state: id mismatch!");
+                    m_key_scans[i]->setRelativeTransform(m);
+                }
+                if(!f){
+                    for(; i < m_key_scans.size(); i++){
+                        m_key_scan_indices.erase(m_key_scans.back());
+                        m_key_scans.pop_back();
+                    }
+                    warning() << "fewer key scans in position file than there are saved keyscans";
+                }
+                f.close();
+            }else{
+                error() << "cannot load persistent state: no keyframe position files";
+            }
+            
         }
 
         void loadKeyScanConstraints(cloud_ptr parent, std::size_t parent_id){
-            /*
-            for(std::size_t i = 0; i < constraints.size(); i++){
-                std::string fname = mkStr() << m_params.persistence_dir << "/" << parent_id<< ".constraints";
-                std::ifstream f(fname.c_str(), std::ios::in | std::ios::binary);
-                
+            std::string fname = mkStr() << m_params.persistence_dir << "/" << parent_id<< ".constraints";
+            std::ifstream f(fname.c_str(), std::ios::in | std::ios::binary);
+            
+            while(f){
                 std::size_t child_id;
                 f.read((char*)&child_id, sizeof(child_id));
-                RelativePose rp = RelativePose::laodFromFile(f);
-                f.close();
+                cloud_ptr child = m_key_scans.at(child_id);
+                RelativePose r;
+                if(f){
+                    r = RelativePose::loadFromFile(f);
+                }
+                if(f){
+                    child->addConstraintTo(parent, r);
+                    boost::shared_ptr<RelativePoseConstraint> pc = boost::make_shared<RelativePoseConstraint>(r, parent, child);
+                    m_key_constraints.push_back(pc);
+                }
             }
-            */
+            f.close();
         }
 
         void saveIntermediatePose(cloud_ptr p, std::size_t id){
-            std::size_t parent_id = m_key_scan_indicies[p->relativeTo()];
+            if(m_params.read_only)
+                return;
+            std::size_t parent_id = m_key_scan_indices[p->relativeTo()];
             std::string cpn = mkStr() << m_params.persistence_dir << "/" << parent_id << ".relposes";
             std::ofstream cp(cpn.c_str(), std::ios::out | std::ios::binary | std::ios::app);
             cp.write((char*)&id, sizeof(id));
@@ -642,28 +741,75 @@ class SlamCloudGraph{
             cp.close();
         }
 
-        void saveKeyFramePositions(){
+        void loadIntermediatePosesForParent(std::size_t parent_id){
+            std::string fn = mkStr() << m_params.persistence_dir << "/" << parent_id << ".relposes";
+            std::ifstream f(fn.c_str(), std::ios::in | std::ios::binary);
+            
+            cloud_ptr parent = m_key_scans.at(parent_id);
+            while(f){
+                std::size_t child_id;
+                f.read((char*)&child_id, sizeof(child_id));
+                TimeStamp t;
+                f.read((char*)&t, sizeof(t));
+                Eigen::Matrix4f tr;
+                loadMat(f, tr);
+                location_ptr l = boost::make_shared<SlamCloudLocation>(t, m_key_scans[parent_id], tr);
+                if(m_all_scans.size() < child_id)
+                    m_all_scans.resize(10+1.5*child_id);
+                m_all_scans[child_id] = l;
+            }
+            f.close();
+        }
+
+        void saveKeyScanPositions(){
+            if(m_params.read_only)
+                return;
             const TimeStamp timestamp = now();
             std::string fname = mkStr() << m_params.persistence_dir << "/" << timestamp.secs << (timestamp.musecs / 1000) << ".nodes";
             std::ofstream f(fname.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
 
-            for(std::size_t i = 0; i < m_key_scans.size(); i++)
+            for(std::size_t i = 0; i < m_key_scans.size(); i++){
+                f.write((char*)&i, sizeof(i));
                 saveMat(f, m_key_scans[i]->globalTransform());
+            }
 
             f.close();
         }
         
-        void loadKeyFrames(){
-            /*list dir
-            foreach keyscan id
-                loadKeyScan(id)
-            foreach keyscan id
-                loadKeyScanConstraints(id)
-            loadKeyScanPositions()*/
+        void loadKeyScans(){
+            // List directory to find all the key-scan ids:
+            
+            bf::path persistence_dir(m_params.persistence_dir);
+
+            std::set<std::size_t> keyframe_ids;
+
+            if(bf::exists(persistence_dir) &&
+               bf::is_directory(persistence_dir)){
+                bf::directory_iterator i(persistence_dir);
+                for(; i != bf::directory_iterator(); i++){
+                    if(i->path().extension().string() == ".keyframe")
+                        keyframe_ids.insert(fromStr<std::size_t>(i->path().stem().generic_string().c_str()));
+                }
+            }else{
+                error() << "cannot load persistent state: directory does not exist";
+            }
+            
+            // !!! FIXME this should munge IDs if the positions file doesn't quite
+            // match up with the directory listing
+            loadKeyScanPositions();
+            
+            for(std::size_t id = 0; id < m_key_scans.size(); id++){
+                m_key_scans.push_back(loadKeyScan(id));
+                m_key_scan_indices[m_key_scans.back()] = m_key_scans.size()-1;
+            }
+            
+            for(std::size_t id = 0; id < m_key_scans.size(); id++)
+                loadKeyScanConstraints(m_key_scans[id], id);
         }
 
         void loadIntermediatePoses(){
-            
+            for(std::size_t i = 0; i < m_key_scans.size(); i++)
+                loadIntermediatePosesForParent(i);
         }
         
 
@@ -852,8 +998,8 @@ class SlamCloudGraph{
             return 1e-6 * std::fabs(ClipperLib::Area(clipper_poly_a));
         }
 
-        /* judge how good initial cloud is by a combination of the number of
-         * features, and how well it matches with itself, or something.
+        /* TODO: judge how good initial cloud is by a combination of the number
+         * of features, and how well it matches with itself, or something.
          */
         bool cloudIsGoodEnoughForInitialisation(cloud_ptr p) const{
             const bool enough_points = (p->size() > m_params.min_initial_points);
@@ -939,7 +1085,10 @@ class SlamCloudGraph{
         bool m_dump_pose_history;
         
         cloud_vec m_key_scans;
-        std::map<location_ptr, std::size_t> m_key_scan_indicies;
+
+        // meh, quite ugly:
+        std::map<location_ptr, std::size_t> m_key_scan_indices;
+        std::map<location_ptr, std::size_t> m_key_scan_indices_in_all;
 
         // each point in this cloud is a key scan (same order as m_key_scans):
         // x,y,z map to x,y,m_rotation_scale*rotation 

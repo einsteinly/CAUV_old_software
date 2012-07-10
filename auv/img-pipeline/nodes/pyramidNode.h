@@ -42,7 +42,7 @@ class PyramidNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID(Image_In_Name, true);
+            registerInputID(Image_In_Name, Const);
             
             // output:
             registerOutputID(Image_Out_Copied_Name);

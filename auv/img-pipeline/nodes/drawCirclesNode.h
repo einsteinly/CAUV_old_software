@@ -41,7 +41,7 @@ class DrawCirclesNode: public Node{
 
         void init(){
             m_speed = slow;
-            registerInputID(Image_In_Name, true);
+            registerInputID(Image_In_Name, Const);
             registerOutputID(Image_Out_Copied_Name);
             registerParamID< std::vector<Circle> >(
                 "Circles", std::vector<Circle>(), "the Circles to draw", Must_Be_New

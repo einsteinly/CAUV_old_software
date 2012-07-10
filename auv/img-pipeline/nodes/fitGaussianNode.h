@@ -40,7 +40,7 @@ class FitGaussianNode : public Node{
             //Fast node
             m_speed = fast;
             
-            registerInputID("image", true);
+            registerInputID("image", Const);
             
             registerOutputID("ellipse", std::vector<Ellipse>());
         }

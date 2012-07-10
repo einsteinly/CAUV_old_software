@@ -41,7 +41,7 @@ class InvertNode: public Node{
             m_speed = fast;
 
             // inputs:
-            registerInputID("image", false);
+            registerInputID("image", Const);
 
             // one output
             registerOutputID("image (not copied)");

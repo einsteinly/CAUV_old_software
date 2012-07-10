@@ -27,6 +27,8 @@ class ThroughputCounter{
         ThroughputCounter(float const& filter_alpha=0.3)
             : m_filter_alpha(filter_alpha),
               m_last_end_time(_now()),
+              m_time_taken(0),
+              m_time_ratio(0),
               m_data_rate(0),
               m_frequency(0),
               m_mux(){

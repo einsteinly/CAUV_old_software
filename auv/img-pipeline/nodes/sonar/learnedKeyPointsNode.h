@@ -457,13 +457,13 @@ class LearnedKeyPointsNode: public Node{
             m_speed = fast;
             
             // source image input:
-            registerInputID("image", true);
+            registerInputID("image", Const);
             registerParamID("bootstrap keypoints", kp_vec());
 
             // training inputs:
             // These must be set from the same node
             registerParamID("training: keypoints", kp_vec(), "keypoints to update training data", May_Be_Old);
-            registerInputID("training: keypoints image", Optional);
+            registerInputID("training: keypoints image", Const, Optional);
             registerParamID("training: goodness", int_vec(), "score values to update training data", May_Be_Old);
 
             // outputs

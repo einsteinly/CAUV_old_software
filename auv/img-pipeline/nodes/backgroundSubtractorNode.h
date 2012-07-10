@@ -46,7 +46,7 @@ class BackgroundSubtractorNode: public Node{
             m_speed = fast;
 
             // inputs:
-            registerInputID("image", true);
+            registerInputID("image", Const);
 
             // one output
             registerOutputID("background");

@@ -89,7 +89,7 @@ static void drawLine(cv::Mat& image,
     cv::Point b(pt2[0]*(1<<shift), pt2[1]*(1<<shift));
     line(image, a, b, col, thickness, CV_AA, shift);
 }
-
+/*
 static void drawPoly(cv::Mat& image,
                      std::vector<Eigen::Vector2f> const& poly,
                      cv::Scalar const& col,
@@ -103,6 +103,7 @@ static void drawPoly(cv::Mat& image,
     cv::Point const* pts = &(cv_pts[0]);
     cv::polylines(image, &pts, &npts, 1, false, col, thickness, CV_AA, shift);
 }
+*/
 
 // - local classes
 class SonarSLAMImpl{
@@ -432,16 +433,17 @@ void SonarSLAMNode::init(){
     registerParamID("training: polar keypoints", kp_vec(), "", Must_Be_New);
     requireSyncInputs("keypoints", "training: polar keypoints");
     
-    registerInputID("keypoints image", Optional); // image from which the keypoints came: actually just passed straight back out with the keypoints training data
+    registerInputID("keypoints image", Const, Optional); // image from which the keypoints came: actually just passed straight back out with the keypoints training data
     registerParamID("delta theta", float(0), "estimated change in orientation (radians) since last image", Must_Be_New);
 
     // parameters: may be old
     // Parameters that are really inputs:
-    registerInputID("xy image", /*"image to use for map visualisation (may be unconnected)", */Optional);
+    registerInputID("xy image", Const, /*"image to use for map visualisation (may be unconnected)", */Optional);
     registerParamID("xy metres/px", float(1), "range conversion for visualisation image");
 
     // Control Parameters:
     registerParamID("clear", bool(false), "true => discard accumulated point cloud");
+    registerParamID("read only", bool(true), "false: save new keyframes and update the persistent state with keyframes and intermediate poses");
     registerParamID("load map", bool(false), "if set to true, the persistent map will be loaded (and current state discarded), and then the parameter will be reset to false");
     registerParamID("map dir", std::string("/tmp/cauv/slam/persistence"), "directory for map persistent state (saving and loading)");
 
@@ -528,6 +530,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     
     // The rest of the parameters
     const bool load_map     = param<bool>("load map");
+    const bool read_only    = param<bool>("read only");
     const std::string map_dir = param<std::string>("map dir");
     const int   max_iters   = param<int>("max iters");
     const float euclidean_fitness   = param<float>("euclidean fitness");
@@ -574,6 +577,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     params.min_scan_consensus = require_match_consensus;
     params.scan_consensus_tolerance = consensus_tolerance;
     params.persistence_dir = map_dir;
+    params.read_only = read_only;
     //params.rotation_scale = 4;
 
     m_impl->setGraphProperties(params);
