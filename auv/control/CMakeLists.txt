@@ -19,6 +19,9 @@ add_executable (
     control.cpp
     xsens_imu.cpp
     sbg_imu.cpp
+    sim_imu.cpp
+    arm_mcb.cpp
+    pid.cpp
 )
 cauv_install ( control )
 
