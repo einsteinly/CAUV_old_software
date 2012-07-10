@@ -20,6 +20,15 @@
 using namespace cauv;
 using namespace cauv::gui;
 
+AiSubscribeObserver::AiSubscribeObserver() {
+    qRegisterMetaType<MessageType::e>("MessageType::e");
+}
+AiSubscribeObserver::~AiSubscribeObserver() {}
+
+void AiSubscribeObserver::onSubscribed(MessageType::e messageType){
+    Q_EMIT onSubscriptionConfirmation(messageType);
+}
+
 
 boost::shared_ptr<const Message> MessageGenerator<AiTaskNode, SetTaskStateMessage>::generate() {
     std::vector< std::string > conditionIds;

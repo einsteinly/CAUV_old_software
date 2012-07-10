@@ -22,8 +22,22 @@
 #include <gui/plugins/ai/conditionnode.h>
 #include <gui/plugins/ai/tasknode.h>
 
+#include <QObject>
+
+#include <common/zeromq/zeromq_mailbox.h>
+
 namespace cauv {
     namespace gui {
+
+        class AiSubscribeObserver : public QObject, public SubscribeObserver {
+            Q_OBJECT
+        public:
+            AiSubscribeObserver();
+            virtual ~AiSubscribeObserver();
+            void onSubscribed(MessageType::e messageType);
+        Q_SIGNALS:
+            void onSubscriptionConfirmation(MessageType::e);
+        };
 
         class AiMessageObserver : public MessageObserver {
 

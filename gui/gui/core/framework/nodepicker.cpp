@@ -277,8 +277,8 @@ void NodeTreeView::init() {
     }
 }
 
-void NodeTreeView::sizeToFit(QModelIndex i){
-
+void NodeTreeView::sizeToFit(){
+    setExpanded(rootIndex(), true);
     updateGeometry();
     resize(sizeHint());
     /*
@@ -317,8 +317,10 @@ void NodeTreeView::registerDelegate(node_type nodeType,
 
 void NodeTreeView::setModel(QAbstractItemModel *model){
     QTreeView::setModel(model);
+    if(m_fixedSize)
+        connect(model, SIGNAL(layoutChanged()), this, SLOT(sizeToFit()));
     setExpanded(rootIndex(), true);
-    sizeToFit(rootIndex());
+    sizeToFit();
 }
 
 void NodeTreeView::mouseReleaseEvent(QMouseEvent *event){
@@ -387,7 +389,7 @@ void NodeTreeView::toggleExpanded(QModelIndex const& index){
     setExpanded(index, !isExpanded(index));
     info() << "post-inversion" << isExpanded(index);
     qDebug() << "sizeHint = " << sizeHint();
-    sizeToFit(index);
+    sizeToFit();
 }
 
 void NodeTreeView::keyPressEvent(QKeyEvent *event){

@@ -15,6 +15,8 @@
 #ifndef AIPLUGIN_H
 #define AIPLUGIN_H
 
+#include <common/zeromq/zeromq_mailbox.h>
+
 #include <gui/core/cauvbasicplugin.h>
 #include <gui/core/model/node.h>
 
@@ -27,7 +29,7 @@ namespace gui {
 
 class NodeChildrenExclusionFilter;
 
-class AiPlugin : public QObject, public CauvBasicPlugin
+class AiPlugin : public QObject, public CauvBasicPlugin, public SubscribeObserver
 {
     Q_OBJECT
     Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
@@ -38,12 +40,14 @@ public:
     virtual void initialise();
 
     typedef liquid::LiquidNode LiquidNode;
+
 public Q_SLOTS:
     void setupTask(boost::shared_ptr<Node> node);
     void setupCondition(boost::shared_ptr<Node> node);
     void setupVehicle(boost::shared_ptr<Node> node);
     void reloadAi();
     void nodeClosed(LiquidNode * node);
+    void onSubscribed(MessageType::e messageType);
 
 protected Q_SLOTS:
     void resetTask();

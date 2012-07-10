@@ -57,28 +57,17 @@ class FluidityDropHandler: public DropHandlerInterface<QGraphicsItem*> {
         if(node->type == nodeType<FluidityNode>()){
             if(ConnectedNode * n = LiquidFluidityNode::nodeFor(node)){
                 return n;
-            } else {
-                return new LiquidFluidityNode(
-                            boost::static_pointer_cast<FluidityNode>(node),
-                            m_window
-                            );
             }
         }
         if (node->type == nodeType<NewPipelineNode>()) {
-
             boost::shared_ptr<Vehicle> vehicle = node->getClosestParentOfType<Vehicle>();
             boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
+            boost::shared_ptr<GroupingNode> defaultGroup = pipelines->findOrCreate<GroupingNode>("default");
 
-            size_t nPipelines = pipelines->countChildrenOfType<FluidityNode>();
-
+            size_t nPipelines = defaultGroup->countChildrenOfType<FluidityNode>();
             boost::shared_ptr<FluidityNode> fnode =
-                    pipelines->findOrCreate<FluidityNode>(
-                        MakeString() << "default/pipeline" << (nPipelines + 1)
-                        );
-
-            return new LiquidFluidityNode(
-                        boost::static_pointer_cast<FluidityNode>(fnode),
-                        m_window
+                    defaultGroup->findOrCreate<FluidityNode>(
+                        MakeString() << "pipeline" << (nPipelines + 1)
                         );
         }
         return NULL;
@@ -118,11 +107,14 @@ void FluidityPlugin::initialise(){
     else
         throw std::runtime_error("only one FluidityPlugin may be initialised");
 
-    boost::shared_ptr<CauvNode> node = m_actions->node.lock();
-    if(node) {
+    if(boost::shared_ptr<CauvNode> node = m_actions->node.lock()) {
         node->subMessage(PipelineDiscoveryResponseMessage());
-        node->subMessage(NodeAddedMessage());
-    }
+        node->subMessage(NodeAddedMessage()); // LEAVE THIS ONE LAST
+
+        boost::shared_ptr<FluiditySubscribeObserver> sub = boost::make_shared<FluiditySubscribeObserver>();
+        connect(sub.get(), SIGNAL(onSubscriptionConfirmation(MessageType::e)), this, SLOT(onSubscribed(MessageType::e)));
+        node->addSubscribeObserver(sub);
+    } else error() << "Failed to lock CauvNode while setting up vehicle ai";
 }
 
 void FluidityPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
@@ -130,46 +122,20 @@ void FluidityPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
         boost::shared_ptr<Vehicle> vehicle = vnode->to<Vehicle>();
         boost::shared_ptr<GroupingNode> creation = vehicle->findOrCreate<GroupingNode>("creation");
         boost::shared_ptr<NewPipelineNode> newpipeline = creation->findOrCreate<NewPipelineNode>("pipeline");
-
         Q_UNUSED(newpipeline)
 
         boost::shared_ptr<CauvNode> node = m_actions->node.lock();
         if(node) {
             boost::shared_ptr<FluidityMessageObserver> observer = boost::make_shared<FluidityMessageObserver>(vnode);
             node->addMessageObserver(observer);
-            connect(observer.get(), SIGNAL(discoveryMessageReceieved()), this, SLOT(stopDiscovery()));
         }
 
         boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
-
         connect(pipelines.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
                 this, SLOT(setupPipeline(boost::shared_ptr<Node>)));
 
-        startDiscovery();
-
     } catch(std::runtime_error& e) {
         error() << "FluidityPlugin::setupVehicle: Expecting Vehicle Node" << e.what();
-    }
-}
-
-void FluidityPlugin::startDiscovery(){
-    m_discoveryTimer.setSingleShot(false);
-    m_discoveryTimer.setInterval(100);
-    connect(&m_discoveryTimer, SIGNAL(timeout()), this, SLOT(discover()));
-    m_discoveryTimer.start();
-}
-
-void FluidityPlugin::stopDiscovery(){
-    info() << "discovery stopped.";
-    m_discoveryTimer.stop();
-}
-
-void FluidityPlugin::discover(){
-    info() << "discovering pipelines...";
-
-    boost::shared_ptr<CauvNode> node = m_actions->node.lock();
-    if(node) {
-        node->send(boost::make_shared<PipelineDiscoveryRequestMessage>());
     }
 }
 
@@ -198,5 +164,15 @@ void FluidityPlugin::nodeClosed(liquid::LiquidNode * node) {
     }
 }
 
+void FluidityPlugin::onSubscribed(MessageType::e messageType){
+    if(messageType == MessageType::NodeAdded){
+        if(boost::shared_ptr<CauvNode> node = m_actions->node.lock()) {
+            info() << "Requesting pipeline state";
+            node->send(boost::make_shared<PipelineDiscoveryRequestMessage>());
+        } else {
+            error() << "Failed to lock CauvNode in FluidityPlugin";
+        }
+    }
+}
 
 Q_EXPORT_PLUGIN2(cauv_fluidityplugin, FluidityPlugin)
