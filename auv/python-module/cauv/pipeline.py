@@ -345,88 +345,85 @@ class Model(messaging.MessageObserver):
     
     def set(self, state, timeout=3.0, clear=True):
         '''Set the state of the image pipeline based on 'state'.'''
-        nodeTypes = {node_id: messaging.NodeType(node.type) for (node_id, node) in state.nodes.iteritems()}
-        nodeArcs = {node_id: {key: messaging.NodeOutput(output[0], output[1], messaging.OutputType(0), 0) for key, output in node.inarcs.iteritems()} for (node_id, node) in state.nodes.iteritems()}
-        nodeParams = {node_id: node.params for (node_id, node) in state.nodes.iteritems()}
-        self.send(messaging.SetPipelineMessage(self.pipeline_name, nodeTypes, nodeArcs, nodeParams))
-        """
         debug("Setting pipeline %s." %(self.pipeline_name))
-        if clear: self.clear()
-        id_map = {}
-        node_map = {}
-        # first ensure all nodes are present
-        for old_id, node in state.nodes.items():
-            try:
-                id_map[old_id] = self.addSynchronous(node.type, timeout)
-            except RuntimeError, e:
-                error(str(e) + ": attempted to add node %s" % node.type)
-                debug('attempting to continue...')
-                id_map[old_id] = None
-            node_map[old_id] = node
-            #print id_map[old_id], 'is new id for', old_id, node.type, node.params
-        connected_inputs = set()
-        for old_id, node in state.nodes.items():
-            for input in node.inarcs.keys():
-                if isinstance(input, messaging.LocalNodeInput):
-                    input_key = input.input
-                else:
-                    input_key = input
-                (other, output) = node.inarcs[input]
-                if other != 0 and id_map[other] is not None:
-                    connected_inputs.add((old_id, input_key))
-        # then set all parameter values (for non-connected parameters only)
-        for old_id, node in state.nodes.items():
-            id = id_map[old_id]
-            if id is None:
-                warning('skipping parameters for node that was not added: %s' %
-                        str(node.params))
-                continue
-            if node.type in NodeParam_Filters:
-                warning('filtering parameters of type %s node' % messaging.NodeType(node.type))
-                params = NodeParam_Filters[node.type](node.params)
-                debug('Filtered parameters:\n%s' % params)
-            else:
-                params = node.params
-            for param in params.keys():
-                if isinstance(param, messaging.LocalNodeInput):
-                    param_key = param.input
-                else:
-                    param_key = param
-                if (old_id, param_key) in connected_inputs:
-                    debug('skipping setting connected parameter: %s:%s' % (old_id, param))
-                    continue
-                debug('%d.%s = %s (%s)' % (id, param, params[param], type(params[param])))
+        try:
+            nodeTypes = {node_id: messaging.NodeType(node.type) for (node_id, node) in state.nodes.iteritems()}
+            nodeArcs = {node_id: {key: messaging.NodeOutput(output[0], output[1], messaging.OutputType(0), 0) for key, output in node.inarcs.iteritems()} for (node_id, node) in state.nodes.iteritems()}
+            nodeParams = {node_id: node.params for (node_id, node) in state.nodes.iteritems()}
+            self.send(messaging.SetPipelineMessage(self.pipeline_name, nodeTypes, nodeArcs, nodeParams))
+        except:
+            error("Pipeline could not be loaded in one step, falling back to adding nodes individually)")
+            if clear: self.clear()
+            id_map = {}
+            node_map = {}
+            # first ensure all nodes are present
+            for old_id, node in state.nodes.items():
                 try:
-                    self.setParameterSynchronous(id, param_key, toNPV(params[param]), timeout)
+                    id_map[old_id] = self.addSynchronous(node.type, timeout)
                 except RuntimeError, e:
-                    error(str(e) + ": attempted to set parameter %s to %s" % ((id, param_key), params[param]))
+                    error(str(e) + ": attempted to add node %s" % node.type)
                     debug('attempting to continue...')
-        # finally add links
-        for old_id, node in state.nodes.items():
-            # strictly speaking only one of these should be necessary, since
-            # arcs have two ends...
-            id = id_map[old_id]
-            if id is None:
-                warning('skipping arcs for node that was not added: %s' %
-                        str(node.inarcs))
-                continue
-            for input in node.inarcs.keys():
-                if isinstance(input, messaging.LocalNodeInput):
-                    input_key = input.input
+                    id_map[old_id] = None
+                node_map[old_id] = node
+                #print id_map[old_id], 'is new id for', old_id, node.type, node.params
+            connected_inputs = set()
+            for old_id, node in state.nodes.items():
+                for input in node.inarcs.keys():
+                    if isinstance(input, messaging.LocalNodeInput):
+                        input_key = input.input
+                    else:
+                        input_key = input
+                    (other, output) = node.inarcs[input]
+                    if other != 0 and id_map[other] is not None:
+                        connected_inputs.add((old_id, input_key))
+            # then set all parameter values (for non-connected parameters only)
+            for old_id, node in state.nodes.items():
+                id = id_map[old_id]
+                if id is None:
+                    warning('skipping parameters for node that was not added: %s' %
+                            str(node.params))
+                    continue
+                if node.type in NodeParam_Filters:
+                    warning('filtering parameters of type %s node' % messaging.NodeType(node.type))
+                    params = NodeParam_Filters[node.type](node.params)
+                    debug('Filtered parameters:\n%s' % params)
                 else:
-                    input_key = input
-                (other, output) = node.inarcs[input]
-                if other != 0 and id_map[other] is not None:
+                    params = node.params
+                for param in params.keys():
+                    if isinstance(param, messaging.LocalNodeInput):
+                        param_key = param.input
+                    else:
+                        param_key = param
+                    if (old_id, param_key) in connected_inputs:
+                        debug('skipping setting connected parameter: %s:%s' % (old_id, param))
+                        continue
+                    debug('%d.%s = %s (%s)' % (id, param, params[param], type(params[param])))
                     try:
-                        self.addArcSynchronous(id_map[other], output, id, input_key, timeout)
+                        self.setParameterSynchronous(id, param_key, toNPV(params[param]), timeout)
                     except RuntimeError, e:
-                        error(str(e) + ': attempted to add arc %s --> %s' % ((id_map[other], output),(id, input)))
+                        error(str(e) + ": attempted to set parameter %s to %s" % ((id, param_key), params[param]))
                         debug('attempting to continue...')
-            #for output in node.outarcs.keys():
-            #    (other, input) = node.outarcs[output]
-            #    if other != 0:
-            #        print 'set outarc:', id_map[id], output, other, input
-            """
+            # finally add links
+            for old_id, node in state.nodes.items():
+                # strictly speaking only one of these should be necessary, since
+                # arcs have two ends...
+                id = id_map[old_id]
+                if id is None:
+                    warning('skipping arcs for node that was not added: %s' %
+                            str(node.inarcs))
+                    continue
+                for input in node.inarcs.keys():
+                    if isinstance(input, messaging.LocalNodeInput):
+                        input_key = input.input
+                    else:
+                        input_key = input
+                    (other, output) = node.inarcs[input]
+                    if other != 0 and id_map[other] is not None:
+                        try:
+                            self.addArcSynchronous(id_map[other], output, id, input_key, timeout)
+                        except RuntimeError, e:
+                            error(str(e) + ': attempted to add arc %s --> %s' % ((id_map[other], output),(id, input)))
+                            debug('attempting to continue...')
    
     def send(self, msg):
         '''Send a message to the pipeline group.'''
