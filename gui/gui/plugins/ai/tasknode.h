@@ -44,24 +44,24 @@ class AiTaskNode : public BooleanNode {
     void removeCondition(boost::shared_ptr<AiConditionNode> condition);
     std::set<boost::shared_ptr<AiConditionNode> > getConditions();
 
-    void addPipelineId(std::string pipe);
-    void removePipelineId(std::string pipe);
+    void addPipelineId(std::string const& pipe);
+    void removePipelineId(std::string const& pipe);
     std::set<std::string> getPipelineIds();
 
-    boost::shared_ptr<Node> setDebug(std::string name, ParamValue value);
-    void removeDebug(std::string name);
+    boost::shared_ptr<Node> setDebug(std::string const& name, ParamValue value);
+    void removeDebug(std::string const& name);
     std::map<std::string, boost::shared_ptr<Node> > getDebugValues();
 
-    boost::shared_ptr<Node> setStaticOption(std::string name, ParamValue value);
-    void removeStaticOption(std::string name);
+    boost::shared_ptr<Node> setStaticOption(std::string const& name, ParamValue value);
+    void removeStaticOption(std::string const& name);
     std::map<std::string, boost::shared_ptr<Node> > getStaticOptions();
 
-    boost::shared_ptr<Node> setDynamicOption(std::string name, ParamValue value);
-    void removeDynamicOption(std::string name);
+    boost::shared_ptr<Node> setDynamicOption(std::string const& name, ParamValue value);
+    void removeDynamicOption(std::string const& name);
     std::map<std::string, boost::shared_ptr<Node> > getDynamicOptions();
 
-    boost::shared_ptr<Node> setTaskOption(std::string name, ParamValue value);
-    void removeTaskOption(std::string name);
+    boost::shared_ptr<Node> setTaskOption(std::string const& name, ParamValue value);
+    void removeTaskOption(std::string const& name);
     std::map<std::string, boost::shared_ptr<Node> > getTaskOptions();
 
     void forceSet();
@@ -83,7 +83,7 @@ class LiquidTaskNode :
     Q_OBJECT
 public:
     LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem *parent = 0);
-    void rebuildContents();
+    void buildContents();
     std::string taskId() const;
     void initButtons();
 

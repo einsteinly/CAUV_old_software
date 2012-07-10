@@ -38,16 +38,16 @@ class AiConditionNode : public BooleanNode {
         AiConditionNode(const nid_t id);
         virtual ~AiConditionNode();
 
-        boost::shared_ptr<Node> setDebug(std::string name, ParamValue value);
-        void removeDebug(std::string name);
+        boost::shared_ptr<Node> setDebug(std::string const& name, ParamValue value);
+        void removeDebug(std::string const& name);
         std::map<std::string, boost::shared_ptr<Node> > getDebugValues();
 
-        boost::shared_ptr<Node> setOption(std::string name, ParamValue value);
-        void removeOption(std::string name);
+        boost::shared_ptr<Node> setOption(std::string const& name, ParamValue value);
+        void removeOption(std::string const& name);
         std::map<std::string, boost::shared_ptr<Node> > getOptions();
 
-        void addPipelineId(std::string);
-        void removePipelineId(std::string);
+        void addPipelineId(std::string const&);
+        void removePipelineId(std::string const&);
         std::set<std::string> getPipelineIds();
 
         void forceSet();
@@ -72,7 +72,7 @@ class LiquidConditionNode :
 
 public:
     LiquidConditionNode(boost::shared_ptr<AiConditionNode> node, QGraphicsItem *parent = 0);
-    virtual void rebuildContents();
+    virtual void buildContents();
     std::string conditionId() const;
 
     virtual liquid::ArcSource * getSourceFor(boost::shared_ptr<Node> const&) const;
@@ -81,7 +81,7 @@ public:
     ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink* to_sink);
 
 protected Q_SLOTS:
-    void highlightStatus(QVariant);
+    void highlightStatus(QVariant const&);
     void ensureConnected();
 
 protected:

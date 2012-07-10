@@ -53,10 +53,8 @@ public:
 public Q_SLOTS:
     void setupVehicle(boost::shared_ptr<Node> node);
     void setupPipeline(boost::shared_ptr<Node> node);
-    void stopDiscovery();
-    void startDiscovery();
-    void discover();
     void nodeClosed(liquid::LiquidNode * node);
+    void onSubscribed(MessageType::e messageType);
 
 private:
     friend class LiquidFluidityNode;
@@ -64,7 +62,6 @@ private:
     // this is set by the first instance of a FluidityPlugin to be initialised.
     static boost::weak_ptr<CauvNode>& theCauvNode();
 
-    QTimer m_discoveryTimer;
 
 };
 

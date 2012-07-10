@@ -27,18 +27,25 @@
 namespace cauv {
 namespace gui {
 
-class FluidityMessageObserver: public QObject, public MessageObserver{
+class FluiditySubscribeObserver : public QObject, public SubscribeObserver {
     Q_OBJECT
+public:
+    FluiditySubscribeObserver();
+    virtual ~FluiditySubscribeObserver();
+    void onSubscribed(MessageType::e messageType);
+Q_SIGNALS:
+    void onSubscriptionConfirmation(MessageType::e);
+};
+
+class FluidityMessageObserver: public MessageObserver{
     public:
         FluidityMessageObserver(boost::shared_ptr< Node > parent);
         virtual ~FluidityMessageObserver();
         void onPipelineDiscoveryResponseMessage(PipelineDiscoveryResponseMessage_ptr m);
         void onNodeAddedMessage(NodeAddedMessage_ptr m);
-        void addPipeline(std::string);
+        void addPipeline(std::string const&);
     protected:
         boost::shared_ptr<Node> m_parent;
-Q_SIGNALS:
-        void discoveryMessageReceieved();
 };
 
 } // namespace gui

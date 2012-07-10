@@ -16,6 +16,7 @@ set ( AI_PLUGIN_H
     ainode.h
     tasknode.h
     conditionnode.h
+    aimessaging.h
 )
 
      

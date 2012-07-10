@@ -102,7 +102,7 @@ public:
 public Q_SLOTS:
     void registerDelegate(node_type nodeType,
                           boost::shared_ptr<AbstractNodeDelegate> delegate);
-    void sizeToFit(QModelIndex);
+    void sizeToFit();
 
 private Q_SLOTS:
     void applyFilters();
