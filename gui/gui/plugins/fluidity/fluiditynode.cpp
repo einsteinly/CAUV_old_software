@@ -56,6 +56,7 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
 
     m_source->setParentItem(this);
     m_source->setZValue(10);
+    this->setClosable(false);
     
     boost::shared_ptr<CauvNode> cauv_node = FluidityPlugin::theCauvNode().lock();
     if(cauv_node){
@@ -95,11 +96,6 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
 
     connect(this, SIGNAL(xChanged()), m_source, SIGNAL(xChanged()));
     connect(this, SIGNAL(yChanged()), m_source, SIGNAL(yChanged()));
-}
-
-LiquidFluidityNode::~LiquidFluidityNode(){
-    debug() << "~LiquidFluidityNode()";
-    unregister(this);
 }
 
 void LiquidFluidityNode::beginMaximise(){
