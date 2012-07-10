@@ -20,7 +20,8 @@ add_executable (
     xsens_imu.cpp
     sbg_imu.cpp
     sim_imu.cpp
-    arm_mcb.cpp
+    barracuda_mcb.cpp
+    #redherring_mcb.cpp
     pid.cpp
 )
 cauv_install ( control )

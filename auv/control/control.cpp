@@ -25,11 +25,13 @@
 #include <generated/types/RedHerringBatteryStatusMessage.h>
 #include <generated/types/Controller.h>
 
+#include "control.h"
 #include "xsens_imu.h"
 #include "sbg_imu.h"
 #include "sim_imu.h"
 #include "mcb.h"
-#include "arm_mcb.h"
+#include "barracuda_mcb.h"
+//#include "redherring_mcb.h"
 #include "pid.h"
 
 #include <boost/shared_ptr.hpp>
@@ -62,70 +64,6 @@ MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
     l.vstern += r.vstern;
     return l;
 }
-
-class ControlLoops : public MessageObserver, public IMUObserver, public MCBObserver
-{
-    public:
-        ControlLoops(boost::shared_ptr<Mailbox> mb);
-        ~ControlLoops();
-
-        void set_mcb(boost::shared_ptr<MCB> mcb);
-
-        void start();
-        void stop();
-
-        //from IMU
-        virtual void onTelemetry(const floatYPR& attitude);
-
-        //from MCB
-        virtual void onDepth(float stern, float bow);
-
-    protected:
-        boost::shared_ptr<MCB> m_mcb;
-        bool m_control_enabled[Controller::NumValues];
-        PIDControl m_controllers[Controller::NumValues];
-        MotorDemand m_demand[Controller::NumValues];
-        
-        //From messages
-        virtual void onMotorMessage(MotorMessage_ptr m);
-        virtual void onMotorRampRateMessage(MotorRampRateMessage_ptr m);
-        virtual void onSetMotorMapMessage(SetMotorMapMessage_ptr m);
-
-        virtual void onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr m);
-        virtual void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr m);
-        virtual void onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr m);
-
-        virtual void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr m);
-        virtual void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr m);
-        virtual void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr m);
-
-    private:
-        boost::thread m_motorControlLoopThread;
-        
-        void motorControlLoop();
-        int motorMap(float const& demand_value, MotorID mid);
-        void updateMotorControl();
-
-
-        int motor_values[MotorID::NumValues];
-
-        int prop_value;
-        int hbow_value;
-        int vbow_value;
-        int hstern_value;
-        int vstern_value;
-
-        MotorMap prop_map;
-        MotorMap hbow_map;
-        MotorMap vbow_map;
-        MotorMap hstern_map;
-        MotorMap vstern_map;
-
-        unsigned m_max_motor_delta;
-        unsigned m_motor_updates_per_second;
-
-        boost::shared_ptr<Mailbox> m_mb;
-};
 
 ControlLoops::ControlLoops(boost::shared_ptr<Mailbox> mb)
 : prop_value(0), hbow_value(0), vbow_value(0),
@@ -351,7 +289,7 @@ void ControlLoops::motorControlLoop()
     {
         m_control_enabled[i] = false;
         m_controllers[i].reset();
-        m_controllers[i].controlee = (Controller)i;
+        m_controllers[i].controlee = Controller::e(i);
         m_demand[i] = no_demand;
 
         boost::shared_ptr<ControllerStateMessage> msg = m_controllers[i].stateMsg();
@@ -378,7 +316,7 @@ void ControlLoops::motorControlLoop()
     debug() << "Control loop thread exiting";
 }
 
-int ControlLoops::motorMap(float const& demand_value, MotorID mid)
+int ControlLoops::motorMap(float const& demand_value, MotorID::e mid)
 {
     MotorMap m(0, 0, 127, -127);
     switch(mid)
@@ -442,7 +380,6 @@ void ControlLoops::updateMotorControl()
     
     MotorDemand mapped_demand;
 
-    //bleh, duplication all over the place. Needs a refactor
     mapped_demand.prop = motorMap(total_demand.prop, MotorID::Prop);
     mapped_demand.hbow = motorMap(total_demand.hbow, MotorID::HBow);
     mapped_demand.vbow = motorMap(total_demand.vbow, MotorID::VBow);
@@ -463,6 +400,7 @@ void ControlLoops::updateMotorControl()
     m_mb->sendMessage(boost::make_shared<MotorStateMessage>(MotorID::VStern, vstern_value), RELIABLE_MSG);
 }
 
+namespace cauv{
 class TelemetryBroadcaster : public IMUObserver, public MCBObserver
 {
     public:
@@ -471,15 +409,18 @@ class TelemetryBroadcaster : public IMUObserver, public MCBObserver
         {
         }
 
-        ~TelemetryBroadcaster(){
+        ~TelemetryBroadcaster()
+        {
             stop();
         }
 
-        void start() {
+        void start()
+        {
             stop();
             m_telemetryThread = boost::thread(&TelemetryBroadcaster::sendTelemetry, this);
         }
-        void stop() {
+        void stop()
+        {
             if (m_telemetryThread.get_id() != boost::thread::id()) {
                 m_telemetryThread.interrupt();    
                 m_telemetryThread.join();    
@@ -487,12 +428,14 @@ class TelemetryBroadcaster : public IMUObserver, public MCBObserver
         }
 
         //from MCB
-        virtual void onDepth(float fore, float aft) {
+        virtual void onDepth(float fore, float aft)
+        {
             m_depth = (fore + aft) / 2;
         }
 
         //from IMU
-        virtual void onTelemetry(const floatYPR& attitude) {
+        virtual void onTelemetry(const floatYPR& attitude)
+        {
             m_orientation = attitude;
         }
 
@@ -503,6 +446,7 @@ class TelemetryBroadcaster : public IMUObserver, public MCBObserver
         float m_depth;
         
         boost::thread m_telemetryThread;
+
         void sendTelemetry()
         {
             try {
@@ -518,6 +462,7 @@ class TelemetryBroadcaster : public IMUObserver, public MCBObserver
             debug() << "Send telemetry thread ending";
         }
 };
+} // namespace cauv
 
 class NotRootException : public std::exception
 {
@@ -527,35 +472,6 @@ class NotRootException : public std::exception
         }
 };
 
-//Mess of initialisation code starts here...
-
-class ControlNode : public CauvNode
-{
-    public:
-        ControlNode();
-        virtual ~ControlNode();
-    
-#ifdef CAUV_MCB_IS_FTDI
-        void setPICMcb(int id);
-#else 
-        void setPICMcb(std::string filename);
-#endif
-        void setArmMcb(std::string port);
-
-        void setXsens(int id);
-        void setSBG (std::string port, int baud_rate, int pause_time);
-        void setSim ();
-    
-    protected:
-        boost::shared_ptr<MCB> m_mcb;
-        boost::shared_ptr<IMU> m_imu;
-        boost::shared_ptr<ControlLoops> m_controlLoops;
-        boost::shared_ptr<TelemetryBroadcaster> m_telemetryBroadcaster;
-    
-        virtual void addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos);
-        virtual int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);
-        virtual void onRun();
-};
 
 ControlNode::ControlNode() : CauvNode("Control")
 {
@@ -614,7 +530,7 @@ void ControlNode::setXsens(int id)
     }
 }
 
-void ControlNode::setSBG (std::string port, int baud_rate, int pause_time)
+void ControlNode::setSBG(std::string const& port, int baud_rate, int pause_time)
 {
     // start up the SBG IMU
 
@@ -633,27 +549,29 @@ void ControlNode::setSBG (std::string port, int baud_rate, int pause_time)
 }
 
 #ifdef CAUV_MCB_IS_FTDI
-void ControlNode::setPICMcb (int conn) {
-
+void ControlNode::setRedHerringMCB(int conn)
+{
+    #warning !!! unimplemented
 }
 #else
-void ControlNode::setPICMcb (std::string port) {
-
+void ControlNode::setRedHerringMCB(std::string const& port)
+{
+    #warning !!! unimplemented
 }
 #endif
 
-void ControlNode::setSim (void) {
+void ControlNode::setSimIMU()
+{
     boost::shared_ptr<SimIMU> sim = boost::make_shared<SimIMU>();
     addMessageObserver(sim);
     m_imu = sim;
-    m_mcb = sim;
-    joinGroup("pressure");
-    joinGroup("state");
+    subMessage(StateMessage());
 }
 
-void ControlNode::setArmMcb(std::string port) {
-    boost::shared_ptr<ArmMcb> arm = boost::make_shared<ArmMcb>(port);
-    m_mcb = arm;
+void ControlNode::setBarracudaMCB(std::string const& port)
+{
+    boost::shared_ptr<BarracudaMCB> mcb = boost::make_shared<BarracudaMCB>(port, m_controlLoops);
+    m_mcb = mcb;
 }
 
 void ControlNode::addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos)
@@ -665,7 +583,7 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
         ("xsens,x", po::value<int>()->default_value(0), "USB device id of the Xsens")
         ("sbg,b", po::value<std::string>()->default_value("/dev/ttyUSB1"), "TTY device for SBG IG500A")
         ("imu,i", po::value<std::string>()->default_value("xsens"), "default Xsens USB device or TTY device for SBG IG500A, or both")
-        ("mcb,m", po::value<std::string>()->default_value("PIC"), "default mcb to use: PIC or ARM")
+        ("mcb,m", po::value<std::string>()->default_value("barracuda"), "default mcb to use: barracuda or redherring")
 
 #ifdef CAUV_MCB_IS_FTDI
         ("port,p", po::value<int>()->default_value(0), "FTDI device id of the MCB")
@@ -687,13 +605,17 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     bool use_xsens = false, use_sbg = false, use_sim = false;
     if (vm["imu"].as<std::string>() == ("xsens")) use_xsens = true;
     if (vm["imu"].as<std::string>() == ("sbg")) use_sbg = true;
-    if (vm["imu"].as<std::string>() == ("sim") || vm.count("simulation")) {
+    if (vm["imu"].as<std::string>() == ("both")){
+        use_xsens = true;    
+        use_sbg = true;
+    }
+    if (vm.count("simulation")) {
         use_sim = true;
         use_xsens = false;
         use_sbg = false;
     }
     if (use_sim) {
-        setSim();
+        setSimIMU();
     }
     if (vm.count("xsens") && use_xsens) {
         setXsens(vm["xsens"].as<int>());
@@ -702,25 +624,26 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
         setSBG(vm["sbg"].as<std::string>(), 115200, 10);
     }
 #ifdef CAUV_MCB_IS_FTDI
-    if (vm["mcb"].as<std::string>() == ("PIC")) {
-        setPICMcb(vm["port"].as<int>());
+    if (vm["mcb"].as<std::string>() == ("redherring")) {
+        setRedHerringMCB(vm["port"].as<int>());
     }
 #else
-    if (vm["mcb"].as<std::string>() == ("PIC")) {
-        setPICMcb(vm["port"].as<std::string>());
+    if (vm["mcb"].as<std::string>() == ("redherring")) {
+        setRedHerringMCB(vm["port"].as<std::string>());
     } 
 #endif
-    if (vm["mcb"].as<std::string>() == ("ARM")) {
-        setArmMcb(vm["port"].as<std::string>());
+    if (vm["mcb"].as<std::string>() == ("barracuda")) {
+        setBarracudaMCB(vm["port"].as<std::string>());
     }
-//    if (vm.count("depth-offset") && vm.count("depth-scale")) {
-//        float offset = vm["depth-offset"].as<float>();
-//        float scale = vm["depth-scale"].as<float>();
-//        m_controlLoops->onDepthCalibrationMessage(boost::make_shared<DepthCalibrationMessage>(offset,scale,offset,scale));
-//    }
-//    else if (vm.count("depth-offset") || vm.count("depth-scale")) {
-//        warning() << "Need both offset and depth for calibration; ignoring calibration input";   
-//    }
+
+    if (vm.count("depth-offset") && vm.count("depth-scale")) {
+        float offset = vm["depth-offset"].as<float>();
+        float scale  = vm["depth-scale"].as<float>();
+        m_mcb->onDepthCalibrationMessage(boost::make_shared<DepthCalibrationMessage>(offset,scale,offset,scale));
+    }
+    else if (vm.count("depth-offset") || vm.count("depth-scale")) {
+        warning() << "Need both offset and depth for calibration; ignoring calibration input";   
+    }
 
     return 0;
 }

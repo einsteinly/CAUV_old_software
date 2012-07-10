@@ -6,18 +6,15 @@
 
 namespace cauv {
 
-class SimIMU : public IMU, public MCB, public MessageObserver {
+class SimIMU : public IMU, public MessageObserver {
     public:
-    virtual void start();
-    virtual void setMotorState(MotorDemand &demand);
+        virtual void start();
     protected:
-    virtual void onStateMessage(StateMessage_ptr m);
-    virtual void onPressureMessage(PressureMessage_ptr m);
-    virtual void onDepthCalibrationMessage(DepthCalibrationMessage_ptr m);
+        virtual void onStateMessage(StateMessage_ptr m);
     private:
-    DepthCalibrationMessage_ptr m_depthCalibration;
+        DepthCalibrationMessage_ptr m_depthCalibration;
 };
 
-}
+} // namespace cauv
 
 #endif

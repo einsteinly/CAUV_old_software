@@ -8,14 +8,14 @@ using namespace cauv;
 
 //TODO: merge this into time.h (There's a conflicting definition in
 //mapping/stuff.h which returns seconds
-float operator-(TimeStamp const& l, TimeStamp const& r)
+static float operator-(TimeStamp const& l, TimeStamp const& r)
 {
     int secs_delta = l.secs - r.secs;
     float msecs_delta = (l.musecs - r.musecs) / 1000.0f;
     return 1000 * secs_delta + msecs_delta;
 }
 
-PIDControl::PIDControl(Controller controlee)
+PIDControl::PIDControl(Controller::e controlee)
         : controlee(controlee),
           target(0),
           Kp(1), Ki(1), Kd(1), scale(1),
