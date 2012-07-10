@@ -182,7 +182,7 @@ class SlamCloudGraph{
         void setParams(CloudGraphParams params){
             m_params = params;
             // !!! FIXME
-            std::system(std::string(mkStr() << "mkdir -p" << m_params.persistence_dir).c_str());
+            std::system(std::string(mkStr() << "mkdir -p " << m_params.persistence_dir).c_str());
         }
 
         void setParams(float overlap_threshold,
@@ -327,6 +327,7 @@ class SlamCloudGraph{
                     m_key_scan_indices[p] = m_key_scans.size();
                     m_key_scan_indices_in_all[p] = m_all_scans.size();
                     m_key_scans.push_back(p);
+                    saveKeyScan(p, 0);
                     m_all_scans.push_back(p);
                     //transformation = Eigen::Matrix4f::Identity();
                     transformation = guess;
@@ -617,10 +618,14 @@ class SlamCloudGraph{
             cp << std::flush;
             cp.close();
             
+            // !!!! FIXME: working here: p->constraints() is always empty
+            // because constraints are stored on the parent, and at this point
+            // p has no children (since it is the newest pose itself)
             SlamCloudLocation::rel_pose_vec constraints = p->constraints();
             location_vec constrained_to = p->constrainedTo();
             assert(constrained_to.size() == constraints.size());
-
+        
+            debug() << "scan" << id << "has" << constraints.size() << "constraints";
             for(std::size_t i = 0; i < constraints.size(); i++){
                 const std::size_t parent_id = m_key_scan_indices[constrained_to[i]];
                 std::string fname = mkStr() << m_params.persistence_dir << "/" << parent_id<< ".constraints";
