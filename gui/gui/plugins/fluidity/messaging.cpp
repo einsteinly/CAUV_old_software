@@ -21,6 +21,16 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
+FluiditySubscribeObserver::FluiditySubscribeObserver() {
+    qRegisterMetaType<MessageType::e>("MessageType::e");
+}
+FluiditySubscribeObserver::~FluiditySubscribeObserver() {}
+
+void FluiditySubscribeObserver::onSubscribed(MessageType::e messageType){
+    Q_EMIT onSubscriptionConfirmation(messageType);
+}
+
+
 FluidityMessageObserver::FluidityMessageObserver(boost::shared_ptr<Node> parent) : m_parent(parent){
 }
 
@@ -29,15 +39,16 @@ FluidityMessageObserver::~FluidityMessageObserver(){
 
 
 void FluidityMessageObserver::onPipelineDiscoveryResponseMessage(PipelineDiscoveryResponseMessage_ptr m) {
+    info() << *m;
     addPipeline(m->pipelineName());
-    Q_EMIT discoveryMessageReceieved();
 }
 
 void FluidityMessageObserver::onNodeAddedMessage(NodeAddedMessage_ptr m){
+    info() << *m;
     addPipeline(m->pipelineName());
 }
 
-void FluidityMessageObserver::addPipeline(std::string name) {
+void FluidityMessageObserver::addPipeline(std::string const& name) {
     boost::shared_ptr<GroupingNode> pipelines = m_parent->findOrCreate<GroupingNode>("pipelines");
 
     QString full_pipeline_name = QString::fromStdString(name);

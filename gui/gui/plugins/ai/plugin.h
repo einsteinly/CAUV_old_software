@@ -38,7 +38,6 @@ public:
     AiPlugin();
     virtual const QString name() const;
     virtual void initialise();
-    virtual void onSubscribed(MessageType::e messageType);
 
     typedef liquid::LiquidNode LiquidNode;
 
@@ -48,6 +47,7 @@ public Q_SLOTS:
     void setupVehicle(boost::shared_ptr<Node> node);
     void reloadAi();
     void nodeClosed(LiquidNode * node);
+    void onSubscribed(MessageType::e messageType);
 
 protected Q_SLOTS:
     void resetTask();

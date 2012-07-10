@@ -80,7 +80,9 @@ void AiPlugin::initialise(){
     m_actions->nodes->registerListFilter(m_filter);
 
     if(boost::shared_ptr<CauvNode> node = m_actions->node.lock()) {
-        //node->addSubscriptionObserver()
+        boost::shared_ptr<AiSubscribeObserver> sub = boost::make_shared<AiSubscribeObserver>();
+        connect(sub.get(), SIGNAL(onSubscriptionConfirmation(MessageType::e)), this, SLOT(onSubscribed(MessageType::e)));
+        node->addSubscribeObserver(sub);
     } else error() << "Failed to lock CauvNode while setting up vehicle ai";
 }
 
