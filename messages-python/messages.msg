@@ -1019,6 +1019,10 @@ group gui
         name : string;
         value : float;
     }
+
+    message RemoteControlsAlive : 105
+    {
+    }
 }
 
 group pl_gui
