@@ -19,6 +19,8 @@
 #include <boost/make_shared.hpp>
 
 #include <utility/string.h>
+#include <map>
+#include <list>
 
 using namespace cauv::imgproc;
 
@@ -31,6 +33,7 @@ ImageProcessor::ImageProcessor(mb_ptr_t mb, boost::shared_ptr<Scheduler> schedul
     m_mailbox->subMessage(SetNodeParameterMessage());
     m_mailbox->subMessage(AddArcMessage());
     m_mailbox->subMessage(RemoveArcMessage());
+    m_mailbox->subMessage(SetPipelineMessage());
     m_mailbox->subMessage(GraphRequestMessage());
     m_mailbox->subMessage(ForceExecRequestMessage());
     m_mailbox->subMessage(ClearPipelineMessage());
@@ -286,6 +289,141 @@ void ImageProcessor::onRemoveArcMessage(RemoveArcMessage_ptr m){
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
+}
+
+void ImageProcessor::onSetPipelineMessage(SetPipelineMessage_ptr m){
+    lock_t l(m_nodes_lock);
+    //translation between ids
+    try{
+        //clear the existing pipeline
+        while(m_nodes.size()){
+            node_id n = m_nodes.rbegin()->first;
+            removeNode(n);
+        }
+    }
+    catch(std::exception& e){
+        error() << __func__ << ":" <<e.what();
+    }
+    std::map<node_id, node_id> old_id2new_id;
+    //need to add all nodes first so that arcs can be added
+    for(std::map<node_id, NodeType::e>::const_iterator node_to_add = m->nodeTypes().begin();
+        node_to_add != m->nodeTypes().end(); node_to_add++){
+        try{
+            node_ptr_t node = NodeFactoryRegister::create(*m_scheduler, *this, m_name, node_to_add->second);
+            if(node->isInputNode()){
+                m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
+            old_id2new_id[node_to_add->first] = node->id();
+            }
+        }
+        catch(std::exception& e){
+            error() << __func__ << ":" <<e.what();
+        }
+    }
+    //params that dont need to be set because they are filled by arcs
+    std::map<node_id, std::list<input_id> > params_with_arcs;
+    //now fill in arcs
+    for(std::map<node_id, Node::msg_node_input_map_t >::const_iterator arcs_to_add = m->nodeConnections().begin();
+        arcs_to_add != m->nodeConnections().end(); arcs_to_add++){
+        try{
+            node_ptr_t to = lookup(old_id2new_id[arcs_to_add->first]);
+            if(!to) throw id_error(MakeString() << "invalid node:" << arcs_to_add->first);
+            std::list<input_id> node_params_set;
+            
+            for(Node::msg_node_input_map_t::const_iterator arc_map = arcs_to_add->second.begin();
+                arc_map != arcs_to_add->second.end(); arc_map++){
+                try{
+                    node_ptr_t from = lookup(old_id2new_id[arc_map->second.node]);
+                    if(!from) throw id_error(MakeString() << "invalid node:" << arc_map->second.node);
+                    
+                    output_id output = arc_map->second.output;
+                    input_id input = arc_map->first.input;
+                    
+                    Node::msg_node_input_map_t il = to->inputLinks();
+                    NodeOutput old_from;
+                    
+                    // remove any existing arc to input first:
+                    Node::msg_node_input_map_t old_il = to->inputLinks();
+                    Node::msg_node_input_map_t::const_iterator old_il_in;
+                    //??use find??
+                    for(old_il_in = old_il.begin(); old_il_in != old_il.end(); old_il_in++)
+                        if(old_il_in->first.input == input){
+                            old_from = old_il_in->second;
+                            break;
+                        }
+                    if(old_il_in != old_il.end() && old_il_in->second.node){
+                        node_ptr_t old_from = lookup(old_il_in->second.node);
+                        if(old_from)
+                            old_from->clearOutput(old_il_in->second.output, to, input);
+                    }else if(old_il_in == old_il.end()){
+                        error() << "badness: node" << arc_map->second.node
+                                << "has no output link record to input" << input
+                                << "on node" << arcs_to_add->first;
+                    }
+                    to->clearInput(input);
+
+                    from->setOutput(output, to, input);
+                    to->setInput(input, from, output);
+                    
+                    node_params_set.push_back(input);
+                }
+                catch(std::exception& e){
+                    error() << __func__ << ":" <<e.what();
+                }
+            }
+            params_with_arcs[arcs_to_add->first] = node_params_set;
+        }
+        catch(std::exception& e){
+            error() << __func__ << ":" <<e.what();
+        }
+    }
+    for(std::map<node_id, Node::msg_node_param_map_t>::const_iterator params_to_add = m->nodeParams().begin();
+        params_to_add != m->nodeParams().end(); params_to_add++){
+        try{
+            std::list<input_id> exclude_params = params_with_arcs.find(params_to_add->first)->second;
+            node_ptr_t n = lookup(old_id2new_id[params_to_add->first]);
+            for(Node::msg_node_param_map_t::const_iterator param_map = params_to_add->second.begin();
+                param_map != params_to_add->second.end(); param_map++){
+                std::list<input_id>::iterator ep_it;
+                for(ep_it = exclude_params.begin(); ep_it != exclude_params.end(); ep_it++){
+                    if(*ep_it == param_map->first.input){
+                        break;
+                    }
+                }
+                //found that param was set by inarc
+                if(ep_it != exclude_params.end()){
+                    continue;
+                }
+                try{
+                    n->setParam(param_map->first.input, param_map->second);
+                }catch(std::exception& e){
+                    error() << __func__ << ":" << e.what();
+                }
+            }
+        }catch(std::exception& e){
+            error() << __func__ << ":" << e.what();
+        }
+    }
+    try{
+        std::map<node_id, NodeType::e> node_types;
+        std::map<node_id, Node::msg_node_input_map_t > node_inputs;
+        std::map<node_id, Node::msg_node_output_map_t > node_outputs;
+        std::map<node_id, Node::msg_node_param_map_t > node_parameters;
+        
+        std::map<node_id, node_ptr_t>::const_iterator i;
+        for(i = m_nodes.begin(); i != m_nodes.end(); i++){
+            node_types[i->first] = i->second->type();
+            node_inputs[i->first] = i->second->inputLinks();
+            node_outputs[i->first] = i->second->outputLinks();
+            node_parameters[i->first] = i->second->parameters();
+        }
+
+        sendMessage(boost::make_shared<GraphDescriptionMessage>(
+            m_name, node_types, node_inputs, node_outputs, node_parameters
+        ));
+    }catch(std::exception& e){
+        error() << __func__ << ":" << e.what();
+    }
+    l.unlock();
 }
 
 void ImageProcessor::onGraphRequestMessage(GraphRequestMessage_ptr m){

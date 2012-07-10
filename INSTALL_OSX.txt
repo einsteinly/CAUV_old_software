@@ -1,0 +1,28 @@
+MAC OS X INSTALL
+---------------------------
+
+easy_install various python packages (see readme.txt)
+
+Download and install Homebrew (http://mxcl.github.com/homebrew/)
+
+Get the following packages (list may well be incomplete)
+
+brew install xz
+brew install opencv
+brew install boost --compile-from-source
+brew install ftgl
+brew install eigen
+brew install qt
+brew install qwt
+brew install cmake
+brew install graphviz
+brew install libusb
+brew install libusb-compat
+brew install libftdi
+
+Update the homebrew git repository to include our formulas. Something like...
+cd /usr/local/
+git pull ssh://data.cambridgeauv.co.uk/cauv/repos/brew.git
+
+brew install spread-src
+brew install libssrcspread

@@ -122,7 +122,8 @@ class circle_buoy(aiTask):
         script_name = 'circle_buoy'
         priority = 3
     conditions = [
-        (c['buoy_detectorCondition'], {}),
+        #(c['buoy_detectorCondition'], {}),
+        (c['stateCondition'], {'state': True}),
         ]
         
 class avoid_collision(aiTask):

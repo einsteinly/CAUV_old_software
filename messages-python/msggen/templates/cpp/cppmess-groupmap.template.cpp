@@ -1,4 +1,4 @@
-\#include <generated/groupmap.h>
+\#include "groupmap.h"
 /***  This is a generated file, do not edit ***/
 
 namespace cauv {

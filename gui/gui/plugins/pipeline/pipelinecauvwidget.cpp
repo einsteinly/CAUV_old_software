@@ -13,7 +13,7 @@
  */
 
 #include "pipelinecauvwidget.h"
-#include "pipeline/ui_pipelinecauvwidget.h"
+#include "ui_pipelinecauvwidget.h"
 
 #include <boost/make_shared.hpp>
 
@@ -27,8 +27,10 @@
 #include <pipelineWidget.h>
 #include <pipelineMessageObserver.h>
 
-using namespace cauv;
+#include <gui/core/framework/mainwindow.h>
 
+using namespace cauv;
+using namespace cauv::gui;
 
 PipelineListingObserver::PipelineListingObserver(boost::shared_ptr<CauvNode> node) : m_node(node), m_rate_limiter(1, 1000) {
     // rate limited to 1 per second
@@ -41,7 +43,7 @@ void PipelineListingObserver::onMembershipChangedMessage(MembershipChangedMessag
         m_node->send(boost::make_shared<PipelineDiscoveryRequestMessage>());
         Q_EMIT searchStarted();
     } else {
-        info() << "Membership change detected but not requesting discovery due to rate limiting";
+        debug(3) << "Membership change detected but not requesting discovery due to rate limiting";
     }
 }
 
@@ -65,47 +67,39 @@ PipelineCauvWidget::PipelineCauvWidget() :
         ui(new Ui::PipelineCauvWidget())
 {
     ui->setupUi(this);
-    m_pipeline->connect(m_pipeline, SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)), Qt::DirectConnection);
+    m_pipeline->connect(m_pipeline, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)), this, SLOT(send(boost::shared_ptr<const Message>)));
 
     ui->pipelines->hide(); // hide until its populated
     ui->layout->addWidget(m_pipeline);
 
     ui->pipelines->connect(ui->pipelines, SIGNAL(currentIndexChanged(const QString&)), m_pipeline, SLOT(setPipelineName(const QString&)));
-
-    m_tabs.append(this);
 }
 
 PipelineCauvWidget::~PipelineCauvWidget(){
-    m_node->removeMessageObserver(m_observer);
-    info() << "Removed pipline message observer";
-
-    // TODO: we need to delete the pipeline here
-    // but it crashes at the moment as its used by
-    // multiple threads (I think this is whats happening)
-    //delete m_pipeline;
 }
 
 const QString PipelineCauvWidget::name() const{
     return QString("Pipeline");
 }
 
-const QList<QString> PipelineCauvWidget::getGroups() const{
-    QList<QString> groups;
-    groups.push_back(QString("pl_gui"));
-    groups.push_back(QString("pipeline"));
-    groups.push_back(QString("membership"));
-    return groups;
-}
-
-void PipelineCauvWidget::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
-    CauvBasicPlugin::initialise(auv, node);
+void PipelineCauvWidget::initialise(){
+    boost::shared_ptr<CauvNode> node = m_actions->node.lock();
+    node->joinGroup("pl_gui");
+    node->joinGroup("pipeline");
+    node->joinGroup("membership");
+    
+    //uncomment to inject the pipelinewidget as the central widget again
+    //m_actions->window.lock()->setCentralWidget(this);
 
     node->addMessageObserver(m_observer);
     boost::shared_ptr<PipelineListingObserver> listingObserver = boost::make_shared<PipelineListingObserver>(node);
     node->addMessageObserver(listingObserver);
 
-    listingObserver->connect(listingObserver.get(), SIGNAL(searchStarted()), this, SLOT(clearPipelines()));
+    //listingObserver->connect(listingObserver.get(), SIGNAL(searchStarted()), this, SLOT(clearPipelines()));
     listingObserver->connect(listingObserver.get(), SIGNAL(pipelineDiscovered(std::string)), this, SLOT(addPipeline(std::string)));
+}
+
+void PipelineCauvWidget::shutdown(){
 }
 
 void PipelineCauvWidget::addPipeline(std::string name){
@@ -134,10 +128,13 @@ void PipelineCauvWidget::clearPipelines(){
     ui->pipelines->blockSignals(false);
 }
 
-void PipelineCauvWidget::send(boost::shared_ptr<Message> message){
+void PipelineCauvWidget::send(boost::shared_ptr<const Message> message){
     info() << message;
-    if(m_node)
-        m_node->send(message);
+    boost::shared_ptr<CauvNode> node = m_actions->node.lock(); 
+    if(node)
+        node->send(message);
+    else
+        warning() << "no node available to send message:" << message;
 }
 
 Q_EXPORT_PLUGIN2(cauv_pipelineplugin, PipelineCauvWidget)

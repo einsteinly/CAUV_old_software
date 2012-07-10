@@ -13,22 +13,26 @@
  */
 
 #include "motorcontrols.h"
-#include "motorcontrol/ui_motorcontrols.h"
+#include "ui_motorcontrols.h"
 
 #include <QLabel>
 #include <QDoubleSpinBox>
 #include <QCheckBox>
 #include <QPushButton>
 
+#include <common/cauv_node.h>
+
+#include <gui/core/framework/mainwindow.h>
+#include <gui/core/model/model.h>
+#include <gui/core/model/nodes/numericnode.h>
+#include <gui/core/model/nodes/groupingnode.h>
 #include <utility/foreach.h>
-#include <model/auv_model.h>
 
 using namespace cauv;
+using namespace cauv::gui;
 
-MotorBurstController::MotorBurstController(QPushButton * b, boost::shared_ptr<AUV::Motor> motor, int8_t speed): m_speed(speed), m_motor(motor){
-    b->connect(b, SIGNAL(pressed()), this, SLOT(burst()));
-    b->connect(b, SIGNAL(released()), this, SLOT(stop()));
-}
+MotorBurstController::MotorBurstController(boost::shared_ptr<NumericNode<int> > motor, int8_t speed):
+        m_speed(speed), m_motor(motor){}
 
 void MotorBurstController::burst(){
     m_motor->set(m_speed);
@@ -40,154 +44,160 @@ void MotorBurstController::stop() {
 
 
 
-AutopilotController::AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<AUV::Autopilot<float> > autopilot):
-        m_autopilot(autopilot),
+
+AutopilotController::AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<Node> node):
+        m_autopilot(node),
         m_enabled(enabled),
         m_target(target),
         m_actual(actual) {
 
-    //incoming events
-    // forward the boost signals to Qt signals 
-    autopilot->onUpdate.connect(boost::bind(&AutopilotController::targetUpdated, this, _1));
-    autopilot->actual->onUpdate.connect(boost::bind(&AutopilotController::actualUpdated, this, _1));
-    autopilot->enabled->onUpdate.connect(boost::bind(&AutopilotController::enabledUpdated, this, _1));
 
-    // internal events, makes GUI updates happen in GUI thread
-    connect(this, SIGNAL(targetUpdated(float)), this, SLOT(onTargetUpdate(float)));
-    connect(this, SIGNAL(actualUpdated(float)), this, SLOT(onActualUpdate(float)));
-    connect(this, SIGNAL(enabledUpdated(bool)), this, SLOT(onEnabledUpdate(bool)));
+    boost::shared_ptr<NumericNode<float> > targetNode = node->findOrCreate<NumericNode<float> >("target");
+    boost::shared_ptr<NumericNode<bool> > enabledNode = node->findOrCreate<NumericNode<bool> >("enabled");
+    boost::shared_ptr<NumericNode<float> > actualNode = node->findOrCreate<NumericNode<float> >("actual");
 
-    //outgoing events
-    enabled->connect(enabled, SIGNAL(clicked(bool)), this, SLOT(updateState(bool)));
-    target->connect(target, SIGNAL(valueChanged(double)), this, SLOT(updateTarget(double)));
-    target->connect(target, SIGNAL(editingFinished()), this, SLOT(targetEditingFinished()));
+    // sets
+    connect(target, SIGNAL(editingFinished()), this, SLOT(targetEditingFinished()));
+
+    connect(target, SIGNAL(valueChanged(double)), targetNode.get(), SLOT(set_slot(double)));
+    connect(enabled, SIGNAL(toggled(bool)), enabledNode.get(), SLOT(set_slot(bool)));
+
+    // updates
+    connect(enabledNode.get(), SIGNAL(onUpdate(bool)), enabled, SLOT(setChecked(bool)));
+    connect(targetNode.get(), SIGNAL(onUpdate(double)), this, SLOT(updateTarget(double)));
+    connect(actualNode.get(), SIGNAL(onUpdate(double)), actual, SLOT(setNum(double)));
+
+    // target params (max/ min / units etc...)
+    targetNode->connect(targetNode.get(), SIGNAL(paramsUpdated()), this, SLOT(configureTarget()));
+
+    configureTarget();
 }
 
-void AutopilotController::onEnabledUpdate(bool enabled){
-    m_enabled->blockSignals(true);
-    m_enabled->setChecked(enabled);
-    m_enabled->blockSignals(false);
-}
-
-void AutopilotController::onTargetUpdate(float target){
+void AutopilotController::updateTarget(double target){
     m_target->blockSignals(true);
     if(!m_target->hasFocus())
         m_target->setValue(target);
     m_target->blockSignals(false);
 }
 
-void AutopilotController::onActualUpdate(float actual){
-    m_actual->blockSignals(true);
-    m_actual->setNum(actual);
-    m_actual->blockSignals(false);
-}
-
 void AutopilotController::targetEditingFinished(){
     m_target->clearFocus();
 }
 
-void AutopilotController::updateTarget(double value) {
-    m_autopilot->set(value);
-}
 
-void AutopilotController::updateState(bool value) {
-    m_autopilot->enabled->set(value);
+void AutopilotController::configureTarget(){
+    boost::shared_ptr<NumericNode<float> > targetNode = m_autopilot->findOrCreate<NumericNode<float> >("target");
+
+    // set wrapping
+    m_target->setWrapping(targetNode->getWraps());
+
+    // max / min values
+    if(targetNode->isMaxSet()){
+        m_target->setMaximum(targetNode->getMax().toDouble());
+    }
+    if(targetNode->isMinSet()) {
+        m_target->setMinimum(targetNode->getMin().toDouble());
+    }
+
+    // units
+    m_target->setSuffix(QString::fromStdString(targetNode->getUnits()));
+
+    // and a sensible step size
+    if(targetNode->isMaxSet() && targetNode->isMinSet()){
+        float min = targetNode->getMin().toFloat();
+        float max = targetNode->getMax().toFloat();
+        m_target->setSingleStep((max-min)/360.0); // 360 is a arbitary value
+                                                    // just chosen to because its
+                                                    // nice for degrees
+    }
 }
 
 
 
 
 MotorControls::MotorControls() :
-        ui(new Ui::MotorControls())
+        m_motorsCount(0), m_autopilotsCount(0), ui(new Ui::MotorControls()), m_burst_controllers()
 {
     ui->setupUi(this);
-
-    m_docks[this] = Qt::LeftDockWidgetArea;
 }
 
-void MotorControls::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
-    CauvBasicPlugin::initialise(auv, node);
+void MotorControls::initialise(){
 
-    // autopilot controls screen
-    int count = 0;
-    foreach(AUV::autopilot_map::value_type i, auv->autopilots){
-        // set up ui
-        QLabel * label = new QLabel(QString::fromStdString(i.second->getName()));
-        ui->autopilotControlsLayout->addWidget(label, count, 0, 1, 1, Qt::AlignCenter);
+    m_actions->node.lock()->joinGroup("gui");
+    m_actions->node.lock()->joinGroup("control");
 
-        QDoubleSpinBox * target = new QDoubleSpinBox();
-        target->setWrapping(i.second->wraps());
-        target->setButtonSymbols(QAbstractSpinBox::PlusMinus);
-        target->setMaximum(i.second->getMax());
-        target->setMinimum(i.second->getMin());
-        target->setSuffix(QString::fromStdString(i.second->getUnits()));
-        target->setSingleStep((i.second->getMax() - i.second->getMin())/360.0); // 360 is a arbitary value
-                                                                             // just chosen to because its
-                                                                             // nice for degrees
-        ui->autopilotControlsLayout->addWidget(target, count, 1, 1, 1, Qt::AlignCenter);
+    m_actions->window.lock()->addDockWidget(Qt::LeftDockWidgetArea, this);
 
-        QCheckBox * enabled = new QCheckBox("State");
-        ui->autopilotControlsLayout->addWidget(enabled, count, 2, 1, 1, Qt::AlignCenter);
+    // for new motors    
+    boost::shared_ptr<GroupingNode> motors = m_auv->findOrCreate<GroupingNode>("motors");
+    motors->connect(motors.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(addMotor(boost::shared_ptr<Node>)));
 
-        QLabel * actual = new QLabel("Actual");
-        actual->setMinimumSize(QSize(60, 0));
-        actual->setMaximumSize(QSize(60, 16777215));
-        ui->autopilotControlsLayout->addWidget(actual, count, 3, 1, 1, Qt::AlignCenter);
-
-        // controller for the GUI view
-        m_autopilot_controllers.push_back(boost::make_shared<AutopilotController>(enabled, target, actual, i.second));
-
-        count++;
-    }
-
-
-    // motor controls screen
-    count = 0;
-    foreach(AUV::motor_map::value_type i, auv->motors){
-        std::string forward = "Forward";
-        std::string backward = "Back";
-
-        switch(i.first){
-        case MotorID::HBow:
-        case MotorID::HStern:
-            forward = "Right";
-            backward = "Left";
-            break;
-        case MotorID::VBow:
-        case MotorID::VStern:
-            forward = "Up";
-            backward = "Down";
-            break;
-        default: break;
-        }
-
-        QPushButton * backButton = new QPushButton(QString::fromStdString(backward));
-        m_burst_controllers.push_back(boost::make_shared<MotorBurstController>(backButton, i.second, -127));
-        ui->motorControlsLayout->addWidget(backButton, ++count, 0, 1, 1, Qt::AlignCenter);
-
-        QLabel * label = new QLabel(QString::fromStdString(i.second->getName()));
-        label->setAlignment(Qt::AlignHCenter);
-        ui->motorControlsLayout->addWidget(label, count, 1, 1, 1, Qt::AlignCenter);
-
-        QPushButton * forwardButton = new QPushButton(QString::fromStdString(forward));
-        m_burst_controllers.push_back(boost::make_shared<MotorBurstController>(forwardButton, i.second, 127));
-        ui->motorControlsLayout->addWidget(forwardButton, count, 2, 1, 1, Qt::AlignCenter);
-    }
+    // new autopilots
+    boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
+    autopilots->connect(autopilots.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(addAutopilot(boost::shared_ptr<Node>)));
 }
 
 MotorControls::~MotorControls(){
     delete ui;
 }
 
-const QString MotorControls::name() const{
-    return QString("Navigation");
+
+void MotorControls::addMotor(boost::shared_ptr<Node> node) {
+    boost::shared_ptr<NumericNode<int> > motor = node->to<NumericNode<int> >();
+    assert(motor);
+
+    std::string forward = "Forward";
+    std::string backward = "Back";
+
+    QPushButton * backButton = new QPushButton(QString::fromStdString(backward));
+    boost::shared_ptr<MotorBurstController> back = boost::make_shared<MotorBurstController>(motor, -127);
+    m_burst_controllers.push_back(back);
+    backButton->connect(backButton, SIGNAL(pressed()), back.get(), SLOT(burst()));
+    backButton->connect(backButton, SIGNAL(released()), back.get(), SLOT(stop()));
+    ui->motorControlsLayout->addWidget(backButton, ++m_motorsCount, 0, 1, 1, Qt::AlignCenter);
+
+    QLabel * label = new QLabel(QString::fromStdString(motor->nodeName()));
+    label->setAlignment(Qt::AlignHCenter);
+    ui->motorControlsLayout->addWidget(label, m_motorsCount, 1, 1, 1, Qt::AlignCenter);
+
+    QPushButton * forwardButton = new QPushButton(QString::fromStdString(forward));
+    boost::shared_ptr<MotorBurstController> fwd = boost::make_shared<MotorBurstController>(motor, 127);
+    m_burst_controllers.push_back(fwd);
+    forwardButton->connect(forwardButton, SIGNAL(pressed()), fwd.get(), SLOT(burst()));
+    forwardButton->connect(forwardButton, SIGNAL(released()), fwd.get(), SLOT(stop()));
+    ui->motorControlsLayout->addWidget(forwardButton, m_motorsCount, 2, 1, 1, Qt::AlignCenter);
 }
 
-const QList<QString> MotorControls::getGroups() const{
-    QList<QString> groups;
-    groups.push_back(QString("gui"));
-    groups.push_back(QString("control"));
-    return groups;
+void MotorControls::addAutopilot(boost::shared_ptr<Node> node){
+
+    // set up ui
+    QLabel * label = new QLabel(QString::fromStdString(node->nodeName()));
+    ui->autopilotControlsLayout->addWidget(label, m_autopilotsCount, 0, 1, 1, Qt::AlignCenter);
+
+    QDoubleSpinBox * target = new QDoubleSpinBox();
+
+    ui->autopilotControlsLayout->addWidget(target, m_autopilotsCount, 1, 1, 1, Qt::AlignCenter);
+
+    QCheckBox * enabled = new QCheckBox("State");
+    ui->autopilotControlsLayout->addWidget(enabled, m_autopilotsCount, 2, 1, 1, Qt::AlignCenter);
+
+    QLabel * actual = new QLabel("Actual");
+    actual->setMinimumSize(QSize(60, 0));
+    actual->setMaximumSize(QSize(60, 16777215));
+    ui->autopilotControlsLayout->addWidget(actual, m_autopilotsCount, 3, 1, 1, Qt::AlignCenter);
+
+    boost::shared_ptr<AutopilotController> controller = boost::make_shared<AutopilotController>(enabled, target, actual, node);
+    m_autopilot_controllers.push_back(controller);
+
+    m_autopilotsCount++;
+}
+
+void MotorControls::shutdown(){
+    m_actions->window.lock()->removeDockWidget(this);
+}
+
+const QString MotorControls::name() const{
+    return QString("Navigation");
 }
 
 Q_EXPORT_PLUGIN2(cauv_motorsplugin, MotorControls)

@@ -1,7 +1,8 @@
-project (guicpp)
+project (gui)
 
 find_package (Qt4 REQUIRED)
 
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set ( MOTORS_PLUGIN_SRCS
     motorcontrols.cpp
@@ -28,5 +29,5 @@ depends_on_messages(motorsplugin)
 cauv_install_plugin(motorsplugin)
                                       
 target_link_libraries( motorsplugin
-    guicpp-core
+    gui-core
 )

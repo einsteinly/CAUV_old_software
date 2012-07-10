@@ -16,7 +16,6 @@
 #include <generated/types/TimeStamp.h>
 #include <generated/types/MotorDemand.h>
 #include <generated/types/ControlGroup.h>
-#include <generated/types/McbGroup.h>
 #include <generated/types/Can_ControlGroup.h>
 #include <generated/types/Can_StatusGroup.h>
 #include <generated/types/StateMessage.h>
@@ -25,7 +24,7 @@
 #include <generated/types/GraphableMessage.h>
 #include <generated/types/TelemetryMessage.h>
 #include <generated/types/DebugMessage.h>
-#include <generated/types/RedherringBatteryStatusMessage.h>
+#include <generated/types/RedHerringBatteryStatusMessage.h>
 
 #include <module/module.h>
 
@@ -1057,8 +1056,8 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     if(vm.count("simulation")){
         m_telemetryBroadcaster->setSimulationMode(true);
         m_controlLoops->setSimulationMode(true);
-        joinGroup("pressure");
-        joinGroup("state");
+        subMessage(PressureMessage());
+        subMessage(StateMessage());
     }
     
     return 0;

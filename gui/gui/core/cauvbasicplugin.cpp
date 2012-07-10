@@ -14,17 +14,25 @@
 
 #include "cauvbasicplugin.h"
 
+#include <debug/cauv_debug.h>
+
+#include <connectednode.h>
+
 using namespace cauv;
+using namespace cauv::gui;
 
-void CauvBasicPlugin::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node) {
-    m_auv = auv;
-    m_node = node;
+CauvBasicPlugin::~CauvBasicPlugin(){
+    debug(2) << "~CauvBasicPlugin()";
 }
 
-const QMap<QDockWidget*, Qt::DockWidgetArea> &CauvBasicPlugin::getDockWidgets() const {
-    return m_docks;
+void CauvBasicPlugin::initialise(boost::shared_ptr<GuiActions> const& actions, ConnectedNodeMap* m) {
+    m_actions = actions;
+
+    ConnectedNode::setMap(m);
+
+    initialise();
 }
 
-const QList<QWidget* > &CauvBasicPlugin::getCentralWidgets() const {
-    return m_tabs;
+void CauvBasicPlugin::shutdown(){
+
 }

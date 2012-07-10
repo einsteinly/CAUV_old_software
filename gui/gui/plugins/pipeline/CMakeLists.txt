@@ -1,7 +1,10 @@
-project (guicpp)
+project (gui)
 
 find_package (Qt4 REQUIRED)
 
+link_directories (${pipeline-widget_BINARY_DIR})
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories (${pipeline-widget_SOURCE_DIR})
 
 set ( PIPELINE_PLUGIN_SRCS
@@ -29,6 +32,6 @@ depends_on_messages(pipelineplugin)
 cauv_install_plugin(pipelineplugin)
                                       
 target_link_libraries( pipelineplugin
+    gui-core
     pipeline-widget
-    guicpp-core
 )
