@@ -82,16 +82,19 @@ void BarracudaMCB::read_loop() {
         }
         read(m_fd, (char*)&frame, sizeof(frame));
         if (frame.id == pressure_MSG_CAN_ID) {
+            //pressure comes in in mbar
             pressure_msg_t pressure;
             std::memcpy(&pressure.frame, &frame, sizeof(frame));
             if (pressure.m.position == 0) {
+                debug(6) << "Fore Pressure:" << pressure.m.pressure;
                 m_fore_depth = depthFromForePressure(pressure.m.pressure);
             } else if (pressure.m.position == 1) {
+                debug(6) << "Aft Pressure:" << pressure.m.pressure;
                 m_aft_depth = depthFromAftPressure(pressure.m.pressure);
             } else {
                 warning() << "Strange position" << pressure.m.position << "reported by psb";
             }
-            debug(5) << "Pressure fore:" << m_fore_depth << "aft:" << m_aft_depth;
+            debug(5) << "Depth fore:" << m_fore_depth << "aft:" << m_aft_depth;
         
         }
 
@@ -118,9 +121,9 @@ void BarracudaMCB::setMotorState(MotorDemand &state) {
     motor_cmd_msg_t cmd; 
     cmd.m.id = motor_cmd_MSG_CAN_ID;
     cmd.m.len = 6;
-    cmd.m.fwd_left = state.prop;
+    cmd.m.fwd_left = -state.prop;
     cmd.m.fwd_right = state.prop;
-    cmd.m.vert_fore = state.vbow;
+    cmd.m.vert_fore = -state.vbow;
     cmd.m.vert_aft = state.vstern;
     cmd.m.horz_fore = state.hbow;
     cmd.m.horz_aft = state.hstern; 
