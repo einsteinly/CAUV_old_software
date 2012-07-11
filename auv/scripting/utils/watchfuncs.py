@@ -42,7 +42,7 @@ def zmq_daemon_pid(ipc_dir = None, vehicle_name = None):
 def search_pid(program_name):
     def get_pid():
         # this could be improved...
-        ps = subprocess.Popen(['ps -opid,command -A', 'aux'], stdout=subprocess.PIPE).communicate()[0]
+        ps = subprocess.Popen(['ps', '-opid,command', '-A'], stdout=subprocess.PIPE).communicate()[0]
         processes = ps.split('\n')
         for p in processes:
             if p.find(program_name) != -1:

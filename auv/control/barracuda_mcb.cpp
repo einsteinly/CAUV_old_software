@@ -86,9 +86,9 @@ void BarracudaMCB::read_loop() {
             pressure_msg_t pressure;
             std::memcpy(&pressure.frame, &frame, sizeof(frame));
             if (pressure.m.position == 0) {
-                m_fore_depth = pressure.m.pressure;
+                m_fore_depth = depthFromForePressure(pressure.m.pressure);
             } else if (pressure.m.position == 1) {
-                m_aft_depth = pressure.m.pressure;
+                m_aft_depth = depthFromAftPressure(pressure.m.pressure);
             } else {
                 warning() << "Strange position" << pressure.m.position << "reported by psb";
             }
