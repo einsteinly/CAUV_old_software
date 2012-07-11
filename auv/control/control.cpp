@@ -509,6 +509,7 @@ ControlNode::ControlNode() : CauvNode("Control")
     subMessage(PressureMessage());
     subMessage(ForePressureMessage());
     subMessage(AftPressureMessage());
+    subMessage(DepthCalibrationMessage());
 
     m_controlLoops = boost::make_shared<ControlLoops>(mailbox());
     m_telemetryBroadcaster = boost::make_shared<TelemetryBroadcaster>(mailbox());
@@ -591,6 +592,7 @@ void ControlNode::setBarracudaMCB(std::string const& port)
 {
     boost::shared_ptr<BarracudaMCB> mcb = boost::make_shared<BarracudaMCB>(port, m_controlLoops);
     m_mcb = mcb;
+    addMessageObserver(mcb);
 }
 
 void ControlNode::addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos)
