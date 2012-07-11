@@ -20,13 +20,6 @@ IF(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         SET(PCHSupport_FOUND TRUE)
     ENDIF()
 
-    SET(_PCH_include_prefix "-I")
-    SET(_PCH_isystem_prefix "-isystem")
-
-ELSEIF(CMAKE_GENERATOR MATCHES "^Visual.*$")
-    SET(PCHSupport_FOUND TRUE)
-    SET(_PCH_include_prefix "/I")
-    SET(_PCH_isystem_prefix "/I")
 ELSE()
     SET(PCHSupport_FOUND FALSE)
 ENDIF()
@@ -43,18 +36,43 @@ macro(_pch_get_compile_command out_command _input _output)
     FILE(TO_NATIVE_PATH ${_input} _native_input)
     FILE(TO_NATIVE_PATH ${_output} _native_output)
 
+    separate_arguments(_cxx_flags UNIX_COMMAND "${CMAKE_CXX_FLAGS}")
+    string(TOUPPER "CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}" _flags_var_name)
+    separate_arguments(_cxx_flags_type UNIX_COMMAND "${${_flags_var_name}}")
+    list(APPEND _compile_flags ${_cxx_flags} ${_cxx_flags_type} )
+    message("compiler_flags ${CMAKE_CXX_FLAGS}")
+    
+    get_filename_component(_absolute_input ${_input} REALPATH)
+    get_filename_component(_indir ${_absolute_input} PATH)
+    message("indir" ${_indir})
+    get_property(_indir_includes
+        DIRECTORY ${_indir}
+        PROPERTY INCLUDE_DIRECTORIES )
+    foreach(item ${_indir_includes})
+        list(APPEND _compile_flags "-isystem" ${item} )
+    endforeach()
+
+    get_property(_indir_defs
+        DIRECTORY ${indir}
+        PROPERTY DEFINITIONS)
+    separate_arguments(_indir_defs UNIX_COMMAND "${_indir_defs}")
+    list(APPEND _compile_flags ${_indir_defs})
+
+
     IF(CMAKE_CXX_COMPILER_ARG1)
         # remove leading space in compiler argument
         STRING(REGEX REPLACE "^ +" "" pchsupport_compiler_cxx_arg1 ${CMAKE_CXX_COMPILER_ARG1})
 
         SET(${out_command}
-          ${CMAKE_CXX_COMPILER} ${pchsupport_compiler_cxx_arg1} ${_compile_FLAGS} -x c++-header -o ${_output} ${_input}
+          ${CMAKE_CXX_COMPILER} ${pchsupport_compiler_cxx_arg1} ${_compile_flags} -x c++-header -o ${_output} ${_input}
           )
     ELSE(CMAKE_CXX_COMPILER_ARG1)
         SET(${out_command}
-          ${CMAKE_CXX_COMPILER}  ${_compile_FLAGS} -x c++-header -o ${_output} ${_input}
+          ${CMAKE_CXX_COMPILER}  ${_compile_flags} -x c++-header -o ${_output} ${_input}
           )
     ENDIF(CMAKE_CXX_COMPILER_ARG1)
+
+    message("compiler_command ${${out_command}}")
 
 ENDMACRO()
 
@@ -89,6 +107,10 @@ macro(use_precompiled_header _targetName _header_file )
     get_filename_component(_absolute_header_file "${_header_file}" REALPATH)
     file(RELATIVE_PATH _source_relative_header_file "${CMAKE_SOURCE_DIR}" "${_absolute_header_file}")
     get_filename_component(_pch_file "${CMAKE_BINARY_DIR}/${_source_relative_header_file}" REALPATH)
+    
+    string(REPLACE "/" "_" _pch_target ${_source_relative_header_file})
+    string(REPLACE "." "_" _pch_target ${_pch_target})
+    set(_pch_target "${_pch_target}_pch")
 
     _pch_get_target_compile_flags(_target_cflags ${_pch_file} ${_dowarn})
     set_property(
@@ -99,10 +121,8 @@ macro(use_precompiled_header _targetName _header_file )
     # Does add_dependencies guarantee that the objects are rebuilt? Probably not, 
     # add dependencies directly to the source files just in case
 
-    #add_custom_target(${_targetName}_pch
-    #  DEPENDS ${_pch_output_to_use}
-    #  )
-    #add_dependencies(${_targetName} ${_targetName}_pch )
+    message("add_dependencies(${_targetName} ${_pch_target} )")
+    add_dependencies(${_targetName} ${_pch_target} )
     get_property( _targetSources
         TARGET ${_targetName}
         PROPERTY SOURCES )
@@ -140,7 +160,6 @@ macro(add_precompiled_header _target _header_file)
     
     string(REPLACE "/" "_" _pch_target ${_source_relative_header_file})
     string(REPLACE "." "_" _pch_target ${_pch_target})
-    
     set(_pch_target "${_pch_target}_pch")
 
     if (NOT TARGET ${_pch_target})
