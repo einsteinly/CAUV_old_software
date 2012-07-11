@@ -18,7 +18,8 @@ void create_path(std::string dir_path) {
                 dir_path[ii] = '\0';
             }
             int err;
-            err = mkdir(dir_path.c_str(), 0775);
+            //this a little bit of an ugly hack since some nodes run as root
+            err = mkdir(dir_path.c_str(), 0777);
             if (!(err == 0 || (err == -1 && errno == EEXIST))) {
                 fprintf(stderr,"error creating dir %s: %d %s\n",
                         dir_path.c_str(),errno,strerror(errno));
