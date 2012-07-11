@@ -7,12 +7,12 @@ class scriptOptions(aiscriptOptions):
     Centre_Name = asv_centre
     Prop_K = 127*2
     Strafe_K = 127*2
-    Pipeline = 'track_asv'
+    class Meta:
+        pipelines = ['track_asv']
     
 class script(aiScript):
     def __init__(self, *args, **kwargs):
         aiScript.__init__(self, *args, **kwargs)
-        self.request_pl(self.options.Pipeline)
     def onCentreMessage(self, m):
         self.centre_on(m.x, m.y)
         

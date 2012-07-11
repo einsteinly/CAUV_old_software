@@ -83,8 +83,8 @@ class locationFilter(msg.MessageObserver):
         return self.last_known_location
 
 class aiLocation(aiProcess):
-    def __init__(self):
-        aiProcess.__init__(self, 'location')
+    def __init__(self, opts):
+        aiProcess.__init__(self, 'location', opts.manager_id)
         self.location_filter = locationFilter(self.node)
         
         #start receiving messages
@@ -104,10 +104,11 @@ class aiLocation(aiProcess):
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('-t', '--update_period', dest='update_period', type=int, default=0.5, help='location updating frequency')
+    p.add_argument('-M', '--manager_id', dest='manager_id', default='', action='store', help="id of relevent ai manager")
     
     opts, args = p.parse_known_args()
     
-    sc = aiLocation()
+    sc = aiLocation(opts)
     sc.update.options.delay = opts.update_period
     sc.update()
     try:

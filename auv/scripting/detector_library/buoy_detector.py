@@ -16,7 +16,6 @@ class detectorOptions(aiDetectorOptions):
     Sightings_Period   = 5.0 # seconds, period to consider sightings of the buoy for
     Required_Confidence = 0.9
     Required_Sightings = 5
-    Required_Pipeline = 'detect_buoy_sim'
     Circles_Name = 'buoy'
     Histogram_Name_A = 'buoy_hue'
     Histogram_Name_B = 'buoy_hue'
@@ -28,6 +27,9 @@ class detectorOptions(aiDetectorOptions):
     Colour_Weight_A  = -20.0 # respective weightings in confidence
     Colour_Weight_B  =  0.4 #
     Circles_Weight   =  1.6 #
+    
+    class Meta:
+        pipelines = ['detect_buoy_sim']
 
 class detector(aiDetector):
     debug_values = ['confidence', 'circles_confidence', 'colour_confidence_A', 'colour_confidence_B']
@@ -49,11 +51,6 @@ class detector(aiDetector):
         self.tzero = time.time()
         self.node.join('processing')
         self.node.join('pl_gui')
-        if self.options.Required_Pipeline:
-           try:
-               self.request_pl(self.options.Required_Pipeline)
-           except Exception, e:
-               warning('Buoy Detector pipeline request failed: %s' % e)
         self.log('Looking for the buoy')
         self.process_c = 0
     

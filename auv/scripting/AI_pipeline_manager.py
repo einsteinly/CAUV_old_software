@@ -14,7 +14,7 @@ from datetime import datetime
 
 class pipelineManager(aiProcess):
     def __init__(self, opts):
-        aiProcess.__init__(self, "pl_manager")
+        aiProcess.__init__(self, "pl_manager", opts.manager_id)
         #TODO make options actually work
         self.disable_gui = opts.disable_gui 
         self.freeze = opts.freeze_pls
@@ -199,6 +199,8 @@ if __name__ == '__main__':
                  action='store_true', help="ignore changes to the pipeline")
     p.add_argument('--simulation', dest='simulation', default=False,
                  action='store_true', help="replace relevent nodes with net input")
+    p.add_argument('-M', '--manager_id', dest='manager_id', default='',
+                 action='store', help="id of relevent ai manager")
     opts, args = p.parse_known_args()
     pm = pipelineManager(opts)
     try:

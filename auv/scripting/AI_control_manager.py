@@ -44,7 +44,7 @@ class slightlyModifiedAUV(control.AUV):
 
 class auvControl(aiProcess):
     def __init__(self, opts):
-        aiProcess.__init__(self, 'auv_control')
+        aiProcess.__init__(self, 'auv_control', opts.manager_id)
         self.auv = slightlyModifiedAUV(self.node)
         self.auv.depth_disabled = False
         
@@ -157,6 +157,8 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser()
     #p.add_argument('-d', '--disable_control', dest='disable_control', default=False,
     #action='store_true', help="stop AI script from controlling the sub")
+    p.add_argument('-M', '--manager_id', dest='manager_id', default='',
+                 action='store', help="id of relevent ai manager")
     opts, args = p.parse_known_args()
     ac = auvControl(opts)
     try:

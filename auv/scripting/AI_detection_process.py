@@ -4,6 +4,7 @@ from cauv import messaging
 
 import threading
 import traceback
+import argparse
 import utils.event as event
 
 from AI_classes import aiProcess, external_function, aiDetectorOptions
@@ -11,8 +12,8 @@ from AI_classes import aiProcess, external_function, aiDetectorOptions
 MAX_WAITING_TIME = 1
 
 class detectionControl(aiProcess):
-    def __init__(self):
-        aiProcess.__init__(self, 'detector_control')
+    def __init__(self, opts):
+        aiProcess.__init__(self, 'detector_control', opts.manager_id)
         self.modules = {}
         self.running_detectors = {}
         self.enable_flag = threading.Event()
@@ -123,8 +124,12 @@ class detectionControl(aiProcess):
         self.ai.task_manager.on_list_of_detectors(self.running_detectors.keys())
 
 if __name__ == '__main__':
+    p = argparse.ArgumentParser()
+    p.add_argument('-M', '--manager_id', dest='manager_id', default='',
+                 action='store', help="id of relevent ai manager")
+    opts, args = p.parse_known_args()
     try:
-        dc = detectionControl()
+        dc = detectionControl(opts)
         dc.run()
     finally:
         dc.die()

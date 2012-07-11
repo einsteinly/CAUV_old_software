@@ -24,6 +24,9 @@ class scriptOptions(aiScriptOptions):
     Run_Away_Time = 1 # seconds
 
 class script(aiScript, RelativeTimeCapability):
+    """
+    THIS IS BROKEN (needs updating to new system)
+    """
     def __init__(self, *arg, **kwargs):
         aiScript.__init__(self, *arg, **kwargs)
         RelativeTimeCapability.__init__(self)
