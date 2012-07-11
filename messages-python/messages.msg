@@ -1023,6 +1023,16 @@ group gui
     message RemoteControlsAlive : 105
     {
     }
+    
+    message SetPenultimateResortTimeout : 107
+    {
+        timeout : float;
+    }
+    
+    message PenultimateResortTimeout : 106
+    {
+        timeout : BoundedFloat;
+    }
 }
 
 group pl_gui
