@@ -62,22 +62,22 @@ from cauv.debug import debug, error, warning, info
 # Position vectors of centre of thrust, and vector of direction of thrust: (ie,
 # opposite to jet of water when motor is set positive)
 # All in m:
-HBow_At   = np.array((0, 0.7,0)); HBow_Vec   = np.array((-1.0,   0,   0))
-HStern_At = np.array((0,-0.7,0)); HStern_Vec = np.array((-1.0,   0,   0))
-VBow_At   = np.array((0, 0.8,0)); VBow_Vec   = np.array((   0,   0,-1.0))
-VStern_At = np.array((0,-0.8,0)); VStern_Vec = np.array((   0,   0,-1.0))
-Prop_At   = np.array((0,-0.9,0)); Prop_Vec   = np.array((   0, 1.0,   0))
+HBow_At   = np.array((0, 0.32,0)); HBow_Vec   = np.array((-1.0,   0,   0))
+HStern_At = np.array((0,-0.32,0)); HStern_Vec = np.array((-1.0,   0,   0))
+VBow_At   = np.array((0, 0.41,0)); VBow_Vec   = np.array((   0,   0,-1.0))
+VStern_At = np.array((0,-0.41,0)); VStern_Vec = np.array((   0,   0,-1.0))
+Prop_At   = np.array((0,-0.73,0)); Prop_Vec   = np.array((   0, 1.0,   0))
 Mass      = 25.0      # kg
 Displacement = 25.0   # kg
 Weight_At = np.array((0,0,-0.1))
 Buoyancy_At = np.array((0,0,0.05))
-Length    = 1.4       # length in m, used for moment calculation only
+Length    = 1.53      # length in m, used for moment calculation only
 Ixx = Izz = (Mass*(Length**2)/12.0) # kg m^2 (a uniform rod)
 Iyy = Ixx / 4
 Ixx_water = Izz_water = Ixx / 2
 Iyy_water = Iyy / 10 # much less added water mass in the roll direction
 
-Seabotix_Max_Thrust = 11.0 # N, used in Force_Per_Unit_Thrust only
+Seabotix_Max_Thrust = 18.0 # N, used in Force_Per_Unit_Thrust only
 Force_Per_Unit_Vector_Thrust = Seabotix_Max_Thrust / 127.0 # N
 Force_Per_Unit_Prop_Thrust = 2 * Seabotix_Max_Thrust / 127.0 # N
 Max_Yaw_Moment   = 1.5*Seabotix_Max_Thrust*2
