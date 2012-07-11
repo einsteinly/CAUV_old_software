@@ -25,7 +25,7 @@ def lastResort(port, kill_after_seconds):
                 connected = True
             except socket.timeout:
                 start_time = time.time() - alivePeriod
-                s = '\nlast-resort.py lost connection at %s\n' % str(start_time)
+                s = '\nlastresort.py lost connection at %s\n' % str(start_time)
                 plog(s, logf)
                 did_warn_30 = False
                 did_warn_10 = False
@@ -35,7 +35,7 @@ def lastResort(port, kill_after_seconds):
                     try:
                         s = sock.accept()
                         s[0].close()
-                        s = '\nlast-resort.py reconnected at %s! Yay!\n' % str(start_time)
+                        s = '\nlastresort.py reconnected at %s! Yay!\n' % str(start_time)
                         plog(s, logf)
                         break
                     except socket.timeout:
@@ -75,8 +75,8 @@ def lastResort(port, kill_after_seconds):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(usage='usage: sudo last-resort PORT TIME_IN_SECONDS')
-    opts, args = parser.parse_known_args()
+    parser = argparse.ArgumentParser(help='usage: sudo last-resort.py PORT TIME_IN_SECONDS')
+    parser.parse_args()
     if len(args) != 2:
         parser.print_help()
         sys.exit(1)
