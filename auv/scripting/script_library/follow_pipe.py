@@ -18,7 +18,7 @@ class scriptOptions(aiScriptOptions):
     #Pipeline details
     ellipses_name = 'pipe'
     lines_name = 'pipe'
-    turns = 3
+    turns = 1
     #Timeouts
     ready_timeout = 30
     lost_timeout = 15
@@ -36,6 +36,7 @@ class scriptOptions(aiScriptOptions):
     #we want to move right, ie negative strafe, so set kP negative
     depth_kP = -1 # if we are too high the width is too small so the error appears negative
     #we want to dive, ie positive value to add to depth, so kP is negative
+    initial_direction = 260
 
     class Meta:
         dynamic = [
@@ -196,10 +197,9 @@ class script(aiScript):
     def run(self):
         # first we need to check we've actually found the pipe
         # the detector doesn't really look for the pipe it just looks
-        # for yellow things in the downward camera, so there will be
+        # for yellow things in the downward camera, so there might be
         # a few false positives
         self.log('Attempting to align over the pipe.')
-        follow_pipe_file = self.options.follow_pipeline_file
         
         # now we wait for messages allowing us to work out how to align with
         # the pipe, but if this is taking too long then just give up as we've
@@ -209,6 +209,14 @@ class script(aiScript):
             self.log('Pipeline follower could not position itself over the pipe (timed out).')
             error("Took too long to become ready, aborting")
             return 'ABORT'
+        #now make sure we're facing in (roughly) the right direction
+        if abs((self.auv.current_bearing - self.options.initial_direction)%360) > 90:
+            self.log("Switching direction (was facing wrong way)")
+            self.enabled = False
+            self.auv.prop(0)
+            self.auv.strafe(0)
+            self.auv.bearingAndWait((self.auv.current_bearing+180)%360)
+            self.enabled = True
         
         for i in range(self.options.turns):
             self.log('Attempting to follow pipe.')
@@ -219,8 +227,14 @@ class script(aiScript):
                 error("Pipeline lost on pass %d" %(i,))
                 return 'LOST'
                 
-            debug('Reached end of pipe, turning (turn %i)')
+            debug('Reached end of pipe')
+            self.log("Reached end of pipe.")
             self.auv.prop(0)
+            self.auv.strafe(0)
+            #if this is the last run, dont turn
+            if i == self.options.turns-1:
+                break
+            debug('Turning (turn %i)' %i)
             self.enabled = False
             self.auv.bearingAndWait((self.auv.current_bearing+180)%360)
             self.enabled = True
