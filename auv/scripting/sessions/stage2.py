@@ -1,8 +1,6 @@
 import socket
 
 from utils.watchfuncs import *
-import sessions.stage1
-
 
 if socket.gethostname() == 'barracuda-seco':
     # processes running on seco only
