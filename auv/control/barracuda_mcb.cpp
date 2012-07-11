@@ -26,8 +26,7 @@ BarracudaMCB::BarracudaMCB(std::string port, boost::weak_ptr<ControlLoops> contr
     m_fore_depth(0),
     m_aft_depth(0),
     m_fd(0),
-    m_read_thread(),
-    m_control_loops(control_loops) {
+    m_read_thread(){
     
     // !!! TODO: utility/ library for serial ports to wrap all this into a class
     m_fd = open(port.c_str(), O_RDWR | O_NOCTTY);
@@ -108,10 +107,8 @@ void BarracudaMCB::read_loop() {
                 debug(6) << "MSB OK!";
             }
         }
-
-        boost::shared_ptr<ControlLoops> cl = m_control_loops.lock();
-        if(cl)
-            cl->onDepth(m_fore_depth, m_aft_depth);
+        
+        notifyDepthObservers(m_fore_depth, m_aft_depth);
 
         debug(7) << "frame " << frame.id;
     }
@@ -135,17 +132,13 @@ void BarracudaMCB::setMotorState(MotorDemand &state) {
 // simulation only
 void BarracudaMCB::onForePressureMessage(ForePressureMessage_ptr p) {
     m_fore_depth = depthFromForePressure(p->pressure());
-    boost::shared_ptr<ControlLoops> cl = m_control_loops.lock();
-    if(cl)
-        cl->onDepth(m_fore_depth, m_aft_depth);
+    notifyDepthObservers(m_fore_depth, m_aft_depth);
 }
 
 // simulation only
 void BarracudaMCB::onAftPressureMessage(AftPressureMessage_ptr p) {
     m_aft_depth = depthFromAftPressure(p->pressure());
-    boost::shared_ptr<ControlLoops> cl = m_control_loops.lock();
-    if(cl)
-        cl->onDepth(m_fore_depth, m_aft_depth);
+    notifyDepthObservers(m_fore_depth, m_aft_depth);
 }
 
 
