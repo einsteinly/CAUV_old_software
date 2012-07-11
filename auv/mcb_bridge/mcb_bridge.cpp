@@ -304,7 +304,7 @@ void CANPty::read_avail() {
 }
 
 int main(int argc, char **argv) {
-    if (!cauv::get_lock_file("/tmp/mcb_bridge")) {
+    if (!get_lock_file("/tmp/mcb_bridge")) {
         error() << "Cannot get lock file. another bridge is still running!";
         return 1;
     }
