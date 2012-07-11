@@ -506,6 +506,7 @@ ControlNode::ControlNode() : CauvNode("Control")
     subMessage(MotorRampRateMessage());
     subMessage(SetMotorMapMessage());
     subMessage(CalibrateNoRotationMessage());
+    subMessage(DepthCalibrationMessage());
     subMessage(PressureMessage());
     subMessage(ForePressureMessage());
     subMessage(AftPressureMessage());
@@ -591,6 +592,7 @@ void ControlNode::setSimIMU()
 void ControlNode::setBarracudaMCB(std::string const& port)
 {
     boost::shared_ptr<BarracudaMCB> mcb = boost::make_shared<BarracudaMCB>(port, m_controlLoops);
+    addMessageObserver(mcb);
     m_mcb = mcb;
     addMessageObserver(mcb);
 }
