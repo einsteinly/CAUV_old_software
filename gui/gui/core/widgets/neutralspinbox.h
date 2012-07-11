@@ -17,6 +17,8 @@
 
 #include <QSpinBox>
 
+#include <common/msg_classes/bounded_float.h>
+
 namespace cauv {
     namespace gui {
 
@@ -49,7 +51,9 @@ namespace cauv {
             Q_OBJECT
 
         public:
+            typedef cauv::BoundedFloat cauv__BoundedFloat;
             Q_PROPERTY(double value READ value WRITE setValue USER true)
+            Q_PROPERTY(cauv__BoundedFloat boundedValue READ boundedValue WRITE setBoundedValue USER false)
             Q_PROPERTY(double neutral READ neutral WRITE setNeutral USER false)
 
             NeutralDoubleSpinBox(QWidget * parent = 0);
@@ -59,6 +63,9 @@ namespace cauv {
 
             bool inverted() const;
             void setInverted(bool invert);
+
+            void setBoundedValue(cauv::BoundedFloat value);
+            cauv::BoundedFloat boundedValue() const;
 
             void paintEvent(QPaintEvent *);
 

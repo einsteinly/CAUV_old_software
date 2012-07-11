@@ -27,6 +27,7 @@ class GamepadServer(messaging.MessageObserver):
         self.lastAxisValues = {}
         self.rate = rate
         self.deadband = deadband
+        self.hasGamepad = False
         info("Gamepad server starting up...")
 
         node.addObserver(self)
@@ -34,21 +35,27 @@ class GamepadServer(messaging.MessageObserver):
         pygame.init()
         if pygame.joystick.get_count() == 0:
             error ("No gamepads detected")
-            raise IOError()
+            #raise IOError()
+        else: 
+            self.hasGamepad = True
         
-        self.joystick = pygame.joystick.Joystick(0)
-        self.joystick.init()
-        info( "Initialized Joystick : %s" % self.joystick.get_name() )
+        if self.hasGamepad:
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()
+            info( "Initialized Joystick : %s" % self.joystick.get_name() )
 
-        for i in range(0, self.joystick.get_numbuttons()):
-            self.lastButtonValues[i] = 0
-        for i in range(0, self.joystick.get_numaxes()):
-            self.lastAxisValues[i] = 0.00
+            for i in range(0, self.joystick.get_numbuttons()):
+                self.lastButtonValues[i] = 0
+            for i in range(0, self.joystick.get_numaxes()):
+                self.lastAxisValues[i] = 0.00
     
     def gamepadName(self):
         return self.joystick.get_name()
 
+
     def handleEvents(self):
+        if not self.hasGamepad:
+            return
         pygame.event.pump()
         for i in range(0, self.joystick.get_numaxes()):
             currentValue = self.joystick.get_axis(i)
@@ -79,13 +86,15 @@ class GamepadServer(messaging.MessageObserver):
                 self.handleEvents()
                 time.sleep(self.rate)
                 if count > iterations:
+                    info("sending alive message")
                     self.__node.send(msg.RemoteControlsAliveMessage())
                     count = 0
                 count = count + 1
         
                 
         except KeyboardInterrupt:
-            self.joystick.quit()
+            if self.hasGamepad:
+                self.joystick.quit()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = "Provide gampepad input to control the AUV", add_help = True)
@@ -102,23 +111,25 @@ if __name__ == '__main__':
     try:
         auv = control.AUV(node)
         d = GamepadServer(node, args.rate, args.deadband)
-        mapFile = ("gamepad_maps.%s" % d.gamepadName().replace(' ',''))
-        if args.mapping:
-            mapFile = ("gamepad_maps.%s" % args.mapping)
-        module = __import__(mapFile, fromlist=['gamepad_maps'])
-        info('Imported mapping module '+str(module))
-        if args.debug:
-            d.mapping = GamepadMapping(auv)
-        else:
-            d.mapping = ConcreteGamepadMapping(auv, module.XBoxAxes, module.XBoxButtons)
-        if args.controls:
-            try:
-                print d.mapping.controls()
-            except AttributeError:
-                print "Mapping did not provide controls listing"
-        else:
-            node.addObserver(d.mapping)
-            d.run()
+        
+        if d.hasGamepad:
+            mapFile = ("gamepad_maps.%s" % d.gamepadName().replace(' ',''))
+            if args.mapping:
+                mapFile = ("gamepad_maps.%s" % args.mapping)
+            module = __import__(mapFile, fromlist=['gamepad_maps'])
+            info('Imported mapping module '+str(module))
+            if args.debug:
+                d.mapping = GamepadMapping(auv)
+            else:
+                d.mapping = ConcreteGamepadMapping(auv, module.XBoxAxes, module.XBoxButtons)
+            if args.controls:
+                try:
+                    print d.mapping.controls()
+                except AttributeError:
+                    print "Mapping did not provide controls listing"
+            else:
+                node.addObserver(d.mapping)
+        d.run()
     except IOError:
         info("Stopping due to IO Error")
     finally:

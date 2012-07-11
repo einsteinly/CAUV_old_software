@@ -168,11 +168,15 @@ void AbstractNodeDelegate::paint(QPainter *painter,
 void AbstractNodeDelegate::setEditorData(QWidget *editor,
                                          const QModelIndex &index) const {
     // don't allow updates while editing
+
+    info() << "setEditorData";
+
+    QStyledItemDelegate::setEditorData(editor, index);
+
     if(!m_updatesWhileEditing) {
         if(editor->property("data-initialised").toBool()) return;
         editor->setProperty("data-initialised", true);
     }
-    QStyledItemDelegate::setEditorData(editor, index);
 }
 
 void AbstractNodeDelegate::updateEditorGeometry(QWidget *editor,

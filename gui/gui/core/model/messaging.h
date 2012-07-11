@@ -38,6 +38,8 @@
 #include <generated/types/BatteryUseMessage.h>
 #include <generated/types/ProcessStatusMessage.h>
 #include <generated/types/SonarControlMessage.h>
+#include <generated/types/PenultimateResortTimeoutMessage.h>
+#include <generated/types/SetPenultimateResortTimeoutMessage.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -168,6 +170,8 @@ MESSAGE_OBSERVER_GENERATOR(AutopilotNode, DepthAutopilotEnabledMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotParamsNode, DepthAutopilotParamsMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotParamsNode, PitchAutopilotParamsMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotParamsNode, BearingAutopilotParamsMessage)
+MESSAGE_OBSERVER(NumericNode<BoundedFloat>, PenultimateResortTimeoutMessage)
+MESSAGE_OBSERVER_GENERATOR(NumericNode<float>, SetPenultimateResortTimeoutMessage)
 MESSAGE_OBSERVER(AutopilotNode, ControllerStateMessage)
 MESSAGE_OBSERVER_GENERATOR(GroupingNode, DepthCalibrationMessage)
 MESSAGE_OBSERVER_GENERATOR(NumericNode<int>, DebugLevelMessage)
