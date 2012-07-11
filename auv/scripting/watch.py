@@ -50,7 +50,7 @@ if args.user is None:
         pass
 
 watcher = watch.Watcher(session.get_processes(args), args.core_dumps, args.log_dir,
-                        args.user, args.script_dir, args.bin_dir)
+                        args.user, args.script_dir, args.bin_dir, detach=False)
 
 def monitor():
     if args.daemonize:

@@ -16,7 +16,6 @@ import time
 
 class scriptOptions(aiScriptOptions):
     #Pipeline details
-    follow_cam_file  = 'river-edges2'
     lines_name = 'cam'
     #Timeouts
     ready_timeout = 30
@@ -37,6 +36,7 @@ class scriptOptions(aiScriptOptions):
             'strafe_kPID', 'centre_error',
             'prop_speed', 'align_error'
         ]
+        pipelines = ['river-edges2']
 
 
 class script(aiScript):
@@ -162,8 +162,6 @@ class script(aiScript):
 
     def run(self):
         self.log('Cam follow: Initiating following river cam.')
-        follow_cam_file = self.options.follow_cam_file
-        self.request_pl(follow_cam_file)
     
         while True:
 

@@ -164,8 +164,8 @@ void FView::_initInMode(Mode const& mode){
         setRenderHints(
             QPainter::Antialiasing |
             QPainter::HighQualityAntialiasing |
-            QPainter::TextAntialiasing //|
-            //QPainter::SmoothPixmapTransform
+            QPainter::TextAntialiasing |
+            QPainter::SmoothPixmapTransform
         );
 
         setMinimumSize(800, 600);

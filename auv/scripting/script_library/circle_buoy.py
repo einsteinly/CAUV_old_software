@@ -30,8 +30,6 @@ class scriptOptions(aiScriptOptions):
     Depth_DError_Window = expWindow(5, 0.6)
     Depth_Error_Clamp = 200
     TotalRightAnglesToTurn = 4
-    
-    Pipeline_File = 'detect_buoy_sim'
 
     class Meta:
         dynamic = [
@@ -40,6 +38,7 @@ class scriptOptions(aiScriptOptions):
             'Angle_Control_kPID', 'Angle_DError_Window', 'Angle_Error_Clamp',
             'Depth_Control_kPID', 'Depth_DError_Window', 'Depth_Error_Clamp'
         ]
+        pipelines = ['detect_buoy_sim']
 
 
 class script(aiScript):
@@ -196,7 +195,6 @@ class script(aiScript):
         pidTelem(self.depth_pid,'BuoyDepth')
 
     def run(self):
-        self.request_pl(self.options.Pipeline_File)
         if not self.auv.current_bearing:
             time.sleep(1)
         start_bearing = self.auv.current_bearing

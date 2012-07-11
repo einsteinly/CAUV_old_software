@@ -16,13 +16,6 @@
 
 #include <debug/cauv_debug.h>
 
-#include <typeinfo>
-
-#include <QGraphicsLinearLayout>
-
-#include <gui/core/model/paramvalues.h>
-#include <gui/core/model/nodes/vehiclenode.h>
-
 #include <liquid/arcSink.h>
 #include <liquid/arc.h>
 #include <liquid/requiresCutout.h>
@@ -32,6 +25,9 @@
 #include <liquid/proxyWidget.h>
 #include <liquid/shadow.h>
 
+#include <gui/core/model/paramvalues.h>
+#include <gui/core/model/nodes/vehiclenode.h>
+
 #include <gui/core/framework/elements/style.h>
 #include <gui/core/model/model.h>
 #include <gui/core/model/nodes/groupingnode.h>
@@ -40,7 +36,6 @@
 #include <gui/plugins/ai/tasknode.h>
 
 // !!! inter plugin dependance
-#include <gui/plugins/fluidity/plugin.h>
 #include <gui/plugins/fluidity/fluiditynode.h>
 
 using namespace cauv;
@@ -56,7 +51,7 @@ AiConditionNode::~AiConditionNode(){
 }
 
 
-boost::shared_ptr<Node> AiConditionNode::setDebug(std::string name, ParamValue value){
+boost::shared_ptr<Node> AiConditionNode::setDebug(std::string const& name, ParamValue value){
     boost::shared_ptr<GroupingNode> debug = findOrCreate<GroupingNode>("debug");
     if (!m_debug[name]) {
         m_debug[name] = paramValueToNode(nid_t(name), value);
@@ -66,7 +61,7 @@ boost::shared_ptr<Node> AiConditionNode::setDebug(std::string name, ParamValue v
     return m_debug[name];
 }
 
-void AiConditionNode::removeDebug(std::string name){
+void AiConditionNode::removeDebug(std::string const& name){
     this->removeChild(nid_t(name));
     m_debug.erase(name);
 }
@@ -75,7 +70,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiConditionNode::getDebugValues(
     return m_debug;
 }
 
-boost::shared_ptr<Node> AiConditionNode::setOption(std::string name, ParamValue value){
+boost::shared_ptr<Node> AiConditionNode::setOption(std::string const& name, ParamValue value){
     boost::shared_ptr<GroupingNode> options = findOrCreate<GroupingNode>("options");
     if (!m_options[name]) {
         m_options[name] = paramValueToNode(nid_t(name), value);
@@ -85,7 +80,7 @@ boost::shared_ptr<Node> AiConditionNode::setOption(std::string name, ParamValue 
     return m_options[name];
 }
 
-void AiConditionNode::removeOption(std::string name){
+void AiConditionNode::removeOption(std::string const& name){
     this->removeChild(nid_t(name));
     m_options.erase(name);
 }
@@ -94,12 +89,12 @@ std::map<std::string, boost::shared_ptr<Node> > AiConditionNode::getOptions(){
     return m_options;
 }
 
-void AiConditionNode::addPipelineId(std::string id){
+void AiConditionNode::addPipelineId(std::string const& id){
     m_pipelineIds.insert(id);
     Q_EMIT onUpdate();
     Q_EMIT structureChanged();
 }
-void AiConditionNode::removePipelineId(std::string id){
+void AiConditionNode::removePipelineId(std::string const& id){
     m_pipelineIds.erase(std::find(m_pipelineIds.begin(), m_pipelineIds.end(), id));
 }
 std::set<std::string > AiConditionNode::getPipelineIds(){
@@ -124,13 +119,13 @@ LiquidConditionNode::LiquidConditionNode(
     m_sinkLabel(new liquid::ArcSinkLabel(m_sink, this, "pipelines"))
 {
 
-    node->connect(node.get(), SIGNAL(onUpdate(QVariant)), this, SLOT(highlightStatus(QVariant)));
+    node->connect(node.get(), SIGNAL(onUpdate(QVariant const&)), this, SLOT(highlightStatus(QVariant const&)));
     node->connect(node.get(), SIGNAL(onBranchChanged()), this, SLOT(ensureConnected()));
     node->connect(node.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
-    rebuildContents();
+    buildContents();
 }
 
-void LiquidConditionNode::highlightStatus(QVariant status){
+void LiquidConditionNode::highlightStatus(QVariant const& status){
     if(status.toBool()) {
         m_status_highlight->setBrush(QBrush(QColor(92,205,92)));
     }
@@ -139,7 +134,7 @@ void LiquidConditionNode::highlightStatus(QVariant status){
     }
 }
 
-void LiquidConditionNode::rebuildContents(){
+void LiquidConditionNode::buildContents(){
 
     addItem(m_sinkLabel);
 
@@ -164,7 +159,8 @@ liquid::ArcSource * LiquidConditionNode::getSourceFor(boost::shared_ptr<Node> co
 
 bool LiquidConditionNode::willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*) {
     Q_UNUSED(from_source);
-    return false; // at the moment pipelines aren't pluggable in the Ai
+    return false;
+    // at the moment pipelines aren't pluggable in the Ai
     /*
     QString id = from_source->reference().toString();
     if(id.compare(QString("FluiditySourceDelegate")) == 0){
@@ -175,6 +171,8 @@ bool LiquidConditionNode::willAcceptConnection(liquid::ArcSourceDelegate* from_s
 
 LiquidConditionNode::ConnectionStatus LiquidConditionNode::doAcceptConnection(liquid::ArcSourceDelegate*,
                                                                               liquid::AbstractArcSink *) {
+
+    // at the moment pipelines aren't pluggable in the Ai
     /* QString id = from_source->reference().toString();
     if(id.compare(QString("FluiditySourceDelegate")) == 0){
         FluidtySourceDelegate * tn = static_cast<FluidtySourceDelegate *>(from_source);
@@ -189,17 +187,10 @@ void LiquidConditionNode::ensureConnected(){
     boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
     boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
 
-    info() << "ensure connected condition";
-
     foreach(std::string const& id, m_node->getPipelineIds()) {
-
-        info() << "need " << id;
-
         try {
             boost::shared_ptr<Node> node = pipelines->findFromPath<Node>(QString::fromStdString(id));
-            info() << "got fluidity node" << node->nodePath();
             ConnectedNode * cn = ConnectedNode::nodeFor(node);
-            qDebug() << "connected node = " << cn;
             if(!cn) {
                 error() << "Node ConnectedNode not registered for " << id;
                 continue;
@@ -211,29 +202,7 @@ void LiquidConditionNode::ensureConnected(){
             }
             source->arc()->addTo(m_sink);
         } catch (std::out_of_range){
-            warning() << "Pipeline node not found for condition";
+            warning() << "Fluidity node not found for condition" << id;
         }
-
-
-        /*
-
-
-
-
-        if(pipelines->exists<FluidityNode>(id)) {
-            boost::shared_ptr<FluidityNode> node = pipelines->find<FluidityNode>(id);
-            ConnectedNode * cn = ConnectedNode::nodeFor(node);
-            qDebug() << "connected node = " << cn;
-            if(!cn) {
-                error() << "Node ConnectedNode registered for " << id;
-                return;
-            }
-            liquid::ArcSource * source = cn->getSourceFor(node);
-            if(!source){
-                warning() << id << "does not have an ArcSource";
-                return;
-            }
-            source->arc()->addTo(m_sink);
-        }*/
     }
 }

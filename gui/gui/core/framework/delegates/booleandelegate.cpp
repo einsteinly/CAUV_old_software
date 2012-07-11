@@ -50,7 +50,7 @@ void BooleanDelegate::paint(QPainter *painter,
     if (node) {
         StyleOptionOnOff onOffOption;
         onOffOption.rect = controlRect(option, index);
-        onOffOption.position = node->get();
+        onOffOption.position = node->typedGet();
         onOffOption.marked = node->isMutable();
         QApplication::style()->drawControl(QStyle::CE_CheckBox,
                                            &onOffOption, painter);
@@ -68,7 +68,7 @@ QWidget * BooleanDelegate::createEditor(QWidget *parent,
         slider->setAnimation(true);
         connect(retval, SIGNAL(switched()), this, SLOT(commit()));
         BooleanNode * node = dynamic_cast<BooleanNode*>((Node*)index.internalPointer());
-        node->set(!node->get());
+        node->set(!node->typedGet());
     }
     return retval;
 }

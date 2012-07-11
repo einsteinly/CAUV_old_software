@@ -5,10 +5,11 @@
 namespace cauv{
 namespace gui{
 
-static QColor alpha(QColor c, int alpha) {
-    c.setAlpha(alpha);
-    return c;
-}
+// not used at the moment
+//static QColor alpha(QColor c, int alpha) {
+//    c.setAlpha(alpha);
+//    return c;
+//}
 
 namespace font{
 const static QFont Verdana_12pt = QFont("Verdana", 12, 1);

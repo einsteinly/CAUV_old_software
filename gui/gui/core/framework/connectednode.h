@@ -48,13 +48,11 @@ public:
     static void setMap(ConnectedNodeMap * map);
     static ConnectedNodeMap * getMap();
 
-protected:
-
-    typedef boost::unique_lock<boost::mutex> lock_t;
-
+private:
     void unregister(boost::shared_ptr<Node> const& node);
     void unregister(ConnectedNode* ln);
 
+    typedef boost::unique_lock<boost::mutex> lock_t;
     static ConnectedNodeMap * m_mapping;
 };
 

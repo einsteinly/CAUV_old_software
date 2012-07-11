@@ -54,21 +54,46 @@ class AUV(messaging.MessageObserver):
             self.send(messaging.BearingAutopilotEnabledMessage(True, bearing))
         else:
             self.send(messaging.BearingAutopilotEnabledMessage(False, 0))
-
-    def bearingAndWait(self, bearing, epsilon = 5, timeout = 30):
+    
+    # additional rate parameter (degrees per second) would ideally be
+    # implemented by the control loops
+    def bearingAndWait(self, bearing, epsilon = 5, timeout = 30, rate=90):
         '''Set a bearing (degrees CW from north) and activate the bearing control loop, do not return until the bearing is achieved within 'epsilon' degrees'''
         if bearing is None:
             raise ValueError("Cannot wait for 'None' bearing.")
         startTime = time.time()
-        self.bearing(bearing)
-        while time.time() - startTime < timeout:
-            if self.current_bearing == None or min((bearing - self.current_bearing) % 360, (self.current_bearing - bearing) % 360) > epsilon:
-                #print 'bearing waiting'
+        if rate < 90:
+            if self.current_bearing is None:
+                start_t = time.time()
                 self.bearingCV.acquire()
-                self.bearingCV.wait(timeout - time.time() + startTime)
+                self.bearingCV.wait(timeout)
                 self.bearingCV.release()
-            else:
-                break
+                timeout -= (time.time() - start_t)
+                if self.current_bearing is None:
+                    return self.bearingAndWait(bearing, epsilon, timeout, rate=90)
+            delta_up = (bearing - self.current_bearing) % 360
+            delta_down = (self.current_bearing - bearing) % 360
+            if delta_up < delta_down:
+                delta = delta_up
+            elif delta_down < delta_up:
+                delta = -delta_down
+            debug("%s %s" % (delta_down, delta_up))
+            x = 0
+            for x in xrange(1, int(abs(delta) / rate)):
+                debug(str(x))
+                self.bearing(self.current_bearing + x * delta);
+                time.sleep(1.0)
+            return self.bearingAndWait(bearing, epsilon, timeout=max(1,timeout-x), rate=90)
+        else:
+            self.bearing(bearing)
+            while time.time() - startTime < timeout:
+                if self.current_bearing == None or min((bearing - self.current_bearing) % 360, (self.current_bearing - bearing) % 360) > epsilon:
+                    #print 'bearing waiting'
+                    self.bearingCV.acquire()
+                    self.bearingCV.wait(timeout - time.time() + startTime)
+                    self.bearingCV.release()
+                else:
+                    break
 
     def calibrateDepth(self, foreOffset, foreMultiplier, aftOffset=None, aftMultiplier=None):
         '''Set the conversion factors between pressure sensor values and depth.
@@ -76,6 +101,7 @@ class AUV(messaging.MessageObserver):
             See also:
                 calibrateForSaltWater()
                 calibrateForFreshWater()
+                autoCalibrateDepth()
         '''
         if aftOffset is None:
             aftOffset = foreOffset
@@ -89,12 +115,23 @@ class AUV(messaging.MessageObserver):
         self.send(messaging.DepthCalibrationMessage(foreOffset, foreMultiplier, aftOffset, aftMultiplier))
 
     def calibrateForSaltWater(self):
-        '''Set the depth calibration for seawater.'''
+        '''Redherring calibration: Set the depth calibration for seawater.'''
         self.calibrateDepth(-912.2/96.2, 1.0/96.2)
 
     def calibrateForFreshWater(self):
-        '''Set the depth calibration for fresh water.'''
+        '''Redherring calibration: Set the depth calibration for fresh water.'''
         self.calibrateDepth(-928.0/86.5, 1.0/86.5)
+        
+    def autoCalibrateDepth(self, surfacePressure = 1000.0, waterDensity = 1025.0):
+        '''Barracuda calibration: Set the depth calibration for barracuda.'''
+        #pressure = (depth - fore_offset) / fore_mult
+        #so depth = (pressure*fore_mult)+fore_offset
+        #at 0, 0=surfacePressure*fore_mult+fore_offset, so foreoffset = -surfacePressure/fore_mult
+        #fore_mult = depth/pressure
+        fore_mult = 1/(waterDensity*9.81)
+        fore_offset = -surfacePressure / (waterDensity*9.81)
+        
+        self.calibrateDepth(fore_offset, fore_mult)
 
     def depth(self, depth):
         '''Set a depth (metres) and activate the depth control loop, or deactivate depth control if 'None' is passed.'''

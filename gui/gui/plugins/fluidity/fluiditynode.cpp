@@ -35,6 +35,22 @@
 using namespace cauv;
 using namespace cauv::gui;
 
+FluidityNode::FluidityNode(const nid_t id) :
+    Node(id, nodeType<FluidityNode>()){
+}
+
+FluidityNode::~FluidityNode(){
+}
+
+std::string FluidityNode::fullPipelineName(){
+    std::string pipelineName = nodeName();
+    if(getParent()->type == nodeType<GroupingNode>()){
+        std::string parentName = getParent()->nodeName();
+        pipelineName = parentName.append("/").append(pipelineName);
+    }
+    return pipelineName;
+}
+
 
 LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node, 
                                        boost::weak_ptr<CauvMainWindow> in_window,
@@ -56,14 +72,11 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
 
     m_source->setParentItem(this);
     m_source->setZValue(10);
+    this->setClosable(false);
     
     boost::shared_ptr<CauvNode> cauv_node = FluidityPlugin::theCauvNode().lock();
     if(cauv_node){
-        std::string pipelineName = m_node->nodeName();
-        if(m_node->getParent()->type == nodeType<GroupingNode>()){
-            std::string parentName = m_node->getParent()->nodeName();
-            pipelineName = parentName.append("/").append(pipelineName);
-        }
+        std::string pipelineName = m_node->fullPipelineName();
 
         m_view = new f::FView(cauv_node, pipelineName);
         m_view->setMode(f::FView::Internal);
@@ -85,8 +98,8 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
 
     
     liquid::Button *maxbutton = new liquid::Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/maximise_button"), NULL, this
-    );
+                QRectF(0,0,24,24), QString(":/resources/icons/maximise_button"), NULL, this
+                );
     m_header->addButton("maximise", maxbutton);
     
     connect(maxbutton, SIGNAL(pressed()), this, SLOT(beginMaximise()));
@@ -95,11 +108,6 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
 
     connect(this, SIGNAL(xChanged()), m_source, SIGNAL(xChanged()));
     connect(this, SIGNAL(yChanged()), m_source, SIGNAL(yChanged()));
-}
-
-LiquidFluidityNode::~LiquidFluidityNode(){
-    debug() << "~LiquidFluidityNode()";
-    unregister(this);
 }
 
 void LiquidFluidityNode::beginMaximise(){
@@ -123,11 +131,11 @@ void LiquidFluidityNode::zoomIn(int percent){
     float pct = percent/100.0f;
     QRectF target = m_contents->mapToScene(m_contents->boundingRect()).boundingRect();
     QRectF r(
-        m_orginal_view_rect.x() + pct * (target.x()-m_orginal_view_rect.x()),
-        m_orginal_view_rect.y() + pct * (target.y()-m_orginal_view_rect.y()),
-        m_orginal_view_rect.width() + pct * (target.width()-m_orginal_view_rect.width()),
-        m_orginal_view_rect.height() + pct * (target.height()-m_orginal_view_rect.height())
-    );
+                m_orginal_view_rect.x() + pct * (target.x()-m_orginal_view_rect.x()),
+                m_orginal_view_rect.y() + pct * (target.y()-m_orginal_view_rect.y()),
+                m_orginal_view_rect.width() + pct * (target.width()-m_orginal_view_rect.width()),
+                m_orginal_view_rect.height() + pct * (target.height()-m_orginal_view_rect.height())
+                );
     scene()->views()[0]->fitInView(r, Qt::KeepAspectRatio);
 }
 
@@ -148,11 +156,11 @@ void LiquidFluidityNode::zoomOut(int percent){
     float pct = percent/100.0f;
     QRectF target = m_orginal_view_rect;
     QRectF r(
-        m_zoomed_view_rect.x() + pct * (target.x()-m_zoomed_view_rect.x()),
-        m_zoomed_view_rect.y() + pct * (target.y()-m_zoomed_view_rect.y()),
-        m_zoomed_view_rect.width() + pct * (target.width()-m_zoomed_view_rect.width()),
-        m_zoomed_view_rect.height() + pct * (target.height()-m_zoomed_view_rect.height())
-    );
+                m_zoomed_view_rect.x() + pct * (target.x()-m_zoomed_view_rect.x()),
+                m_zoomed_view_rect.y() + pct * (target.y()-m_zoomed_view_rect.y()),
+                m_zoomed_view_rect.width() + pct * (target.width()-m_zoomed_view_rect.width()),
+                m_zoomed_view_rect.height() + pct * (target.height()-m_zoomed_view_rect.height())
+                );
     scene()->views()[0]->fitInView(r, Qt::KeepAspectRatio);
 }
 
@@ -174,7 +182,7 @@ void LiquidFluidityNode::unMaximise(){
         // ... so create a new one instead:
         boost::shared_ptr<CauvNode> cauv_node = m_view->node();
         m_view->deleteLater();
-        m_view = new f::FView(cauv_node, m_node->nodeName());
+        m_view = new f::FView(cauv_node, m_node->fullPipelineName());
         m_view->setMode(f::FView::Internal);
         m_contents->setWidget(m_view);
     }

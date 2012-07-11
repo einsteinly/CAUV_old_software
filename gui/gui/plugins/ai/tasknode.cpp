@@ -62,13 +62,13 @@ std::set<boost::shared_ptr<AiConditionNode> > AiTaskNode::getConditions(){
     return m_conditions;
 }
 
-void AiTaskNode::addPipelineId(std::string pipe){
+void AiTaskNode::addPipelineId(std::string const& pipe){
     m_pipelineIds.insert(pipe);
     Q_EMIT onUpdate();
     Q_EMIT structureChanged();
 }
 
-void AiTaskNode::removePipelineId(std::string pipe){
+void AiTaskNode::removePipelineId(std::string const& pipe){
     m_pipelineIds.erase(std::find(m_pipelineIds.begin(), m_pipelineIds.end(), pipe));
 }
 
@@ -76,7 +76,7 @@ std::set<std::string> AiTaskNode::getPipelineIds(){
     return m_pipelineIds;
 }
 
-boost::shared_ptr<Node> AiTaskNode::setDebug(std::string name, ParamValue value){
+boost::shared_ptr<Node> AiTaskNode::setDebug(std::string const& name, ParamValue value){
     if (!m_debug[name]) {
         m_debug[name] = paramValueToNode(nid_t(name), value);
         findOrCreate<GroupingNode>("debug")->addChild(m_debug[name]);
@@ -85,7 +85,7 @@ boost::shared_ptr<Node> AiTaskNode::setDebug(std::string name, ParamValue value)
     return m_debug[name];
 }
 
-void AiTaskNode::removeDebug(std::string name){
+void AiTaskNode::removeDebug(std::string const& name){
     findOrCreate<GroupingNode>("debug")->removeChild(nid_t(name));
     m_debug.erase(name);
 }
@@ -94,7 +94,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getDebugValues(){
     return m_debug;
 }
 
-boost::shared_ptr<Node> AiTaskNode::setStaticOption(std::string name, ParamValue value){
+boost::shared_ptr<Node> AiTaskNode::setStaticOption(std::string const& name, ParamValue value){
     if (!m_staticOptions[name]) {
         m_staticOptions[name] = paramValueToNode(nid_t(name), value);
         findOrCreate<GroupingNode>("options")->addChild(m_staticOptions[name]);
@@ -103,7 +103,7 @@ boost::shared_ptr<Node> AiTaskNode::setStaticOption(std::string name, ParamValue
     return m_staticOptions[name];
 }
 
-void AiTaskNode::removeStaticOption(std::string name){
+void AiTaskNode::removeStaticOption(std::string const& name){
     findOrCreate<GroupingNode>("options")->removeChild(nid_t(name));
     m_staticOptions.erase(name);
 }
@@ -112,7 +112,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getStaticOptions(){
     return m_staticOptions;
 }
 
-boost::shared_ptr<Node> AiTaskNode::setDynamicOption(std::string name, ParamValue value){
+boost::shared_ptr<Node> AiTaskNode::setDynamicOption(std::string const& name, ParamValue value){
     if (!m_dynamicOptions[name]) {
         m_dynamicOptions[name] = paramValueToNode(nid_t(name), value);
         findOrCreate<GroupingNode>("options")->addChild(m_dynamicOptions[name]);
@@ -121,7 +121,7 @@ boost::shared_ptr<Node> AiTaskNode::setDynamicOption(std::string name, ParamValu
     return m_dynamicOptions[name];
 }
 
-void AiTaskNode::removeDynamicOption(std::string name){
+void AiTaskNode::removeDynamicOption(std::string  const& name){
     this->removeChild(name);
     m_dynamicOptions.erase(name);
 }
@@ -130,7 +130,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getDynamicOptions(){
     return m_dynamicOptions;
 }
 
-boost::shared_ptr<Node> AiTaskNode::setTaskOption(std::string name, ParamValue value){
+boost::shared_ptr<Node> AiTaskNode::setTaskOption(std::string const& name, ParamValue value){
     if (!m_taskOptions[name]) {
         m_taskOptions[name] = paramValueToNode(nid_t(name), value);
         findOrCreate<GroupingNode>("options")->addChild(m_taskOptions[name]);
@@ -139,7 +139,7 @@ boost::shared_ptr<Node> AiTaskNode::setTaskOption(std::string name, ParamValue v
     return m_taskOptions[name];
 }
 
-void AiTaskNode::removeTaskOption(std::string name){
+void AiTaskNode::removeTaskOption(std::string const& name){
     findOrCreate<GroupingNode>("options")->removeChild(nid_t(name));
     m_taskOptions.erase(name);
 }
@@ -165,7 +165,7 @@ LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem
     m_pipelineSinkLabel(new liquid::ArcSinkLabel(m_pipelineSink, this, "pipelines"))
 {
     initButtons();
-    rebuildContents();
+    buildContents();
     node->connect(node.get(), SIGNAL(onUpdate(QVariant)), this, SLOT(highlightRunningStatus(QVariant)));
     node->connect(node.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
 
@@ -249,7 +249,7 @@ void LiquidTaskNode::ensureConnected(){
     }
 }
 
-void LiquidTaskNode::rebuildContents(){
+void LiquidTaskNode::buildContents(){
 
     // incoming dependencies
 

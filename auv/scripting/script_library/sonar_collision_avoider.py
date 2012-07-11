@@ -6,7 +6,6 @@ from collections import deque
 import time, Queue
 
 class scriptOptions(aiScriptOptions):
-    pipeline = 'sonar_collisions_2'
     points_name = 'avoid_collision'
     monitor_fraction = 0.25
     reverse_to_distance = 3.0
@@ -16,6 +15,7 @@ class scriptOptions(aiScriptOptions):
     class Meta:
         dynamic = ['monitor_fraction', 'reverse_to_distance', 'reverse_time',
                    'points_name', 'use_distance', 'use_time']
+        pipelines = ['sonar_collisions_2']
 
 class script(aiScript):
     debug_values = ['start_time', 'mean_distance_closest']
@@ -35,7 +35,6 @@ class script(aiScript):
         self.messages.put(m.points)
         
     def run(self):
-        self.request_pl(self.options.pipeline)
         while (self.start_time+self.options.reverse_time-time.time()>0 and self.options.use_time) or \
               (self.mean_distance_closest<self.options.reverse_to_distance and self.options.use_distance):      
             self.auv.prop(-127)

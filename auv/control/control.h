@@ -109,21 +109,19 @@ class ControlLoops : public MessageObserver, public IMUObserver, public MCBObser
         void motorControlLoop();
         int motorMap(float const& demand_value, MotorID::e mid);
         void updateMotorControl();
-
+        void sendIfChangedOrOld(MotorDemand const& old_values, MotorDemand const& new_values);
+        void sendIfChangedOrOld(MotorID::e mid, int old_value, int new_value);
 
         int motor_values[MotorID::NumValues];
+        
+        MotorDemand m_motor_values;
+        std::map<MotorID::e, std::size_t> m_ticks_since_send;
 
-        int prop_value;
-        int hbow_value;
-        int vbow_value;
-        int hstern_value;
-        int vstern_value;
-
-        MotorMap prop_map;
-        MotorMap hbow_map;
-        MotorMap vbow_map;
-        MotorMap hstern_map;
-        MotorMap vstern_map;
+        MotorMap m_prop_map;
+        MotorMap m_hbow_map;
+        MotorMap m_vbow_map;
+        MotorMap m_hstern_map;
+        MotorMap m_vstern_map;
 
         unsigned m_max_motor_delta;
         unsigned m_motor_updates_per_second;

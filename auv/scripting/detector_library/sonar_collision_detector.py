@@ -6,7 +6,6 @@ import time
 from collections import deque
 
 class detectorOptions(aiDetectorOptions):
-    pipeline = 'sonar_collisions_2'
     points_name = 'avoid_collision'
     monitor_fraction = 0.25
     min_distance = 0.5 #any values below this constitute and emergency
@@ -15,13 +14,13 @@ class detectorOptions(aiDetectorOptions):
     class Meta:
         dynamic = ['monitor_fraction', 'min_distance', 'speed_factor',
                     'distance_factor']
+        pipelines = ['sonar_collisions_2']
 
 class detector(aiDetector):
     debug_values = ['last_min','last_mean','speed_limit', 'detected']
     def __init__(self, *arg, **kwargs):
         aiDetector.__init__(self, *arg, **kwargs)
         self.node.subMessage(messaging.PointsMessage())
-        self.request_pl(self.options.pipeline)
         self.last_min = None
         self.last_mean = None
         self.speed_limit = None

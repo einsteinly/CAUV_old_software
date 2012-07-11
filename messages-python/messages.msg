@@ -1019,6 +1019,10 @@ group gui
         name : string;
         value : float;
     }
+
+    message RemoteControlsAlive : 105
+    {
+    }
 }
 
 group pl_gui
@@ -1113,6 +1117,10 @@ group ai
     message AIlog : 201
     {
         msg : string;
+    }
+    message AIKeepAlive : 199
+    {
+        managerId : string;
     }
 }
 group guiai

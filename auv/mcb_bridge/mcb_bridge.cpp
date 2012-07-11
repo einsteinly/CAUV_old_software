@@ -65,7 +65,7 @@ SerialPort::SerialPort(std::string file, unsigned int) :
                      | INLCR | IGNCR | ICRNL | IXON | IXOFF | IXANY | INPCK );
 
     term.c_oflag &= ~(OCRNL | ONLCR | ONLRET |
-                      ONOCR | OFILL | OLCUC | OPOST);
+                      ONOCR | OFILL | OPOST);
 
     term.c_cc[VMIN] = 1;
     term.c_cc[VTIME] = 0;
@@ -218,7 +218,7 @@ Pty::Pty(std::string name) :
                      | INLCR | IGNCR | ICRNL | IXON | IXOFF | IXANY | INPCK );
 
     term.c_oflag &= ~(OCRNL | ONLCR | ONLRET |
-                      ONOCR | OFILL | OLCUC | OPOST);
+                      ONOCR | OFILL | OPOST);
 
     term.c_cc[VMIN] = 1;
     term.c_cc[VTIME] = 0;

@@ -4,6 +4,7 @@ import cauv.messaging as messaging
 
 import cauv
 import cauv.control as control
+import cauv.messaging as msg
 import cauv.node
 from cauv.debug import debug, error, warning, info
 
@@ -72,9 +73,17 @@ class GamepadServer(messaging.MessageObserver):
             
     def run(self):
         try:
+            iterations = 1/self.rate # send an alive message once per second
+            count = 0
             while True:
                 self.handleEvents()
                 time.sleep(self.rate)
+                if count > iterations:
+                    self.__node.send(msg.RemoteControlsAliveMessage())
+                    count = 0
+                count = count + 1
+        
+                
         except KeyboardInterrupt:
             self.joystick.quit()
 

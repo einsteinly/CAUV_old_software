@@ -92,7 +92,7 @@ void NumericDelegate::setEditorData(QWidget *editor,
                                     const QModelIndex &index) const{
     QStyledItemDelegate::setEditorData(editor, index);
 
-    NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
+    NumericNodeBase * node = static_cast<NumericNodeBase*>(index.internalPointer());
 
     if(node && node->isMaxSet() && node->isMinSet()) {
         if(NeutralSpinBox * neutral = qobject_cast<NeutralSpinBox*>(editor)){
@@ -101,16 +101,22 @@ void NumericDelegate::setEditorData(QWidget *editor,
             neutral->setWrapping(node->getWraps());
             neutral->setNeutral(node->getNeutral().toInt());
             neutral->setInverted(node->isInverted());
+            neutral->setValue(node->asNumber().toInt());
         }
+
 
         if(NeutralDoubleSpinBox * neutral = qobject_cast<NeutralDoubleSpinBox*>(editor)){
             neutral->setMinimum(node->getMin().toDouble());
             neutral->setMaximum(node->getMax().toDouble());
             neutral->setWrapping(node->getWraps());
-            neutral->setNeutral(node->getNeutral().toDouble());
-            neutral->setDecimals(node->getPrecision());
-            neutral->setInverted(node->isInverted());
         }
+    }
+
+    if(NeutralDoubleSpinBox * neutral = qobject_cast<NeutralDoubleSpinBox*>(editor)){
+        neutral->setNeutral(node->getNeutral().toDouble());
+        neutral->setDecimals(node->getPrecision());
+        neutral->setInverted(node->isInverted());
+        neutral->setValue(node->asNumber().toDouble());
     }
 }
 

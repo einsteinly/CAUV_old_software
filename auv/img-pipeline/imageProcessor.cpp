@@ -78,7 +78,6 @@ void ImageProcessor::onSonarImageMessage(SonarImageMessage_ptr m){
 
 
 void ImageProcessor::onTelemetryMessage(TelemetryMessage_ptr m){
-    debug() << "ImageProcessor::onTelemetry" << *m;
     lock_t l(m_nodes_lock);
     std::set<node_ptr_t>::iterator i;        
     for(i = m_telem_req_nodes.begin(); i != m_telem_req_nodes.end(); i++)
@@ -312,13 +311,15 @@ void ImageProcessor::onSetPipelineMessage(SetPipelineMessage_ptr m){
             node_ptr_t node = NodeFactoryRegister::create(*m_scheduler, *this, m_name, node_to_add->second);
             if(node->isInputNode()){
                 m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
-            old_id2new_id[node_to_add->first] = node->id();
             }
+            old_id2new_id[node_to_add->first] = node->id();
+            _addNode(node, node->id());
         }
         catch(std::exception& e){
             error() << __func__ << ":" <<e.what();
         }
     }
+    debug() << old_id2new_id;
     //params that dont need to be set because they are filled by arcs
     std::map<node_id, std::list<input_id> > params_with_arcs;
     //now fill in arcs
@@ -332,35 +333,15 @@ void ImageProcessor::onSetPipelineMessage(SetPipelineMessage_ptr m){
             for(Node::msg_node_input_map_t::const_iterator arc_map = arcs_to_add->second.begin();
                 arc_map != arcs_to_add->second.end(); arc_map++){
                 try{
+                    if(arc_map->second.node == 0){
+                        continue;
+                    }
                     node_ptr_t from = lookup(old_id2new_id[arc_map->second.node]);
                     if(!from) throw id_error(MakeString() << "invalid node:" << arc_map->second.node);
                     
                     output_id output = arc_map->second.output;
                     input_id input = arc_map->first.input;
                     
-                    Node::msg_node_input_map_t il = to->inputLinks();
-                    NodeOutput old_from;
-                    
-                    // remove any existing arc to input first:
-                    Node::msg_node_input_map_t old_il = to->inputLinks();
-                    Node::msg_node_input_map_t::const_iterator old_il_in;
-                    //??use find??
-                    for(old_il_in = old_il.begin(); old_il_in != old_il.end(); old_il_in++)
-                        if(old_il_in->first.input == input){
-                            old_from = old_il_in->second;
-                            break;
-                        }
-                    if(old_il_in != old_il.end() && old_il_in->second.node){
-                        node_ptr_t old_from = lookup(old_il_in->second.node);
-                        if(old_from)
-                            old_from->clearOutput(old_il_in->second.output, to, input);
-                    }else if(old_il_in == old_il.end()){
-                        error() << "badness: node" << arc_map->second.node
-                                << "has no output link record to input" << input
-                                << "on node" << arcs_to_add->first;
-                    }
-                    to->clearInput(input);
-
                     from->setOutput(output, to, input);
                     to->setInput(input, from, output);
                     
@@ -379,7 +360,11 @@ void ImageProcessor::onSetPipelineMessage(SetPipelineMessage_ptr m){
     for(std::map<node_id, Node::msg_node_param_map_t>::const_iterator params_to_add = m->nodeParams().begin();
         params_to_add != m->nodeParams().end(); params_to_add++){
         try{
-            std::list<input_id> exclude_params = params_with_arcs.find(params_to_add->first)->second;
+            std::map<node_id, std::list<input_id> >::const_iterator exclude_params_it = params_with_arcs.find(params_to_add->first);
+            if(exclude_params_it==params_with_arcs.end()){
+                throw id_error(std::string("Unknown node id: ") + toStr(params_to_add->first));
+            }
+            std::list<input_id> exclude_params = exclude_params_it->second;
             node_ptr_t n = lookup(old_id2new_id[params_to_add->first]);
             for(Node::msg_node_param_map_t::const_iterator param_map = params_to_add->second.begin();
                 param_map != params_to_add->second.end(); param_map++){

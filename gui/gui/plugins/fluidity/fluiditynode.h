@@ -33,11 +33,19 @@ class CauvNode;
 
 namespace gui {
 
+class GroupingNode;
+
 namespace f {
 class FView;
 } // namespace f
 
-GENERATE_SIMPLE_NODE(FluidityNode)
+
+class FluidityNode : public Node {
+    public:
+    FluidityNode(const nid_t id);
+    virtual ~FluidityNode();
+    std::string fullPipelineName();
+};
 
 class FluidtySourceDelegate : public liquid::ArcSourceDelegate {
     public:
@@ -55,7 +63,6 @@ public:
     LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
                        boost::weak_ptr<CauvMainWindow> in_window,
                        QGraphicsItem *parent = 0);
-    virtual ~LiquidFluidityNode();
 
     virtual liquid::ArcSource * getSourceFor(boost::shared_ptr<Node> const&) const;
 

@@ -45,7 +45,7 @@ class taskManager(aiProcess):
     #_store_values = ['task_nid', 'tasks', 'condition_nid', 'conditions', 'detector_nid', 'detectors_required', ]
     #SETUP FUNCTIONS
     def __init__(self, opts):
-        aiProcess.__init__(self, 'task_manager')
+        aiProcess.__init__(self, 'task_manager', opts.manager_id)
         self.node.subMessage(messaging.AddTaskMessage())
         self.node.subMessage(messaging.RemoveTaskMessage())
         self.node.subMessage(messaging.SetTaskStateMessage())
@@ -460,7 +460,9 @@ class taskManager(aiProcess):
                                    '--options',
                                    cPickle.dumps(task.get_script_options()), 
                                    '--state',
-                                   cPickle.dumps(task.persist_state)])
+                                   cPickle.dumps(task.persist_state),
+                                   '--mission_id',
+                                   self._man_id])
         #set relevent parameters
         if self.current_task:
             #stop any old script
@@ -531,6 +533,8 @@ if __name__ == '__main__':
                  action='store', help="try and resume from last saved state")
     p.add_argument('-f', '--mission_save', dest='mission_save', default='',
                  action='store', help="load saved state")
+    p.add_argument('-M', '--manager_id', dest='manager_id', default='',
+                 action='store', help="id of relevent ai manager")
     opts, args = p.parse_known_args()
     
     tm = taskManager(opts)

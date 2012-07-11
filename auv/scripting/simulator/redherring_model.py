@@ -74,7 +74,7 @@ Length    = 1.3       # length in m, used for moment calculation only
 Ixx = Izz = (Mass*(Length**2)/12.0) # kg m^2
 Iyy = Ixx / 4
 
-Max_Thrust = 11.0 # N, used in Force_Per_Unit_Thrust only
+Max_Thrust = 11.0 # N, used in Force_Per_Unit_Thrust only !!! apparently this is wrong
 Force_Per_Unit_Thrust = Max_Thrust/127.0 # N
 Max_Yaw_Moment   = 1.5*Max_Thrust*2
 Max_Pitch_Moment = Max_Yaw_Moment

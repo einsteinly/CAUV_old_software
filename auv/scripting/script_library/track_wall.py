@@ -40,6 +40,7 @@ class scriptOptions(aiScriptOptions):
                 'maximumBearingChange',
                 'targetDistance',
                 ]
+        pipelines = ['track_wall2']
 
 
 class script(aiScript):
@@ -288,7 +289,6 @@ class script(aiScript):
         
     def run(self):
         #head to start
-        self.request_pl('track_wall2')
         time.sleep(2)
         if self.options.useDepth:
             self.auv.depth(self.options.depth)

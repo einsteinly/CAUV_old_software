@@ -4,6 +4,7 @@ from cauv.debug import debug, warning, error, info
 from math import atan, degrees
 
 import threading
+import thread
 import cPickle
 import time
 import traceback
@@ -65,7 +66,8 @@ def force_calling_process(f):
     return f
     
 class aiProcess(event.EventLoop, messaging.MessageObserver):
-    def __init__(self, process_name):
+    def __init__(self, process_name, manager_id=None):
+        #Note that if no manager_id is oassed, then this will die quickly
         print 'initialising ' + str(self.__class__)
         #Need to be careful with use of super(), since there's now multiple
         #inheritance. It can act unexpectedly (for instance, switching the order
@@ -76,6 +78,11 @@ class aiProcess(event.EventLoop, messaging.MessageObserver):
         self.node = cauv.node.Node("ai_"+process_name)
         self.node.subMessage(messaging.AIMessage())
         self.node.subMessage(messaging.AIlogMessage())
+        self.node.subMessage(messaging.AIKeepAliveMessage())
+        self._keep_alive = True
+        self._man_id = manager_id
+        self._keep_alive_thread = threading.Thread(target=self._keep_alive_loop)
+        self._keep_alive_thread.daemon = True
         self.process_name = process_name
         self.ai = aiAccess(self.node, self.process_name)
         self.running = True
@@ -92,6 +99,15 @@ class aiProcess(event.EventLoop, messaging.MessageObserver):
     #the 'most child' process should call this at the end of its init method
     def _register(self):
         self.node.addObserver(self)
+        self._keep_alive_thread.start()
+        
+    def onAIKeepAliveMessage(self, m):
+        if m.managerId == self._man_id:
+            self._keep_alive = True
+        else:
+            #if there is another manager running, then kill this script
+            self._keep_alive = False
+            warning("Old process still running!!!!!")
 
     def onAIMessage(self, m):
         message = cPickle.loads(m.msg)
@@ -107,6 +123,18 @@ class aiProcess(event.EventLoop, messaging.MessageObserver):
                     error(traceback.format_exc().encode('ascii', 'replace'))
             except KeyError:
                 error("Unknown function {} called by {}".format(message.function, message.calling_process))
+            
+    def _keep_alive_loop(self):
+        try:
+            while True:
+                time.sleep(5)
+                if self._keep_alive:
+                    self._keep_alive = False
+                else:
+                    raise Exception("AI_manager died.")
+        except:
+            thread.interrupt_main()
+            debug("Killed thread since AI_manager died")
 
     def log(self, message):
         debug(message)
@@ -401,8 +429,8 @@ class aiScriptState(object):
         
 class aiScript(aiProcess):
     debug_values = []
-    def __init__(self, task_name, script_opts, persistent_state):
-        aiProcess.__init__(self, task_name)
+    def __init__(self, task_name, script_opts, persistent_state, manager_id):
+        aiProcess.__init__(self, task_name, manager_id)
         self.die_flag = threading.Event() #for any subthreads
         self.exit_confirmed = threading.Event()
         self.pl_confirmed = threading.Event()
@@ -543,7 +571,6 @@ class aiDetector(messaging.MessageObserver):
             error('Error sending high-level log message')
             error(traceback.format_exc().encode('ascii','ignore'))
     def die(self):
-        self.drop_all_pl()
         self.node.removeObserver(self)
     def optionChanged(self, option_name):
         pass
