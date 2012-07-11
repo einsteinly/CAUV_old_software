@@ -16,13 +16,11 @@
 #define __CAUV_DEBUG_H__
 
 #include <iostream>
-#include <string>
 #include <sstream>
-#include <list>
+#include <string>
+#include <vector>
 
-#include <boost/foreach.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include <utility/bash_cout.h>
 
@@ -124,13 +122,13 @@ class SmartStreamBase : public boost::noncopyable
             std::stringstream s;
 
             // apply any manipulators first
-            BOOST_FOREACH (manip_t m, m_manipulators)
-                s << *m;
+            for(std::vector<manip_t>::const_iterator i = m_manipulators.begin(), iend = m_manipulators.end(); i != iend; ++i)
+                s << **i;
             m_manipulators.clear();
 
             s << a;
 
-            // push this onto the list of things to print
+            // push this onto the vector of things to print
             m_stuffs.push_back(s.str());
         }
 
@@ -140,8 +138,8 @@ class SmartStreamBase : public boost::noncopyable
         }
 
         // stuff to print
-        std::list< std::string > m_stuffs;
-        std::list< manip_t > m_manipulators;
+        std::vector< std::string > m_stuffs;
+        std::vector< manip_t > m_manipulators;
 
         static Settings defaultSettings();
         // initialise on first use

@@ -19,7 +19,6 @@
 // standard integral types (int32_t etc)
 \#include <boost/cstdint.hpp>
 \#include <boost/variant/variant_fwd.hpp>
-\#include <utility/streamops.h>
 
 namespace cauv{
 

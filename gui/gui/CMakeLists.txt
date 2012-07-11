@@ -47,6 +47,7 @@ else()
         ${GUI_MOC_H}
         ${GUI_RCC_H}
     )
+    add_precompiled_header( gui ${guis_SOURCE_DIR}/pch.h)
 
     cauv_install( gui )
 

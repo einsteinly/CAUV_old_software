@@ -18,7 +18,6 @@
 
 // standard integral types (int32_t etc)
 \#include <boost/cstdint.hpp>
-\#include <utility/streamops.h>
 \#include <utility/serialisation-types.h>
 
 namespace cauv{

@@ -15,15 +15,13 @@
 #ifndef __CAUV_SONAR_H__
 #define __CAUV_SONAR_H__
 
-#include <string>
-
 #include <boost/shared_ptr.hpp>
 
 #include <common/cauv_node.h>
 
-#include "seanet_sonar.h"
-
 namespace cauv{
+
+class SeanetSonar;
 
 class SonarNode : public CauvNode
 {

@@ -16,6 +16,7 @@
 #define __CAUV_GUI_F_MENU_H__
 
 #include <algorithm>
+#include <cassert>
 #include <boost/bind.hpp>
 
 #include <QMenu>

@@ -43,17 +43,17 @@ namespace cauv {
     float mod(float const& d, float const& base);
     
     template<typename T>
-    T degrees(T const& radians){
+    static inline T degrees(T const& radians){
         return radians * 180 / 3.14159265358979323846;
     }
 
     template<typename T>
-    T radians(T const& degrees){
+    static inline T radians(T const& degrees){
         return degrees * 3.14159265358979323846 / 180;
     }
 
     template<typename T>
-    inline T sq(T const& val)
+    static inline T sq(T const& val)
     {
         return val*val;
     }

@@ -52,6 +52,8 @@ add_library (cauvinterface SHARED
     ${CAUV_MESSAGE_PYTHON_FILES}
     workarounds.h
 )
+add_precompiled_header(cauvinterface pch.h)
+
 depends_on_messages(cauvinterface)
 set_target_properties(cauvinterface PROPERTIES PREFIX            "" 
                                                ${CONFIG}_POSTFIX "")

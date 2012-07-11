@@ -122,9 +122,6 @@ template <class R, class C, class T0, class T1, class T2> MemberWrap<R, C, T0, T
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/tss.hpp>
 
-#include <debug/cauv_debug.h>
-#include <utility/bash_cout.h>
-
 /** ... but the definitions of the wrappers need boost python (since the whole
  ** point is to wrap with GIL release, so they must be placed after inclusion)
  **/
@@ -154,19 +151,19 @@ class ThreadSaveRestoreBase: boost::noncopyable{
             // linked: multiple linked python libraries can cause NULL tstate
             // errors
             threadState().push(PyEval_SaveThread());
-            debug(9) << BashColour::Purple << threadState().size()
-                     << "PyEval_SaveThread=" << threadState().top();
+            //debug(9) << BashColour::Purple << threadState().size()
+            //         << "PyEval_SaveThread=" << threadState().top();
         }
         void acquire() const{
             if(!threadState().size()){
                 // but don't throw an error, since that would probably cause
                 // indecipherable errors instead of something that might lead
                 // someone to the solution of whatever caused this
-                error() << BashColour::Red << "probably FATAL: "
-                        << "acquire() does not correspond to release() on this thread";
+                //error() << BashColour::Red << "probably FATAL: "
+                //        << "acquire() does not correspond to release() on this thread";
             }else{
-                debug(9) << BashColour::Purple << threadState().size()
-                        << "PyEval_RestoreThread(" << threadState().top() << ")";
+                //debug(9) << BashColour::Purple << threadState().size()
+                //        << "PyEval_RestoreThread(" << threadState().top() << ")";
                 PyEval_RestoreThread(threadState().top());
                 threadState().pop();
             }
@@ -199,12 +196,12 @@ class GILLock: boost::noncopyable{
     public:
         GILLock()
             : m_released(false), m_gs(PyGILState_Ensure()){
-            debug(9) << BashColour::Green << "PyGILState_Ensure=" << m_gs;
+            //debug(9) << BashColour::Green << "PyGILState_Ensure=" << m_gs;
         }
         void release(){
             if(m_released)
                 return;
-            debug(9) << BashColour::Green << "PyGILState_Release(" << m_gs << ")";
+            //debug(9) << BashColour::Green << "PyGILState_Release(" << m_gs << ")";
             PyGILState_Release(m_gs);
             m_released = true;
         }
@@ -220,10 +217,10 @@ template<class R, class C>
 R MemberWrap<R, C>::operator()(C* p){
     ThreadSave guard;
     if(m_wrapped){
-        debug(11) << "wrap ()";
+        //debug(11) << "wrap ()";
         return (p->*(this->m_wrapped))();
     }
-    debug(11) << "wrap () const";
+    //debug(11) << "wrap () const";
     assert(this->m_wrapped_const);
     return (p->*(this->m_wrapped_const))();
 }
@@ -231,21 +228,21 @@ R MemberWrap<R, C>::operator()(C* p){
 template <class R, class C, class T0>
 R MemberWrap<R, C, T0>::operator()(C* p, T0_ p0){
     ThreadSave guard;
-    debug(11) << "wrap(T0)";
+    //debug(11) << "wrap(T0)";
     return (p->*(this->m_wrapped))(p0);
 }
 
 template <class R, class C, class T0, class T1>
 R MemberWrap<R, C, T0, T1>::operator()(C* p, T0_ p0, T1_ p1){
     ThreadSave guard;
-    debug(11) << "wrap(T0, T1)";
+    //debug(11) << "wrap(T0, T1)";
     return (p->*(this->m_wrapped))(p0, p1);
 }
 
 template <class R, class C, class T0, class T1, class T2>
 R MemberWrap<R, C, T0, T1, T2>::operator()(C* p, T0_ p0, T1_ p1, T2_ p2){
     ThreadSave guard;
-    debug(11) << "wrap(T0, T1, T2)";
+    //debug(11) << "wrap(T0, T1, T2)";
     return (p->*(this->m_wrapped))(p0, p1, p2);
 }
 
@@ -609,10 +606,10 @@ struct from_python_dict
 
     static void* convertible(PyObject* obj_ptr)
     {
-        debug(15) << "map convertible start";
+        // debug(15) << "map convertible start";
         if(!PyDict_Check(obj_ptr))
             return 0;
-        debug(15) << "map convertible dict ok";
+        // debug(15) << "map convertible dict ok";
         boost::python::handle<> obj_hdl(boost::python::borrowed(obj_ptr));
         boost::python::object obj_obj(obj_hdl);
         boost::python::extract<boost::python::dict> obj_proxy(obj_obj);
@@ -620,15 +617,15 @@ struct from_python_dict
             return 0;
         boost::python::dict obj_dict = obj_proxy();
        
-        debug(15) << "map convertible proxy ok";
+        // debug(15) << "map convertible proxy ok";
 
         if (ConversionPolicy::check_convertibility_per_element()) {
             if (!ConversionPolicy::check_size(boost::type<MapType>(), boost::python::len(obj_dict)))
                 return 0;
-        debug(15) << "map convertible size ok";
+        // debug(15) << "map convertible size ok";
             if (!all_elements_convertible(obj_dict))
                 return 0;
-        debug(15) << "map convertible elms ok";
+        // debug(15) << "map convertible elms ok";
         }
 
         return obj_ptr;
@@ -639,21 +636,21 @@ struct from_python_dict
     {
         boost::python::list keys = obj_dict.keys();
         int len_keys = boost::python::len(keys);
-        debug(15) << "map convertible elms";
+        // debug(15) << "map convertible elms";
         for(int i=0;i<len_keys;i++) {
-        debug(15) << "map convertible elm"<<i;
+        // debug(15) << "map convertible elm"<<i;
             boost::python::object key_obj = keys[i];
             boost::python::extract<k_t> key_proxy(key_obj);
             if (!key_proxy.check()) {
                 return false;
             }
-        debug(15) << "map convertible elm"<<i<<"key ok";
+        // debug(15) << "map convertible elm"<<i<<"key ok";
             boost::python::object value_obj = obj_dict[key_obj];
             boost::python::extract<m_t> value_proxy(value_obj);
             if (!value_proxy.check()) {
                 return false;
             }
-        debug(15) << "map convertible elm"<<i<<"val ok";
+        // debug(15) << "map convertible elm"<<i<<"val ok";
         }
         return true;
     }
@@ -709,12 +706,12 @@ struct from_python_variant
 
     static void* convertible(PyObject* obj_ptr)
     {
-        debug(3) << "variant convertible";
+        // debug(3) << "variant convertible";
         boost::python::handle<> obj_hdl(boost::python::borrowed(obj_ptr));
         boost::python::object obj_obj(obj_hdl);
         if(!isinstance<ValueType>(obj_obj))
             return 0;
-        debug(3) << "variant convertible isinstance ok";
+        // debug(3) << "variant convertible isinstance ok";
         return obj_ptr;
     }
     

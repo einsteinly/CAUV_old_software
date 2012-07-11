@@ -7,12 +7,15 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#include <string>
 #include <sstream>
 #include <algorithm>
 
 #include <boost/make_shared.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/uuid/random_generator.hpp>
+#include <boost/cstdint.hpp>
+#include <boost/foreach.hpp>
 
 #include <debug/cauv_debug.h>
 #include <utility/time.h>

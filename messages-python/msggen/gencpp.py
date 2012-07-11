@@ -58,15 +58,15 @@ def getIncludes(types, includestring='"%s.h"', fwddeclstring='"%s_fwd.h"'):
             fwddecls.add(t.included.location)
         elif isinstance(t, msggenyacc.ListType):
             newincludes,newfwddecls = getIncludes([t.valType], includestring, fwddeclstring)
-            includes = set(["<vector>"]) | includes | newincludes
+            includes = set(["<vector>","<utility/streamops/vector.h>"]) | includes | newincludes
             fwddecls = set(["<vector>"]) | fwddecls | newfwddecls
         elif isinstance(t, msggenyacc.MapType):
             newincludes,newfwddecls = getIncludes([t.keyType, t.valType], includestring, fwddeclstring)
-            includes = set(["<map>"]) | includes | newincludes
+            includes = set(["<map>","<utility/streamops/map.h>"]) | includes | newincludes
             fwddecls = set(["<map>"]) | fwddecls | newfwddecls
         elif isinstance(t, msggenyacc.ArrayType):
             newincludes,newfwddecls = getIncludes([t.valType], includestring, fwddeclstring)
-            includes = set(["<boost/array.hpp>"]) | includes | newincludes
+            includes = set(["<boost/array.hpp>","<utility/streamops/array.h>"]) | includes | newincludes
             fwddecls = set(["<boost/array.hpp>"]) | fwddecls | newfwddecls
         elif hasattr(t,"__iter__"):
             newincludes,newfwddecls = getIncludes(t, includestring, fwddeclstring)

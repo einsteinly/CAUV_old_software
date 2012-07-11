@@ -17,7 +17,6 @@
 \#define __CAUV_${v.name}_H__
 
 \#include <boost/variant.hpp>
-\#include <utility/streamops.h>
 \#include <utility/serialisation-types.h>
 
 #for $i in $includes

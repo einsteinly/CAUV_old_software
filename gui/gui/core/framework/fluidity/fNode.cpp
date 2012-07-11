@@ -26,6 +26,7 @@
 #include <utility/qstring.h>
 #include <utility/foreach.h>
 #include <utility/time.h>
+#include <utility/streamops/pair.h>
 
 #include <liquid/button.h>
 #include <liquid/nodeHeader.h>

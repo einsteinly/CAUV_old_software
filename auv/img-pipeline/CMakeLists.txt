@@ -119,6 +119,7 @@ add_executable (
     ${CONDITIONAL_SOURCE_FILES}
 )
 cauv_install ( img-pipeline )
+add_precompiled_header( img-pipeline ${CAUV_SOURCE_DIR}/pch.h)
 
 # libs:
 target_link_libraries (

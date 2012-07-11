@@ -17,7 +17,6 @@
 
 #include <sstream>
 #include <string>
-#include <stdint.h>
 #include <set>
 
 #include <boost/cstdint.hpp>
