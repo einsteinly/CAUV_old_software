@@ -89,6 +89,14 @@ void RedHerring::initialise() {
     attachObserver(processes, boost::make_shared<MessageHandler<GroupingNode, ProcessStatusMessage> >(processes));
 
 
+    boost::shared_ptr<GroupingNode> watchdogs = findOrCreate<GroupingNode>("watchdogs");
+    boost::shared_ptr<NumericNode<BoundedFloat> > remaining = watchdogs->findOrCreate<NumericNode<BoundedFloat> >("controls-timeout-remaining");
+    boost::shared_ptr<NumericNode<float> > timeout = watchdogs->findOrCreate<NumericNode<float> >("controls-timeout");
+    timeout->setMutable(true);
+    remaining->setInverted(true);
+    attachGenerator(boost::make_shared<MessageHandler<NumericNode<float>, SetPenultimateResortTimeoutMessage> >(timeout));
+    attachObserver(remaining, boost::make_shared<MessageHandler<NumericNode<BoundedFloat>, PenultimateResortTimeoutMessage> >(remaining));
+
     // calibrations
     boost::shared_ptr<GroupingNode> calibration = telemetry->findOrCreate<GroupingNode>("calibration");
     attachGenerator(boost::make_shared<MessageHandler<GroupingNode, DepthCalibrationMessage> >(calibration));

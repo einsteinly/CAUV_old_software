@@ -248,6 +248,10 @@ namespace cauv {
                 typedUpdate(value.value<BoundedFloat>());
             }
 
+            virtual BoundedFloat typedGet() {
+                return m_value.value<BoundedFloat>();
+            }
+
             virtual bool typedSet(BoundedFloat const& value){
                 return NumericNodeBase::set(QVariant::fromValue(value));
             }

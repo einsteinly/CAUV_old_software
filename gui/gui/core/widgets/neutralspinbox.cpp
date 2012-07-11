@@ -17,6 +17,7 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QLineEdit>
+#include <QMetaProperty>
 
 #include <utility/pivot.h>
 #include <debug/cauv_debug.h>
@@ -37,7 +38,6 @@ NeutralSpinBox::NeutralSpinBox(QWidget * parent) : QSpinBox(parent), m_neutral(0
     QPalette pal = this->palette();
     pal.setColor(QPalette::Base, Qt::transparent);
     this->setPalette(pal);
-
 }
 
 int NeutralSpinBox::neutral() const {
@@ -95,6 +95,20 @@ bool NeutralDoubleSpinBox::inverted() const {
 
 void NeutralDoubleSpinBox::setInverted(bool invert){
     m_inverted = invert;
+}
+
+void NeutralDoubleSpinBox::setBoundedValue(BoundedFloat value){
+    info() << "set bounded value " << value;
+    setMaximum(value.max);
+    setMinimum(value.min);
+    setValue(value.value);
+    setWrapping(value.type == BoundedFloatType::Wraps);
+}
+
+BoundedFloat NeutralDoubleSpinBox::boundedValue() const{
+    BoundedFloat bf(value(), minimum(), maximum(),
+                    wrapping()?BoundedFloatType::Wraps:BoundedFloatType::Clamps);
+    return bf;
 }
 
 void NeutralDoubleSpinBox::paintEvent(QPaintEvent * )

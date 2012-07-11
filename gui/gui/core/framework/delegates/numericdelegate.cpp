@@ -26,11 +26,16 @@
 using namespace cauv;
 using namespace cauv::gui;
 
+
 NumericDelegate::NumericDelegate(bool showTitle, QObject *parent) :
     AbstractNodeDelegate(parent),
     m_titles(showTitle) {
     QItemEditorFactory * factory = new QItemEditorFactory();
     setItemEditorFactory(factory);
+
+    //https://bugreports.qt-project.org/browse/QTBUG-2151
+    qRegisterMetaType<cauv::BoundedFloat>("cauv__BoundedFloat");
+
     factory->registerEditor(QVariant::Int,
                             new QItemEditorCreator<NeutralSpinBox>("value"));
     factory->registerEditor(QVariant::UInt,
@@ -39,7 +44,7 @@ NumericDelegate::NumericDelegate(bool showTitle, QObject *parent) :
                             new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
     factory->registerEditor((QVariant::Type)qMetaTypeId<float>(),
                             new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
-    factory->registerEditor((QVariant::Type)qMetaTypeId<BoundedFloat>(),
+    factory->registerEditor((QVariant::Type)qMetaTypeId<cauv::BoundedFloat>(),
                             new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
 }
 
@@ -90,33 +95,51 @@ void NumericDelegate::commit() {
 
 void NumericDelegate::setEditorData(QWidget *editor,
                                     const QModelIndex &index) const{
-    QStyledItemDelegate::setEditorData(editor, index);
+    //AbstractNodeDelegate::setEditorData(editor, index);
 
     NumericNodeBase * node = static_cast<NumericNodeBase*>(index.internalPointer());
 
-    if(node && node->isMaxSet() && node->isMinSet()) {
+    if(!m_updatesWhileEditing) {
+        if(editor->property("data-initialised").toBool()) return;
+        editor->setProperty("data-initialised", true);
+    }
+
+    if(node) {
         if(NeutralSpinBox * neutral = qobject_cast<NeutralSpinBox*>(editor)){
-            neutral->setMinimum(node->getMin().toInt());
-            neutral->setMaximum(node->getMax().toInt());
-            neutral->setWrapping(node->getWraps());
-            neutral->setNeutral(node->getNeutral().toInt());
-            neutral->setInverted(node->isInverted());
+            if(node->isMaxSet() && node->isMinSet()){
+                neutral->setMinimum(node->getMin().toInt());
+                neutral->setMaximum(node->getMax().toInt());
+                neutral->setWrapping(node->getWraps());
+                neutral->setNeutral(node->getNeutral().toInt());
+                neutral->setInverted(node->isInverted());
+            }
+            // hack
             neutral->setValue(node->asNumber().toInt());
         }
 
 
         if(NeutralDoubleSpinBox * neutral = qobject_cast<NeutralDoubleSpinBox*>(editor)){
-            neutral->setMinimum(node->getMin().toDouble());
-            neutral->setMaximum(node->getMax().toDouble());
-            neutral->setWrapping(node->getWraps());
+            if(node->isMaxSet() && node->isMinSet()){
+                neutral->setMinimum(node->getMin().toDouble());
+                neutral->setMaximum(node->getMax().toDouble());
+                neutral->setWrapping(node->getWraps());
+                neutral->setNeutral(node->getNeutral().toDouble());
+            }
+            neutral->setDecimals(node->getPrecision());
+            neutral->setInverted(node->isInverted());
+
+            // hack
+            neutral->setValue(node->asNumber().toDouble());
         }
     }
 
     if(NeutralDoubleSpinBox * neutral = qobject_cast<NeutralDoubleSpinBox*>(editor)){
-        neutral->setNeutral(node->getNeutral().toDouble());
-        neutral->setDecimals(node->getPrecision());
-        neutral->setInverted(node->isInverted());
-        neutral->setValue(node->asNumber().toDouble());
+
+        // !!! hack: this should all be dealth with by the base class
+        //     but for some reason it fails to set the value when non Qt types
+        //     are used as a property...
+
+
     }
 }
 
