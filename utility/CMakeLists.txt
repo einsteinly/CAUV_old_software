@@ -22,6 +22,7 @@ add_library(utility
     daemon.cpp
     files.cpp
 )
+add_precompiled_header(utility ${CAUV_SOURCE_DIR}/pch.h)
 
 if(CAUV_BUILD_TESTS)
     add_executable(

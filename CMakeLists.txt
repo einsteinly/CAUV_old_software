@@ -24,10 +24,14 @@ endif()
 
 project (CAUV)
 
+include (cmake/PCHSupport.cmake)
+
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CAUV_BINARY_DIR}/bin")
 
 # set paths for package search scripts
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CAUV_SOURCE_DIR}/cmake/")
+
+option(CAUV_USE_PRECOMPILED_HEADERS "User precompiled headers to speed up compilation" ON)
 
 option(CAUV_DEBUG_MESSAGES "Emit code to allow message bytes to be printed at high debug levels" OFF)
 if (CAUV_DEBUG_MESSAGES)

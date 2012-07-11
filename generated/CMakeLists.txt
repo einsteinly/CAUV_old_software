@@ -21,6 +21,7 @@ add_library (
     messages STATIC
     ${CAUV_MESSAGE_FILES}
 )
+add_precompiled_header(messages ${CAUV_SOURCE_DIR}/pch.h)
 
 target_link_libraries (
     messages

@@ -28,8 +28,6 @@ if (CAUV_BUILD_GUI)
         set (MOC_BOOST_HACK OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
 
         add_subdirectory (liquid)
-        add_subdirectory (pipeline-widget)
-        add_subdirectory (gui-pipeline)
         add_subdirectory (gui)
         add_subdirectory (scratch)
 

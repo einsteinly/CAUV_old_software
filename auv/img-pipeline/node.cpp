@@ -17,6 +17,7 @@
 #include <algorithm>
 
 #include <utility/time.h>
+#include <utility/streamops/set.h>
 
 #include "imageProcessor.h"
 #include "pipelineTypes.h"

@@ -16,7 +16,8 @@
 
 #include <utility/serialisation.h>
 #include <utility/serialisation-types.h>
-#include <utility/streamops.h>
+#include <utility/streamops/vector.h>
+#include <utility/streamops/map.h>
 #include <debug/cauv_debug.h>
 
 #include <boost/make_shared.hpp>

@@ -23,7 +23,6 @@
 #include <boost/make_shared.hpp>
 
 #include <utility/foreach.h>
-#include <utility/streamops.h>
 #include <utility/string.h>
 #include <utility/math.h>
 

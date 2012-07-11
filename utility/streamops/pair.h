@@ -12,20 +12,22 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef __CAUV_SERIALISATION_TYPES_H__
-#define __CAUV_SERIALISATION_TYPES_H__
+#ifndef __CAUV_STREAMOPS_PAIR_H__
+#define __CAUV_STREAMOPS_PAIR_H__
 
-#include <vector>
-#include <boost/shared_ptr.hpp>
+#include <ostream>
+#include <utility>
 
-namespace cauv{
+namespace std{
 
-typedef unsigned char byte;
-typedef std::vector<byte> svec_t;
-typedef boost::shared_ptr<svec_t> svec_ptr;
-typedef boost::shared_ptr<const svec_t> const_svec_ptr;
+template<typename T1, typename T2, typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, std::pair<T1, T2> const& a){
+    os << "{" << a.first << "," << a.second << "}";
+    return os;
+}
 
-} // namespace cauv
+} // namespace std
 
-#endif // ndef __CAUV_SERIALISATION_TYPES_H__
+#endif // __CAUV_STREAMOPS_PAIR_H__
 

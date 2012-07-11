@@ -18,8 +18,11 @@
 
 \#include "message.h"
 
+#if $m.numLazyFields() > 0
+\#include <set>
+#end if
+
 \#include <boost/shared_ptr.hpp>
-\#include <utility/streamops.h>
 
 #for $i in $includes
 \#include ${i}

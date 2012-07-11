@@ -26,6 +26,7 @@ add_library( fluidityplugin MODULE
 )
 depends_on_messages(fluidityplugin)
 cauv_install_plugin(fluidityplugin)
+add_precompiled_header(fluidityplugin ${guis_SOURCE_DIR}/pch.h)
                                       
 target_link_libraries( fluidityplugin
     gui-core
