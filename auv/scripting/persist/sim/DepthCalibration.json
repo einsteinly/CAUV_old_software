@@ -1,9 +1,9 @@
 {
     "__name__": "DepthCalibrationMessage", 
     "contents": {
-        "aftMultiplier": 0.010395010001957417, 
-        "aftOffset": -9.482328414916992, 
-        "foreMultiplier": 0.010395010001957417, 
-        "foreOffset": -9.482328414916992
+        "aftMultiplier": 0.009949999861419201, 
+        "aftOffset": -9.949999809265137, 
+        "foreMultiplier": 0.009949999861419201, 
+        "foreOffset": -9.949999809265137
     }
 }

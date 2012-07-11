@@ -124,12 +124,18 @@ class AUV(messaging.MessageObserver):
         
     def autoCalibrateDepth(self, surfacePressure = 1000.0, waterDensity = 1025.0):
         '''Barracuda calibration: Set the depth calibration for barracuda.'''
-        #pressure = (depth - fore_offset) / fore_mult
-        #so depth = (pressure*fore_mult)+fore_offset
-        #at 0, 0=surfacePressure*fore_mult+fore_offset, so foreoffset = -surfacePressure/fore_mult
-        #fore_mult = depth/pressure
+        # pressure = (depth - fore_offset) / fore_mult
+        #    depth = (pressure*fore_mult)+fore_offset
+        #
+        # at depth = 0
+        #             0 = (surfacePressure*fore_mult)+fore_offset
+        #    foreoffset = -surfacePressure*fore_mult
+        # 
+        # at depth = 
+        # fore_mult = depth/pressure
+
         fore_mult = 1/(waterDensity*9.81)
-        fore_offset = -surfacePressure / (waterDensity*9.81)
+        fore_offset = -surfacePressure * fore_mult
         
         self.calibrateDepth(fore_offset, fore_mult)
 
