@@ -7,6 +7,7 @@ import time
 class scriptOptions(aiScriptOptions):
     useDepth = True
     depth = 1.0
+    to_gate_time = 30
     forward_time = 10
     back_time = 10
     forward_speed = 100, MotorValue
@@ -21,10 +22,16 @@ class script(aiScript):
         if self.persist.already_run:
             return 'SUCCESS'
         self.persist.already_run = True
-        self.auv.bearingAndWait(self.options.bearing)
+        self.auv.bearingAndWait(self.options.bearing+90)
         if self.options.useDepth:
             self.log('Diving to %d to start mission' %(self.options.depth))
             self.auv.depthAndWait(self.options.depth)
+        self.log('Heading forwards towards validation gate')
+        self.auv.prop(self.options.forward_speed)
+        time.sleep(self.options.to_gate_time)
+        self.log('Turning to face gate')
+        self.auv.prop(0)
+        self.auv.bearingAndWait(self.options.bearing)
         self.log('Heading forwards through validation gate')
         self.auv.prop(self.options.forward_speed)
         time.sleep(self.options.forward_time)
