@@ -40,11 +40,9 @@ macro(_pch_get_compile_command out_command _input _output)
     string(TOUPPER "CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}" _flags_var_name)
     separate_arguments(_cxx_flags_type UNIX_COMMAND "${${_flags_var_name}}")
     list(APPEND _compile_flags ${_cxx_flags} ${_cxx_flags_type} )
-    message("compiler_flags ${CMAKE_CXX_FLAGS}")
     
     get_filename_component(_absolute_input ${_input} REALPATH)
     get_filename_component(_indir ${_absolute_input} PATH)
-    message("indir" ${_indir})
     get_property(_indir_includes
         DIRECTORY ${_indir}
         PROPERTY INCLUDE_DIRECTORIES )
@@ -71,8 +69,6 @@ macro(_pch_get_compile_command out_command _input _output)
           ${CMAKE_CXX_COMPILER}  ${_compile_flags} -x c++-header -o ${_output} ${_input}
           )
     ENDIF(CMAKE_CXX_COMPILER_ARG1)
-
-    message("compiler_command ${${out_command}}")
 
 ENDMACRO()
 
@@ -121,7 +117,6 @@ macro(use_precompiled_header _targetName _header_file )
     # Does add_dependencies guarantee that the objects are rebuilt? Probably not, 
     # add dependencies directly to the source files just in case
 
-    message("add_dependencies(${_targetName} ${_pch_target} )")
     add_dependencies(${_targetName} ${_pch_target} )
     get_property( _targetSources
         TARGET ${_targetName}
