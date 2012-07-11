@@ -440,7 +440,7 @@ class aiScript(aiProcess):
         self.persist = persistent_state
         #take ownership to ensure that changes get directed back
         self.persist.own(self)
-        self._last_log = message
+        self._last_log = ''
         self.reporting_thread=threading.Thread(target=self.report_loop)
         self.reporting_thread.start()
     #override log to store value
