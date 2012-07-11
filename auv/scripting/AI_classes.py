@@ -440,8 +440,14 @@ class aiScript(aiProcess):
         self.persist = persistent_state
         #take ownership to ensure that changes get directed back
         self.persist.own(self)
+        self._last_log = ''
         self.reporting_thread=threading.Thread(target=self.report_loop)
         self.reporting_thread.start()
+    #override log to store value
+    def log(self, message):
+        aiProcess.log(self, message)
+        self._last_log = message
+        
     #image pipeline stuff
     def request_pl(self, pl_name, timeout=10):
         raise NotImplementedError("This feature has been removed, pipelines should be requested by placing them in the requested pipelines list")
@@ -488,6 +494,7 @@ class aiScript(aiProcess):
                 error_attrs.append(key_str)
                 continue
             debug[key_str] = value
+        debug['last_log_message'] = self._last_log
         if error_attrs:
             warning("Could not get/encode attributes %s, skipping from debug value report" %str(error_attrs))
         try:

@@ -461,7 +461,7 @@ class taskManager(aiProcess):
                                    cPickle.dumps(task.get_script_options()), 
                                    '--state',
                                    cPickle.dumps(task.persist_state),
-                                   '--mission_id',
+                                   '--manager_id',
                                    self._man_id])
         #set relevent parameters
         if self.current_task:
