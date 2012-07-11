@@ -15,8 +15,7 @@
 #ifndef __BASH_COUT_H__
 #define __BASH_COUT_H__
 
-#include <iomanip>
-#include <ostream>
+#include <iostream>
 
 /* bash colours */
 namespace BashColour

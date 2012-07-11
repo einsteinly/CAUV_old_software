@@ -19,7 +19,6 @@
 \#include <string>
 \#include <iomanip>
 \#include <boost/cstdint.hpp>
-\#include <utility/streamops.h>
 \#include <utility/serialisation-types.h>
 
 

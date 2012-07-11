@@ -18,6 +18,9 @@
 #include <QGraphicsWidget>
 #include <QGraphicsLinearLayout>
 
+#include <utility/streamops/set.h>
+#include <debug/cauv_debug.h>
+
 #include <liquid/arcSink.h>
 #include <liquid/proxyWidget.h>
 
@@ -28,8 +31,6 @@
 #include <gui/core/model/nodes/colournode.h>
 #include <gui/core/model/model.h>
 #include <gui/core/framework/nodepicker.h>
-
-#include <debug/cauv_debug.h>
 
 #include "fluidity/manager.h"
 #include "fluidity/fNodeOutput.h"

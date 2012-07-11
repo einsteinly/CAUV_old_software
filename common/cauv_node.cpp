@@ -19,7 +19,6 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
-#include <utility/string.h>
 #include <common/cauv_logo.h> 
 
 #include <common/zeromq/zeromq_mailbox.h>
@@ -27,7 +26,6 @@
 #include <debug/cauv_debug.h>
 #include <generated/message_observers.h>
 #include <generated/types/DebugLevelMessage.h>
-#include <generated/types/MembershipChangedMessage.h>
 #include <utility/time.h>
 
 #include "cauv_node.h"

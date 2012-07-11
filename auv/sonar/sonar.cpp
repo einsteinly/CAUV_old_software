@@ -22,6 +22,7 @@
 #include <generated/types/SonaroutGroup.h>
 #include <generated/types/SonarctlGroup.h>
 #include <generated/types/TelemetryMessage.h>
+#include <sonar/seanet_sonar.h>
 
 #include "display_sonar_observer.h"
 

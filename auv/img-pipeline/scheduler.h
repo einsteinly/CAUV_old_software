@@ -16,7 +16,6 @@
 #define __CAUV_IMGPROC_SCHEDULER_H__
 
 #include <map>
-#include <list>
 #include <ostream>
 
 #include <boost/shared_ptr.hpp>

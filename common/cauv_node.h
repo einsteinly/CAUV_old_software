@@ -17,11 +17,9 @@
 
 #include <string>
 #include <csignal>
-#include <iostream>
 
 #include <boost/shared_ptr.hpp>
 #include "mailbox.h"
-#include "mailbox_monitor.h"
 
 
 namespace boost {
@@ -35,12 +33,12 @@ namespace program_options {
 namespace cauv{
 
 /* Forward Declarations */
-class Mailbox;
 class ReconnectingSpreadMailbox;
 class ZeroMQMailbox;
 class MailboxEventMonitor;
 class MessageObserver;
 class Message;
+class SubscribeObserver;
 
 class CauvNode
 {

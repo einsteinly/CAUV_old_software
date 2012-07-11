@@ -17,13 +17,11 @@
 
 #include <boost/cstdint.hpp>
 #include <boost/variant.hpp>
-#include <boost/utility/result_of.hpp>
 #include <boost/make_shared.hpp>
 
 #include <opencv2/core/core.hpp>
 
 #include <debug/cauv_debug.h>
-#include <utility/streamops.h>
 
 #include "base_image.h"
 

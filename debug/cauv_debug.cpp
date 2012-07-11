@@ -17,7 +17,7 @@
 #include <iostream>
 #include <ostream>
 #include <fstream>
-#include <list>
+#include <vector>
 #include <sstream>
 #include <cctype>
 #include <ctime>
@@ -158,7 +158,7 @@ void SmartStreamBase::printToStream(std::ostream& os)
     os << oss.str();
 
     // add spaces between consecutive items that do not have spaces
-    std::list<std::string>::const_iterator i = m_stuffs.begin();
+    std::vector<std::string>::const_iterator i = m_stuffs.begin();
     bool add_space = false;
     while(i != m_stuffs.end())
     {

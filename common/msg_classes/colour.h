@@ -15,10 +15,9 @@
 #ifndef __CAUV_COLOUR_H__
 #define __CAUV_COLOUR_H__
 
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/operators.hpp>
 
-#include <utility/serialisation-types.h>
 #include <utility/rounding.h>
 #include <generated/types/ColourBase.h>
 #include <generated/types/ColourType.h>
