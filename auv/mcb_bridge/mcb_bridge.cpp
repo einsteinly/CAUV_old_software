@@ -15,6 +15,7 @@
 #include <boost/crc.hpp>
 #include <boost/lexical_cast.hpp>
 #include <debug/cauv_debug.h>
+#include <utility/files.h>
 
 //imported from embedded_software. Needs to be synced
 #define CXX_HACKY_HACK
@@ -303,6 +304,10 @@ void CANPty::read_avail() {
 }
 
 int main(int argc, char **argv) {
+    if (!cauv::get_lock_file("/tmp/mcb_bridge")) {
+        error() << "Cannot get lock file. another bridge is still running!";
+        return 1;
+    }
     namespace po = boost::program_options;
     po::options_description desc("bridge options");
 
