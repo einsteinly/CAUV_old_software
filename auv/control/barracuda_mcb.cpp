@@ -84,7 +84,6 @@ void BarracudaMCB::read_loop() {
         read(m_fd, (char*)&frame, sizeof(frame));
         if (frame.id == pressure_MSG_CAN_ID) {
             pressure_msg_t pressure;
-            debug(5) << "Pressure: " << pressure.m.pressure;
             std::memcpy(&pressure.frame, &frame, sizeof(frame));
             if (pressure.m.position == 0) {
                 m_fore_depth = depthFromForePressure(pressure.m.pressure);
@@ -92,6 +91,21 @@ void BarracudaMCB::read_loop() {
                 m_aft_depth = depthFromAftPressure(pressure.m.pressure);
             } else {
                 warning() << "Strange position" << pressure.m.position << "reported by psb";
+            }
+            debug(5) << "Pressure fore:" << m_fore_depth << "aft:" << m_aft_depth;
+        
+        }
+
+        if (frame.id == motor_status_MSG_CAN_ID) {
+            motor_status_msg_t status;
+            std::memcpy(&status.frame, &frame, sizeof(frame));
+            if (status.frame.data[0]) {
+                warning() << "MSB fault detected!" << (int)status.frame.data[0];
+            }
+            if (status.m.flags.timeout) {
+                warning() << "MSB reports timeout!";
+            } else {
+                debug(6) << "MSB OK!";
             }
         }
 
@@ -112,7 +126,7 @@ void BarracudaMCB::setMotorState(MotorDemand &state) {
     cmd.m.vert_fore = state.vbow;
     cmd.m.vert_aft = state.vstern;
     cmd.m.horz_fore = state.hbow;
-    cmd.m.horz_fore = state.vbow; 
+    cmd.m.horz_aft = state.hstern; 
     write(m_fd, &delimiter[0], delimiter.size());
     write(m_fd, &cmd.frame, sizeof(cmd.frame));
     debug(3) << "BarracudaMCB::setMotorState:" <<  state;
