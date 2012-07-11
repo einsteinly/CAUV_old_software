@@ -22,12 +22,12 @@ class BarracudaMCB : public MCB {
 
     private:
         void read_loop();
+        void notifyObservers();
 
         float m_fore_depth;
         float m_aft_depth;
         int   m_fd;
         boost::thread m_read_thread;
-        boost::weak_ptr<ControlLoops> m_control_loops;
 };
 
 } // namespace cauv

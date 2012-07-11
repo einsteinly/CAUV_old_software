@@ -4,6 +4,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <utility/observable.h>
+#include <utility/foreach.h>
 
 #include <generated/message_observers.h>
 #include <generated/types/MotorDemand.h>
@@ -28,6 +29,12 @@ class MCB : public Observable<MCBObserver>, public MessageObserver, boost::nonco
         }
    
     protected:
+        void notifyDepthObservers(float fore_depth, float aft_depth)
+        {
+            foreach(observer_ptr_t o, m_observers)
+                o->onDepth(fore_depth, aft_depth);
+        }
+
         // NB: offset then scale
         float depthFromForePressure(float const& pressure) const
         {
