@@ -23,6 +23,7 @@
 #include <generated/types/NodeAddedMessage.h>
 
 #include <gui/plugins/ai/conditionnode.h>
+#include <common/zeromq/zeromq_mailbox.h>
 
 namespace cauv {
 namespace gui {
