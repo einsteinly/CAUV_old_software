@@ -45,6 +45,7 @@ class ImagePipelineNode : public CauvNode,
         virtual void onRemoveNodeMessage(RemoveNodeMessage_ptr m);
         virtual void onGraphRequestMessage(GraphRequestMessage_ptr m);
         virtual void onClearPipelineMessage(ClearPipelineMessage_ptr m);
+        virtual void onSetPipelineMessage(SetPipelineMessage_ptr m);
     
     protected:
         virtual void onRun();

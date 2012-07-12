@@ -15,9 +15,9 @@ def dfu():
     node = cauv.node.Node('py-l')
     auv = control.AUV(node)
     bearing = 350
-    auv.bearing(bearing)
     try:
         debug('set bearing')
+        auv.bearing(bearing)
         time.sleep(4)
         debug('down')
         auv.depth(2)

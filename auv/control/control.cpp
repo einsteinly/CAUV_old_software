@@ -8,7 +8,9 @@
 #include <utility/string.h>
 #include <utility/rounding.h>
 #include <utility/foreach.h>
+#include <utility/files.h>
 #include <common/mailbox.h>
+#include <common/zeromq/zeromq_addresses.h>
 #include <debug/cauv_debug.h>
 
 #include <generated/types/TimeStamp.h>
@@ -715,6 +717,14 @@ void interrupt(int sig)
 int main(int argc, char** argv)
 {
     signal(SIGINT, interrupt);
+
+    std::string vehicle_name(cauv::get_vehicle_name());
+    create_path("/tmp/" + vehicle_name);
+    std::string lockfile = "/tmp/" + vehicle_name + "/control.lock";
+    if (!get_lock_file(lockfile)) {
+        fprintf(stderr,"Could not get lock file %s, is another control running?\n", lockfile.c_str());
+        exit(1);
+    }
     
     try {
         ControlNode node;

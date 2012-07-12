@@ -93,13 +93,6 @@ class Attenuator : public osg::Referenced {
 		{
 			_root->removeChildren(0, _root->getNumChildren());
 
-			// If not enabled, just use the top level camera
-			if (!_attenuatorEnabled)
-			{
-				_root->addChild(_scene.get());
-				return;
-			}
-
             _compositeCamera->removeChildren(0, _compositeCamera->getNumChildren());
 			{
 				_compositeCamera->setName("Composite");
@@ -178,6 +171,7 @@ class Attenuator : public osg::Referenced {
                     "uniform sampler2D colourTexture;\n"
                     "uniform sampler2D depthTexture;\n"
                     "uniform float factor;\n"
+                    "uniform bool doAttenuation;\n"
                     "float LinearizeDepth(float w)\n"
                     "{\n"
                     "    float n = 0.5; // camera z near\n"
@@ -185,13 +179,15 @@ class Attenuator : public osg::Referenced {
                     "    return (2.0 * n) / (f + n - w * (f - n));	\n"
                     "}\n"
                     "void main() {\n"
-                    "    float w = texture2D(depthTexture, texcoord.st).r;\n"
-                    "    float z = LinearizeDepth(w);\n"
-                    "    float dist = z/100.0;\n"
-                    "    vec3 colour = texture2D(colourTexture, texcoord.st).rgb;\n"
-                    "    vec3 waterColour = vec3(0.2,0.2,0.3);\n"
-                    "    float attenuationFactor = exp(-factor*dist);\n"
-                    "    gl_FragColor = vec4(mix(waterColour, colour, attenuationFactor),1.0);\n"
+                    "    gl_FragColor = texture2D(colourTexture, texcoord.st);\n"
+                    "    if (doAttenuation) {\n"
+                    "        float w = texture2D(depthTexture, texcoord.st).r;\n"
+                    "        float z = LinearizeDepth(w);\n"
+                    "        float dist = z/100.0;\n"
+                    "        vec3 waterColour = vec3(0.2,0.2,0.3);\n"
+                    "        float attenuationFactor = exp(-factor*dist);\n"
+                    "        gl_FragColor = vec4(mix(waterColour, gl_FragColor.rgb, attenuationFactor),1.0);\n"
+                    "    }\n"
                     "}\n"
                 );
 
@@ -207,6 +203,7 @@ class Attenuator : public osg::Referenced {
                 ss->addUniform(new osg::Uniform("colourTexture", 0));
                 ss->addUniform(new osg::Uniform("depthTexture", 1));
                 ss->addUniform(new osg::Uniform("factor", _factor));
+                ss->addUniform(new osg::Uniform("doAttenuation", _attenuatorEnabled));
             }
             _compositeCamera->addChild(quad);
 		}

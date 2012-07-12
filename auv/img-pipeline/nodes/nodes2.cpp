@@ -34,6 +34,7 @@
 #include "getNthNode.h"
 #include "sumSquaredNode.h"
 #include "broadcastFloatNode.h"
+#include "meanShiftFilterNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -72,6 +73,7 @@ DEFINE_NFR(BackgroundSubtractorNode, NodeType::BackgroundSubtractor);
 template<> DEFINE_NFR(GetNthNode<Colour>, NodeType::GetNthColour);
 DEFINE_NFR(SumSquaredNode, NodeType::SumSquared);
 DEFINE_NFR(BroadcastFloatNode, NodeType::BroadcastFloat);
+DEFINE_NFR(MeanShiftFilterNode, NodeType::MeanShiftFilter);
 
 } // namespace imgproc
 } // namespace cauv
