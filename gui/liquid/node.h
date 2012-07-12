@@ -39,6 +39,8 @@ public:
 
 Q_SIGNALS:
     void closed(LiquidNode *);
+    void doubleClicked();
+
 public Q_SLOTS:
     virtual void close();
 
@@ -50,6 +52,7 @@ protected:
     // override to limit node positions to whole numbers of px - so that thin
     // lines and text are drawn nicely
     virtual void mouseMoveEvent(QGraphicsSceneMouseEvent* event);
+    virtual void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event);
 
 public:
     virtual QSizeF size() const;

@@ -124,6 +124,11 @@ void LiquidNode::mouseMoveEvent(QGraphicsSceneMouseEvent* event){
     }
 }
 
+void LiquidNode::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event){
+    Q_UNUSED(event);
+    Q_EMIT doubleClicked();
+}
+
 void LiquidNode::addButton(QString name, Button *button){
     m_header->addButton(name, button);
 }

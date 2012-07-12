@@ -63,7 +63,8 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
                                      new liquid::Arc(Image_Arc_Style()))),
       m_in_window(in_window),
       m_orginal_view_rect(),
-      m_zoomed_view_rect(){
+      m_zoomed_view_rect(),
+      m_maximising(false){
 
     setResizable(true);
 
@@ -103,7 +104,7 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
     m_header->addButton("maximise", maxbutton);
     
     connect(maxbutton, SIGNAL(pressed()), this, SLOT(beginMaximise()));
-    connect(header(), SIGNAL(doubleClick()), this, SLOT(beginMaximise()));    
+    connect(this, SIGNAL(doubleClicked()), this, SLOT(beginMaximise()));    
 
     setSize(QSizeF(300, 300));
 
@@ -112,6 +113,9 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
 }
 
 void LiquidFluidityNode::beginMaximise(){
+    if(m_maximising)
+        return;
+    m_maximising = true;
     QGraphicsScene* s = scene();
     if(!s)
         return maximise();
@@ -151,6 +155,7 @@ void LiquidFluidityNode::maximise(){
         m_view->centerOn(m_contents->mapToScene(m_contents->boundingRect()).boundingRect().center());
         connect(m_view, SIGNAL(closeRequested()), this, SLOT(unMaximise()));
     }
+    m_maximising = false;
 }
 
 void LiquidFluidityNode::zoomOut(int percent){

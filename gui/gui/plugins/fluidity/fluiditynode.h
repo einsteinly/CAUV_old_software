@@ -84,6 +84,7 @@ protected:
     boost::weak_ptr<CauvMainWindow> m_in_window;
     QRectF m_orginal_view_rect;
     QRectF m_zoomed_view_rect;
+    bool m_maximising;
 };
 
 } // namespace gui
