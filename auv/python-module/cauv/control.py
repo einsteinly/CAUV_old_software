@@ -95,6 +95,7 @@ class AUV(messaging.MessageObserver):
                 else:
                     break
 
+    #The values of fore multiplier need to be copied into simulation to work
     def calibrateDepth(self, foreOffset, foreMultiplier, aftOffset=None, aftMultiplier=None):
         '''Set the conversion factors between pressure sensor values and depth.
             

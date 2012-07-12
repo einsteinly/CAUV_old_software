@@ -18,7 +18,7 @@ class scriptOptions(aiScriptOptions):
     #Pipeline details
     ellipses_name = 'pipe'
     lines_name = 'pipe'
-    turns = 1
+    follows = 2
     #Timeouts
     ready_timeout = 30
     lost_timeout = 15
@@ -218,7 +218,7 @@ class script(aiScript):
             self.auv.bearingAndWait((self.auv.current_bearing+180)%360)
             self.enabled = True
         
-        for i in range(self.options.turns):
+        for i in range(self.options.follows):
             self.log('Attempting to follow pipe.')
             self.auv.prop(self.options.prop_speed)
             # follow the pipe along until the end
@@ -232,7 +232,7 @@ class script(aiScript):
             self.auv.prop(0)
             self.auv.strafe(0)
             #if this is the last run, dont turn
-            if i == self.options.turns-1:
+            if i == self.options.follows-1:
                 break
             debug('Turning (turn %i)' %i)
             self.enabled = False
