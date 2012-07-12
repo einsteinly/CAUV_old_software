@@ -242,17 +242,18 @@ boost::shared_ptr<const Message> MessageHandler<SonarNode, SonarControlMessage>:
 
 
 /* Penultimate timeout messages */
-void MessageHandler<NumericNode<float>, SetPenultimateResortTimeoutMessage>::onSetPenultimateResortTimeoutMessage(
-        SetPenultimateResortTimeoutMessage_ptr message){
-    m_node->typedUpdate(message->timeout());
+//void MessageHandler<NumericNode<float>, SetPenultimateResortTimeoutMessage>::onSetPenultimateResortTimeoutMessage(
+//        SetPenultimateResortTimeoutMessage_ptr message){
+//    m_node->typedUpdate(message->timeout());
+//}
+
+boost::shared_ptr<const Message> MessageGenerator<NumericNode<float>, SetPenultimateResortTimeoutMessage>::generate() {
+    return boost::make_shared<SetPenultimateResortTimeoutMessage>(m_node->typedGet());
 }
 
-boost::shared_ptr<const Message> MessageHandler<NumericNode<float>, SetPenultimateResortTimeoutMessage>::generate() {
-    return boost::make_shared<SetPenultimateResortTimeoutMessage>(
-                m_node->typedGet());
-}
-
-void MessageHandler<NumericNode<BoundedFloat>, PenultimateResortTimeoutMessage>::onPenultimateResortTimeoutMessage(
+void MessageHandler<GroupingNode, PenultimateResortTimeoutMessage>::onPenultimateResortTimeoutMessage(
         PenultimateResortTimeoutMessage_ptr message){
-    m_node->typedUpdate(message->timeout());
+    info() << *message;
+    m_node->findOrCreate<NumericNode<BoundedFloat> >("remaining")->typedUpdate(message->timeout());
+    m_node->findOrCreate<NumericNode<float> >("timeout")->typedUpdate(message->timeout().max);
 }

@@ -89,13 +89,13 @@ void RedHerring::initialise() {
     attachObserver(processes, boost::make_shared<MessageHandler<GroupingNode, ProcessStatusMessage> >(processes));
 
 
+    // watchdogs
     boost::shared_ptr<GroupingNode> watchdogs = findOrCreate<GroupingNode>("watchdogs");
-    boost::shared_ptr<NumericNode<BoundedFloat> > remaining = watchdogs->findOrCreate<NumericNode<BoundedFloat> >("controls-timeout-remaining");
-    boost::shared_ptr<NumericNode<float> > timeout = watchdogs->findOrCreate<NumericNode<float> >("controls-timeout");
+    boost::shared_ptr<GroupingNode> gamepad = watchdogs->findOrCreate<GroupingNode>("gamepad");
+    boost::shared_ptr<NumericNode<float> > timeout = gamepad->findOrCreate<NumericNode<float> >("timeout");
     timeout->setMutable(true);
-    remaining->setInverted(true);
-    attachGenerator(boost::make_shared<MessageHandler<NumericNode<float>, SetPenultimateResortTimeoutMessage> >(timeout));
-    attachObserver(remaining, boost::make_shared<MessageHandler<NumericNode<BoundedFloat>, PenultimateResortTimeoutMessage> >(remaining));
+    attachGenerator(boost::make_shared<MessageGenerator<NumericNode<float>, SetPenultimateResortTimeoutMessage> >(timeout));
+    attachObserver(gamepad, boost::make_shared<MessageHandler<GroupingNode, PenultimateResortTimeoutMessage> >(gamepad));
 
     // calibrations
     boost::shared_ptr<GroupingNode> calibration = telemetry->findOrCreate<GroupingNode>("calibration");

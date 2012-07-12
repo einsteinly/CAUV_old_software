@@ -286,7 +286,7 @@ void CANPty::read_avail() {
         }
         buf_pos = 0;
         state = READING;
-        debug() << "CAN Delimited";
+        debug(7) << "CAN Delimited";
     } else if (state == READING) {
         can_frame_t frame;
         int ret = read(fd, ((char*)&frame) + buf_pos, sizeof(frame) - buf_pos); 
@@ -296,7 +296,7 @@ void CANPty::read_avail() {
         if (buf_pos < sizeof(frame)) {
             return;
         }
-        debug() << "Write CAN frame id: " << frame.id;
+        debug(4) << "Write CAN frame id: " << frame.id;
         write_buf((char*)&frame, sizeof(frame));
         state = DELIMITING;
         buf_pos = 0;
