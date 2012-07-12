@@ -90,6 +90,7 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
             // it should be set.
             // // The sequence number is derived from the first input/
             // uint64_t seq = (uint64_t(m_uid.seq1) << 32) | m_uid.seq2;
+            debug() << BashColour::Purple << "multiple sensors demote UID to 0!" << i->second->id() << "on " << i->first << "vs." << m_uid << "previously";
             m_uid = mkUID(SensorUIDBase::Multiple, 0);//seq);
             uid_inherited = false;
             break;
@@ -99,6 +100,7 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
             // if UIDs differ only in sequence, inherit the highest number
             // !!! this is not ideal, but essential until images are also
             // supported as synchronised inputs
+            debug(6) << "inherit highest UID from common sensor:" << i->second->id();
             m_uid = i->second->id();
         }
     }
@@ -183,7 +185,7 @@ Node::InternalParamValue Node::Input::getParam(bool& did_change) const{
         InternalParamValue parent_value;    
         if(synchronised_with){
             UID latest_common_uid = latestUIDSharedWithSync();
-            //debug() << "getParam (synchronised)" << target.id << "        uid:" << latest_common_uid;
+            debug(6) << "getParam (synchronised)" << target.id << " common uid:" << latest_common_uid;
             parent_value = target.node->getOutputParamWithUID(target.id, latest_common_uid);
             debug(6) << "getParam (synchronised)" << target.id << " actual uid:" << parent_value.uid;            
         }else{
@@ -265,8 +267,10 @@ UID Node::Input::latestUIDSharedWithSync() const{
     std::set<UID> common_uids =
         target.node->getOutputParamUIDs(target.id) &
         syncwith_tgt.node->getOutputParamUIDs(syncwith_tgt.id);
-
-    debug(5) << "common UIDs:" << common_uids;
+    
+    debug(6) << "target   UIDs:" << target.node->getOutputParamUIDs(target.id);
+    debug(6) << "syncwith UIDs:" << syncwith_tgt.node->getOutputParamUIDs(target.id);
+    debug(5) << "common   UIDs:" << common_uids;
     // go though in most recent order to find which is latest:
     
     return syncwith_tgt.node->mostRecentUIDOnOutputInSet(syncwith_tgt.id, common_uids);

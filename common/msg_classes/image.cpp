@@ -129,9 +129,10 @@ cauv::Image::Image(augmented_mat_t const& img, TimeStamp const& ts, UID const& i
 {
 }
 
-// Copy constructor; take a deep copy of the image data
+// Copy constructor; take a deep copy of the image data, make sure to copy the
+// UID too.
 cauv::Image::Image(Image const& other)
-    : BaseImage(svec_t(), other.ts()),
+    : BaseImage(svec_t(), other.ts(), other.id()), 
       m_img(boost::apply_visitor(cauv::clone(), other.m_img))
 {
 }
