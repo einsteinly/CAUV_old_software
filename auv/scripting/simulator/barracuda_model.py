@@ -68,7 +68,7 @@ VBow_At   = np.array((0, 0.41,0)); VBow_Vec   = np.array((   0,   0,-1.0))
 VStern_At = np.array((0,-0.41,0)); VStern_Vec = np.array((   0,   0,-1.0))
 Prop_At   = np.array((0,-0.73,0)); Prop_Vec   = np.array((   0, 1.0,   0))
 Mass      = 25.0      # kg
-Displacement = 25.0   # kg
+Displacement = 25.01   # kg
 Weight_At = np.array((0,0,-0.1))
 Buoyancy_At = np.array((0,0,0.05))
 Length    = 1.53      # length in m, used for moment calculation only
@@ -239,8 +239,9 @@ class Model(base_model.Model):
         # 
         # These should match the DepthCalibration message used:
         # Barracuda pressure
-        depth_offset = -9.48232
-        depth_mult = 0.010395
+        depth_mult = 1/(1025*9.81)
+        depth_offset = -1000 * depth_mult
+        
         depth = float(-self.displacement[2])
         pressure = int((depth - depth_offset) / depth_mult)
         # if somehow we're floating above the surface...

@@ -4,6 +4,7 @@
 
 from cauv.control import AUV
 from cauv.node import Node
+from cauv.debug import info, debug, warning, error
 import time
 
 class scriptOptions():
@@ -13,7 +14,7 @@ class scriptOptions():
     forward_time = 5
     back_time = 7
     forward_speed = 127
-    bearing = 260
+    bearing = 80
         
 class scriptState():
     already_run = False
@@ -27,17 +28,24 @@ class script():
         self.options = scriptOptions
         
     def run(self):
-        self.auv.bearingAndWait(self.options.bearing+90)
+        info("Turning to %d" % (self.options.bearing-90))
+        self.auv.bearingAndWait(self.options.bearing-90)
         if self.options.useDepth:
+            info("Diving to %d" % (self.options.depth))
             self.auv.depthAndWait(self.options.depth)
+        info("Going forward")
         self.auv.prop(self.options.forward_speed)
         time.sleep(self.options.to_gate_time)
         self.auv.prop(0)
+        info("Turning to %d" % self.options.bearing)
         self.auv.bearingAndWait(self.options.bearing)
+        info("Going forward")
         self.auv.prop(self.options.forward_speed)
         time.sleep(self.options.forward_time)
         self.auv.prop(0)
+        info("Turning to %d" % ((self.options.bearing+180)%360))
         self.auv.bearingAndWait((self.options.bearing+180)%360)
+        info("Going forward")
         self.auv.prop(self.options.forward_speed)
         time.sleep(self.options.back_time)
         self.auv.prop(0)
@@ -45,6 +53,8 @@ class script():
 
 s = script()
 try:
+    info("Started dead reckoning qualification")
+    time.sleep(3)
     s.run()
 finally:
     s.node.stop()

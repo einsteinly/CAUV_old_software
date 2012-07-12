@@ -305,7 +305,7 @@ void CANPty::read_avail() {
 
 int main(int argc, char **argv) {
     if (!get_lock_file("/tmp/mcb_bridge")) {
-        error() << "Cannot get lock file. another bridge is still running!";
+        error() << "Cannot get lock file. Another bridge is still running!";
         return 1;
     }
     namespace po = boost::program_options;
@@ -314,11 +314,13 @@ int main(int argc, char **argv) {
     std::string port_name;
     std::string port_prefix;
     unsigned int n_ports;
+    unsigned int n_can_ports;
     desc.add_options()
         ("help,h", "Print this help message")
         ("port,p", po::value<std::string>(&port_name)->default_value("/dev/ttyUSB0"), "Serial port to connect to")
         ("prefix,x", po::value<std::string>(&port_prefix)->default_value("/dev/ttyV"), "Prefix for virtual serial ports")
-        ("n_ports,n", po::value<unsigned int>(&n_ports)->default_value(3), "Number of ports to multiplex");
+        ("n_ports,n", po::value<unsigned int>(&n_ports)->default_value(3), "Number of ports to multiplex")
+        ("n_can_ports,c", po::value<unsigned int>(&n_can_ports)->default_value(2), "Number of CAN ports to produce");
 
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -344,14 +346,18 @@ int main(int argc, char **argv) {
         ptys.push_back(pty);
         fd_vect.push_back(p);
     }
-    CANPty can(port_prefix + "CAN");
-    serial.can_fds.push_back(can.fd);
-    can.write_fd = serial.fd;
-    can.ser_id = 255;
-    pollfd p;
-    p.fd = can.fd;
-    p.events = POLLIN;
-    fd_vect.push_back(p);
+    std::vector<CANPty> can_ptys;
+    for (unsigned int ii = 0; ii < n_can_ports; ii++) {
+        CANPty can(port_prefix + "CAN" + boost::lexical_cast<std::string>(ii));
+        serial.can_fds.push_back(can.fd);
+        can.write_fd = serial.fd;
+        can.ser_id = 255;
+        pollfd p;
+        p.fd = can.fd;
+        p.events = POLLIN;
+        can_ptys.push_back(can);
+        fd_vect.push_back(p);
+    }
     while(true) {
         int ret = poll(fd_vect.data(), fd_vect.size(), 1000); 
         if (fd_vect[0].revents & POLLIN) {
@@ -362,8 +368,10 @@ int main(int argc, char **argv) {
                 ptys[ii].read_avail();
             }
         }
-        if (fd_vect[n_ports + 1].revents & POLLIN) {
-            can.read_avail();
+        for (unsigned int ii = 0; ii < n_can_ports; ii++) {
+            if (fd_vect[n_ports + ii + 1].revents & POLLIN) {
+                can_ptys[ii].read_avail();
+            }
         }
     }
 }

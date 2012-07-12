@@ -95,6 +95,7 @@ class AUV(messaging.MessageObserver):
                 else:
                     break
 
+    #The values of fore multiplier need to be copied into simulation to work
     def calibrateDepth(self, foreOffset, foreMultiplier, aftOffset=None, aftMultiplier=None):
         '''Set the conversion factors between pressure sensor values and depth.
             
@@ -127,17 +128,15 @@ class AUV(messaging.MessageObserver):
         # pressure = (depth - fore_offset) / fore_mult
         #    depth = (pressure*fore_mult)+fore_offset
         #
-        # at depth = 0
-        #             0 = (surfacePressure*fore_mult)+fore_offset
-        #    foreoffset = -surfacePressure*fore_mult
-        # 
-        # at depth = 
-        # fore_mult = depth/pressure
-
+        # pressure = surfacePressure + waterDensity*g*depth
+        #          = (depth + surfacePressure)/(waterDensity*g)) * (waterDensity*g)
+        #
+        # This is pressure in Pa, but we use pressure in mbar, so scale by 100
+        
         fore_mult = 1/(waterDensity*9.81)
         fore_offset = -surfacePressure * fore_mult
         
-        self.calibrateDepth(fore_offset, fore_mult)
+        self.calibrateDepth(fore_offset, fore_mult*100)
 
     def depth(self, depth):
         '''Set a depth (metres) and activate the depth control loop, or deactivate depth control if 'None' is passed.'''
