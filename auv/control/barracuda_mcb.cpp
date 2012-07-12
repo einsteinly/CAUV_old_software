@@ -121,7 +121,7 @@ void BarracudaMCB::setMotorState(MotorDemand &state) {
     motor_cmd_msg_t cmd; 
     cmd.m.id = motor_cmd_MSG_CAN_ID;
     cmd.m.len = 6;
-    cmd.m.fwd_left = -state.prop;
+    cmd.m.fwd_left = state.prop;
     cmd.m.fwd_right = state.prop;
     cmd.m.vert_fore = -state.vbow;
     cmd.m.vert_aft = state.vstern;
