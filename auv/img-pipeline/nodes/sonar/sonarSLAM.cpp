@@ -594,9 +594,11 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     else
         ts = now();
     
+    debug() << keypoints.size() << "keypoints";
     cloud_ptr scan = boost::make_shared<cloud_t>(
         keypoints, ts, cloud_t::FilterResponse(weight_test)
     );
+    debug() << scan->size() << "keypoints in cloud";
     
     boost::shared_ptr< PairwiseMatcher<pt_t> > scan_matcher;
     if(boost::iequals(match_algorithm, "NDT")){
