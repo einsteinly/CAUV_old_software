@@ -48,8 +48,8 @@ class scriptOptions(aiScriptOptions):
 
 class script(aiScript):
     debug_values = ['centre_error', 'angle_error', 'depth_error', 'angle', 'centred', 'depthed', 'aligned', 'pipeEnded', 'yVal']
-    def __init__(self, script_name, opts, state):
-        aiScript.__init__(self, script_name, opts, state) 
+    def __init__(self, *args, **kwargs):
+        aiScript.__init__(self, *args, **kwargs) 
         self.node.join("processing")
         
         # parameters to say if the auv is above the pipe

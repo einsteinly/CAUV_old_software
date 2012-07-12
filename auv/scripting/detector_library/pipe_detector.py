@@ -9,7 +9,7 @@ import threading
 import math
 
 class detectorOptions(aiDetectorOptions):
-    Threshold = 0.38
+    Threshold = 0.39
     Float_Name = 'pipe_det'
     Lines_Name = 'pipe_det'
     Angular_Discrepancy = 0.5
@@ -23,7 +23,7 @@ class detector(aiDetector):
         aiDetector.__init__(self, node, opts)
         self.start_time = time.time()
 
-        self.colour_trigger = 0
+        self.colour_trigger = 0.0
         self.detected = False
         self.node.join("processing")
 
