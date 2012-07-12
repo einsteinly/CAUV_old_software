@@ -8,9 +8,11 @@ class scriptOptions(aiScriptOptions):
     useBearing = True
     depth = 2
     useDepth = True
-    power = 60 #motor power
+    first_power = 100 #motor power
+    first_time = 25
+    power = 60
     time = 10
-    repeat = 2 #repeat infinity = -1
+    repeat = 10 #repeat infinity = -1
 
 class script(aiScript):
     debug_values = ['runsRemaining', 'current_heading']
@@ -21,6 +23,13 @@ class script(aiScript):
     def run(self):
         if self.options.useDepth:
             self.auv.depthAndWait(self.options.depth)
+        #first run
+        if self.options.useBearing:
+            self.auv.bearingAndWait(self.current_heading)
+        self.auv.prop(self.options.first_power)
+        time.sleep(self.options.first_time)
+        self.auv.prop(0)
+        self.current_heading = (self.current_heading +180)%360
         #repeat infinity if <=-1
         while self.runsRemaining != 0:
             if self.options.useBearing:

@@ -239,7 +239,7 @@ class Model(base_model.Model):
         # 
         # These should match the DepthCalibration message used:
         # Barracuda pressure
-        pressure = 1000 + depth * 9.81 * 10.2 # in millibars
+        pressure = 1000 - self.displacement[2] * 9.81 * 10.2 # in millibars
         # if somehow we're floating above the atmosphere
         if pressure < 0:
             pressure = 0
