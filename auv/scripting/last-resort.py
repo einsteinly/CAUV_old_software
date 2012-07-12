@@ -67,7 +67,7 @@ def lastResort(port, kill_after_seconds):
         s = 'WARNING: Last resort stopped by keyboard interrupt\n'
         plog(s, logf)
     finally:
-        s = 'lastresort.py finished at %s\n' % str(time.time())
+        s = 'last-resort.py finished at %s\n' % str(time.time())
         plog(s, logf)
         logf.close()
         sock.close()
@@ -75,7 +75,7 @@ def lastResort(port, kill_after_seconds):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(help='usage: sudo last-resort.py PORT TIME_IN_SECONDS')
+    parser = argparse.ArgumentParser(usage='usage: sudo last-resort.py PORT TIME_IN_SECONDS')
     parser.parse_args()
     if len(args) != 2:
         parser.print_help()

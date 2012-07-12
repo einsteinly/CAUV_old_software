@@ -347,7 +347,7 @@ int main(int argc, char **argv) {
         fd_vect.push_back(p);
     }
     std::vector<CANPty> can_ptys;
-    for (unsigned int ii = 0; ii < n_ports; ii++) {
+    for (unsigned int ii = 0; ii < n_can_ports; ii++) {
         CANPty can(port_prefix + "CAN" + boost::lexical_cast<std::string>(ii));
         serial.can_fds.push_back(can.fd);
         can.write_fd = serial.fd;
@@ -355,7 +355,7 @@ int main(int argc, char **argv) {
         pollfd p;
         p.fd = can.fd;
         p.events = POLLIN;
-        ptys.push_back(can);
+        can_ptys.push_back(can);
         fd_vect.push_back(p);
     }
     while(true) {
