@@ -104,6 +104,14 @@
     "recv_by" : ["mcb_v2.0.0"]
 },
 
+"killswitch_state" : {
+    "id" : 11,
+    "members" : {
+        "state" : "uint8_t"
+    },
+    "recv_by" : ["mcb_v2.0.0"]
+},
+
 "motor_cmd" : {
     "id" : 20,
     "members" : {
