@@ -12,17 +12,17 @@ from math import radians
 
 from AI_classes import aiProcess, external_function
 from utils.coordinates import LLACoord, NorthEastDepthCoord, River_Cam_Datum
-from simulator import redherring_model
+from simulator import barracuda_model
 
 #need these to modify simulator
 from utils.quaternion import Quaternion
 
-class motorEstimator(redherring_model.Model):
+class motorEstimator(barracuda_model.Model):
     """
     Estimation based on motor commands, by running the simulator and updating with real bearing/detph info
     """
     def __init__(self, node):
-        redherring_model.Model.__init__(self, node)
+        barracuda_model.Model.__init__(self, node)
         self.node.subMessage(msg.TelemetryMessage())
         self.last_position = NorthEastDepthCoord(self.displacement[1],self.displacement[0],-self.displacement[2])
         self.start()
