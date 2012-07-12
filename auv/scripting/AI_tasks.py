@@ -196,6 +196,7 @@ class line_search(aiTask):
     class options(taskOptions):
         script_name = 'line_search'
         priority = 0
+        frequency_limit = 0
     conditions = [
         (c['stateCondition'], {'state': True}),
         ]

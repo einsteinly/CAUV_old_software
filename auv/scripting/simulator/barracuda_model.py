@@ -64,8 +64,8 @@ from cauv.debug import debug, error, warning, info
 # All in m:
 HBow_At   = np.array((0, 0.32,0)); HBow_Vec   = np.array((-1.0,   0,   0))
 HStern_At = np.array((0,-0.32,0)); HStern_Vec = np.array((-1.0,   0,   0))
-VBow_At   = np.array((0, 0.41,0)); VBow_Vec   = np.array((   0,   0,-1.0))
-VStern_At = np.array((0,-0.41,0)); VStern_Vec = np.array((   0,   0,-1.0))
+VBow_At   = np.array((0, 0.41,0)); VBow_Vec   = np.array((   0,   0,1.0))
+VStern_At = np.array((0,-0.41,0)); VStern_Vec = np.array((   0,   0,1.0))
 Prop_At   = np.array((0,-0.73,0)); Prop_Vec   = np.array((   0, 1.0,   0))
 Mass      = 25.0      # kg
 Displacement = 25.01   # kg
