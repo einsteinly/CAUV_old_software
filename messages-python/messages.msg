@@ -117,6 +117,7 @@ enum NodeType : int8 {
     ClampColour,
     SumSquared,
     BroadcastFloat,
+    MeanShiftFilter,
 }
 enum NodeStatus : int8 {
     None = 0,
