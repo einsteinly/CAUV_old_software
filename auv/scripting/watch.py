@@ -69,6 +69,6 @@ elif args.daemonize:
 else:
     try:
         monitor()
-    except:
+    finally:
         if args.kill_after is not None:
             watcher.kill(args.kill_after)
