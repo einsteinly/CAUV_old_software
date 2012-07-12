@@ -355,7 +355,7 @@ int main(int argc, char **argv) {
         pollfd p;
         p.fd = can.fd;
         p.events = POLLIN;
-        ptys.push_back(can);
+        can_ptys.push_back(can);
         fd_vect.push_back(p);
     }
     while(true) {
