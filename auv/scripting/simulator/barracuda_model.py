@@ -68,7 +68,7 @@ VBow_At   = np.array((0, 0.41,0)); VBow_Vec   = np.array((   0,   0,-1.0))
 VStern_At = np.array((0,-0.41,0)); VStern_Vec = np.array((   0,   0,-1.0))
 Prop_At   = np.array((0,-0.73,0)); Prop_Vec   = np.array((   0, 1.0,   0))
 Mass      = 25.0      # kg
-Displacement = 25.0   # kg
+Displacement = 25.01   # kg
 Weight_At = np.array((0,0,-0.1))
 Buoyancy_At = np.array((0,0,0.05))
 Length    = 1.53      # length in m, used for moment calculation only

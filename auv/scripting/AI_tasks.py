@@ -192,4 +192,12 @@ class waypoint_demo(aiTask):
         (c['stateCondition'], {'state': True}),
         ]
         
+class line_search(aiTask):
+    class options(taskOptions):
+        script_name = 'line_search'
+        priority = 0
+    conditions = [
+        (c['stateCondition'], {'state': True}),
+        ]
+        
 tasks = subclassDict(aiTask)

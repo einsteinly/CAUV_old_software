@@ -507,7 +507,6 @@ class aiScript(aiProcess):
         debug("Exiting reporting thread.")
     def _notify_exit(self, exit_status):
         #make sure to drop pipelines
-        self.drop_all_pl()
         self.ai.task_manager.on_script_exit(self.task_name, exit_status)
         if self.exit_confirmed.wait(5.0):
             return
