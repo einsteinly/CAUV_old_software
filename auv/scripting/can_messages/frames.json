@@ -1,0 +1,193 @@
+{
+
+"dummy" : {
+    "id" : 0,
+    "members" : {},
+    "recv_by" : []
+},
+
+"test" : {
+    "id" : 1337,
+    "members" : {
+        "bitmap" : {
+            "bit1"  : 1,
+            "bit2"  : 1,
+            "_3bits" : 3
+        },
+        "byte"  : "uint8_t",
+        "_float" : "float",
+        "_int"   : "int16_t"
+    },
+    "recv_by" : []
+},
+
+"bootload" : {
+    "id" : 2,
+    "members" : {
+        "board_id" : "uint16_t",
+        "image_size" : "uint32_t"
+    },
+    "recv_by" : []
+},
+
+"send_flash": {
+    "id" : 3,
+    "members" : {
+        "buf_size" : "uint32_t"
+    },
+    "recv_by" : []
+},
+
+"image_data" : {
+    "id" : 4,
+    "members" : {}, //using the raw data
+    "recv_by" : []
+},
+
+"reset" : {
+    "id" : 6,
+    "members" : {
+        "board_id" : "uint16_t"
+    },
+    "recv_by" : []
+},
+
+"debug_enable" : {
+    "id" : 7,
+    "members" : {
+        "board_id" : "uint16_t",
+        "enable" : "uint8_t"
+    },
+    "recv_by" : []
+},
+
+"debug_output" : {
+    "id" : 107,
+    "members" : {
+        "dummy" : "double"
+    },
+    "recv_by" : ["mcb_v2.0.0"]
+},
+
+"flash_verify": {
+    "id" : 5,
+    "members" : {
+        "crc32" : "uint32_t"
+    },
+    "recv_by" : []
+},
+
+"pwr_source_set" : {
+    "id" : 8,
+    "members" : {
+        "source" : "uint8_t"
+    },
+    "recv_by" : ["pdb"]
+},
+
+"pwr_output_state_set" : {
+    "id" : 9,
+    "members" : {
+        "output_id" : "uint8_t",
+        "state" : "uint8_t"
+    },
+    "recv_by" : ["pdb"]
+},
+
+"pressure" : {
+    "id" : 10,
+    "members" : {
+        "pressure" : "int16_t",
+        "temperature" : "int16_t",
+        "position" : "uint8_t"
+    },
+    "recv_by" : ["mcb_v2.0.0"]
+},
+
+"motor_cmd" : {
+    "id" : 20,
+    "members" : {
+        "fwd_left"  : "int8_t",
+        "fwd_right" : "int8_t",
+        "vert_fore" : "int8_t",
+        "vert_aft"  : "int8_t",
+        "horz_fore" : "int8_t",
+        "horz_aft"  : "int8_t"
+    },
+    "recv_by" : ["msb"]
+},
+
+"motor_status" : {
+    "id" : 21,
+    "members" : {
+        "flags" : {
+            "otw_vert"   : 1,
+            "otw_horz"   : 1,
+            "otw_fwd"    : 1,
+            "fault_vert" : 1,
+            "fault_horz" : 1,
+            "fault_fwd"  : 1,
+            "timeout"    : 1
+        }
+    },
+    "recv_by" : ["mcb_v2.0.0"]
+},
+
+"motor_settings" : {
+    "id" : 22,
+    "members" : {
+        "slew_time" : "uint16_t" //ms
+    },
+    "recv_by" : ["msb"]
+},
+
+"pwr_source_status" : {
+    "id" : 26,
+    "members" : {
+        "source" : "uint8_t"
+    },
+    "recv_by" : ["mcb_v2.0.0"]
+},
+
+"pwr_output_state_status" : {
+    "id" : 27,
+    "members" : {
+        "output_id" : "uint8_t",
+        "state" : "uint8_t"
+    },
+    "recv_by" : ["mcb_v2.0.0"]
+},
+
+"front_light_level" : {
+    "id" : 30,
+    "members" : {
+        "level" : "uint8_t"
+    },
+    "recv_by" : ["flb"]
+},
+
+"down_light_level" : {
+    "id" : 31,
+    "members" : {
+        "level" : "uint8_t"
+    },
+    "recv_by" : ["flb"]
+},
+
+"strobe_light_level" : {
+    "id" : 32,
+    "members" : {
+        "level" : "uint8_t",
+        "time_period" : "uint8_t",
+        "duty_cycle" : "uint8_t"
+    },
+    "recv_by" : ["flb"]
+},
+
+"msb_f_init" : {
+    "id" : 40,
+    "members" : {}
+}
+
+
+}
