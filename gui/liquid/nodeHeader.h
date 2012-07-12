@@ -40,9 +40,10 @@ class NodeHeader: public QGraphicsObject{
     
         virtual void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
         virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
+        virtual void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event);
 
     Q_SIGNALS:
-        /* none */
+        void doubleClick();        
 
     public Q_SLOTS:
         void setTitle(QString title);

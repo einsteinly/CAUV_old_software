@@ -103,6 +103,7 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
     m_header->addButton("maximise", maxbutton);
     
     connect(maxbutton, SIGNAL(pressed()), this, SLOT(beginMaximise()));
+    connect(header(), SIGNAL(doubleClick()), this, SLOT(beginMaximise()));    
 
     setSize(QSizeF(300, 300));
 

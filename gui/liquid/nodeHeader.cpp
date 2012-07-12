@@ -98,6 +98,11 @@ void NodeHeader::hoverLeaveEvent(QGraphicsSceneHoverEvent *event){
     fadeIn->start();
 }
 
+void NodeHeader::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event){
+    Q_UNUSED(event);
+    Q_EMIT doubleClick();
+}
+
 void NodeHeader::setTitle(QString title){
     m_title->setText(title);
     setWidth(m_width);
