@@ -25,7 +25,6 @@ def pingThatShit(address, port):
     
     except KeyboardInterrupt:
         s = 'WARNING: Ping that shit stopped by keyboard interrupt\n'
-        plog(s, logf)
     finally:
         s = 'pingThatShit.py finished at %s\n' % str(time.time())
         sock.close()

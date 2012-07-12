@@ -32,10 +32,12 @@ class GamepadServer(messaging.MessageObserver):
 
         node.addObserver(self)
         
+        node.send(msg.SetPenultimateResortTimeoutMessage(10))
+        
         pygame.init()
         if pygame.joystick.get_count() == 0:
             error ("No gamepads detected")
-            #raise IOError()
+            raise IOError()
         else: 
             self.hasGamepad = True
         
