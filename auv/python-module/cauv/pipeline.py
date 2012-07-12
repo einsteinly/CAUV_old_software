@@ -347,7 +347,6 @@ class Model(messaging.MessageObserver):
         '''Set the state of the image pipeline based on 'state'.'''
         debug("Setting pipeline %s." %(self.pipeline_name))
         try:
-            raise Exception("Temporarily broken")
             nodeTypes = {node_id: messaging.NodeType(node.type) for (node_id, node) in state.nodes.iteritems()}
             nodeArcs = {node_id: {key: messaging.NodeOutput(output[0], output[1], messaging.OutputType(0), 0) for key, output in node.inarcs.iteritems()} for (node_id, node) in state.nodes.iteritems()}
             nodeParams = {node_id: node.params for (node_id, node) in state.nodes.iteritems()}

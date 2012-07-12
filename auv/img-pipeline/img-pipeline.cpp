@@ -26,6 +26,7 @@
 #include <generated/types/MembershipChangedMessage.h>
 #include <generated/types/AddNodeMessage.h>
 #include <generated/types/GraphRequestMessage.h>
+#include <generated/types/SetPipelineMessage.h>
 
 #include "imageProcessor.h"
 #include "scheduler.h"
@@ -70,6 +71,11 @@ void ImagePipelineNode::onRemoveNodeMessage(RemoveNodeMessage_ptr m)
 }
 
 void ImagePipelineNode::onGraphRequestMessage(GraphRequestMessage_ptr m)
+{
+    spawnNewPipeline(m->pipelineName());
+}
+
+void ImagePipelineNode::onSetPipelineMessage(SetPipelineMessage_ptr m)
 {
     spawnNewPipeline(m->pipelineName());
 }

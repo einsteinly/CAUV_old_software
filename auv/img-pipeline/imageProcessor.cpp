@@ -291,6 +291,8 @@ void ImageProcessor::onRemoveArcMessage(RemoveArcMessage_ptr m){
 }
 
 void ImageProcessor::onSetPipelineMessage(SetPipelineMessage_ptr m){
+    if(!_filterMatches(m))
+        return;
     lock_t l(m_nodes_lock);
     //translation between ids
     try{
