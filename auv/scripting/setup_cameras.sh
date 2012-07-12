@@ -1,5 +1,5 @@
 #!/bin/bash
-sudo rmmod gscpa_ov534
+sudo rmmod gspca_ov534
 sudo modprobe ov534
 
 for file in /dev/video0 /dev/video1 /dev/video2
