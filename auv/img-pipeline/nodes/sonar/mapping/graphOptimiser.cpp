@@ -23,8 +23,11 @@
 #include <boost/make_shared.hpp>
 
 #include <utility/foreach.h>
+#include <utility/streamops/vector.h>
+#include <utility/streamops/set.h>
 #include <utility/string.h>
 #include <utility/math.h>
+#include <utility/streamops/vector.h>
 
 #include <debug/cauv_debug.h>
 
