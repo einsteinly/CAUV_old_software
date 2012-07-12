@@ -75,12 +75,9 @@ def lastResort(port, kill_after_seconds):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(usage='usage: sudo last-resort.py PORT TIME_IN_SECONDS')
-    parser.parse_args()
-    if len(args) != 2:
-        parser.print_help()
-        sys.exit(1)
-    port = int(args[0])
-    tf = float(args[1])
-    lastResort(port,tf)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("port", default=7777, type=int, nargs='?', help="Port on which to listen for connections")
+    parser.add_argument("time", type=float, help="Time to wait before killing (seconds)")
+    args = parser.parse_args()
+    lastResort(args.port,args.time)
 
