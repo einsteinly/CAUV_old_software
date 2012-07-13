@@ -2,8 +2,8 @@
     "__name__": "BearingAutopilotParamsMessage", 
     "contents": {
         "Ad": 1.0, 
-        "Ai": 1.2999999523162842, 
-        "Ap": 1.2999999523162842, 
+        "Ai": 1.0, 
+        "Ap": 1.0, 
         "Kd": 35.0, 
         "Ki": 0.0, 
         "Kp": 3.5, 
