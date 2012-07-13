@@ -310,8 +310,24 @@ void CauvMainWindow::onRun()
 
     // always need at least the gui and control group
     // TODO: messages based subscription
-    this->joinGroup("gui");
-    this->joinGroup("control");
+
+    this->subMessage(MotorStateMessage());
+    this->subMessage(BearingAutopilotEnabledMessage());
+    this->subMessage(DepthAutopilotEnabledMessage());
+    this->subMessage(PitchAutopilotEnabledMessage());
+    this->subMessage(BearingAutopilotParamsMessage());
+    this->subMessage(DepthAutopilotParamsMessage());
+    this->subMessage(PitchAutopilotParamsMessage());
+    this->subMessage(DepthCalibrationMessage());
+    this->subMessage(DebugLevelMessage());
+    this->subMessage(TelemetryMessage());
+    this->subMessage(ImageMessage());
+    this->subMessage(ControllerStateMessage());
+    this->subMessage(PressureMessage());
+    this->subMessage(BatteryUseMessage());
+    this->subMessage(ProcessStatusMessage());
+    this->subMessage(SonarControlMessage());
+    this->subMessage(PenultimateResortTimeoutMessage());
 
     // Load external plugins (this includes things like gamepad support)
     // static plugins first

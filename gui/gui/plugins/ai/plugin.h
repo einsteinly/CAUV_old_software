@@ -56,6 +56,7 @@ protected Q_SLOTS:
     void pauseAi();
     void resumeAi();
     void toggleAi();
+    void saveAi();
     void keyPressed(int,Qt::KeyboardModifiers);
 
 protected:

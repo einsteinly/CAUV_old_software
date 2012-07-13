@@ -35,6 +35,7 @@ GENERATE_SIMPLE_NODE(AiMissionNode)
 GENERATE_SIMPLE_NODE(AiTaskTypeNode)
 
 class AiTaskNode : public BooleanNode {
+    Q_OBJECT
     public:
 
     AiTaskNode(const nid_t id);
@@ -65,6 +66,10 @@ class AiTaskNode : public BooleanNode {
     std::map<std::string, boost::shared_ptr<Node> > getTaskOptions();
 
     void forceSet();
+
+    Q_SIGNALS:
+    void pipelineIdAdded(std::string const&);
+    void conditionAdded(boost::shared_ptr<AiConditionNode> const&);
 
     protected:
     std::set<boost::shared_ptr<AiConditionNode> > m_conditions;

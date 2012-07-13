@@ -43,6 +43,11 @@ void FluidityMessageObserver::onPipelineDiscoveryResponseMessage(PipelineDiscove
     addPipeline(m->pipelineName());
 }
 
+void FluidityMessageObserver::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m) {
+    info() << *m;
+    addPipeline(m->pipelineName());
+}
+
 void FluidityMessageObserver::onNodeAddedMessage(NodeAddedMessage_ptr m){
     info() << *m;
     addPipeline(m->pipelineName());

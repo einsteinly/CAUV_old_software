@@ -253,7 +253,7 @@ boost::shared_ptr<const Message> MessageGenerator<NumericNode<float>, SetPenulti
 
 void MessageHandler<GroupingNode, PenultimateResortTimeoutMessage>::onPenultimateResortTimeoutMessage(
         PenultimateResortTimeoutMessage_ptr message){
-    info() << *message;
     m_node->findOrCreate<NumericNode<BoundedFloat> >("remaining")->typedUpdate(message->timeout());
+    m_node->findOrCreate<NumericNode<BoundedFloat> >("remaining")->setInverted(true);
     m_node->findOrCreate<NumericNode<float> >("timeout")->typedUpdate(message->timeout().max);
 }

@@ -292,7 +292,6 @@ void FNodeParamInput::initView(){
     m_view->setModel(m_model);
     m_view->updateGeometry();
     m_view->setRootIndex(m_model->indexFromNode(m_model_root));
-    qDebug() << "size hint = " << m_view->sizeHint();
     m_view->resize(m_view->sizeHint());
     //m_view->setRootIndex(m_model->index(0, 0));
     //m_view->resizeColumnToContents(0);

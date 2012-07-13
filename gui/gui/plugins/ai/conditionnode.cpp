@@ -90,9 +90,10 @@ std::map<std::string, boost::shared_ptr<Node> > AiConditionNode::getOptions(){
 }
 
 void AiConditionNode::addPipelineId(std::string const& id){
-    m_pipelineIds.insert(id);
-    Q_EMIT onUpdate();
-    Q_EMIT structureChanged();
+    //if(m_pipelineIds.find(id) == m_pipelineIds.end()) {
+        m_pipelineIds.insert(id);
+        Q_EMIT pipelineIdAdded(id);
+    //}
 }
 void AiConditionNode::removePipelineId(std::string const& id){
     m_pipelineIds.erase(std::find(m_pipelineIds.begin(), m_pipelineIds.end(), id));
@@ -118,11 +119,14 @@ LiquidConditionNode::LiquidConditionNode(
     m_sink(new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(), this)),
     m_sinkLabel(new liquid::ArcSinkLabel(m_sink, this, "pipelines"))
 {
+    buildContents();
 
     node->connect(node.get(), SIGNAL(onUpdate(QVariant const&)), this, SLOT(highlightStatus(QVariant const&)));
-    node->connect(node.get(), SIGNAL(onBranchChanged()), this, SLOT(ensureConnected()));
-    node->connect(node.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
-    buildContents();
+    node->connect(node.get(), SIGNAL(pipelineIdAdded(std::string)), this, SLOT(ensureConnected()));
+
+    boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
+    boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
+    connect(pipelines.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
 }
 
 void LiquidConditionNode::highlightStatus(QVariant const& status){
@@ -184,6 +188,9 @@ LiquidConditionNode::ConnectionStatus LiquidConditionNode::doAcceptConnection(li
 }
 
 void LiquidConditionNode::ensureConnected(){
+
+    info() << "connecting up LiquidConditionNode";
+
     boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
     boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
 

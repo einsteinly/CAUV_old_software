@@ -32,7 +32,7 @@ const QString RedHerringPlugin::name() const{
 
 void RedHerringPlugin::initialise(){
     VehicleRegistry::instance()->registerVehicle<RedHerring>("redherring");
-
+/*
     boost::shared_ptr<CauvNode> node = m_actions->node.lock();
     if(node){
         node->joinGroup("telemetry");
@@ -41,7 +41,7 @@ void RedHerringPlugin::initialise(){
         node->joinGroup("sonarctl");
         node->joinGroup("gui");
         node->joinGroup("pressure");
-    }
+    }*/
 }
 Q_EXPORT_PLUGIN2(cauv_redherringplugin, RedHerringPlugin)
 
@@ -74,13 +74,16 @@ void RedHerring::initialise() {
     telemetry->findOrCreate<NumericNode<float> >("yaw")->typedSetMin(0);
     telemetry->findOrCreate<NumericNode<float> >("yaw")->typedSetMax(360);
     telemetry->findOrCreate<NumericNode<float> >("yaw")->setWraps(true);
+    telemetry->findOrCreate<NumericNode<float> >("yaw")->setUnits("°");
     telemetry->findOrCreate<NumericNode<float> >("pitch")->typedSetMin(-180);
     telemetry->findOrCreate<NumericNode<float> >("pitch")->typedSetMax(180);
     telemetry->findOrCreate<NumericNode<float> >("pitch")->setWraps(true);
+    telemetry->findOrCreate<NumericNode<float> >("pitch")->setUnits("°");
     telemetry->findOrCreate<NumericNode<float> >("roll")->typedSetMin(-180);
     telemetry->findOrCreate<NumericNode<float> >("roll")->typedSetMax(180);
     telemetry->findOrCreate<NumericNode<float> >("roll")->setWraps(true);
-    telemetry->findOrCreate<NumericNode<float> >("depth");
+    telemetry->findOrCreate<NumericNode<float> >("roll")->setUnits("°");
+    telemetry->findOrCreate<NumericNode<float> >("depth")->setUnits("m");
     boost::shared_ptr<GroupingNode> pressure = telemetry->findOrCreate<GroupingNode>("pressure");
     attachObserver(pressure, boost::make_shared<MessageHandler<GroupingNode, PressureMessage> >(pressure));
     boost::shared_ptr<GroupingNode> power = telemetry->findOrCreate<GroupingNode>("power");
@@ -94,6 +97,7 @@ void RedHerring::initialise() {
     boost::shared_ptr<GroupingNode> gamepad = watchdogs->findOrCreate<GroupingNode>("gamepad");
     boost::shared_ptr<NumericNode<float> > timeout = gamepad->findOrCreate<NumericNode<float> >("timeout");
     timeout->setMutable(true);
+    timeout->setUnits("s");
     attachGenerator(boost::make_shared<MessageGenerator<NumericNode<float>, SetPenultimateResortTimeoutMessage> >(timeout));
     attachObserver(gamepad, boost::make_shared<MessageHandler<GroupingNode, PenultimateResortTimeoutMessage> >(gamepad));
 

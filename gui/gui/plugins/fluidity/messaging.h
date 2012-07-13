@@ -21,6 +21,7 @@
 
 #include <generated/types/PipelineDiscoveryResponseMessage.h>
 #include <generated/types/NodeAddedMessage.h>
+#include <generated/types/GraphDescriptionMessage.h>
 
 #include <gui/plugins/ai/conditionnode.h>
 #include <common/zeromq/zeromq_mailbox.h>
@@ -44,6 +45,7 @@ class FluidityMessageObserver: public MessageObserver{
         virtual ~FluidityMessageObserver();
         void onPipelineDiscoveryResponseMessage(PipelineDiscoveryResponseMessage_ptr m);
         void onNodeAddedMessage(NodeAddedMessage_ptr m);
+        void onGraphDescriptionMessage(GraphDescriptionMessage_ptr m);
         void addPipeline(std::string const&);
     protected:
         boost::shared_ptr<Node> m_parent;

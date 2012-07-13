@@ -53,7 +53,6 @@ public:
 public Q_SLOTS:
     void setupVehicle(boost::shared_ptr<Node> node);
     void setupPipeline(boost::shared_ptr<Node> node);
-    void nodeClosed(liquid::LiquidNode * node);
     void onSubscribed(MessageType::e messageType);
 
 private:

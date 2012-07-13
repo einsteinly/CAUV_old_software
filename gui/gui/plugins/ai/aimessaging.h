@@ -17,7 +17,22 @@
 
 #include <gui/core/model/messaging.h>
 
-#include <generated/types/GuiaiGroup.h>
+#include <generated/types/AddTaskMessage.h>
+#include <generated/types/RemoveTaskMessage.h>
+#include <generated/types/SetTaskStateMessage.h>
+#include <generated/types/TaskRemovedMessage.h>
+#include <generated/types/TaskStateMessage.h>
+#include <generated/types/ScriptStateMessage.h>
+#include <generated/types/AddConditionMessage.h>
+#include <generated/types/RemoveConditionMessage.h>
+#include <generated/types/SetConditionStateMessage.h>
+#include <generated/types/ConditionRemovedMessage.h>
+#include <generated/types/ConditionStateMessage.h>
+#include <generated/types/TaskTypesMessage.h>
+#include <generated/types/ConditionTypesMessage.h>
+#include <generated/types/RequestAIStateMessage.h>
+#include <generated/types/ScriptControlMessage.h>
+#include <generated/types/AIControlMessage.h>
 
 #include <gui/plugins/ai/conditionnode.h>
 #include <gui/plugins/ai/tasknode.h>

@@ -50,8 +50,9 @@ AiTaskNode::~AiTaskNode(){
 }
 
 void AiTaskNode::addCondition(boost::shared_ptr<AiConditionNode> condition){
+    info() << "condition added to task";
     m_conditions.insert(condition);
-    condition->connect(condition.get(), SIGNAL(structureChanged()), this, SIGNAL(structureChanged()));
+    Q_EMIT conditionAdded(condition);
 }
 
 void AiTaskNode::removeCondition(boost::shared_ptr<AiConditionNode> condition){
@@ -62,10 +63,12 @@ std::set<boost::shared_ptr<AiConditionNode> > AiTaskNode::getConditions(){
     return m_conditions;
 }
 
-void AiTaskNode::addPipelineId(std::string const& pipe){
-    m_pipelineIds.insert(pipe);
-    Q_EMIT onUpdate();
-    Q_EMIT structureChanged();
+void AiTaskNode::addPipelineId(std::string const& id){
+    info() << "pipeline added to task";
+    //if(m_pipelineIds.find(id) == m_pipelineIds.end()) {
+        m_pipelineIds.insert(id);
+        Q_EMIT pipelineIdAdded(id);
+    //}
 }
 
 void AiTaskNode::removePipelineId(std::string const& pipe){
@@ -166,12 +169,16 @@ LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem
 {
     initButtons();
     buildContents();
-    node->connect(node.get(), SIGNAL(onUpdate(QVariant)), this, SLOT(highlightRunningStatus(QVariant)));
-    node->connect(node.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
+
+    connect(node.get(), SIGNAL(onUpdate(QVariant)), this, SLOT(highlightRunningStatus(QVariant)));
+    connect(node.get(), SIGNAL(pipelineIdAdded(std::string)), this, SLOT(ensureConnected()));
+    connect(node.get(), SIGNAL(conditionAdded(boost::shared_ptr<AiConditionNode>)), this, SLOT(ensureConnected()));
 
     boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
     boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
     connect(pipelines.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
+
+    info() << "shit is connected up";
 
     highlightRunningStatus(node->get());
 }
@@ -211,6 +218,8 @@ void LiquidTaskNode::initButtons(){
 }
 
 void LiquidTaskNode::ensureConnected(){
+    info() << "ensure task node is connected";
+
     foreach(boost::shared_ptr<AiConditionNode> const& node, m_node->getConditions()) {
         ConnectedNode * cn = ConnectedNode::nodeFor(node->to<Node>());
         if(!cn) {
@@ -232,7 +241,6 @@ void LiquidTaskNode::ensureConnected(){
         try {
             boost::shared_ptr<Node> node = pipelines->findFromPath<Node>(QString::fromStdString(id));
             ConnectedNode * cn = ConnectedNode::nodeFor(node);
-            qDebug() << "connected node = " << cn;
             if(!cn) {
                 error() << "Node ConnectedNode not registered for " << id;
                 continue;
@@ -252,35 +260,8 @@ void LiquidTaskNode::ensureConnected(){
 void LiquidTaskNode::buildContents(){
 
     // incoming dependencies
-
     addItem(m_conditionSinkLabel);
     addItem(m_pipelineSinkLabel);
-
-    /*
-    foreach(boost::shared_ptr<AiConditionNode> const& condition, m_node->getConditions()){
-        LiquidConditionNode * conditionNode = nodeFor(condition);
-        if(!conditionNode) continue;
-        //conditionNode->setPos(pos().x()-(conditionNode->size().width() + 30), pos().y());
-        liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
-                                                      new liquid::RejectingConnectionSink());
-        liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,
-                               QString::fromStdString(boost::get<std::string>(condition->nodeId())));
-        sink->setParent(label);
-        this->addItem(label);
-        conditionNode->source()->arc()->addTo(label->sink());
-    }
-
-    foreach(boost::shared_ptr<FluidityNode> const& pipeline, m_node->getPipelines()){
-        LiquidFluidityNode * pipelineNode = LiquidFluidityNode::liquidNode(pipeline);
-        if(!pipelineNode) continue;
-        liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(),
-                                                      new liquid::RejectingConnectionSink());
-        liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink, this,
-                               QString::fromStdString(boost::get<std::string>(pipeline->nodeId())));
-        sink->setParent(label);
-        this->addItem(label);
-        pipelineNode->source()->arc()->addTo(label->sink());
-    }*/
 
     // the item view
     header()->setTitle(QString::fromStdString(m_node->nodeName()));
@@ -292,8 +273,6 @@ void LiquidTaskNode::buildContents(){
     liquid::ProxyWidget * proxy = new liquid::ProxyWidget();
     proxy->setWidget(view);
     addItem(proxy);
-
-
 }
 
 std::string LiquidTaskNode::taskId() const{
@@ -318,5 +297,5 @@ LiquidTaskNode::ConnectionStatus LiquidTaskNode::doAcceptConnection(liquid::ArcS
 
 
 liquid::ArcSource * LiquidTaskNode::getSourceFor(boost::shared_ptr<Node> const&) const{
-    return NULL;
+    return NULL; //no sources in this node
 }

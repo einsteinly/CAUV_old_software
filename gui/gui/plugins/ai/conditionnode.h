@@ -34,6 +34,7 @@ class NodeTreeView;
 GENERATE_SIMPLE_NODE(AiConditionTypeNode)
 
 class AiConditionNode : public BooleanNode {
+    Q_OBJECT
     public:
         AiConditionNode(const nid_t id);
         virtual ~AiConditionNode();
@@ -56,6 +57,10 @@ class AiConditionNode : public BooleanNode {
         std::map<std::string, boost::shared_ptr<Node> > m_debug;
         std::map<std::string, boost::shared_ptr<Node> > m_options;
         std::set<std::string > m_pipelineIds;
+
+   Q_SIGNALS:
+        void pipelineIdAdded(std::string const&);
+
 };
 
 

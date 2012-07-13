@@ -45,6 +45,8 @@ using namespace cauv::gui;
 AiPlugin::AiPlugin() :
     m_filter(boost::make_shared<NodeChildrenExclusionFilter>()),
     m_aiRunning(false){
+    qRegisterMetaType<std::string>("std::string");
+    qRegisterMetaType<boost::shared_ptr<AiConditionNode> >("boost::shared_ptr<AiConditionNode>");
 }
 
 const QString AiPlugin::name() const{
@@ -60,9 +62,11 @@ void AiPlugin::initialise(){
     connect(VehicleRegistry::instance().get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
             this, SLOT(setupVehicle(boost::shared_ptr<Node>)));
 
-    boost::shared_ptr<CauvNode> node = m_actions->node.lock();
-    if(node) {
-        node->joinGroup("guiai");
+    if(boost::shared_ptr<CauvNode> node = m_actions->node.lock()) {
+        boost::shared_ptr<AiSubscribeObserver> sub = boost::make_shared<AiSubscribeObserver>();
+        connect(sub.get(), SIGNAL(onSubscriptionConfirmation(MessageType::e)), this, SLOT(onSubscribed(MessageType::e)));
+        node->addSubscribeObserver(sub);
+
         node->subMessage(ConditionStateMessage());
         node->subMessage(ConditionRemovedMessage());
         node->subMessage(TaskTypesMessage());
@@ -78,12 +82,6 @@ void AiPlugin::initialise(){
     m_actions->scene->registerDropHandler(boost::make_shared<AiDropHandler>(m_actions->root, m_actions->node));
     m_actions->nodes->registerDelegate(nodeType<AiTaskNode>(), boost::make_shared<BooleanDelegate>());
     m_actions->nodes->registerListFilter(m_filter);
-
-    if(boost::shared_ptr<CauvNode> node = m_actions->node.lock()) {
-        boost::shared_ptr<AiSubscribeObserver> sub = boost::make_shared<AiSubscribeObserver>();
-        connect(sub.get(), SIGNAL(onSubscriptionConfirmation(MessageType::e)), this, SLOT(onSubscribed(MessageType::e)));
-        node->addSubscribeObserver(sub);
-    } else error() << "Failed to lock CauvNode while setting up vehicle ai";
 }
 
 void AiPlugin::keyPressed(int key,Qt::KeyboardModifiers){
@@ -92,7 +90,13 @@ void AiPlugin::keyPressed(int key,Qt::KeyboardModifiers){
     reloadAi();
     break;
     case Qt::Key_P:
-    toggleAi();
+    resumeAi();
+    break;
+    case Qt::Key_O:
+    pauseAi();
+    break;
+    case Qt::Key_S:
+    saveAi();
     break;
     }
 }
@@ -231,6 +235,13 @@ void AiPlugin::toggleAi(){
     m_aiRunning = !m_aiRunning;
 }
 
+void AiPlugin::saveAi(){
+    if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()){
+        cauvNode->send(boost::make_shared<AIControlMessage>(
+                           AICommand::Save));
+    }
+}
+
 void AiPlugin::nodeClosed(liquid::LiquidNode * node) {
     if(LiquidTaskNode * task = dynamic_cast<LiquidTaskNode*>(node)){
         if(boost::shared_ptr<CauvNode> cauvNode = m_actions->node.lock()){
@@ -249,6 +260,7 @@ void AiPlugin::nodeClosed(liquid::LiquidNode * node) {
 void AiPlugin::onSubscribed(MessageType::e messageType){
     if(messageType == MessageType::ScriptState){
         if(boost::shared_ptr<CauvNode> node = m_actions->node.lock()) {
+            info() << "Requesting pipeline state";
             node->send(boost::make_shared<RequestAIStateMessage>());
         } else {
             error() << "Failed to lock CauvNode in AiPLugin";

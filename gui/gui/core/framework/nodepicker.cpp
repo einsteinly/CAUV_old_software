@@ -16,6 +16,7 @@
 #include "ui_nodepicker.h"
 
 #include <QtGui>
+#include <boost/shared_ptr.hpp>
 
 #include <debug/cauv_debug.h>
 
@@ -171,21 +172,11 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
 }
 
 void NodePicker::setHighlighting(QString text){
-    //QPalette p = ui->filter->palette();
     if(text.isEmpty()){
-        //p.setColor(ui->filter->backgroundRole(), QColor('red'));
         m_clearButton->hide();
     } else{
         m_clearButton->show();
     }
-
-
-    //p.setColor( QPalette::Base, bg );
-    //p.setColor( QPalette::Window, bg );
-    //p.setColor( QPalette::Background, bg );
-    //ui->filter->setPalette(p);
-    //ui->filter->setAutoFillBackground(true);
-    //ui->filter->setBackgroundRole(QPalette::Background);
 }
 
 void NodePicker::redirectKeyboardFocus(QKeyEvent* event){
@@ -261,15 +252,7 @@ void NodeTreeView::init() {
 
     this->setExpandsOnDoubleClick(false);
 
-
-    //QTimer * t =new QTimer();
-    //t->connect(t, SIGNAL(timeout()), this, SLOT(sizeToFit()));
-    //t->setSingleShot(false);
-    //t->start(100);
-
     if(m_fixedSize){
-        //connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(sizeToFit(QModelIndex)));
-        //connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(sizeToFit(QModelIndex)));
         this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         this->viewport()->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -281,33 +264,6 @@ void NodeTreeView::sizeToFit(){
     setExpanded(rootIndex(), true);
     updateGeometry();
     resize(sizeHint());
-    /*
-
-    // https://bugreports.qt-project.org/browse/QTBUG-14622
-    QObject * p = parent();
-    if(!p)
-        qDebug() << "parent not found";
-    while(p){
-
-        qDebug() << p;
-
-        if(QGraphicsLayoutItem * layoutItem = dynamic_cast<QGraphicsLayoutItem*>(p)){
-            info() << "found layout item parent";
-            layoutItem->updateGeometry();
-        }
-
-        p = p->parent();
-    }*/
-
-    /*info() << "expanded = " << isExpanded(i);
-    resize(sizeHint());
-    info() << "sizing to fit";
-    updateGeometry();
-    if(this->layout())
-        qDebug() << this->layout();
-    adjustSize();
-    updateGeometries();*/
-    //m_delegateMap->sizeHintChanged(rootIndex());
 }
 
 void NodeTreeView::registerDelegate(node_type nodeType,
@@ -317,8 +273,9 @@ void NodeTreeView::registerDelegate(node_type nodeType,
 
 void NodeTreeView::setModel(QAbstractItemModel *model){
     QTreeView::setModel(model);
-    if(m_fixedSize)
+    if(m_fixedSize) {
         connect(model, SIGNAL(layoutChanged()), this, SLOT(sizeToFit()));
+    }
     setExpanded(rootIndex(), true);
     sizeToFit();
 }
@@ -354,7 +311,7 @@ QSize NodeTreeView::sizeHint() const {
         width = std::max(width, rowSize.width());
     }
 
-    qDebug() << "computed size hint = " << QSize(width, height);
+    //qDebug() << "computed size hint = " << QSize(width, height);
 
     return QSize(width, height);
 }
@@ -384,22 +341,15 @@ QSize NodeTreeView::sizeHint(QModelIndex index) const {
 }
 
 void NodeTreeView::toggleExpanded(QModelIndex const& index){
-    info() << "pre-inversion" << isExpanded(index);
-    qDebug() << "sizeHint = " << sizeHint();
+    //info() << "pre-inversion" << isExpanded(index);
+   // qDebug() << "sizeHint = " << sizeHint();
     setExpanded(index, !isExpanded(index));
-    info() << "post-inversion" << isExpanded(index);
-    qDebug() << "sizeHint = " << sizeHint();
+    //info() << "post-inversion" << isExpanded(index);
+    //qDebug() << "sizeHint = " << sizeHint();
     sizeToFit();
 }
 
 void NodeTreeView::keyPressEvent(QKeyEvent *event){
-    qDebug() << "size = " << size();
-    qDebug() << "minimumSize = " << minimumSize();
-    qDebug() << "maximumSize = " << maximumSize();
-    qDebug() << "sizeHint = " << sizeHint();
-    qDebug() << "baseSize = " << this->baseSize();
-    qDebug() << "normalGeometry = " << this->normalGeometry();
-    this->setAutoFillBackground(true);
     Q_EMIT onKeyPressed(event);
     QTreeView::keyPressEvent(event);
 }

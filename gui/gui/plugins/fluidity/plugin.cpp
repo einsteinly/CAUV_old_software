@@ -108,12 +108,13 @@ void FluidityPlugin::initialise(){
         throw std::runtime_error("only one FluidityPlugin may be initialised");
 
     if(boost::shared_ptr<CauvNode> node = m_actions->node.lock()) {
-        node->subMessage(PipelineDiscoveryResponseMessage());
-        node->subMessage(NodeAddedMessage()); // LEAVE THIS ONE LAST
-
         boost::shared_ptr<FluiditySubscribeObserver> sub = boost::make_shared<FluiditySubscribeObserver>();
         connect(sub.get(), SIGNAL(onSubscriptionConfirmation(MessageType::e)), this, SLOT(onSubscribed(MessageType::e)));
         node->addSubscribeObserver(sub);
+
+        node->subMessage(PipelineDiscoveryResponseMessage());
+        node->subMessage(GraphDescriptionMessage());
+        node->subMessage(NodeAddedMessage()); // LEAVE THIS ONE LAST
     } else error() << "Failed to lock CauvNode while setting up vehicle ai";
 }
 
@@ -147,21 +148,13 @@ void FluidityPlugin::setupPipeline(boost::shared_ptr<Node> node){
             setupPipeline(child);
         }
     } else if(boost::shared_ptr<FluidityNode> fn = boost::dynamic_pointer_cast<FluidityNode>(node)){
-        LiquidFluidityNode * liquidNode = new LiquidFluidityNode(fn, m_actions->window);
-        connect(liquidNode, SIGNAL(closed(LiquidNode*)), this, SLOT(nodeClosed(liquid::LiquidNode*)));
-        m_actions->scene->addItem(liquidNode);
+        m_actions->scene->addItem(new LiquidFluidityNode(fn, m_actions->window));
     }
 }
 
 boost::weak_ptr<CauvNode>& FluidityPlugin::theCauvNode(){
     static boost::weak_ptr<CauvNode> the_cauv_node;
     return the_cauv_node;
-}
-
-void FluidityPlugin::nodeClosed(liquid::LiquidNode * node) {
-    if(LiquidFluidityNode * task = dynamic_cast<LiquidFluidityNode*>(node)){
-        task->fluidityNode()->getParent()->removeChild(task->fluidityNode()->nodeId());
-    }
 }
 
 void FluidityPlugin::onSubscribed(MessageType::e messageType){
