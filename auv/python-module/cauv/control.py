@@ -122,7 +122,7 @@ class AUV(messaging.MessageObserver):
         '''Redherring calibration: Set the depth calibration for fresh water.'''
         self.calibrateDepth(-928.0/86.5, 1.0/86.5)
         
-    def autoCalibrateDepth(self, surfacePressure = 1000.0, waterDensity = 1025.0):
+    def autoCalibrateDepth(self, surfacePressure = 1015.0, waterDensity = 1025.0):
         '''Barracuda calibration: Set the depth calibration for barracuda.'''
         # pressure = (depth - fore_offset) / fore_mult
         #    depth = (pressure*fore_mult)+fore_offset
@@ -133,7 +133,7 @@ class AUV(messaging.MessageObserver):
         # This is pressure in Pa, but we use pressure in mbar, so scale by 100
         
         fore_mult = 1/(waterDensity*9.81)
-        fore_offset = -surfacePressure * fore_mult
+        fore_offset = -surfacePressure*100 * fore_mult
         
         self.calibrateDepth(fore_offset, fore_mult*100)
 
