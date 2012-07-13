@@ -21,14 +21,14 @@ class scriptOptions(aiScriptOptions):
     strafeLimit = 60
     wallDistancekP = -1000
     depth = 2 #depth in metres
-    useDepth = False
-    maximumRunTime = 500 #run time in seconds
+    useDepth = True
+    maximumRunTime = 200 #run time in seconds
     forwardAngle = math.pi/4
     changeDifference = 0.01
     maximumBearingChange = 5
     targetDistance = 0.1
     initialLocation = (Simulation_Datum+NorthEastDepthCoord(-18, 5, 0)).toWGS84()
-    initalBearing = 180
+    initalBearing = 80
     linesName = 'track_wall'
     
     class Meta:
