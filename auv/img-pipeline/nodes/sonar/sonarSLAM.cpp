@@ -158,6 +158,11 @@ class SonarSLAMImpl{
             
             if(m_have_telem){
                 boost::unique_lock<boost::mutex> l(m_async_data_mux);
+                if(m_last_orientation.pitch < -1 || m_last_orientation.pitch > 2){
+                    debug() << "too much pitch to try to match scan:" << m_last_orientation.pitch;
+                    return 0;
+                }
+
                 const Eigen::Matrix4f last_transform = m_graph.lastTransform();
                 const float yaw_rad = m_last_orientation.yaw * M_PI / 180;
                 Eigen::Matrix4f telemetry_rotation = Eigen::Matrix4f::Identity();
