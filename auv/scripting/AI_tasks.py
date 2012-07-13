@@ -201,4 +201,13 @@ class line_search(aiTask):
         (c['stateCondition'], {'state': True}),
         ]
         
+class breach(aiTask):
+    class options(taskOptions):
+        script_name = 'breach'
+        priority = 0
+        frequency_limit = 0
+    conditions = [
+        (c['stateCondition'], {'state': True}),
+        ]
+        
 tasks = subclassDict(aiTask)
