@@ -292,7 +292,7 @@ class script(aiScript):
         time.sleep(2)
         if self.options.useDepth:
             self.auv.depth(self.options.depth)
-        self.auv.headToLocation(self.options.initialLocation)
+        #self.auv.headToLocation(self.options.initialLocation)
         self.auv.bearingAndWait(self.options.initalBearing)
         #start onMessage handler
         start_time = time.time()

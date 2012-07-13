@@ -24,6 +24,7 @@ class scriptOptions(aiScriptOptions):
     lost_timeout = 15
     # Calibration
     pipe_end     = 0.1 # of image (range +0.5 to -0.5)
+    use_depth = False
     target_width = 0.05 # of image
     width_error  = 0.1 # of image
     centre_error = 0.2 # of image
@@ -31,8 +32,8 @@ class scriptOptions(aiScriptOptions):
     average_time = 1   # seconds
     angle_consistency = 0.4
     # Control
-    prop_speed = 80
-    strafe_kP  = -50 # if we are to the left of the pipe then the pipe is on the right, so has positive center error
+    prop_speed = 40
+    strafe_kP  = -100 # if we are to the left of the pipe then the pipe is on the right, so has positive center error
     #we want to move right, ie negative strafe, so set kP negative
     depth_kP = -1 # if we are too high the width is too small so the error appears negative
     #we want to dive, ie positive value to add to depth, so kP is negative
@@ -109,7 +110,7 @@ class script(aiScript):
             debug('Centred:%s Aligned:%s Depthed:%s' %
                     (self.centred.is_set(), self.aligned.is_set(), self.depthed.is_set())
             )
-            if self.centred.is_set() and self.aligned.is_set() and self.depthed.is_set():
+            if self.centred.is_set() and self.aligned.is_set() and (not self.options.use_depth or self.depthed.is_set()):
                 self.ready.set()
                 self.log('Pipeline follower managed to align itself over the pipe.')
             else:
@@ -166,8 +167,9 @@ class script(aiScript):
         depth = self.depthControl.update(m.minorRadius-self.options.target_width)
         debug(str(m.minorRadius))
         self.depth_error = depth
-        debug('Width error: %f, diving: %f' %(m.minorRadius-self.options.target_width, depth))
-        self.auv.depth(self.auv.current_depth+depth)
+        if self.options.use_depth:
+            debug('Width error: %f, diving: %f' %(m.minorRadius-self.options.target_width, depth))
+            self.auv.depth(self.auv.current_depth+depth)
         if abs(self.options.target_width-m.minorRadius) < self.options.width_error:
             self.depthed.set()
         else:

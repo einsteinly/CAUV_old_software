@@ -16,7 +16,6 @@ class AUV(messaging.MessageObserver):
         self.current_bearing = None
         self.current_depth = None
         self.current_pitch = None
-        self.depth_disabled = True
         self.bearingCV = threading.Condition()
         self.depthCV = threading.Condition()
         self.pitchCV = threading.Condition()
@@ -140,7 +139,7 @@ class AUV(messaging.MessageObserver):
 
     def depth(self, depth):
         '''Set a depth (metres) and activate the depth control loop, or deactivate depth control if 'None' is passed.'''
-        if depth is not None and not self.depth_disabled:
+        if depth is not None:
             self.send(messaging.DepthAutopilotEnabledMessage(True, depth))
         else:
             self.send(messaging.DepthAutopilotEnabledMessage(False, 0))
