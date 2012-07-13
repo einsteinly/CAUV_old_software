@@ -80,21 +80,21 @@ Iyy_water = Iyy / 10 # much less added water mass in the roll direction
 Seabotix_Max_Thrust = 18.0 # N, used in Force_Per_Unit_Thrust only
 Force_Per_Unit_Vector_Thrust = Seabotix_Max_Thrust / 127.0 # N
 Force_Per_Unit_Prop_Thrust = 2 * Seabotix_Max_Thrust / 127.0 # N
-Max_Yaw_Moment   = 1.5*Seabotix_Max_Thrust*2
-Max_Pitch_Moment = Max_Yaw_Moment
-Max_Roll_Moment  = Max_Yaw_Moment / 20
+Max_Yaw_Moment   = abs(HBow_At[1] - HStern_At[1]) * Seabotix_Max_Thrust*2
+Max_Pitch_Moment = abs(VBow_At[1] - VStern_At[1]) * Seabotix_Max_Thrust*2
+Max_Roll_Moment  = Max_Yaw_Moment / 5
 
 # Hydrodynamic model:
 # Drag: Newtons per metre per second, modelled from measured terminal velocity:
 # (this is a simple exponential model)
-Drag_F = np.array((Seabotix_Max_Thrust*2 / 0.3, # x (sideways)
-                   Seabotix_Max_Thrust   / 0.4, # y (forwards)
-                   Seabotix_Max_Thrust*2 / 0.7)) # z (up/down)
+Drag_F = np.array((Seabotix_Max_Thrust*2 / 1.0, # x (sideways)
+                   Seabotix_Max_Thrust   / 2.0, # y (forwards)
+                   Seabotix_Max_Thrust*2 / 0.6)) # z (up/down)
 # Drag Torque: Newton metres per radian per second, measured from complete
 # guesses at maximum rotation rates:
-Drag_J = np.array((Max_Yaw_Moment / 0.8,   # yaw
-                   Max_Roll_Moment / 1,  # roll
-                   Max_Pitch_Moment / 0.8)) # pitch
+Drag_J = np.array((Max_Yaw_Moment / 1.6,   # yaw
+                   Max_Roll_Moment / 2,  # roll
+                   Max_Pitch_Moment / 1.6)) # pitch
 
 class Model(base_model.Model):
     def __init__(self, node, profile=False):
