@@ -73,7 +73,7 @@ void SimSonar::tick(double timestamp) {
         //  near
         float near_width = near * std::tan(fovx/2 / 360.0 * 2 * M_PI);
         for (unsigned int x = 0; x < width; x++) {
-            float bearing = std::atan2(((float)x/width - 0.5) * 2 * near_width, near);
+            float bearing = std::atan2((float(x)/width - 0.5f) * 2 * near_width, near);
             bearings[x] = bearing / (2 * M_PI) * 6400 * 0x10000;
             float scale = 1/std::cos(bearing);
             for (unsigned int y = height/2; y < height; y++) {

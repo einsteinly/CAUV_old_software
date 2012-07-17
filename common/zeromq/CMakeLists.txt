@@ -18,7 +18,7 @@ target_link_libraries(
     common
     utility
     messages
-    rt
+    ${rt_LIBRARY}
 )
 
 depends_on_messages(zeromq_msg)

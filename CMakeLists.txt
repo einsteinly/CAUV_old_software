@@ -97,6 +97,12 @@ function (cauv_install TARGET)
     endif()
 endfunction()
 
+if (${APPLE})
+    set(rt_LIBRARY "")
+else()
+    find_library (rt_LIBRARY rt)
+endif()
+
 # include the root source dir in the search path for all subprojects
 include_directories (${CAUV_SOURCE_DIR})
 
