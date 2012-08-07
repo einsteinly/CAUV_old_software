@@ -84,4 +84,6 @@ else()
         cauv_debug
     )
 
+    cauv_install ( liquid )
+
 endif()

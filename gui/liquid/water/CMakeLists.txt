@@ -53,6 +53,8 @@ target_link_libraries ( water
     utility
 )
 
+cauv_install ( water )
+
 if(CAUV_BUILD_TESTS)
     add_executable(
         map-test

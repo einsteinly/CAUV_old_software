@@ -135,7 +135,7 @@ void SmartStreamBase::printToStream(std::ostream& os)
     // stream that nothing else is going to interfere with to get at
     // the time in the format that we want:
     std::ostringstream oss;
-    oss.imbue(getTheLocale());
+    oss.imbue(getTheLocale()); 
 
     // add timestamp at start of each line:
     if(m_stuffs.size())

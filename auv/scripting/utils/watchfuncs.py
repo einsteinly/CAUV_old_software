@@ -64,3 +64,5 @@ def restart(n_times = 0):
 def panic(proc):
     raise RuntimeError("Important process {} crashed! panic!".format(proc.name))
 
+def ignore(proc):
+    pass

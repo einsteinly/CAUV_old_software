@@ -1,0 +1,14 @@
+{
+    "__name__": "BearingAutopilotParamsMessage", 
+    "contents": {
+        "Ad": 1.0, 
+        "Ai": 1.0, 
+        "Ap": 1.0, 
+        "Kd": 35.0, 
+        "Ki": 0.0, 
+        "Kp": 3.5, 
+        "maxError": 150.0, 
+        "scale": -1.0, 
+        "thr": 1.0
+    }
+}

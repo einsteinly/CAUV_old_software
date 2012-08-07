@@ -81,8 +81,10 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
 
         m_view = new f::FView(cauv_node, pipelineName);
         m_view->setMode(f::FView::Internal);
+        m_view->setMinimumSize(120, 120);
         m_contents = new liquid::ProxyWidget(this);
         m_contents->setWidget(m_view);
+        m_contents->setMinimumSize(120, 120);
 
         QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(Qt::Horizontal);
         hlayout->setSpacing(0);

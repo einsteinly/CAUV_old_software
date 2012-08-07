@@ -56,4 +56,4 @@ target_link_libraries ( magma
     utility
 )
 
-
+cauv_install ( magma )
