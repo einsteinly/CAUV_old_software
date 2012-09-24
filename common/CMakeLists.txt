@@ -8,13 +8,15 @@ set (
     cauv_node.cpp
 )
 
+find_library(BOOST_THREAD_LIB NAMES boost_thread boost_thread-mt)
+
 set (
     common_links
 
     messages
     cauv_debug
     utility
-    boost_thread
+    ${BOOST_THREAD_LIB}
     boost_date_time
     boost_iostreams
     boost_signals
