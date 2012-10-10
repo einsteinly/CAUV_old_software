@@ -26,6 +26,8 @@ add_executable (
 )
 cauv_install ( control )
 
+find_library(BOOST_THREAD_LIB NAMES boost_thread boost_thread-mt)
+
 # libs
 target_link_libraries (
     control
@@ -38,6 +40,6 @@ target_link_libraries (
     ${ftdi_LIBRARIES}
 
     SbgComSerial
-    boost_thread
+    ${BOOST_THREAD_LIB}
 )
 depends_on_messages(control)
