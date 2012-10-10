@@ -79,7 +79,6 @@ endfunction()
 function (cauv_install TARGET)
     get_target_property(TARGET_TYPE ${TARGET} TYPE)
     if (${TARGET_TYPE} STREQUAL "EXECUTABLE")
-        #SET_TARGET_PROPERTIES(${TARGET} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
         get_target_property(TARGET_OUTPUT ${TARGET} OUTPUT_NAME)
         if (NOT TARGET_OUTPUT)
             set(TARGET_OUTPUT "${TARGET}")
@@ -90,6 +89,7 @@ function (cauv_install TARGET)
         install (TARGETS ${TARGET} DESTINATION bin/cauv/${CMAKE_BUILD_TYPE} )
         cauv_install_link(${TARGET_NEW} ${TARGET_OLD})
     else()
+        set_target_properties(${TARGET} PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
         install (
             TARGETS ${TARGET}
             RUNTIME DESTINATION bin
