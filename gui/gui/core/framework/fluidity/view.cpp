@@ -283,9 +283,10 @@ void FView::initMenu(MenuNode& parent, QAction_ptr_set actions){
 
     static const char* split_words_init[] = {
         "Sonar", "File", "Split", "Combine", "Math", "Corner", /*"Int",*/ "Float",
-        "String", "Keypoint", "Lines", "Input", "Output", "Camera",
-        "Histogram", "Max", "Min", "Segment", "Mix", "Filter", "Copy", "Mix",
-        "Clamp", "Crop", "Draw"
+        "String", "Keypoint", "Lines", "Point", "Circle", "Ellipse",
+        "Input", "Output", "Camera", "Histogram", "Max", "Min", "Segment",
+        "Mix", "Filter", "Copy", "Mix", "Clamp", "Crop", "Draw", "Broadcast",
+        "Background", "Fit", "Segment", "KMean", "Colour", "Mean", "Cluster"
     };
     std::vector<std::string> split_words;
     for(std::size_t i = 0; i < sizeof(split_words_init) / sizeof(char*); i++){

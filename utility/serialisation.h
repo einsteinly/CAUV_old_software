@@ -49,16 +49,15 @@ typedef const_svec_ptr const& const_svec_ptr_cref;
 namespace impl{
 /* helper function: serialise by copying bytes */
 template<typename T>
-inline static void copyBytes(svec_ptr_cref p, T& CAUV_RESTRICT v){
-    svec_ptr::element_type* const CAUV_RESTRICT restrict_p = p.get();
-    restrict_p->insert(
-        restrict_p->end(),
+inline static void copyBytes(svec_ptr_cref p, T& v){
+    p->insert(
+        p->end(),
         reinterpret_cast<byte const*>(&v),
         reinterpret_cast<byte const*>(&v) + sizeof(T)
     );
 }
 template<typename T>
-inline static int32_t unCopyBytes(const_svec_ptr_cref p, uint32_t i, T& CAUV_RESTRICT v){
+int32_t unCopyBytes(const_svec_ptr_cref p, uint32_t i, T& CAUV_RESTRICT v){
     v = reinterpret_cast<T const&>((*p)[i]);
     return sizeof(T);
 }
@@ -232,7 +231,7 @@ inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, boost::array<T,Siz
 template<typename T>
 inline void serialise(svec_ptr_cref p, std::vector<T> const& CAUV_RESTRICT v){
     assert(v.size() < 0x80000000);
-    int32_t num = int32_t(v.size());
+    uint32_t num = int32_t(v.size());
     // 2 * p->size to preserve O(Length) amortized time with the gcc
     // reserve-means-reserve-exactly implementation...
     const std::size_t add_length = sizeof(int32_t) + (sizeof(T)) * num;
@@ -248,12 +247,12 @@ inline void serialise(svec_ptr_cref p, std::vector<T> const& CAUV_RESTRICT v){
 template<typename T>
 inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, std::vector<T>& CAUV_RESTRICT v){
     int32_t b = i;
-    int32_t num = 0;
+    uint32_t num = 0;
     b += deserialise(p, b, num);
     
     v.reserve(num);
     /* NB: assuming v is already clear */
-    for(int32_t j = 0; j < num; j++){
+    for(uint32_t j = 0; j < num; j++){
         T t;
         b += deserialise(p, b, t);
         v.push_back(t);

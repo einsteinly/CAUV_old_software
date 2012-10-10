@@ -68,6 +68,6 @@ while True:
     for node_name in new_nodes:
         if node_name in current_nodes:
             run_screen_cmd(['at', node_name, 'kill'])
-        run_screen_cmd(['screen', '-t', node_name, 'less', '+F', new_nodes[node_name]])
+        run_screen_cmd(['screen', '-t', node_name, 'less', '+F', '-R', new_nodes[node_name]])
 
     time.sleep(1)
