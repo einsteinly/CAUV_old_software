@@ -15,6 +15,7 @@
 #ifndef GUI_VARIANTS_H
 #define GUI_VARIANTS_H
 
+
 #include <QVariant>
 #include <QColor>
 #include <QMetaType>
@@ -32,6 +33,10 @@
 #include <generated/types/Controller.h>
 #include <generated/types/CameraID.h>
 #include <common/msg_classes/colour.h>
+
+#if BOOST_VERSION == 105100
+    #error boost version 1.51 is broken for enum hashing: please update to a newer version
+#endif
 
 #include <sstream>
 #include <vector>
