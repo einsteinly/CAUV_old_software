@@ -10,7 +10,7 @@ if(CAUV_BUILD_MCB_BRIDGE)
         utility
         cauv_debug
 
-        boost_program_options
+        ${Boost_LIBRARIES}
         util
     )
 

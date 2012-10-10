@@ -12,11 +12,9 @@ add_executable (
 
 )
 
-find_library(BOOST_THREAD_LIB NAMES boost_thread boost_thread-mt)
-
 target_link_libraries (
     cube3d
-    ${BOOST_THREAD_LIB}
+    ${Boost_LIBRARIES}
     SbgComSerial
 
 )

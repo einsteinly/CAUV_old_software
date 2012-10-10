@@ -2,6 +2,7 @@ project (magma)
 
 option(MAGMA_DEBUG_LAYOUT "Draw layout debugging helpers" OFF)
 
+
 if (MAGMA_DEBUG_LAYOUT)
     add_definitions(-DMAGMA_DEBUG_LAYOUT=true)
 else()

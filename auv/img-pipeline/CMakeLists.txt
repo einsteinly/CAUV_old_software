@@ -129,9 +129,7 @@ target_link_libraries (
     utility
     sonar_accumulator
     camera_client
-    boost_date_time
-    boost_filesystem
-    boost_system
+    ${Boost_LIBRARIES}
     opencv_image
     ${OpenCV_LIBS}
     ${CONDITIONAL_LIBS}

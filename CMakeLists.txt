@@ -48,6 +48,7 @@ set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_RELEASE CAUV_NO_DEBUG)
 
 # rpath stuff
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+#message("setting cmake install rpath to ${CMAKE_INSTALL_PREFIX}/lib")
 SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
 # Custom install which adds a prefix to executables
@@ -78,7 +79,7 @@ endfunction()
 function (cauv_install TARGET)
     get_target_property(TARGET_TYPE ${TARGET} TYPE)
     if (${TARGET_TYPE} STREQUAL "EXECUTABLE")
-
+        #SET_TARGET_PROPERTIES(${TARGET} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
         get_target_property(TARGET_OUTPUT ${TARGET} OUTPUT_NAME)
         if (NOT TARGET_OUTPUT)
             set(TARGET_OUTPUT "${TARGET}")
@@ -107,8 +108,8 @@ endif()
 include_directories (${CAUV_SOURCE_DIR})
 
 # everything needs boost: 
-find_package (Boost 1.43 REQUIRED)
-set (LIBS ${LIBS} ${Boost_LIBRARIES}) 
+SET(Boost_USE_MULTITHREAD ON)
+find_package (Boost REQUIRED COMPONENTS date_time thread program_options iostreams python system filesystem )
 include_directories (SYSTEM ${Boost_INCLUDE_DIRS})
 link_directories (${Boost_LIBRARY_DIRS})
 

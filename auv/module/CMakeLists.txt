@@ -22,7 +22,7 @@ add_library (
 target_link_libraries (
     module
     common
-    boost_iostreams
+    ${Boost_LIBRARIES}
     ${ftdi_LIBRARIES}
 )
 depends_on_messages(module)

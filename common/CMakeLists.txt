@@ -8,19 +8,13 @@ set (
     cauv_node.cpp
 )
 
-find_library(BOOST_THREAD_LIB NAMES boost_thread boost_thread-mt)
-
 set (
     common_links
 
     messages
     cauv_debug
     utility
-    ${BOOST_THREAD_LIB}
-    boost_date_time
-    boost_iostreams
-    boost_signals
-    boost_program_options
+    ${Boost_LIBRARIES}
     special_messages
     zeromq_msg
 )

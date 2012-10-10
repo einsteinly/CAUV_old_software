@@ -61,10 +61,9 @@ set_target_properties(cauvinterface PROPERTIES PREFIX            ""
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_dependencies(cauvinterface python-messages-gen)
 
-#message ("Python Libs: ${PYTHON_LIBRARIES}")
 target_link_libraries (cauvinterface
     common
-    boost_python
+    ${Boost_LIBRARIES}
     ${PYTHON_LIBRARIES}
 )
 

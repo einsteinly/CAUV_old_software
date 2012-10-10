@@ -6,6 +6,7 @@ if (CAUV_USE_DC1394)
     add_definitions(-DCAUV_USE_DC1394)
 endif()
 
+
 # sources
 add_library (
     camera STATIC
@@ -31,7 +32,7 @@ add_executable (camera_server
 target_link_libraries (camera_server
     cauv_debug
     ${OpenCV_LIBS}
-    boost_system
+    ${Boost_LIBRARIES}
     pthread
     ${rt_LIBRARY}
 )
@@ -51,7 +52,7 @@ add_library (camera_client
 target_link_libraries (camera_client
     cauv_debug
     ${OpenCV_LIBS}
-    boost_system
+    ${Boost_LIBRARIES}
     pthread
     ${rt_LIBRARY}
 )

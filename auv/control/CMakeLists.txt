@@ -26,13 +26,12 @@ add_executable (
 )
 cauv_install ( control )
 
-find_library(BOOST_THREAD_LIB NAMES boost_thread boost_thread-mt)
 
 # libs
 target_link_libraries (
     control
 
-    boost_serialization
+    ${Boost_LIBRARIES}
     common
     module
     cmt
