@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -8,10 +8,10 @@
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
+ *     Steve Ogborne   steve@camhydro.co.uk
  *     Leszek Swirski leszek@camhydro.co.uk
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
-
 #ifndef __CAUV_GUI_MODEL_H__
 #define __CAUV_GUI_MODEL_H__
 
@@ -62,8 +62,8 @@ class NodeItemModel : public QAbstractItemModel {
         int columnCount(const QModelIndex &/*parent*/) const ;
 
         QModelIndex parent(const QModelIndex &child) const ;
-        QModelIndex index(int row, int column, const QModelIndex &parent) const ;
-
+        QModelIndex index(int row, int column, const QModelIndex &parent=QModelIndex()) const ;
+        
         boost::shared_ptr<Node> rootNode();
 
     protected Q_SLOTS:

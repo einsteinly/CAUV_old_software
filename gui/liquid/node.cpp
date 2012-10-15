@@ -49,7 +49,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
       m_style(style),
       m_status(OK){
 
-    setCacheMode(DeviceCoordinateCache);
+    setCacheMode(ItemCoordinateCache);
 
     setFlag(ItemIsMovable);
     setFlag(ItemHasNoContents);
@@ -86,6 +86,10 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     status(OK);
 
     setSize(Minimum_Size);
+
+#ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("LiquidNode");
+#endif // def QT_PROFILE_GRAPHICSSCENE
 }
 
 LiquidNode::~LiquidNode(){

@@ -2,8 +2,8 @@
     "__name__": "GeminiControlMessage", 
     "contents": {
         "continuous": true, 
-        "gain": 70.0, 
-        "interPingPeriod": 0.25, 
+        "gain": 75.0, 
+        "interPingPeriod": 0.5, 
         "range": 40.0, 
         "rangeLines": 1000
     }

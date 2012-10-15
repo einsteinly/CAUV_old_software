@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -8,6 +8,7 @@
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
+ *     Steve Ogborne   steve@camhydro.co.uk
  *     Leszek Swirski leszek@camhydro.co.uk
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
@@ -163,9 +164,14 @@ QModelIndex NodeItemModel::index(int row, int column, const QModelIndex &parent)
         return QModelIndex();
 
     boost::shared_ptr<Node> parentNode;
-    if(!parent.isValid())
+    if(!parent.isValid()){
+        // The parent of a top-level index should be invalid (assert in debug Qt)
+        if(row == 0 && column == 0)
+            return QModelIndex();
         parentNode = m_root;
-    else parentNode = nodeFromIndex(parent);
+    }else{
+        parentNode = nodeFromIndex(parent);
+    }
 
     try {
         std::vector<boost::shared_ptr<Node> > children = parentNode->getChildren();

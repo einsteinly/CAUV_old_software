@@ -73,6 +73,10 @@ Arc::Arc(ArcStyle const& of_style,
     m_pending_front->setPen(QPen(
         QBrush(m_style.front.col, Qt::Dense4Pattern), m_style.front.thickness, Qt::SolidLine, Qt::FlatCap
     ));
+
+#ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("Arc");
+#endif // def QT_PROFILE_GRAPHICSSCENE
 }
 
 Arc::~Arc(){

@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -8,10 +8,10 @@
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
+ *     Steve Ogborne   steve@camhydro.co.uk
  *     Leszek Swirski leszek@camhydro.co.uk
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
-
 #include "node.h"
 
 #include <QMetaType>
@@ -186,10 +186,18 @@ void Node::update(QVariant const& value){
     //if(m_value.userType() != value.userType()) {
     //    error() << "Node::update() Type mismatch in Node variant:" << nodePath();
     //}
-    m_value = value;
-    Q_EMIT onUpdate(value);
-    Q_EMIT onUpdate();
-    debug(8) << nodePath() << "updated to " << value.toString().toStdString() << "type:" << value.typeName();
+
+    // !!! if this check causes problems (I don't think it should), then don't
+    // remove it without adding this check in at a higher level for fluidity
+    // node inputs: most time spent rendering is due to changed parameters!
+    if(m_value != value){
+        m_value = value;
+        Q_EMIT onUpdate(value);
+        Q_EMIT onUpdate();
+        debug(8) << nodePath() << "updated to " << value.toString().toStdString() << "type:" << value.typeName();
+    }else{
+        debug(8) << nodePath() << "remains at " << value.toString().toStdString() << "type:" << value.typeName();
+    }
 }
 
 bool Node::set(QVariant const& value){

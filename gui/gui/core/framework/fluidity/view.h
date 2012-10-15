@@ -87,6 +87,10 @@ class FView: public liquid::LiquidView{
         void menuActioned();
         void setSceneRectToContents();
 
+#ifdef QT_PROFILE_GRAPHICSSCENE
+        void dumpProfile();
+#endif // def QT_PROFILE_GRAPHICSSCENE
+
         //void postData();
 
     private:

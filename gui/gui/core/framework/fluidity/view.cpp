@@ -102,6 +102,14 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     m_scenerect_update_timer = new QTimer(this);
     connect(m_scenerect_update_timer, SIGNAL(timeout()), this, SLOT(setSceneRectToContents()), Qt::QueuedConnection);
 
+
+#ifdef QT_PROFILE_GRAPHICSSCENE
+    QTimer* profile_dump_timer = new QTimer(this);
+    connect(profile_dump_timer, SIGNAL(timeout()), this, SLOT(dumpProfile()), Qt::QueuedConnection); 
+    profile_dump_timer->setInterval(10000);
+    profile_dump_timer->start();
+#endif // def QT_PROFILE_GRAPHICSSCENE
+
     _initInMode(m_mode);
 
     /*
@@ -371,6 +379,23 @@ void FView::setSceneRectToContents(){
     
     update();
 }
+
+
+#ifdef QT_PROFILE_GRAPHICSSCENE
+void FView::dumpProfile(){
+    QMap<QString, quint64> profile_map = scene()->profileMap();
+
+    QFile file("/tmp/com.cauv.qgraphicsscene.profile");
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
+
+    QTextStream out(&file);
+    out << "Item,Cumulative Ticks\n"; 
+    for(auto i = profile_map.begin(); i != profile_map.end(); i++){
+        out << i.key() << ", " << i.value() << '\n';
+    }
+}
+#endif // def QT_PROFILE_GRAPHICSSCENE
+
 
 
 void FView::contextMenuEvent(QContextMenuEvent *event){

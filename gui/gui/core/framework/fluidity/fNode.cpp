@@ -137,6 +137,10 @@ FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
     // !!!
     
     status(OK);
+
+#ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("FNode");
+#endif // def QT_PROFILE_GRAPHICSSCENE
 }
 
 
@@ -159,6 +163,11 @@ FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
     setOutputLinks(p->outputs());
 
     status(OK);
+
+#ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("FNode");
+#endif // def QT_PROFILE_GRAPHICSSCENE
+
 }
 
 void FNode::setType(NodeType::e const& type){

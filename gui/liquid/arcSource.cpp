@@ -45,6 +45,10 @@ AbstractArcSourceInternal::AbstractArcSourceInternal(ArcStyle const& of_style,
     // !!! TODO: instead of signals we can use ItemScenePositionHasChanged notifications
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
+
+#ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("AbstractArcSourceInternal");
+#endif // def QT_PROFILE_GRAPHICSSCENE
 }
 AbstractArcSourceInternal::~AbstractArcSourceInternal(){
     debug(7) << "~AbstractArcSourceInternal()" << this;

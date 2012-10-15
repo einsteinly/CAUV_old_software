@@ -7,6 +7,11 @@ if (CAUV_BUILD_GUI)
     if(CAUV_DEBUG_GUI_LAYOUT)
         add_definitions(-DCAUV_DEBUG_DRAW_LAYOUT)
     endif()
+    
+    option(JC_PROFILE_GRAPHICSSCENE "Use with custom build of Qt to debug graphicsscene performance." OFF)
+    if(JC_PROFILE_GRAPHICSSCENE)
+        add_definitions(-DQT_PROFILE_GRAPHICSSCENE)
+    endif()
 
     find_package (Qt4)
 

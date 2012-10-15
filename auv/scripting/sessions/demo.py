@@ -18,9 +18,9 @@ processes = [
     Process('savepl.py',   '{SDIR}', node_pid('py-play'),  ignore,    None,
         ["sh -c 'sleep 2 && {SDIR}/run.sh {SDIR}/savepl.py -f {SDIR}/pipelines/slam.pipe load -n default/sonar-demo'"]
     ),
-    Process('savepl.py',   '{SDIR}', node_pid('py-play'),  ignore,    None,
-        ["sh -c 'sleep 2 && {SDIR}/run.sh {SDIR}/savepl.py -f {SDIR}/pipelines/camdemo.pipe load -n default/image-demo'"]
-    ),
+    #Process('savepl.py',   '{SDIR}', node_pid('py-play'),  ignore,    None,
+    #    ["sh -c 'sleep 2 && {SDIR}/run.sh {SDIR}/savepl.py -f {SDIR}/pipelines/camdemo.pipe load -n default/image-demo'"]
+    #),
     Process('persist',     '{SDIR}', node_pid('persist'),  restart(), None,
         ['{SDIR}/persist.py -rsf {SDIR}/persist/demo']
     ),

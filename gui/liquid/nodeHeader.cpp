@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -8,6 +8,7 @@
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
+ *     Steve Ogborne   steve@camhydro.co.uk
  *     Leszek Swirski leszek@camhydro.co.uk
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
@@ -40,7 +41,7 @@ NodeHeader::NodeHeader(NodeStyle const& style, QGraphicsObject *parent)
       m_info_text(){
     setAcceptHoverEvents(true);
     setFlag(ItemHasNoContents);
-    setCacheMode(DeviceCoordinateCache);
+    setCacheMode(ItemCoordinateCache);
 
     m_overlay_back = new QGraphicsPathItem(this);
     m_overlay_back->setPen(m_style.header.pen);
@@ -99,13 +100,17 @@ void NodeHeader::hoverLeaveEvent(QGraphicsSceneHoverEvent *event){
 }
 
 void NodeHeader::setTitle(QString title){
-    m_title->setText(title);
-    setWidth(m_width);
+    if(m_title->text() != title){
+        m_title->setText(title);
+        setWidth(m_width);
+    }
 }
 
 void NodeHeader::setInfo(QString info){
-    m_info_text->setText(info);
-    setWidth(m_width);
+    if(m_info_text->text() != info){
+        m_info_text->setText(info);
+        setWidth(m_width);
+    }
 }
 
 void NodeHeader::addButton(QString name, Button *button){

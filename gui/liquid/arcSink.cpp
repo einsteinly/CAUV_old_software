@@ -31,6 +31,10 @@ AbstractArcSink::AbstractArcSink(QGraphicsItem * parent)
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
     connectParentSignals(parent);
+
+#ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("AbstractArcSink");
+#endif // def QT_PROFILE_GRAPHICSSCENE
 }
 AbstractArcSink::~AbstractArcSink(){
     debug(7) << "~AbstractArcSink(): scene=" << scene(); 
