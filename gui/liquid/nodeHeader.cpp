@@ -61,6 +61,17 @@ NodeHeader::NodeHeader(NodeStyle const& style, QGraphicsObject *parent)
     m_info_text->setZValue(2);
 
     m_width = minimumWidth();
+
+    setCacheMode(DeviceCoordinateCache);
+    m_title->setCacheMode(ItemCoordinateCache);
+    m_info_text->setCacheMode(ItemCoordinateCache);
+
+    #ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("liquid::NodeHeader");
+    m_overlay_back->setProfileName("liquid::NodeHeader::overlay_back");
+    m_title->setProfileName("liquid::NodeHeader::title");
+    m_info_text->setProfileName("liquid::NodeHeader::info_text");
+    #endif // def QT_PROFILE_GRAPHICSSCENE
 }
 
 float NodeHeader::minimumWidth() const{

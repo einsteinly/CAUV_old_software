@@ -46,6 +46,16 @@ EphemeralArcEnd::EphemeralArcEnd(QGraphicsItem* parent, ArcStyle const& of_style
     setFlag(ItemIsMovable);
     if(cosmetic)
         setAcceptedMouseButtons(Qt::NoButton);
+
+    setCacheMode(DeviceCoordinateCache);
+    m_back_poly->setCacheMode(DeviceCoordinateCache);
+    m_front_poly->setCacheMode(DeviceCoordinateCache);
+    
+#ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("liquid::EphemeralArcEnd");
+    m_back_poly->setProfileName("liquid::EphemeralArcEnd::back_poly");
+    m_front_poly->setProfileName("liquid::EphemeralArcEnd::front_poly");
+#endif // def QT_PROFILE_GRAPHICSSCENE
 }
 
 EphemeralArcEnd::~EphemeralArcEnd(){

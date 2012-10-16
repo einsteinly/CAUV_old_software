@@ -75,6 +75,10 @@ public:
     ProxyWidget(QGraphicsItem* parent=0, Qt::WindowFlags wFlags=0)
         : QGraphicsProxyWidget(parent, wFlags){
         setCacheMode(QGraphicsItem::ItemCoordinateCache);
+
+        #ifdef QT_PROFILE_GRAPHICSSCENE
+            setProfileName("liquid::ProxyWidget");
+        #endif // def QT_PROFILE_GRAPHICSSCENE
     }
 
     virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){

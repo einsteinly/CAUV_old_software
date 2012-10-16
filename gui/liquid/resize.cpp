@@ -26,6 +26,10 @@ m_size(25, 25), m_pen(QColor(Qt::white), 2){
     this->setFlag(QGraphicsItem::ItemIsMovable);
     //this->setFlag(QGraphicsItem::ItemIsSelectable);
     this->setCursor(QCursor(Qt::SizeFDiagCursor));
+   
+    #ifdef QT_PROFILE_GRAPHICSSCENE
+        setProfileName("liquid::ResizeHandle");
+    #endif // def QT_PROFILE_GRAPHICSSCENE
 }
 
 QRectF ResizeHandle::boundingRect() const{

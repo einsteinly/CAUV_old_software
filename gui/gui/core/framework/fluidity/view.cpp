@@ -67,7 +67,7 @@ FView::FView(boost::shared_ptr<CauvNode> node,
 
     // !!! is this really what we want to do?
     // items aren't added or removed a lot, just updated
-    s->setItemIndexMethod(QGraphicsScene::NoIndex);
+    //s->setItemIndexMethod(QGraphicsScene::NoIndex);
     s->setSceneRect(-4000,-4000,8000,8000);
 
     setScene(s);
@@ -186,7 +186,8 @@ void FView::_initInMode(Mode const& mode){
         // QGraphicsView spends most of its time testing the intersection of
         // bounding boxes without this set, and in any case OpenGL doesn't
         // support partial updates:
-        setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+        //setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+        setViewportUpdateMode(QGraphicsView::MinimalViewportUpdate);
         m_scenerect_update_timer->stop();
 
         initMenu();

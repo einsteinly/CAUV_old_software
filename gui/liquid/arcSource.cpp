@@ -45,10 +45,6 @@ AbstractArcSourceInternal::AbstractArcSourceInternal(ArcStyle const& of_style,
     // !!! TODO: instead of signals we can use ItemScenePositionHasChanged notifications
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
-
-#ifdef QT_PROFILE_GRAPHICSSCENE
-    setProfileName("AbstractArcSourceInternal");
-#endif // def QT_PROFILE_GRAPHICSSCENE
 }
 AbstractArcSourceInternal::~AbstractArcSourceInternal(){
     debug(7) << "~AbstractArcSourceInternal()" << this;
@@ -274,6 +270,16 @@ ArcSource::ArcSource(ArcSourceDelegate* sourceDelegate,
     m_front_line->setPen(QPen(
         QBrush(front_gradient),m_style.front.thickness, Qt::SolidLine, Qt::FlatCap
     ));
+    
+    setCacheMode(DeviceCoordinateCache);
+    m_front_line->setCacheMode(DeviceCoordinateCache);
+    m_back_line->setCacheMode(DeviceCoordinateCache);
+
+#ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("liquid::ArcSource");
+    m_front_line->setProfileName("liquid::ArcSource::front_line");
+    m_back_line->setProfileName("liquid::ArcSource::back_line");
+#endif // def QT_PROFILE_GRAPHICSSCENE
 }
 
 QSizeF ArcSource::sizeHint(Qt::SizeHint which, const QSizeF &constraint) const{

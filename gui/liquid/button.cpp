@@ -41,6 +41,8 @@ Button::Button(QRectF clip,
 
     m_hover->hide();
     m_pressed->hide();
+
+    commonInit();
 }
 
 Button::Button(QRectF clip,
@@ -71,7 +73,26 @@ Button::Button(QRectF clip,
         m_background->setFlag(ItemStacksBehindParent);
         m_background->setBrush(QBrush(Qt::white));
     }
+    commonInit();
+}
 
+void Button::commonInit(){
+    // we're just drawing pixmaps, so no point in caching to a pixmap?
+    setCacheMode(NoCache);
+    m_default->setCacheMode(NoCache);
+    m_hover->setCacheMode(NoCache);
+    m_pressed->setCacheMode(NoCache);
+    if(m_background)
+        m_background->setCacheMode(NoCache);
+
+    #ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("liquid::Button");
+    m_default->setProfileName("liquid::Button::default");
+    m_hover->setProfileName("liquid::Button::hover");
+    m_pressed->setProfileName("liquid::Button::pressed");
+    if(m_background)
+        m_background->setProfileName("liquid::Button::background");
+    #endif // def QT_PROFILE_GRAPHICSSCENE
 }
 
 void Button::setPen(QPen pen){

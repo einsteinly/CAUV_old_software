@@ -31,10 +31,6 @@ AbstractArcSink::AbstractArcSink(QGraphicsItem * parent)
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
     connectParentSignals(parent);
-
-#ifdef QT_PROFILE_GRAPHICSSCENE
-    setProfileName("AbstractArcSink");
-#endif // def QT_PROFILE_GRAPHICSSCENE
 }
 AbstractArcSink::~AbstractArcSink(){
     debug(7) << "~AbstractArcSink(): scene=" << scene(); 
@@ -93,8 +89,7 @@ ArcSink::ArcSink(ArcStyle const& of_style,
         -(1+m_cutout_style.main_cutout.cutout_base/2),
         m_cutout_style.main_cutout.cutout_depth,
         2+m_cutout_style.main_cutout.cutout_base
-      ){
-    
+      ){   
     
     QPainterPath hl_path(m_rect.topLeft() - QPointF(9, 3));
     hl_path.lineTo(m_rect.right(), 1);
@@ -172,6 +167,16 @@ ArcSink::ArcSink(ArcStyle const& of_style,
 
     // start out not presenting a highlight:
     doPresentHighlight(0);
+    
+    setCacheMode(DeviceCoordinateCache);
+    m_back->setCacheMode(DeviceCoordinateCache);
+    m_highlight->setCacheMode(DeviceCoordinateCache);
+ 
+#ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("liquid::ArcSink");
+    m_back->setProfileName("liquid::ArcSink::back");
+    m_highlight->setProfileName("liquid::ArcSink::highlight");
+#endif // def QT_PROFILE_GRAPHICSSCENE
 
     #if !defined(CAUV_DEBUG_DRAW_LAYOUT)
     setFlag(ItemHasNoContents);

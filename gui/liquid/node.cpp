@@ -41,6 +41,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     : QGraphicsObject(parent),
       m_size(Minimum_Size),
       m_header(new NodeHeader(style, this)),
+      //m_buttonsWidget(),
       m_contentWidget(new QGraphicsWidget(this)),
       m_contentLayout(new QGraphicsLinearLayout(Qt::Vertical)),
       m_back(new QGraphicsPathItem(this)),
@@ -48,8 +49,6 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
       m_items_requiring_cutout(),      
       m_style(style),
       m_status(OK){
-
-    setCacheMode(ItemCoordinateCache);
 
     setFlag(ItemIsMovable);
     setFlag(ItemHasNoContents);
@@ -87,8 +86,14 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
 
     setSize(Minimum_Size);
 
+    setCacheMode(DeviceCoordinateCache);
+    m_contentWidget->setCacheMode(ItemCoordinateCache);
+    m_back->setCacheMode(DeviceCoordinateCache);
+
 #ifdef QT_PROFILE_GRAPHICSSCENE
-    setProfileName("LiquidNode");
+    setProfileName("liquid::LiquidNode");
+    m_contentWidget->setProfileName("liquid::LiquidNode::contentWidget");
+    m_back->setProfileName("liquid::LiquidNode::back");
 #endif // def QT_PROFILE_GRAPHICSSCENE
 }
 

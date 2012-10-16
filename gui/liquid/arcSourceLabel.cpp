@@ -94,10 +94,16 @@ ArcSourceLabel::ArcSourceLabel(ArcSource * arc_source,
     connect(node, SIGNAL(xChanged()), m_arc_source, SIGNAL(geometryChanged()));
     connect(node, SIGNAL(yChanged()), m_arc_source, SIGNAL(geometryChanged()));
     
-    setCacheMode(DeviceCoordinateCache);    
+    setCacheMode(DeviceCoordinateCache);
+
     #ifndef CAUV_DEBUG_DRAW_LAYOUT
     setFlag(ItemHasNoContents);
     #endif // ndef CAUV_DEBUG_DRAW_LAYOUT
+
+    #ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("liquid::ArcSourceLabel");
+    m_text->setProfileName("liquid::ArcSourceLabel::text");
+    #endif // def QT_PROFILE_GRAPHICSSCENE
 }
 
 ArcSourceLabel::~ArcSourceLabel(){

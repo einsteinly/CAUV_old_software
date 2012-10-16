@@ -36,6 +36,7 @@ class Button: public QGraphicsWidget{
                QGraphicsItem *pressed_item=NULL,
                QAbstractGraphicsShapeItem *back_item=NULL,
                QGraphicsItem *parent=NULL);
+        void commonInit();
         virtual ~Button(){ }
         
         // sets background pen & brush if the background is set

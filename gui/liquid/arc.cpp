@@ -49,8 +49,6 @@ Arc::Arc(ArcStyle const& of_style,
     #ifndef CAUV_DEBUG_DRAW_LAYOUT
     setFlag(ItemHasNoContents);
     #endif
-    setCacheMode(DeviceCoordinateCache);
-    setBoundingRegionGranularity(0.1); // 10x10px regions
     
     if(from)
         setFrom(from);
@@ -74,8 +72,25 @@ Arc::Arc(ArcStyle const& of_style,
         QBrush(m_style.front.col, Qt::Dense4Pattern), m_style.front.thickness, Qt::SolidLine, Qt::FlatCap
     ));
 
+    setBoundingRegionGranularity(0.1); // 10x10px regions
+
+    m_back->setBoundingRegionGranularity(0.1);
+    m_front->setBoundingRegionGranularity(0.1);
+    m_pending_back->setBoundingRegionGranularity(0.1);
+    m_pending_front->setBoundingRegionGranularity(0.1);
+
+    setCacheMode(DeviceCoordinateCache);
+    m_back->setCacheMode(DeviceCoordinateCache);
+    m_front->setCacheMode(DeviceCoordinateCache);
+    m_pending_back->setCacheMode(NoCache);
+    m_pending_front->setCacheMode(NoCache);
+
 #ifdef QT_PROFILE_GRAPHICSSCENE
-    setProfileName("Arc");
+    setProfileName("liquid::Arc");
+    m_back->setProfileName("liquid::Arc::back");
+    m_front->setProfileName("liquid::Arc::front");
+    m_pending_back->setProfileName("liquid::Arc::pending_back");
+    m_pending_front->setProfileName("liquid::Arc::pending_front");
 #endif // def QT_PROFILE_GRAPHICSSCENE
 }
 

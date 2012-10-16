@@ -93,10 +93,17 @@ ArcSinkLabel::ArcSinkLabel(ArcSink * arc_sink,
     connect(node, SIGNAL(xChanged()), m_arc_sink, SIGNAL(geometryChanged()));
     connect(node, SIGNAL(yChanged()), m_arc_sink, SIGNAL(geometryChanged()));
     
-    setCacheMode(DeviceCoordinateCache);    
+
+    setCacheMode(DeviceCoordinateCache);
+
     #ifndef CAUV_DEBUG_DRAW_LAYOUT
     setFlag(ItemHasNoContents);
-    #endif // ndef CAUV_DEBUG_DRAW_LAYOUT
+    #endif // ndef CAUV_DEBUG_DRAW_LAYOUT 
+
+    #ifdef QT_PROFILE_GRAPHICSSCENE
+    setProfileName("liquid::ArcSinkLabel");
+    m_text->setProfileName("liquid::ArkSinkLabel::text");
+    #endif // def QT_PROFILE_GRAPHICSSCENE
 }
 
 ArcSinkLabel::~ArcSinkLabel(){

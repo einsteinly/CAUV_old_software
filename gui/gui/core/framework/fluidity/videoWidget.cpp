@@ -80,6 +80,6 @@ void VideoWidget::displayImage(boost::shared_ptr<const GuiImageMessage> p){
 
     QGraphicsScene* s = scene();
     if(s)
-        s->invalidate(sceneBoundingRect());
+        s->invalidate(sceneBoundingRect(), QGraphicsScene::ItemLayer);
 }
 

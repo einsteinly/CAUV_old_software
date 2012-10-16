@@ -25,6 +25,10 @@ liquid::Shadow::Shadow(QGraphicsItem* parent)
     setFlag(ItemHasNoContents);
     m_shape->setPen(QPen(Qt::NoPen));
     setBrush(QBrush(Qt::NoBrush));
+    
+    #ifdef QT_PROFILE_GRAPHICSSCENE
+        setProfileName("liquid::Shadow");
+    #endif // def QT_PROFILE_GRAPHICSSCENE
 }
 
 QRectF liquid::Shadow::boundingRect() const{

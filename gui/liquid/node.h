@@ -86,7 +86,7 @@ protected:
     QSizeF m_size;
 
     NodeHeader            *m_header;
-    QGraphicsWidget       *m_buttonsWidget;
+    //QGraphicsWidget       *m_buttonsWidget;
     ResizeHandle          *m_resizeHandle;
     QGraphicsWidget       *m_contentWidget;
     QGraphicsLinearLayout *m_contentLayout;
