@@ -106,6 +106,7 @@ class FView: public liquid::LiquidView{
         // relative to right and bottom of the view:
         // This is used, for example, to draw buttons inside the view in a
         // consistent position as the view is moved around.
+        // !!! FIXME: can use drawForeground overload to do this more nicely
         std::vector< std::pair<QPoint, QGraphicsWidget*> > m_overlay_items;
         
         /*

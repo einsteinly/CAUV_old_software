@@ -91,6 +91,7 @@ Arc::Arc(ArcStyle const& of_style,
     m_front->setProfileName("liquid::Arc::front");
     m_pending_back->setProfileName("liquid::Arc::pending_back");
     m_pending_front->setProfileName("liquid::Arc::pending_front");
+    m_ephemeral_end->setProfileName("liquid::Arc::ephemeral_end");
 #endif // def QT_PROFILE_GRAPHICSSCENE
 }
 

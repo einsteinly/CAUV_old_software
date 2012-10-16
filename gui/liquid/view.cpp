@@ -126,6 +126,15 @@ void LiquidView::scaleAround(QPoint point, qreal scaleFactor){
     scale(scaleFactor, scaleFactor);
 }
 
+
+#ifdef QT_PROFILE_GRAPHICSSCENE
+void LiquidView::displayUpdateRects(){
+    m_display_rects = getRectsUpdated();
+    clearRectsUpdated();
+}
+#endif // def QT_PROFILE_GRAPHICSSCENE
+
+
 std::ostream& operator<<(std::ostream& os, QStringList const& sl){
     os << "QStringList:";
     foreach(QString s, sl)
@@ -154,6 +163,16 @@ void LiquidView::keyPressEvent(QKeyEvent *event){
                 event->accept();
                 LayoutItems::updateLayout(scene());
                 break;
+
+        #ifdef QT_PROFILE_GRAPHICSSCENE
+            case Qt::Key_P:
+                event->accept();
+                if(m_display_rects.size())
+                    m_display_rects.clear();
+                else
+                    displayUpdateRects();
+                break;
+        #endif // def QT_PROFILE_GRAPHICSSCENE
             default:
                 Q_EMIT keyPressed(event->key(), event->modifiers());
                 event->accept();
@@ -162,6 +181,23 @@ void LiquidView::keyPressEvent(QKeyEvent *event){
     }
     event->ignore();
 }
+
+
+#ifdef QT_PROFILE_GRAPHICSSCENE
+void LiquidView::drawForeground(QPainter* painter, const QRectF& rect){
+    
+    if(m_display_rects.size() && getRectsUpdated().size() > 10){
+        displayUpdateRects();
+    }
+
+    painter->setPen(QPen(QColor(160,20,20,24)));
+    painter->setBrush(QBrush(QColor(180,30,30,12)));
+
+    foreach(QRectF const& r, m_display_rects)
+        painter->drawPolygon(mapToScene(r.toRect()));
+    
+}
+#endif // def QT_PROFILE_GRAPHICSSCENE
 
 
 float LiquidView::scaleFactor(){

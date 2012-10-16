@@ -87,7 +87,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     setSize(Minimum_Size);
 
     setCacheMode(DeviceCoordinateCache);
-    m_contentWidget->setCacheMode(ItemCoordinateCache);
+    m_contentWidget->setCacheMode(DeviceCoordinateCache);
     m_back->setCacheMode(DeviceCoordinateCache);
 
 #ifdef QT_PROFILE_GRAPHICSSCENE

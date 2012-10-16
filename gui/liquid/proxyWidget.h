@@ -40,9 +40,9 @@ public:
         : ItemT(parent){
         // this seems to mostly hide the effects of LOD stuff... (and gives
         // a *significant* performance improvement)
-        ItemT::setCacheMode(QGraphicsItem::ItemCoordinateCache);
+        //ItemT::setCacheMode(QGraphicsItem::ItemCoordinateCache);
         // ItemCoordinateCache is definitely faster
-        //ItemT::setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+        ItemT::setCacheMode(QGraphicsItem::DeviceCoordinateCache);
     }
 
     // Ideas for improving performance at mid-range LODs:
@@ -74,6 +74,9 @@ class ProxyWidget: public QGraphicsProxyWidget{
 public:
     ProxyWidget(QGraphicsItem* parent=0, Qt::WindowFlags wFlags=0)
         : QGraphicsProxyWidget(parent, wFlags){
+
+        // NB: with ItemCoordinateCache, LOD stuff is ineffective (since painting is always done at 100%)
+        //setCacheMode(QGraphicsItem::DeviceCoordinateCache);
         setCacheMode(QGraphicsItem::ItemCoordinateCache);
 
         #ifdef QT_PROFILE_GRAPHICSSCENE
