@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -8,9 +8,11 @@
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
+ *     Steve Ogborne   steve@camhydro.co.uk
  *     Leszek Swirski leszek@camhydro.co.uk
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
+
 
 #ifndef __CAUV_BASEIMAGE_H__
 #define __CAUV_BASEIMAGE_H__
@@ -29,7 +31,6 @@ class BaseImage {
     BaseImage(svec_t const &bytes);
     BaseImage(svec_t const &bytes, TimeStamp const &ts);
     BaseImage(svec_t const &bytes, TimeStamp const &ts, UID const &id);
-    BaseImage(BaseImage const &other);
     virtual ~BaseImage();
         
     TimeStamp ts() const;
@@ -45,16 +46,20 @@ class BaseImage {
     void id(UID const &id);
 
     //Useful for specific subclasses
-    virtual svec_t &private_bytes(void) const;
+    virtual svec_t const& private_bytes() const;
     virtual void private_bytes(svec_t&);
+    
+    // for thread-safety encodeBytes doesn't set the internal encoded bytes
+    // buffer
+    virtual svec_t const& encodedBytes() const;
+    // derived types must override this:
+    virtual svec_t encodeBytes() const;
+    virtual void encodedBytes(svec_t const&);
 
-    virtual svec_t &bytes(void) const;
-    virtual void bytes(svec_t&);
-
-    virtual uint32_t serializeQuality(void) const;
+    virtual uint32_t serializeQuality() const;
     virtual void serializeQuality(uint32_t);
 
-    virtual uint32_t channels(void) const;
+    virtual uint32_t channels() const;
     virtual void channels(uint32_t);
 
     protected:
@@ -63,8 +68,8 @@ class BaseImage {
     UID m_uid;
     uint32_t m_quality;
     mutable uint32_t m_channels;
-    mutable svec_t m_bytes;
-    mutable svec_t m_private_bytes;
+    svec_t m_bytes;
+    svec_t m_private_bytes;
 };
 
 /* image serialisation */

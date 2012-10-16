@@ -100,7 +100,7 @@ void VideoScreen::paintEvent(QPaintEvent*) {
     m_updateMutex.lock();
 
     if(m_new_image.get()) {
-        m_qImage->loadFromData(&(m_new_image->bytes()[0]), m_new_image->bytes().size(), "jpg");
+        m_qImage->loadFromData(&(m_new_image->encodedBytes()[0]), m_new_image->encodedBytes().size(), "jpg");
         m_new_image.reset();
         m_updateMutex.unlock();
     }
