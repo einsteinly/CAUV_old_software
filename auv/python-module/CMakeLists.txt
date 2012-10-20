@@ -65,7 +65,7 @@ add_dependencies(cauvinterface python-messages-gen)
 target_link_libraries (cauvinterface
     common
     ${Boost_LIBRARIES}
-    boost_python
+    ${Boost_PYTHON_LIBRARIES}
     ${PYTHON_LIBRARY}
 )
 
