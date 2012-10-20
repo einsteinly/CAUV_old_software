@@ -171,7 +171,7 @@ void FView::_initInMode(Mode const& mode){
         setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
         setRenderHints(
             QPainter::Antialiasing |
-            QPainter::HighQualityAntialiasing |
+            //QPainter::HighQualityAntialiasing |
             QPainter::TextAntialiasing |
             QPainter::SmoothPixmapTransform
         );

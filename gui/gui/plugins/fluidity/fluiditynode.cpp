@@ -68,8 +68,8 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
 
     setResizable(true);
 
-    header()->setTitle(QString::fromStdString(m_node->nodeName()));
-    header()->setInfo(QString::fromStdString(m_node->nodePath()));
+    setTitle(QString::fromStdString(m_node->nodeName()));
+    setInfo(QString::fromStdString(m_node->nodePath()));
 
     m_source->setParentItem(this);
     m_source->setZValue(10);
@@ -103,7 +103,7 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
     liquid::Button *maxbutton = new liquid::Button(
                 QRectF(0,0,24,24), QString(":/resources/icons/maximise_button"), NULL, this
                 );
-    m_header->addButton("maximise", maxbutton);
+    addButton("maximise", maxbutton);
     
     connect(maxbutton, SIGNAL(pressed()), this, SLOT(beginMaximise()));
     connect(this, SIGNAL(doubleClicked()), this, SLOT(beginMaximise()));    

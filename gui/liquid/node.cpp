@@ -32,6 +32,7 @@
 #include "nodeHeader.h"
 #include "resize.h"
 #include "shadow.h"
+#include "itemFridge.h"
 
 using namespace liquid;
 
@@ -40,7 +41,7 @@ QSizeF LiquidNode::Minimum_Size = QSizeF(100, 40);
 LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     : QGraphicsObject(parent),
       m_size(Minimum_Size),
-      m_header(new NodeHeader(style, this)),
+      m_header(new ItemFridge<NodeHeader>(style, this)),
       //m_buttonsWidget(),
       m_contentWidget(new QGraphicsWidget(this)),
       m_contentLayout(new QGraphicsLinearLayout(Qt::Vertical)),
@@ -77,7 +78,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     Button *close_button = new Button(
        QRectF(0,0,24,24), QString(":/resources/icons/x_button"), NULL, this
     );
-    m_header->addButton("close", close_button);
+    addButton("close", close_button);
 
     connect(close_button, SIGNAL(pressed()), this, SLOT(close()));
     connect(m_contentWidget, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
@@ -140,6 +141,7 @@ void LiquidNode::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event){
 
 void LiquidNode::addButton(QString name, Button *button){
     m_header->addButton(name, button);
+    m_header->freeze();
 }
 
 void LiquidNode::addItem(QGraphicsLayoutItem *item){
@@ -222,6 +224,7 @@ void LiquidNode::setClosable(bool close){
         else
             closebutton->hide();
     }
+    m_header->freeze();
 }
 
 void LiquidNode::setResizable(bool sizeable){
@@ -303,16 +306,22 @@ void LiquidNode::setSizeFromContents(){
     m_resizeHandle->setY(m_size.height() - m_resizeHandle->size().height());
 
     m_header->setWidth(m_size.width());
+    m_header->freeze();
 }
 
 NodeStyle LiquidNode::style() const{
     return m_style;
 }
 
-NodeHeader* LiquidNode::header() const{
-    return m_header;
+void LiquidNode::setTitle(QString text){
+    m_header->setTitle(text);
+    m_header->freeze();
 }
 
+void LiquidNode::setInfo(QString text){
+    m_header->setInfo(text);
+    m_header->freeze();
+}
 
 LiquidNode::Status LiquidNode::status() const{
     return m_status;
@@ -320,7 +329,7 @@ LiquidNode::Status LiquidNode::status() const{
 
 void LiquidNode::status(Status const& s, std::string const& status_information){
     m_status = s;
-    m_header->setInfo(QString::fromStdString(status_information));
+    setInfo(QString::fromStdString(status_information));
     if(s == OK){
         m_status_highlight->setBrush(QBrush(Qt::NoBrush));
     }else{

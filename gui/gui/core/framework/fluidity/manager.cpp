@@ -29,6 +29,7 @@
 #include <generated/types/Pl_GuiGroup.h>
 
 #include <liquid/layout.h>
+#include <liquid/itemFridge.h>
 
 #include "framework/nodescene.h"
 
@@ -311,6 +312,10 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
         node->setInputLinks(inputs_it->second);
         node->setParamLinks(inputs_it->second);
         node->setOutputLinks(outputs_it->second);
+
+        //liquid::ItemFridge<FNode>* p = dynamic_cast<liquid::ItemFridge<FNode>*>(node);
+        //if(p)
+        //    p->freeze();
     }
 
     _layoutSoonIfNothingHappens();
@@ -440,6 +445,7 @@ fnode_ptr Manager::addNode(NodeType::e const& type, node_id_t const& id){
     }else if(m_nodes.right().find(id) != m_nodes.right().end()){
         error() << "node" << id << "already exists";
     }else{
+        //r = new liquid::ItemFridge<FNode>(*this, id, type);
         r = new FNode(*this, id, type);
         m_nodes.insert(node_id_map_t::value_type(r, id));
         m_scene->addItem(r);
@@ -462,6 +468,7 @@ fnode_ptr Manager::addNode(NodeAddedMessage_ptr m){
     }else if(m_nodes.right().find(id) != m_nodes.right().end()){
         error() << "node" << id << "already exists";
     }else{
+        //r = new liquid::ItemFridge<FNode>(*this, m);
         r = new FNode(*this, m);
         m_nodes.insert(node_id_map_t::value_type(r, id));
         m_scene->addItem(r);

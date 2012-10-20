@@ -78,10 +78,11 @@ Arc::Arc(ArcStyle const& of_style,
     m_front->setBoundingRegionGranularity(0.1);
     m_pending_back->setBoundingRegionGranularity(0.1);
     m_pending_front->setBoundingRegionGranularity(0.1);
-
-    setCacheMode(DeviceCoordinateCache);
-    m_back->setCacheMode(DeviceCoordinateCache);
-    m_front->setCacheMode(DeviceCoordinateCache);
+    
+    // Arcs are big, and caching them is about the same speed
+    setCacheMode(NoCache);
+    m_back->setCacheMode(NoCache);
+    m_front->setCacheMode(NoCache);
     m_pending_back->setCacheMode(NoCache);
     m_pending_front->setCacheMode(NoCache);
 

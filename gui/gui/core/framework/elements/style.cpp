@@ -66,7 +66,7 @@ const liquid::NodeStyle& F_Node_Style() {
     QPalette p = w.palette();
     const static liquid::NodeStyle style = {
         QPen(QBrush(QColor(0,0,0,128)), 1, Qt::SolidLine, Qt::FlatCap),
-        QBrush(QColor(243,243,243)),
+        QBrush(QColor(243,243,243,235)),
         24, 24, 0, 0, {
             30,
             QPen(Qt::NoPen),
