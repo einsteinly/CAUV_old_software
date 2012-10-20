@@ -24,7 +24,7 @@
 
 #include <limits>
 
-#include "framework/style.h"
+#include "framework/styles/style.h"
 
 using namespace cauv;
 using namespace cauv::gui;

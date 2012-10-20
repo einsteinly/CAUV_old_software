@@ -19,9 +19,11 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/program_options.hpp>
 
+#include <gui/core/model/node.h>
+
 #include <common/cauv_node.h>
 
-#include "style.h"
+#include "styles/style.h"
 #include "fluidity/view.h"
 
 class ScratchNode: public cauv::CauvNode, public boost::enable_shared_from_this<ScratchNode>{
@@ -60,7 +62,8 @@ class ScratchNode: public cauv::CauvNode, public boost::enable_shared_from_this<
 
             QApplication::setStyle(new cauv::gui::CauvStyle());
 
-            cauv::gui::f::FView* view = new cauv::gui::f::FView(shared_from_this(), m_pipeline_name);
+            boost::shared_ptr<cauv::gui::Node> n = boost::make_shared<cauv::gui::Node>("scratch", cauv::gui::nodeType<cauv::gui::Node>());
+            cauv::gui::f::FView* view = new cauv::gui::f::FView(shared_from_this(), m_pipeline_name, n);
             view->show();
 
             m_exit_status = app.exec();

@@ -27,12 +27,9 @@ include_directories (${AUV_SOURCE_DIR})
 include_directories (${guis_SOURCE_DIR})
 
 set ( GUI_CORE_SRCS
-    nodedragging.cpp
     cauvbasicplugin.cpp
 
-    widgets/videoscreen.cpp
     widgets/neutralspinbox.cpp
-    widgets/graphbar.cpp
     widgets/onoff.cpp
 
     model/node.cpp
@@ -41,14 +38,13 @@ set ( GUI_CORE_SRCS
     model/registry.cpp
     model/messaging.cpp
     model/paramvalues.cpp
-    model/utils/datarecorder.cpp
-    model/utils/sampler.cpp
 
     framework/nodepicker.cpp
     framework/mainwindow.cpp
     framework/nodescene.cpp
-    framework/style.cpp
     framework/connectednode.cpp
+
+    framework/styles/style.cpp
 
     framework/delegates/delegate.cpp
     framework/delegates/booleandelegate.cpp
@@ -63,26 +59,28 @@ set ( GUI_CORE_SRCS
     framework/fluidity/manager.cpp
     framework/fluidity/fNodeInput.cpp
     framework/fluidity/videoWidget.cpp
+
+    framework/trees/nodeTreeView.cpp
+
+    framework/filter/nodePathFilter.cpp
+
+    framework/drag/graphDropHandler.cpp
+    framework/drag/groupDropHandler.cpp
+    framework/drag/nodeDragging.cpp
     )
 
 set ( GUI_CORE_UIS
-    widgets/videoscreen.ui
     framework/nodepicker.ui
     framework/mainwindow.ui
     )
 
 set ( GUI_CORE_H
-    nodedragging.h
-
-    widgets/videoscreen.h
     widgets/neutralspinbox.h
-    widgets/graphbar.h
     widgets/onoff.h
 
     model/node.h
     model/model.h
     model/registry.h
-    model/singleItemModel.h
     model/nodes/numericnode.h
     model/nodes/stringnode.h
     model/nodes/imagenode.h
@@ -91,11 +89,11 @@ set ( GUI_CORE_H
     model/nodes/sonarnode.h
     model/nodes/colournode.h
     model/messaging.h
-    model/utils/sampler.h
 
     framework/nodepicker.h
     framework/mainwindow.h
-    framework/style.h
+
+    framework/styles/style.h
 
     framework/delegates/delegate.h
     framework/delegates/booleandelegate.h
@@ -110,6 +108,13 @@ set ( GUI_CORE_H
     framework/fluidity/menu.h
     framework/fluidity/imageSource.h
     framework/fluidity/videoWidget.h
+
+    framework/trees/nodeTreeView.h
+
+    framework/filter/nodePathFilter.h
+
+    framework/drag/groupDropHandler.h
+    framework/drag/nodeDragging.h
     )
 
 set ( GUI_CORE_RCC

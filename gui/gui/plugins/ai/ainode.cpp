@@ -14,12 +14,11 @@
 
 #include "ainode.h"
 
+#include <QtGui>
+
 #include <debug/cauv_debug.h>
 
-#include <gui/core/framework/elements/style.h>
-
-#include <gui/plugins/ai/tasknode.h>
-#include <gui/plugins/ai/conditionnode.h>
+#include <framework/elements/style.h>
 
 #include <generated/types/GuiaiGroup.h>
 
@@ -27,7 +26,8 @@
 
 #include <common/cauv_node.h>
 
-#include <QtGui>
+#include "ai/tasknode.h"
+#include "ai/conditionnode.h"
 
 using namespace cauv;
 using namespace cauv::gui;

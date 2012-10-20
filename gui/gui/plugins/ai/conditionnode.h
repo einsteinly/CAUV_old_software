@@ -23,8 +23,8 @@
 #include <liquid/arcSourceLabel.h>
 #include <liquid/arcSinkLabel.h>
 
-#include <gui/core/model/nodes/numericnode.h>
-#include <gui/plugins/ai/ainode.h>
+#include <model/nodes/numericnode.h>
+#include <ai/ainode.h>
 
 namespace cauv {
 namespace gui {

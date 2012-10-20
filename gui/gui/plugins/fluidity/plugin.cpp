@@ -26,9 +26,9 @@
 
 #include <debug/cauv_debug.h>
 
-#include <gui/core/model/registry.h>
+#include <model/registry.h>
 
-#include <gui/core/framework/nodescene.h>
+#include <framework/nodescene.h>
 
 #include "fluiditynode.h"
 #include "messaging.h"

@@ -15,7 +15,7 @@
 #include "messaging.h"
 #include "fluiditynode.h"
 
-#include <gui/core/model/nodes/groupingnode.h>
+#include <model/nodes/groupingnode.h>
 
 using namespace cauv;
 using namespace cauv::gui;

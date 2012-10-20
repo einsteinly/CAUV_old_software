@@ -29,7 +29,7 @@
 #include <generated/types/NodeType.h>
 
 #include "elements/style.h"
-#include "style.h"
+#include "styles/style.h"
 
 #include "framework/nodescene.h"
 
@@ -37,6 +37,8 @@
 #include "fluidity/managedElement.h"
 #include "fluidity/manager.h"
 #include "fluidity/menu.h"
+
+#include "model/node.h"
 
 #include <debug/cauv_debug.h>
 
@@ -53,6 +55,7 @@ uint qHash(boost::shared_ptr<T> p){
 
 FView::FView(boost::shared_ptr<CauvNode> node,
              std::string const& pipeline_name,
+             boost::shared_ptr<gui::Node> model_parent,
              QWidget* parent)
     : liquid::LiquidView(parent),
       m_cauv_node(node),
@@ -71,7 +74,7 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     s->setSceneRect(-4000,-4000,8000,8000);
 
     setScene(s);
-    m_manager = boost::make_shared<Manager>(s, m_cauv_node.get(), pipeline_name);
+    m_manager = boost::make_shared<Manager>(s, model_parent, m_cauv_node.get(), pipeline_name);
     m_manager->init();
 
     setWindowTitle("Fluidity");

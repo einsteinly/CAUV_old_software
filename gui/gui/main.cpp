@@ -27,7 +27,7 @@
 #include <QFile>
 
 #include <gui/core/framework/mainwindow.h>
-#include <gui/core/framework/style.h>
+#include <gui/core/framework/styles/style.h>
 
 using namespace std;
 using namespace cauv;

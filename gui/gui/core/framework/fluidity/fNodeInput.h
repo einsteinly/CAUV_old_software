@@ -103,10 +103,8 @@ class FNodeParamInput: public FNodeInput{
 
         SubType m_subtype;
         std::set<int32_t> m_compatible_subtypes;
-        
-        NodeItemModel* m_model;
+
         boost::shared_ptr<Node> m_model_node;
-        boost::shared_ptr<Node> m_model_root;
         NodeTreeView* m_view;
         liquid::ProxyWidget* m_view_proxy;
 };

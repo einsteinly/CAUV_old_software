@@ -25,13 +25,15 @@
 #include <liquid/arcSink.h>
 #include <liquid/proxyWidget.h>
 
-#include <gui/core/model/node.h>
-#include <gui/core/model/variants.h>
-#include <gui/core/model/nodes/numericnode.h>
-#include <gui/core/model/nodes/stringnode.h>
-#include <gui/core/model/nodes/colournode.h>
-#include <gui/core/model/model.h>
-#include <gui/core/framework/nodepicker.h>
+#include <model/node.h>
+#include <model/variants.h>
+#include <model/nodes/numericnode.h>
+#include <model/nodes/groupingnode.h>
+#include <model/nodes/stringnode.h>
+#include <model/nodes/colournode.h>
+#include <model/model.h>
+#include <framework/nodepicker.h>
+
 
 #include "fluidity/manager.h"
 #include "fluidity/fNodeOutput.h"
@@ -186,7 +188,6 @@ FNodeParamInput::FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode*
     : FNodeInput(m, Image_Arc_Style(), cutoutStyleForSchedType(input.schedType), node, input.input),
       m_subtype(input.subType),
       m_compatible_subtypes(input.compatibleSubTypes.begin(), input.compatibleSubTypes.end()),
-      m_model(),
       m_model_node(),
       m_view(NULL),
       m_view_proxy(NULL){
@@ -212,11 +213,13 @@ SubType FNodeParamInput::subType() const{
 }
 
 void FNodeParamInput::setValue(ParamValue const& v){
-    if(!m_model){
+    if(!m_model_node){
         m_model_node = makeModelNodeForInput(id(), v);
-        m_model_root = boost::make_shared<Node>("root", nodeType<Node>());
-        m_model_root->addChild(m_model_node);
-        m_model = new NodeItemModel(m_model_root);
+        boost::shared_ptr<gui::Node> n = manager().model()->findOrCreate<GroupingNode>(node()->id());
+        // each item needs to be an only child
+        // this should be changed if multiple NodeItemViews are not used any more
+        boost::shared_ptr<gui::Node> p = n->findOrCreate<GroupingNode>((unsigned int)n->getChildren().size());
+        p->addChild(m_model_node);
         connect(m_model_node.get(), SIGNAL(onSet(QVariant)), this, SLOT(modelValueChanged(QVariant)));
         initView();
     }
@@ -282,8 +285,6 @@ liquid::CutoutStyle const& FNodeParamInput::cutoutStyleForSchedType(InputSchedTy
 }
 
 void FNodeParamInput::initView(){
-    assert(m_model);
-
     m_view = new NodeTreeView(true);
     m_view->setIndentation(0);
     m_view->setRootIsDecorated(false);
@@ -291,9 +292,9 @@ void FNodeParamInput::initView(){
     //m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     //m_view->setMinimumSize(QSize(60, height_hint));
     //m_view->setMaximumSize(QSize(1200, 600));
-    m_view->setModel(m_model);
+    m_view->setModel(manager().itemModel());
     m_view->updateGeometry();
-    m_view->setRootIndex(m_model->indexFromNode(m_model_root));
+    m_view->setRootIndex(manager().itemModel()->indexFromNode(m_model_node->getParent()));
     m_view->resize(m_view->sizeHint());
     //m_view->setRootIndex(m_model->index(0, 0));
     //m_view->resizeColumnToContents(0);

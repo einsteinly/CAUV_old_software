@@ -21,7 +21,7 @@
 #include "model/nodes/numericnode.h"
 
 #include "widgets/neutralspinbox.h"
-#include "framework/style.h"
+#include "framework/styles/style.h"
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -131,15 +131,6 @@ void NumericDelegate::setEditorData(QWidget *editor,
             // hack
             neutral->setValue(node->asNumber().toDouble());
         }
-    }
-
-    if(NeutralDoubleSpinBox * neutral = qobject_cast<NeutralDoubleSpinBox*>(editor)){
-
-        // !!! hack: this should all be dealth with by the base class
-        //     but for some reason it fails to set the value when non Qt types
-        //     are used as a property...
-
-
     }
 }
 

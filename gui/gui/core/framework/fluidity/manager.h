@@ -23,6 +23,7 @@
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <generated/message_observers.h>
 #include <generated/types/NodeOutput.h>
@@ -34,9 +35,8 @@
 #include <utility/bimap.h>
 #include <utility/time.h>
 
-#include "nodedragging.h"
-
-#include "fluidity/types.h"
+#include <framework/drag/nodeDragging.h>
+#include <framework/fluidity/types.h>
 
 // - Forward Declarations in ::
 class QGraphicsScene;
@@ -49,6 +49,7 @@ class CauvNode;
 namespace gui{
 // - Forward Declarations in cauv::gui
 class NodeScene;
+class NodeItemModel;
 
 namespace f{
 // - Forward Declarations in cauv::gui::f
@@ -56,12 +57,15 @@ class ImageSource;
 
 class Manager: public QObject,
                public BufferedMessageObserver,
-               public DropHandlerInterface<QGraphicsItem*>,
+               //public DropHandlerInterface<QGraphicsItem*>,
                public boost::enable_shared_from_this<Manager>,
                public boost::noncopyable{
     Q_OBJECT
     public:
-        Manager(NodeScene *scene, CauvNode *node, std::string const& pipeline_name);
+        Manager(NodeScene *scene,
+                boost::shared_ptr<Node> model_parent,
+                CauvNode *node,
+                std::string const& pipeline_name);
         ~Manager();
         
         // a shared pointer to this must be held when this is called!
@@ -83,10 +87,13 @@ class Manager: public QObject,
 
         // DropHandlerInterface: create things in response to drag-drop
         // interaction with the associated scene
-        virtual bool accepts(boost::shared_ptr<cauv::gui::Node> const& node);
-        virtual QGraphicsItem* handle(boost::shared_ptr<cauv::gui::Node> const& node);
+        //virtual bool accepts(boost::shared_ptr<cauv::gui::Node> const& node);
+        //virtual QGraphicsItem* handle(boost::shared_ptr<cauv::gui::Node> const& node);
         
         QList<QGraphicsItem *> rootNodes() const;
+
+        boost::shared_ptr<Node> model() const;
+        gui::NodeItemModel * itemModel() const;
         
         // these methods are called from the messaging thread(s), they MUST NOT
         // modify anything directly: the general pattern is that these emit a
@@ -187,6 +194,10 @@ class Manager: public QObject,
         TimeStamp m_last_anim_auto_disable_check;
 
         QTimer* m_layout_soon_timer;
+
+        boost::shared_ptr<Node> m_model_parent;
+
+        boost::shared_ptr<NodeItemModel> m_item_model;
 };
 
 class FocusPositionForwarder: public QObject{

@@ -17,7 +17,7 @@
 
 #include <QtGui>
 
-#include <gui/core/model/nodeType.h>
+#include <model/nodeType.h>
 
 #include <boost/shared_ptr.hpp>
 

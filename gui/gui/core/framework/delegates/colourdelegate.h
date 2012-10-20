@@ -19,7 +19,7 @@
 
 #include <common/msg_classes/colour.h>
 
-#include <gui/core/framework/delegates/delegate.h>
+#include <framework/delegates/delegate.h>
 
 #include <boost/shared_ptr.hpp>
 

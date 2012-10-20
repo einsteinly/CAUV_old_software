@@ -22,7 +22,7 @@
 #include <liquid/arcSink.h>
 #include <liquid/arcSinkLabel.h>
 
-#include <gui/core/model/nodes/numericnode.h>
+#include <model/nodes/numericnode.h>
 
 #include "ainode.h"
 

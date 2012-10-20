@@ -1,4 +1,4 @@
-project (gui)
+project (fluidityplugin)
 
 set ( FLUIDITY_PLUGIN_SRCS
     plugin.cpp

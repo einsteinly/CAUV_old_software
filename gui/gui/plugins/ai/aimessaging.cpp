@@ -14,8 +14,8 @@
 
 #include "aimessaging.h"
 
-#include <gui/core/model/nodes/groupingnode.h>
-#include <gui/core/model/paramvalues.h>
+#include <model/nodes/groupingnode.h>
+#include <model/paramvalues.h>
 
 using namespace cauv;
 using namespace cauv::gui;

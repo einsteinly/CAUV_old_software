@@ -15,7 +15,7 @@
 #ifndef GUI_PARAMVALUES_H
 #define GUI_PARAMVALUES_H
 
-#include <gui/core/model/variants.h>
+#include <model/variants.h>
 
 #include <QVariant>
 

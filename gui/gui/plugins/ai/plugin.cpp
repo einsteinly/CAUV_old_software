@@ -24,10 +24,10 @@
 
 #include <debug/cauv_debug.h>
 
-#include <gui/core/framework/nodescene.h>
-#include <gui/core/framework/nodepicker.h>
-#include <gui/core/framework/delegates/booleandelegate.h>
-#include <gui/core/model/registry.h>
+#include <framework/nodescene.h>
+#include <framework/nodepicker.h>
+#include <framework/delegates/booleandelegate.h>
+#include <model/registry.h>
 
 #include <generated/types/GuiaiGroup.h>
 #include <generated/types/message_type.h>
@@ -35,7 +35,7 @@
 #include "aimessaging.h"
 #include "ainode.h"
 
-#include <gui/core/framework/nodepicker.h>
+#include <framework/nodepicker.h>
 #include <stdexcept>
 
 using namespace cauv;

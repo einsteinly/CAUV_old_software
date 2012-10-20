@@ -28,7 +28,7 @@
 #include <QUrl>
 #include <QMimeData>
 
-#include "nodedragging.h"
+#include "nodeDragging.h"
 
 using namespace cauv;
 using namespace cauv::gui;

@@ -25,10 +25,12 @@
 #include <liquid/style.h>
 #include <liquid/nodeHeader.h>
 
-#include <gui/core/framework/elements/style.h>
-#include <gui/core/model/model.h>
-#include <gui/core/framework/nodepicker.h>
-#include <gui/core/framework/fluidity/view.h>
+#include <model/model.h>
+
+#include <framework/elements/style.h>
+#include <framework/nodepicker.h>
+#include <framework/fluidity/view.h>
+#include <framework/fluidity/manager.h>
 
 #include "plugin.h"
 
@@ -79,7 +81,7 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
     if(cauv_node){
         std::string pipelineName = m_node->fullPipelineName();
 
-        m_view = new f::FView(cauv_node, pipelineName);
+        m_view = new f::FView(cauv_node, pipelineName, node);
         m_view->setMode(f::FView::Internal);
         m_view->setMinimumSize(120, 120);
         m_contents = new liquid::ProxyWidget(this);
@@ -190,7 +192,7 @@ void LiquidFluidityNode::unMaximise(){
         // ... so create a new one instead:
         boost::shared_ptr<CauvNode> cauv_node = m_view->node();
         m_view->deleteLater();
-        m_view = new f::FView(cauv_node, m_node->fullPipelineName());
+        m_view = new f::FView(cauv_node, m_node->fullPipelineName(), m_view->manager()->model());
         m_view->setMode(f::FView::Internal);
         m_contents->setWidget(m_view);
     }

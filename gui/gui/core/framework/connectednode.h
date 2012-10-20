@@ -24,9 +24,9 @@
 #include <liquid/style.h>
 #include <liquid/arcSource.h>
 
-#include <gui/core/model/variants.h>
+#include <model/variants.h>
 
-#include <gui/core/framework/connectednodemap.h>
+#include <framework/connectednodemap.h>
 
 namespace cauv{
 namespace gui{

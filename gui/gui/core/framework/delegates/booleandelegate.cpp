@@ -19,7 +19,7 @@
 #include "model/nodes/numericnode.h"
 
 #include "widgets/onoff.h"
-#include "framework/style.h"
+#include "framework/styles/style.h"
 
 using namespace cauv;
 using namespace cauv::gui;

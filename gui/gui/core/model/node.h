@@ -28,8 +28,8 @@
 
 #include <debug/cauv_debug.h>
 
-#include <gui/core/model/variants.h>
-#include <gui/core/model/nodeType.h>
+#include <model/variants.h>
+#include <model/nodeType.h>
 
 
 #define GENERATE_SIMPLE_NODE(X) \

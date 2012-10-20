@@ -21,7 +21,7 @@
 
 #include <debug/cauv_debug.h>
 
-#include <gui/core/model/registry.h>
+#include <model/registry.h>
 
 using namespace cauv;
 using namespace cauv::gui;

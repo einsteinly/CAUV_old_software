@@ -13,8 +13,8 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef __CAUV_NODEPICKER_H__
-#define __CAUV_NODEPICKER_H__
+#ifndef __CAUV_NODETREEVIEW_H__
+#define __CAUV_NODETREEVIEW_H__
 
 #include <QtGui>
 
@@ -22,48 +22,50 @@
 #include <boost/weak_ptr.hpp>
 
 #include <framework/filter/nodeFilterInterface.h>
-#include <framework/filter/nodePathFilter.h>
-
-#include <framework/trees/nodeTreeView.h>
-
 #include <model/nodeType.h>
-
-namespace Ui {
-class NodePicker;
-}
 
 namespace cauv {
 namespace gui {
 
 class NodeItemModel;
+class DelegateProxy;
 class AbstractNodeDelegate;
+class Node;
 
 /**
-* NodeTreeView with a filter entry box above it
+* Filterable tree view onto the node model
 */
-class NodePicker : public QWidget {
+class NodeTreeView : public QTreeView {
     Q_OBJECT
-
 public:
-    NodePicker(boost::shared_ptr<NodeItemModel> const& root);
-    virtual ~NodePicker();
-
-    void registerDelegate(node_type nodeType,
-                          boost::shared_ptr<AbstractNodeDelegate> delegate);
-    void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
+    NodeTreeView(QWidget * parent = 0);
+    NodeTreeView(bool fixedSize, QWidget * parent = 0);
+    void init();
+    virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
+    QSize sizeHint() const;
+    QSize sizeHint(QModelIndex index) const;
+    void setModel(QAbstractItemModel *model);
 
 public Q_SLOTS:
-        void setHighlighting(QString);
+    void registerDelegate(node_type nodeType,
+                          boost::shared_ptr<AbstractNodeDelegate> delegate);
+    void sizeToFit();
 
-protected Q_SLOTS:
-    void redirectKeyboardFocus(QKeyEvent* key);
+private Q_SLOTS:
+    void applyFilters();
+    void applyFilters(QModelIndex const&);
+    bool applyFilters(boost::shared_ptr<Node> const&);
+    void toggleExpanded(QModelIndex const&);
+    void mouseReleaseEvent(QMouseEvent *event);
+
+Q_SIGNALS:
+    void onKeyPressed(QKeyEvent *event);
 
 protected:
-    boost::shared_ptr<NodeItemModel> m_root;
-
-private:
-    Ui::NodePicker *ui;
-    QPushButton * m_clearButton;
+    std::vector<boost::shared_ptr<NodeFilterInterface> > m_filters;
+    void keyPressEvent(QKeyEvent *event);
+    boost::shared_ptr<DelegateProxy> m_delegateMap;
+    bool m_fixedSize;
 };
 
 } // namespace gui

@@ -15,7 +15,7 @@
 #ifndef __CAUV_AIMESSAGEGENERATORS_H__
 #define __CAUV_AIMESSAGEGENERATORS_H__
 
-#include <gui/core/model/messaging.h>
+#include <model/messaging.h>
 
 #include <generated/types/AddTaskMessage.h>
 #include <generated/types/RemoveTaskMessage.h>
@@ -34,8 +34,8 @@
 #include <generated/types/ScriptControlMessage.h>
 #include <generated/types/AIControlMessage.h>
 
-#include <gui/plugins/ai/conditionnode.h>
-#include <gui/plugins/ai/tasknode.h>
+#include <ai/conditionnode.h>
+#include <ai/tasknode.h>
 
 #include <QObject>
 

@@ -29,10 +29,6 @@
 #include <debug/cauv_debug.h>
 
 #include <liquid/view.h>
-#include <liquid/node.h>
-#include <liquid/nodeHeader.h>
-#include <liquid/water/graph.h>
-#include <liquid/water/dataSeries.h>
 
 #include "cauvplugins.h"
 
@@ -43,6 +39,8 @@
 #include "framework/nodescene.h"
 #include "framework/nodepicker.h"
 #include "framework/connectednode.h"
+
+#include "framework/drag/graphDropHandler.h"
 
 #include "fluidity/view.h"
 
@@ -117,104 +115,6 @@ void StackWidget::updateTitle(){
 
     m_title->setText(text);
 }
-
-
-class GroupDropHandler : public DropHandlerInterface<QGraphicsItem * > {
-public:
-    GroupDropHandler(boost::shared_ptr<NodeItemModel> model) :
-        m_model(model){
-
-    }
-
-    virtual bool accepts(boost::shared_ptr<Node> const& node){
-        return node->type == nodeType<GroupingNode>();
-    }
-
-    virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node) {
-
-        liquid::LiquidNode * ln = new liquid::LiquidNode(AI_Node_Style());
-        ln->header()->setTitle(QString::fromStdString(node->nodeName()));
-        ln->header()->setInfo(QString::fromStdString(node->nodePath()));
-        NodeTreeView * view = new NodeTreeView(true);
-        view->setModel(m_model.get());
-        view->setRootIndex(m_model->indexFromNode(node));
-        QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
-        proxy->setWidget(view);
-
-        ln->addItem(proxy);
-
-        return ln;
-    }
-
-protected:
-    boost::shared_ptr<NodeItemModel> m_model;
-};
-
-class GraphLayoutItem: public QGraphicsLayoutItem, public liquid::water::Graph{
-public:
-    GraphLayoutItem(liquid::water::GraphConfig const& config)
-        : QGraphicsLayoutItem(),
-          liquid::water::Graph(config){
-        setMinimumSize(16, 16);
-        setMaximumSize(1200, 800);
-        setPreferredSize(1200, 800);
-    }
-
-    void setGeometry(const QRectF& rect){
-        setPos(rect.topLeft());
-        QGraphicsLayoutItem::setGeometry(QRectF(QPointF(0,0), rect.size()));
-        setRect(geometry());
-    }
-
-    virtual void updateGeometry(){
-        liquid::water::Graph::setRect(geometry());
-        QGraphicsLayoutItem::updateGeometry();
-    }
-
-protected:
-    QSizeF sizeHint(Qt::SizeHint which, const QSizeF &constraint=QSizeF()) const{
-        switch(which){
-        case Qt::PreferredSize: return QSizeF(300, 200);
-        case Qt::MinimumSize:   return QSizeF(60, 40);
-        default:                return constraint;
-        }
-    }
-};
-
-class GraphingDropHandler: public DropHandlerInterface<QGraphicsItem * >{
-public:
-    GraphingDropHandler(boost::shared_ptr<NodeItemModel> model) :
-        m_model(model){
-    }
-
-    virtual bool accepts(boost::shared_ptr<Node> const& node){
-        debug() << "GraphingDropHandler drop enter from" << node->nodePath();
-        return node->type == nodeType<NumericNodeBase>();
-    }
-
-    virtual QGraphicsItem* handle(boost::shared_ptr<Node> const& node) {
-        debug() << "GraphingDropHandler drop from" << node->nodePath();
-        
-        liquid::LiquidNode * ln = new liquid::LiquidNode(Graph_Node_Style());
-        ln->setResizable(true);
-        ln->header()->setTitle(QString::fromStdString(node->nodeName()));
-        ln->header()->setInfo(QString::fromStdString(node->nodePath()));
-        GraphLayoutItem* graph = new GraphLayoutItem(liquid::water::One_Minute);
-        // !!! FIXME need some sort of traits to know what is an angle
-        boost::shared_ptr<liquid::water::DataSeries> series(
-                    new liquid::water::DataSeries(liquid::water::Unlimited_Graph, QString::fromStdString(node->nodeName()))
-                    );
-        graph->addDataSeries(series);
-        ln->addItem(graph);
-
-        QObject::connect(node.get(), SIGNAL(onUpdate(QVariant)), series.get(), SLOT(postData(QVariant)));
-
-        return ln;
-    }
-
-protected:
-    boost::shared_ptr<NodeItemModel> m_model;
-};
 
 
 CauvMainWindow::CauvMainWindow(QApplication * app) :

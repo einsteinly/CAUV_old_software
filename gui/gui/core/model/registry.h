@@ -19,8 +19,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <gui/core/model/nodes/groupingnode.h>
-#include <gui/core/model/nodes/vehiclenode.h>
+#include <model/nodes/groupingnode.h>
+#include <model/nodes/vehiclenode.h>
 
 namespace cauv {
 

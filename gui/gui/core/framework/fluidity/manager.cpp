@@ -30,7 +30,9 @@
 
 #include <liquid/layout.h>
 
+#include "model/model.h"
 #include "framework/nodescene.h"
+#include "framework/drag/graphDropHandler.h"
 
 #include "model/node.h"
 
@@ -62,10 +64,13 @@ static bool isInvalid(node_id_t const& id){
 }
 
 // - General Public Implementation:
-Manager::Manager(NodeScene *scene, CauvNode *node, std::string const& pipeline_name)
+Manager::Manager(NodeScene *scene,
+                 boost::shared_ptr<Node> model_parent,
+                 CauvNode *node,
+                 std::string const& pipeline_name)
     : QObject(),
       BufferedMessageObserver(),
-      DropHandlerInterface<QGraphicsItem*>(),
+      //DropHandlerInterface<QGraphicsItem*>(),
       boost::enable_shared_from_this<Manager>(),
       m_scene(scene),
       m_cauv_node(node),
@@ -73,7 +78,9 @@ Manager::Manager(NodeScene *scene, CauvNode *node, std::string const& pipeline_n
       m_pipeline_name(pipeline_name),
       m_image_sources(), 
       m_focus_scenepos(0,0),
-      m_layout_soon_timer(new QTimer()){
+      m_layout_soon_timer(new QTimer()),
+      m_model_parent(model_parent),
+      m_item_model(new gui::NodeItemModel(model_parent->getRoot())){
     m_animation_permitted.push(true);
 
     m_scene->installEventFilter(new FocusPositionForwarder(*this));
@@ -114,7 +121,7 @@ Manager::~Manager(){
 
 
 void Manager::init(){
-    m_scene->registerDropHandler(shared_from_this());
+    m_scene->registerDropHandler(boost::make_shared<gui::GraphingDropHandler>(m_item_model));
 
     m_cauv_node->addMessageObserver(shared_from_this());
     m_cauv_node->subMessage(GraphDescriptionMessage());
@@ -147,6 +154,14 @@ std::string const& Manager::pipelineName() const{
     return m_pipeline_name;
 }
 
+boost::shared_ptr<gui::Node> Manager::model() const {
+    return m_model_parent;
+}
+
+gui::NodeItemModel * Manager::itemModel() const {
+    return m_item_model.get();
+}
+
 bool Manager::animationPermitted() const{
    return m_animation_permitted.top();
 }
@@ -171,7 +186,7 @@ void Manager::delayLayout(){
 void Manager::setFocusPosition(QPointF p){
     m_focus_scenepos = QPointF(qRound(p.x()), qRound(p.y()));
 }
-
+/*
 // - DropHandlerInterface Implementation
 bool Manager::accepts(boost::shared_ptr<cauv::gui::Node> const& node){
     debug() << "Manager drop enter from" << node->nodePath();
@@ -181,7 +196,7 @@ bool Manager::accepts(boost::shared_ptr<cauv::gui::Node> const& node){
 QGraphicsItem* Manager::handle(boost::shared_ptr<cauv::gui::Node> const& node){
     debug() << "Manager drop from" << node->nodePath();
     return NULL;
-}
+}*/
 
 QList<QGraphicsItem*> Manager::rootNodes() const{
     QList<QGraphicsItem*> r;

@@ -1,4 +1,4 @@
-project (gui)
+project (aiplugin)
 
 set ( AI_PLUGIN_SRCS
     plugin.cpp
