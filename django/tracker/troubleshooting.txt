@@ -1,9 +1,0 @@
-Some general helpful hints if things don't work (also a record of where things some things are):
-You get a CSRF error when attempting to login on a local copy
--This means you probably have a newer version of django that requires extra tags unsupported on the SRCF version. You may be able to login on the admin page (/admin), then return to the main site.
-You can view things, but can't edit, login (or use admin interface):
--This probably means the django database is missing or broken. Check tracker/db/db.db exists. If it doesn't then there should be an up to date copy in /societies/cauv/code/django/tracker/db (if this is the one thats missing, theres a few old copies scattered about).
-The SRCF version gives server errors:
--Try running  from the tracker directory "python manage.py runserver 0.0.0.0:21200", browse to www.srcf.ucam.org:21200 and try the same thing. If something goes wrong this should through a much more useful error message as this should run in debug mode.
-The admin interface is lacking styling and javascript:
--THIS ONLY APPLIES TO THE SRCF VERSION SERVED BY APACHE.The symlink probably got deleted. At the moment /usr/lib/pymodules/django/contrib/admin/media should be symlinked to tracker/static/adminmedia. The first can be found by running "python manage.py shell" then import django and run help(django). the adminmedia directory is set settings.py

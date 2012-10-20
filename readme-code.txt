@@ -1,9 +1,22 @@
 This top-level directory contains, in order of importance:
 
+Basic compilation:
+==================
+
+READ THE REST OF THIS DOCUMENT (especially installing 
+$cd <somewhere_not_in_the_repo>
+$mkdir build
+$cd build
+$cmake <path_to_software.hg>
+$make -j<however many cores you have + 1>
+if you run out of memory compiling (even if it just starts swapping to disk), reduce the -jnumber passed to make!
+
+Most programs will be placed in build/bin. Most interesting ones are gui,
+scratch, and img-pipeline.
+
 Important things:
 =================
 
-setup.sh        - script to setup various things for development
 auv/            - folder containing code that runs on the AUV
 common/         - library used by c++ programs to talk to the messaging system:
                   provides some other common utilities
@@ -24,28 +37,20 @@ sim/            - Simulation node, the aim is to provide indistinguishable
                   output from the real hardware in order to test the rest of the 
                   software in a virtual environment.
 
-No longer used:                  
-(pitzdir/        - directory containing the files of the issue tracker (pitz):
-                  to see a list of tasks from the command line, run:
-                    pitz-tasks --detailed-view
-
-django/         - code for the web interface of the issue tracker (pitz))
-
-
 Less important things:
 =======================
 
 cmake/            - files for the build system
 CMakeLists.txt    - top-level build file for the CMake build system
-msg-format.txt    - description of the message format
-
-
 
 
 Installing Dependencies
 =======================
 
-Check the wiki (data.cambridgeauv.co.uk/wiki, same username/password as for access to repository) for up to date instructions
+Check the wiki (https://data.cambridgeauv.co.uk/wiki/InstallInstructions,
+                same username/password as for access to repository) for up to date instructions.
+Installing on Ubuntu with the already set up packages will be a lot easier than
+compiling manually!
 
 Dependancies:
 This is an (incomplete!) list of the libraries required for things to build
@@ -85,30 +90,6 @@ gui:
     Qt 4, ?with OpenGL support
     libFTGL
     libgraphviz
-
-This is an OUTDATED list, kept only for reference only:
-
-PACKAGES
-
-sudo apt-get install libboost-dev cmake cmake-curses-gui python-cheetah \
-python-ply python-numpy python-psutil python-setuptools qt4-dev-tools \
-libqt4-dev qt4-designer qt4-doc libftdi-dev libftgl-dev libqhull-dev vim
-
-sudo easy_install psi blist Quaternion
-
-BUILT FROM SOURCE
-
-These also need to be compiled from source: (email the mailing list if you
-have trouble or need help)
-
-For new ubunty install!!
-Follow the steps on this website to install ffm-peg first
-http://ubuntuforums.org/showthread.php?t=786095
-
-OpenCV >= 2.3.1 (http://opencv.willowgarage.com/wiki/InstallGuide)
-PCL             (http://pointclouds.org)
-
-crossroads (with pgm support and zmq compatibility)
 
 If you've installed all these, and something still seems to be missing, please
 add it to this list! 

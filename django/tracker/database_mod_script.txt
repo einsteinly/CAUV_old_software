@@ -1,5 +1,0 @@
--- Add new columns. Note that if a new column is NOT NULL it must have a DEFAULT value
-BEGIN;
-    ALTER TABLE track_userprofile ADD COLUMN "custom_shortcuts" bool NOT NULL DEFAULT FALSE;
-    ALTER TABLE track_userprofile ADD COLUMN "custom_bags" bool NOT NULL DEFAULT FALSE;
-COMMIT;
