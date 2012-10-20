@@ -4,8 +4,9 @@ set (MSGSRCD ${AUV_SOURCE_DIR}/common)
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 set (BINDIR ${CMAKE_CURRENT_BINARY_DIR})
 
-find_package(PythonInterp)
+set(Python_ADDITIONAL_VERSIONS 2.7)
 find_package(PythonLibs)
+find_package(PythonInterp 2.7)
 include_directories (${PYTHON_INCLUDE_DIRS})
 
 
@@ -64,7 +65,8 @@ add_dependencies(cauvinterface python-messages-gen)
 target_link_libraries (cauvinterface
     common
     ${Boost_LIBRARIES}
-    ${PYTHON_LIBRARIES}
+    boost_python
+    ${PYTHON_LIBRARY}
 )
 
 add_custom_target (python-module ALL

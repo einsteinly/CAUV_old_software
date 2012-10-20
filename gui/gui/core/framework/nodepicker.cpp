@@ -348,7 +348,7 @@ void NodeTreeView::toggleExpanded(QModelIndex const& index){
     setExpanded(index, !isExpanded(index));
     //info() << "post-inversion" << isExpanded(index);
     //qDebug() << "sizeHint = " << sizeHint();
-    sizeToFit();
+    //sizeToFit();
 }
 
 void NodeTreeView::keyPressEvent(QKeyEvent *event){
