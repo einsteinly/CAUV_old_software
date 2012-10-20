@@ -61,6 +61,16 @@ struct NodeStyle;
 // view.h
 class LiquidView;
 
+// shadow.h
+class Shadow;
+
+// proxyWidget.h
+class ProxyWidget;
+
+// itemFridge.h
+template<typename T>
+class ItemFridge;
+
 } // namespace liquid
 
 #endif // ndef __LIQUID_FORWARD_H__

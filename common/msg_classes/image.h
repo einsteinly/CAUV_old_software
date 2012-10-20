@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -8,6 +8,7 @@
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
+ *     Steve Ogborne   steve@camhydro.co.uk
  *     Leszek Swirski leszek@camhydro.co.uk
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
@@ -160,11 +161,12 @@ class Image : public BaseImage {
         // fact
         augmented_mat_t augmentedMat() const;
         void augmentedMat(augmented_mat_t const& mat);
+        
+        // return by value: the compiler will optimise this to a move
+        virtual svec_t encodeBytes() const;
+        virtual void encodedBytes(svec_t const&);
 
-        virtual svec_t &bytes(void) const;
-        virtual void bytes(svec_t&);
-
-        virtual uint32_t channels(void) const;
+        virtual uint32_t channels() const;
 
         //why is this float?
         float bits() const;

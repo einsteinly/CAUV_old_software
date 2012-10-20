@@ -33,12 +33,6 @@ BaseImage::BaseImage(svec_t const &bytes, TimeStamp const &ts, UID const &id) :
 
 }
 
-BaseImage::BaseImage(BaseImage const &other) :
-    m_compress_fmt(other.m_compress_fmt), m_ts(other.ts()), m_uid(other.id()),
-    m_quality(other.serializeQuality()), m_channels(other.channels()),
-    m_bytes(other.bytes()), m_private_bytes(other.private_bytes()) {
-}
-
 BaseImage::~BaseImage(void) {}
 
 TimeStamp BaseImage::ts(void) const{
@@ -57,15 +51,21 @@ void BaseImage::id(UID const &ts) {
     m_uid = ts;
 }
 
-svec_t &BaseImage::bytes(void) const {
+svec_t const& BaseImage::encodedBytes() const {
     return m_bytes;
 }
 
-void BaseImage::bytes(svec_t &bytes) {
+// this base class doesn't know how to serialise an image (derived class must
+// do that)
+svec_t BaseImage::encodeBytes() const{
+    return svec_t();
+}
+
+void BaseImage::encodedBytes(svec_t const& bytes) {
     m_bytes = bytes;
 }
 
-svec_t &BaseImage::private_bytes(void) const {
+svec_t const& BaseImage::private_bytes(void) const {
     return m_private_bytes;
 }
 
@@ -73,7 +73,7 @@ void BaseImage::private_bytes(svec_t &bytes) {
     m_private_bytes = bytes;
 }
 
-uint32_t BaseImage::serializeQuality(void) const {
+uint32_t BaseImage::serializeQuality() const {
     return m_quality;
 }
 
@@ -81,7 +81,7 @@ void BaseImage::serializeQuality(uint32_t quality) {
     m_quality = quality;
 }
 
-uint32_t BaseImage::channels(void) const {
+uint32_t BaseImage::channels() const {
     return m_channels;
 }
 
@@ -93,7 +93,7 @@ void cauv::serialise(svec_ptr p, BaseImage const& v) {
     serialise(p, v.m_compress_fmt);
     serialise(p, v.serializeQuality());
     serialise(p, v.channels());
-    serialise(p, v.bytes());
+    serialise(p, v.encodeBytes());
     serialise(p, v.private_bytes());
     serialise(p, v.ts());
     serialise(p, v.id());
@@ -121,7 +121,7 @@ int32_t cauv::deserialise(const_svec_ptr p, uint32_t i, BaseImage& v) {
     svec_t private_buf;
     b += deserialise(p, b, private_buf);
     v.private_bytes(private_buf);
-    v.bytes(buf);
+    v.encodedBytes(buf);
 
     TimeStamp ts;
     b += deserialise(p, b, ts);

@@ -35,6 +35,7 @@ if (CAUV_BUILD_GUI)
         add_subdirectory (liquid)
         add_subdirectory (gui)
         add_subdirectory (scratch)
+        add_subdirectory (fridgetest)
 
     endif ()
 

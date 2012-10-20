@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -8,6 +8,7 @@
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
+ *     Steve Ogborne   steve@camhydro.co.uk
  *     Leszek Swirski leszek@camhydro.co.uk
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
@@ -172,7 +173,7 @@ float cauv::Image::bits() const{
     return boost::apply_visitor(getImageSizeInBits(), m_img);
 }
 
-uint32_t cauv::Image::channels(void) const {
+uint32_t cauv::Image::channels() const {
     if(boost::apply_visitor(getPrincipalMat(), m_img).channels() == 1) {
         m_channels = 1;
     } else {
@@ -181,7 +182,7 @@ uint32_t cauv::Image::channels(void) const {
     return m_channels;
 }
 
-cauv::svec_t &cauv::Image::bytes(void) const {
+cauv::svec_t cauv::Image::encodeBytes() const {
     // !!! TODO: serialise augmented data
     cv::Mat source = boost::apply_visitor(getPrincipalMat(), m_img);
     cv::Mat converted;
@@ -197,10 +198,11 @@ cauv::svec_t &cauv::Image::bytes(void) const {
     }
     else
         converted = source;
-
-    m_bytes.reserve(converted.cols * converted.rows * converted.elemSize() * 0.2);
+    
+    svec_t r;
+    r.reserve(converted.cols * converted.rows * converted.elemSize() * 0.2);
     try {
-        cv::imencode(m_compress_fmt, converted, m_bytes, compress_params);
+        cv::imencode(m_compress_fmt, converted, r, compress_params);
     } catch(cv::Exception& e) {
         error() << "OpenCV couldn't encode image:"
                 << "error:" << e.msg
@@ -208,10 +210,10 @@ cauv::svec_t &cauv::Image::bytes(void) const {
                 << "quality:" << serializeQuality()
                 << "size:" << source.rows << "x" << source.cols;
     }
-    return m_bytes;
+    return r;
 }
 
-void cauv::Image::bytes(svec_t &bytes) {
+void cauv::Image::encodedBytes(svec_t const& bytes) {
     int load_flags;
     if (m_channels == 3) {
         load_flags = 1;

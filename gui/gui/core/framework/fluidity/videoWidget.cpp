@@ -76,7 +76,7 @@ void VideoWidget::displayImage(boost::shared_ptr<const GuiImageMessage> p){
     BaseImage t;
     m_image_msg->get_image_inplace(t);
     m_pixmap = boost::make_shared<QPixmap>();
-    m_pixmap->loadFromData(&t.bytes()[0], t.bytes().size(), "jpg");
+    m_pixmap->loadFromData(&t.encodedBytes()[0], t.encodedBytes().size(), "jpg");
 
     QGraphicsScene* s = scene();
     if(s)

@@ -172,7 +172,7 @@ FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
 
 void FNode::setType(NodeType::e const& type){
     m_type = type;
-    m_header->setTitle(nodeTypeDesc(type));
+    setTitle(nodeTypeDesc(type));
 }
 
 void FNode::setInputs(msg_node_input_map_t const& inputs){
@@ -429,17 +429,17 @@ void FNode::initButtons(){
     Button *collapsebutton = new Button(
        QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"), NULL, this
     );
-    m_header->addButton("collapse", collapsebutton);
+    addButton("collapse", collapsebutton);
 
     Button *execbutton = new Button(
        QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
     );
-    m_header->addButton("exec", execbutton);
+    addButton("exec", execbutton);
     
     Button *dupbutton = new Button(
        QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), NULL, this
     );
-    m_header->addButton("duplicate", dupbutton);
+    addButton("duplicate", dupbutton);
     
     connect(this, SIGNAL(closed(node_id_t const&)), &manager(), SLOT(requestRemoveNode(node_id_t const&)));
     connect(dupbutton, SIGNAL(pressed()), this, SLOT(duplicate()));
