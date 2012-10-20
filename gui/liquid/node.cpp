@@ -224,6 +224,7 @@ void LiquidNode::setClosable(bool close){
         else
             closebutton->hide();
     }
+    m_header->thaw();
     m_header->freeze();
 }
 
