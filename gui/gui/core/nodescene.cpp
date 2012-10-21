@@ -89,6 +89,10 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
         line->setPen(QPen(QColor(colour, colour, colour)));
         line->setZValue(-1000);
         this->addItem(line);
+        
+        #ifdef QT_PROFILE_GRAPHICSSCENE
+        line->setProfileName("nodescene::backgroundLine");
+        #endif // def QT_PROFILE_GRAPHICSSCENE
     }
     for(int y = -sceneSize; y < sceneSize; y = y + 50) {
         int colour = 242;
@@ -97,6 +101,10 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
         line->setPen(QPen(QColor(colour, colour, colour)));
         line->setZValue(-1000);
         this->addItem(line);
+
+        #ifdef QT_PROFILE_GRAPHICSSCENE
+        line->setProfileName("nodescene::backgroundLine");
+        #endif // def QT_PROFILE_GRAPHICSSCENE
     }
 
     addRect(-sceneSize, -sceneSize, sceneSize*2, sceneSize*2);
