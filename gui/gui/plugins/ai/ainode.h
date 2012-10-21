@@ -20,10 +20,10 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
-#include <gui/core/model/nodes/numericnode.h>
-#include <gui/core/model/model.h>
-#include <gui/core/nodedragging.h>
-#include <gui/core/framework/connectednode.h>
+#include <model/nodes/numericnode.h>
+#include <model/nodeItemModel.h>
+#include <drag/nodeDragging.h>
+#include <connectednode.h>
 
 namespace cauv {
     class CauvNode;

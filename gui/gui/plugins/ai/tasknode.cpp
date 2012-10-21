@@ -18,9 +18,10 @@
 
 #include <debug/cauv_debug.h>
 
-#include <gui/core/model/paramvalues.h>
-#include <gui/core/model/nodes/groupingnode.h>
-#include <gui/core/model/nodes/vehiclenode.h>
+#include <model/nodeItemModel.h>
+#include <model/paramvalues.h>
+#include <model/nodes/groupingnode.h>
+#include <model/nodes/vehiclenode.h>
 
 #include <liquid/arcSink.h>
 #include <liquid/arc.h>
@@ -32,11 +33,10 @@
 #include <liquid/button.h>
 #include <liquid/proxyWidget.h>
 
-#include <gui/core/framework/elements/style.h>
-#include <gui/core/model/model.h>
-#include <gui/core/framework/nodepicker.h>
+#include <nodepicker.h>
+#include <elements/style.h>
 
-#include <gui/plugins/ai/conditionnode.h>
+#include "ai/conditionnode.h"
 
 using namespace cauv;
 using namespace cauv::gui;

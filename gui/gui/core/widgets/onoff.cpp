@@ -19,7 +19,7 @@
 
 #include <QDebug>
 
-#include "style.h"
+#include "styles/style.h"
 
 using namespace cauv;
 using namespace cauv::gui;

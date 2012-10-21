@@ -15,15 +15,15 @@
 #ifndef __CAUV_FUIDITY_PLUGIN_H__
 #define __CAUV_FUIDITY_PLUGIN_H__
 
-#include <gui/core/cauvbasicplugin.h>
-#include <gui/core/model/node.h>
+#include <QObject>
 
-#include <gui/core/model/nodes/groupingnode.h>
-#include <gui/core/model/nodes/vehiclenode.h>
+#include <cauvbasicplugin.h>
+
+#include <model/node.h>
+#include <model/nodes/groupingnode.h>
+#include <model/nodes/vehiclenode.h>
 
 #include <liquid/node.h>
-
-#include <QObject>
 
 namespace cauv{
 class CauvNode;

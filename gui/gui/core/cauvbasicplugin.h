@@ -28,11 +28,12 @@ namespace cauv {
 
             virtual void initialise(boost::shared_ptr<GuiActions> const& actions, ConnectedNodeMap*);
 
-            virtual void initialise() = 0;
-
             virtual void shutdown();
 
         protected:
+
+            virtual void initialise() = 0;
+
             boost::shared_ptr<GuiActions> m_actions;
         };
     } //namespace gui

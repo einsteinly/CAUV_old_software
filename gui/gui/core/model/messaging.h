@@ -43,13 +43,13 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <gui/core/model/node.h>
-#include <gui/core/model/nodes/numericnode.h>
-#include <gui/core/model/nodes/groupingnode.h>
-#include <gui/core/model/nodes/autopilotnode.h>
-#include <gui/core/model/nodes/imagenode.h>
-#include <gui/core/model/nodes/stringnode.h>
-#include <gui/core/model/nodes/sonarnode.h>
+#include <model/node.h>
+#include <model/nodes/numericnode.h>
+#include <model/nodes/groupingnode.h>
+#include <model/nodes/autopilotnode.h>
+#include <model/nodes/imagenode.h>
+#include <model/nodes/stringnode.h>
+#include <model/nodes/sonarnode.h>
 
 #include <common/cauv_node.h>
 

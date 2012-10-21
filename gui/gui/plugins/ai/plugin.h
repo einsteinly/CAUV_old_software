@@ -17,8 +17,8 @@
 
 #include <common/zeromq/zeromq_mailbox.h>
 
-#include <gui/core/cauvbasicplugin.h>
-#include <gui/core/model/node.h>
+#include <cauvbasicplugin.h>
+#include <model/node.h>
 
 #include <QObject>
 

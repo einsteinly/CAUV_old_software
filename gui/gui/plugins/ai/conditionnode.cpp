@@ -25,18 +25,19 @@
 #include <liquid/proxyWidget.h>
 #include <liquid/shadow.h>
 
-#include <gui/core/model/paramvalues.h>
-#include <gui/core/model/nodes/vehiclenode.h>
+#include <model/paramvalues.h>
+#include <model/nodes/vehiclenode.h>
 
-#include <gui/core/framework/elements/style.h>
-#include <gui/core/model/model.h>
-#include <gui/core/model/nodes/groupingnode.h>
-#include <gui/core/framework/nodepicker.h>
+#include <elements/style.h>
+#include <nodepicker.h>
 
-#include <gui/plugins/ai/tasknode.h>
+#include <model/nodeItemModel.h>
+#include <model/nodes/groupingnode.h>
+
+#include "ai/tasknode.h"
 
 // !!! inter plugin dependance
-#include <gui/plugins/fluidity/fluiditynode.h>
+#include <fluidity/fluiditynode.h>
 
 using namespace cauv;
 using namespace cauv::gui;

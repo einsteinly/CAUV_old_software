@@ -3,7 +3,6 @@ project (gui-scratch)
 
 include_directories(${guis_SOURCE_DIR})
 include_directories(${guis_SOURCE_DIR}/gui/core/)
-include_directories(${guis_SOURCE_DIR}/gui/core/framework)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set (
@@ -36,7 +35,7 @@ qt4_add_resources(scratch_RCC_H ${scratch_RCC})
 include_directories (${AUV_SOURCE_DIR})
 
 add_executable (
-    scratch
+    scratch EXCLUDE_FROM_ALL
     ${scratch_srcs}
     ${scratch_H}
     ${scratch_MOC_H}
@@ -47,6 +46,7 @@ target_link_libraries (
     scratch
     common
     gui-core
+    fludity
 )
 #cauv_install ( scratch )
 

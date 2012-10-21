@@ -17,13 +17,12 @@
 
 #include <QObject>
 
-#include <gui/core/model/messaging.h>
+#include <model/messaging.h>
 
 #include <generated/types/PipelineDiscoveryResponseMessage.h>
 #include <generated/types/NodeAddedMessage.h>
 #include <generated/types/GraphDescriptionMessage.h>
 
-#include <gui/plugins/ai/conditionnode.h>
 #include <common/zeromq/zeromq_mailbox.h>
 
 namespace cauv {

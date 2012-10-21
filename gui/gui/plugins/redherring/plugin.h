@@ -15,9 +15,9 @@
 #ifndef CAUV_REDHERRINGPLUGIN_H
 #define CAUV_REDHERRINGPLUGIN_H
 
-#include <gui/core/cauvbasicplugin.h>
-#include <gui/core/model/node.h>
-#include <gui/core/model/nodes/vehiclenode.h>
+#include <cauvbasicplugin.h>
+#include <model/node.h>
+#include <model/nodes/vehiclenode.h>
 
 #include <QObject>
 

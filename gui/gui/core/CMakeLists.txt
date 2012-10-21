@@ -13,11 +13,9 @@ set ( GUI_CORE_AUX_DIRS
 
 # include files
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} )
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/framework)
 
 # generated files includes
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/framework)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/widgets)
 
 # for <common/includesstuff> etc
@@ -27,62 +25,59 @@ include_directories (${AUV_SOURCE_DIR})
 include_directories (${guis_SOURCE_DIR})
 
 set ( GUI_CORE_SRCS
-    nodedragging.cpp
     cauvbasicplugin.cpp
+    nodepicker.cpp
+    mainwindow.cpp
+    nodescene.cpp
+    connectednode.cpp
 
-    widgets/videoscreen.cpp
     widgets/neutralspinbox.cpp
-    widgets/graphbar.cpp
     widgets/onoff.cpp
+    widgets/videoWidget.cpp
 
     model/node.cpp
     model/variants.cpp
-    model/model.cpp
+    model/nodeItemModel.cpp
     model/registry.cpp
     model/messaging.cpp
     model/paramvalues.cpp
-    model/utils/datarecorder.cpp
-    model/utils/sampler.cpp
 
-    framework/nodepicker.cpp
-    framework/mainwindow.cpp
-    framework/nodescene.cpp
-    framework/style.cpp
-    framework/connectednode.cpp
+    styles/style.cpp
 
-    framework/delegates/delegate.cpp
-    framework/delegates/booleandelegate.cpp
-    framework/delegates/numericdelegate.cpp
-    framework/delegates/colourdelegate.cpp
+    delegates/delegate.cpp
+    delegates/booleandelegate.cpp
+    delegates/numericdelegate.cpp
+    delegates/colourdelegate.cpp
 
-    framework/elements/style.cpp
+    elements/style.cpp
 
-    framework/fluidity/fNode.cpp
-    framework/fluidity/view.cpp 
-    framework/fluidity/managedElement.cpp
-    framework/fluidity/manager.cpp
-    framework/fluidity/fNodeInput.cpp
-    framework/fluidity/videoWidget.cpp
+    trees/nodeTreeView.cpp
+
+    filter/nodePathFilter.cpp
+    filter/nodeExclusionFilter.cpp
+
+    drag/graphDropHandler.cpp
+    drag/groupDropHandler.cpp
+    drag/nodeDragging.cpp
     )
 
 set ( GUI_CORE_UIS
-    widgets/videoscreen.ui
-    framework/nodepicker.ui
-    framework/mainwindow.ui
+    nodepicker.ui
+    mainwindow.ui
     )
 
 set ( GUI_CORE_H
-    nodedragging.h
 
-    widgets/videoscreen.h
+    nodepicker.h
+    mainwindow.h
+
     widgets/neutralspinbox.h
-    widgets/graphbar.h
     widgets/onoff.h
+    widgets/videoWidget.h
 
     model/node.h
-    model/model.h
+    model/nodeItemModel.h
     model/registry.h
-    model/singleItemModel.h
     model/nodes/numericnode.h
     model/nodes/stringnode.h
     model/nodes/imagenode.h
@@ -91,25 +86,20 @@ set ( GUI_CORE_H
     model/nodes/sonarnode.h
     model/nodes/colournode.h
     model/messaging.h
-    model/utils/sampler.h
 
-    framework/nodepicker.h
-    framework/mainwindow.h
-    framework/style.h
+    styles/style.h
 
-    framework/delegates/delegate.h
-    framework/delegates/booleandelegate.h
-    framework/delegates/numericdelegate.h
-    framework/delegates/colourdelegate.h
+    delegates/delegate.h
+    delegates/booleandelegate.h
+    delegates/numericdelegate.h
+    delegates/colourdelegate.h
 
-    framework/fluidity/view.h
-    framework/fluidity/manager.h
-    framework/fluidity/fNode.h
-    framework/fluidity/fNodeOutput.h
-    framework/fluidity/fNodeInput.h
-    framework/fluidity/menu.h
-    framework/fluidity/imageSource.h
-    framework/fluidity/videoWidget.h
+    trees/nodeTreeView.h
+
+    filter/nodePathFilter.h
+    filter/nodeExclusionFilter.h
+
+    drag/nodeDragging.h
     )
 
 set ( GUI_CORE_RCC
@@ -133,6 +123,7 @@ target_link_libraries ( gui-core
         cauv_debug
         liquid
         common
+        pthread
         ${QT_LIBRARIES}
     )
 depends_on_messages(gui-core)

@@ -1,4 +1,4 @@
-project (gui)
+project (redherringplugin)
 
 set ( REDHERRING_PLUGIN_SRCS
     plugin.cpp

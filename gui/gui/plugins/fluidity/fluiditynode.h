@@ -22,10 +22,11 @@
 #include <liquid/arcSource.h>
 #include <liquid/proxyWidget.h>
 
-#include <gui/core/model/model.h>
-#include <gui/core/model/node.h>
-#include <gui/core/framework/mainwindow.h>
-#include <gui/core/framework/connectednode.h>
+#include <model/nodeItemModel.h>
+#include <model/node.h>
+
+#include <mainwindow.h>
+#include <connectednode.h>
 
 
 namespace cauv {

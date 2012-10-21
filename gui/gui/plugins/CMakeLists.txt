@@ -1,4 +1,4 @@
-project (gui)
+project (plugins)
 
 # main GUI options
 option(CAUV_GUI_MAP "True if the GUI should have a map of the Earth" ON)
@@ -8,6 +8,8 @@ option(CAUV_GUI_GAMEPAD "True if the GUI should support game controllers" ON)
 # includes for shared and generated files
 include_directories (${guis_SOURCE_DIR})
 include_directories (${AUV_SOURCE_DIR})
+include_directories (${gui-core_SOURCE_DIR})
+include_directories (${plugins_SOURCE_DIR})
 
 get_property (gui_RUNTIME_OUTPUT_DIRECTORY TARGET gui PROPERTY RUNTIME_OUTPUT_DIRECTORY)
 SET(LIBRARY_OUTPUT_PATH ${gui_RUNTIME_OUTPUT_DIRECTORY}/plugins)
