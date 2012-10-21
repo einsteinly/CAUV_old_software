@@ -138,6 +138,7 @@ target_link_libraries ( gui-core
         cauv_debug
         liquid
         common
+        pthread
         ${QT_LIBRARIES}
     )
 depends_on_messages(gui-core)

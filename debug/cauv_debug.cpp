@@ -110,9 +110,13 @@ SmartStreamBase::Settings SmartStreamBase::defaultSettings() {
     char *logdir = getenv("CAUV_LOG_DIR");
     if (logdir) {
         s.logdir_name = logdir;
-        if (*s.logdir_name.rbegin() != '/') {
-            s.logdir_name += "/";
-        }
+    } else {
+        // /var/tmp is persistent across reboots and world-writable.
+        // /var/log, alas, is not
+        s.logdir_name = "/var/tmp/cauv_log";
+    }
+    if (*s.logdir_name.rbegin() != '/') {
+        s.logdir_name += "/";
     }
     s.program_name = "unknown";
     s.changed = true;
@@ -239,30 +243,44 @@ std::ofstream& SmartStreamBase::logFile()
 
     if (settings().changed) {
         std::string new_lfn;
+        settings().changed = false;
         new_lfn = settings().logdir_name + logFilePrefix() + settings().program_name + ".log";
         if(settings().logfile_name != new_lfn) {
             bool new_file = true;
-            if (lf.is_open()) {
+            try {
+                boost::filesystem::create_directories(settings().logdir_name);
+                if (lf.is_open()) {
+                    try {
+                        boost::filesystem::rename(settings().logfile_name, new_lfn);
+                        lf << "\n\n---------\n renamed from " << settings().logfile_name << "\n";
+                    } catch (boost::filesystem::filesystem_error &e) {
+                        std::cerr << BashColour::Brown << "Log: Could not rename File: " << e.what() << BashControl::Reset << "\n";
+                        lf.close();
+                        new_file = false;
+                    }
+                }
+                if (!lf.is_open()) {
+                    lf.open(new_lfn.c_str(), std::ios::out | std::ios::app);
+                    if (new_file) {
+                        lf << "\n\n----------\n" << settings().program_name << " Started" << std::endl;
+                    } else {
+                        lf << "\n\n----------\n continued from " << settings().logfile_name << "\n";
+                    }
+                }
                 try {
-                    boost::filesystem::rename(settings().logfile_name, new_lfn);
-                    lf << "\n\n---------\n renamed from " << settings().logfile_name << "\n";
+                    std::string symlink(settings().logdir_name + settings().program_name + ".log");
+                    try {
+                        boost::filesystem::remove(symlink);
+                    } catch (boost::filesystem::filesystem_error &e) {/*doesn't matter*/};
+                    boost::filesystem::create_symlink(new_lfn, symlink);
                 } catch (boost::filesystem::filesystem_error &e) {
-                    std::cerr << BashColour::Brown << "Log: Could not rename File: " << e.what() << BashControl::Reset << "\n";
-                    lf.close();
-                    new_file = false;
+                    std::cerr << "Log: Could not symlink logfile: " << e.what() << "\n";
                 }
+                settings().logfile_name = new_lfn;
+            } catch (boost::filesystem::filesystem_error &e) {
+                std::cerr << BashColour::Brown << "Log: Could not create log directory: " << e.what() << BashControl::Reset << "\n";
             }
-            if (!lf.is_open()) {
-                lf.open(new_lfn.c_str(), std::ios::out | std::ios::app);
-                if (new_file) {
-                    lf << "\n\n----------\n" << settings().program_name << " Started" << std::endl;
-                } else {
-                    lf << "\n\n----------\n continued from " << settings().logfile_name << "\n";
-                }
-            }
-            settings().logfile_name = new_lfn;
         }
-        settings().changed = false;
     }
     return lf;
 }
