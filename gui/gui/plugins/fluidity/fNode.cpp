@@ -35,6 +35,8 @@
 #include <liquid/arcSource.h>
 #include <liquid/arc.h>
 
+#include <widgets/videoWidget.h>
+
 #include "elements/style.h"
 #include "elements/nodeInput.h"
 
@@ -43,7 +45,6 @@
 #include "manager.h"
 #include "types.h"
 #include "imageSource.h"
-#include "videoWidget.h"
 
 using cauv::gui::f::FNode;
 using cauv::gui::f::FNodeOutput;

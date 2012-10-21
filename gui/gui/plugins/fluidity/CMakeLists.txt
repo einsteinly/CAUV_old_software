@@ -10,7 +10,6 @@ set ( FLUIDITY_PLUGIN_SRCS
     managedElement.cpp
     manager.cpp
     fNodeInput.cpp
-    videoWidget.cpp
 )
 
 set ( FLUIDITY_PLUGIN_UIS
@@ -28,7 +27,6 @@ set ( FLUIDITY_PLUGIN_H
     fNodeInput.h
     menu.h
     imageSource.h
-    videoWidget.h
 )
 
 

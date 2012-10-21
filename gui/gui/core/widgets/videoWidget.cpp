@@ -13,7 +13,6 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-
 #include "videoWidget.h"
 
 #include <QPixmap>
@@ -28,7 +27,7 @@
 #include <generated/types/GuiImageMessage.h>
 
 using namespace cauv;
-using namespace cauv::gui::f;
+using namespace cauv::gui;
 
 VideoWidget::VideoWidget(QGraphicsWidget* parent)
     : QGraphicsWidget(parent),

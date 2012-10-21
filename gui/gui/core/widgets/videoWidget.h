@@ -13,8 +13,8 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef __CAUV_GUI_F_VIDEO_WIDGET_H__
-#define __CAUV_GUI_F_VIDEO_WIDGET_H__
+#ifndef __CAUV_GUI_VIDEO_WIDGET_H__
+#define __CAUV_GUI_VIDEO_WIDGET_H__
 
 #include <QGraphicsWidget>
 
@@ -27,7 +27,6 @@ namespace cauv{
 class GuiImageMessage;
 
 namespace gui{
-namespace f{
 
 class VideoWidget: public QGraphicsWidget{
         Q_OBJECT
@@ -44,8 +43,7 @@ class VideoWidget: public QGraphicsWidget{
         boost::shared_ptr<QPixmap> m_pixmap;
 };
 
-} // namespace f
 } // namespace gui
 } // namespace cauv
 
-#endif // ndef __CAUV_GUI_F_VIDEO_WIDGET_H__
+#endif // ndef __CAUV_GUI_VIDEO_WIDGET_H__
