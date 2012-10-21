@@ -52,6 +52,12 @@ class MakeString{
             }
             return r;
         }
+        
+        // abbreviation for explicit cast for contexts where implicit
+        // conversion is insufficient
+        std::string str() const{
+            return std::string(*this);
+        }
 
         template<class T>
         MakeString& operator<<(T const& v){

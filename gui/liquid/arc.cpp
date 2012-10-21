@@ -15,14 +15,16 @@
 #include "arc.h"
 
 #include <cmath>
-
-#include <QPainter>
+#include <cassert>
 
 #include <debug/cauv_debug.h>
+
+#include <QPainter>
 
 #include "arcSink.h"
 #include "style.h"
 #include "ephemeralArcEnd.h"
+
 
 using namespace liquid;
 
@@ -43,15 +45,14 @@ Arc::Arc(ArcStyle const& of_style,
       m_ephemeral_end(new EphemeralArcEnd(this, of_style, true)),
       m_cached_shape_invalid(true),
       m_cached_shape(){
-
-    debug(7) << "Arc()" << this;
     
     #ifndef CAUV_DEBUG_DRAW_LAYOUT
     setFlag(ItemHasNoContents);
     #endif
-    
+
     if(from)
         setFrom(from);
+
     if(to)
         addTo(to);
     
@@ -78,6 +79,10 @@ Arc::Arc(ArcStyle const& of_style,
     m_front->setBoundingRegionGranularity(0.1);
     m_pending_back->setBoundingRegionGranularity(0.1);
     m_pending_front->setBoundingRegionGranularity(0.1);
+
+    m_ephemeral_end->setPos(-1,0);
+
+    setZValue(-100);
     
     // Arcs are big, and caching them is about the same speed
     setCacheMode(NoCache);
@@ -97,7 +102,6 @@ Arc::Arc(ArcStyle const& of_style,
 }
 
 Arc::~Arc(){
-    debug(7) << "~Arc()" << this;
     LayoutItems::unRegisterConnection(this);
 }
 
@@ -113,19 +117,33 @@ std::set<AbstractArcSink *> Arc::sinks(){
     return m_sinks;
 }
 
+QGraphicsItem* Arc::ultimateParent(){
+    return NULL;
+}
+
 void Arc::setFrom(AbstractArcSource *from){
-    debug(7) << "arc::setFrom:" << from;
+    assert(from);
     if (m_source)
         disconnect(m_source, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     m_source = from;
+    
+    if(!scene()){
+        // temporarily use from as the parent item: when from is added to a
+        // scene, we can re-parent the arc to a top-level item, but at this
+        // point a scene might not even exist (!)
+        // it's necessary to do this in setFrom not in the constructor, because
+        // passing 0 for `from` in the constructor is allowed (to ease
+        // construction order-dependence of arcs and the things arcs connect
+        // to)
+        setParentItem(from);
+    }
+
     setSourceDelegate(from->sourceDelegate());
-    setParentItem(from);
     connect(from, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     updateLayout();
 }
 
 void Arc::addTo(AbstractArcSink *to){
-    debug(3) << "Arc::addTo:" << to;
     if(m_pending_sinks.count(to)){
         promotePending(to);
     }else if(!m_sinks.count(to)){
@@ -141,7 +159,6 @@ void Arc::addTo(AbstractArcSink *to){
 }
 
 void Arc::addPending(AbstractArcSink *to){
-    debug(3) << "Arc::addPending:" << to;
     if(!m_pending_sinks.count(to) && !m_sinks.count(to)){
         m_pending_sinks.insert(to);
         m_ends[to] = new EphemeralArcEnd(this, m_style, true);
@@ -155,7 +172,6 @@ void Arc::addPending(AbstractArcSink *to){
 }
 
 void Arc::removeTo(AbstractArcSink *to){
-    debug(3) << "Arc::removeTo:" << to;
     disconnect(to, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     disconnect(to, SIGNAL(disconnected(AbstractArcSink*)),
                this, SLOT(removeTo(AbstractArcSink*)));
@@ -167,7 +183,6 @@ void Arc::removeTo(AbstractArcSink *to){
 }
 
 void Arc::promotePending(AbstractArcSink *to){
-    debug(3) << "Arc::promotePending:" << to;
     m_sinks.insert(to);
     m_pending_sinks.erase(to);
     updateLayout();
@@ -175,7 +190,6 @@ void Arc::promotePending(AbstractArcSink *to){
 
 QPainterPath Arc::shape() const{
     if(m_cached_shape_invalid){
-        debug(5) << "cached shape invalid, updating...";
         m_cached_shape = m_back->shape() | m_pending_back->shape();
         for(sink_end_map_t::const_iterator i = m_ends.begin(); i != m_ends.end(); i++)
             m_cached_shape |= i->second->shape().translated(i->second->pos());
@@ -205,15 +219,6 @@ void Arc::paint(QPainter *painter,
     Q_UNUSED(painter);
     Q_UNUSED(option);
     Q_UNUSED(widget);
-    /*painter->setBrush(QBrush(QColor(200,20,20,24)));
-    painter->setPen(QPen(Qt::NoPen));
-    painter->drawPath(shape());
-    m_back->setFlag(ItemStacksBehindParent);
-    m_front->setFlag(ItemStacksBehindParent);
-    sink_end_map_t::const_iterator i;    
-    for(i = m_ends.begin(); i != m_ends.end(); i++)
-        i->second->setFlag(ItemStacksBehindParent);
-    */
     #ifdef CAUV_DEBUG_DRAW_LAYOUT    
     painter->setPen(QPen(QColor(200,20,20,24)));
     painter->setBrush(Qt::NoBrush);
@@ -229,20 +234,22 @@ void Arc::paint(QPainter *painter,
     #endif // def CAUV_DEBUG_DRAW_LAYOUT
 }
 
-// !!! TODO: the updateLayout slot should only set a dirty flag on the layout,
-// which causes re-layout the next time paint() contains() shape() or something
-// gets called - at the moment updateLayout() can be called many times for a
-// single paint, and it's a pretty big performance bottleneck
+QVariant Arc::itemChange(GraphicsItemChange change, QVariant const& value){
+    if(change == ItemSceneHasChanged && scene())
+        setParentItem(NULL);
+    return AbstractArcSourceInternal::itemChange(change, value);
+}
+
 void Arc::updateLayout(){
     if(!m_source){
         warning() << "no source!";
         return;
     }
-
-    debug(7) << "Updating arc layout" << this;
     m_cached_shape_invalid = true;
-
+    
     prepareGeometryChange();
+
+    setPos(m_source->scenePos());
 
     QPointF start_point = mapFromScene(m_source->scenePos());
     QPointF split_point = start_point + QPointF(8,0);

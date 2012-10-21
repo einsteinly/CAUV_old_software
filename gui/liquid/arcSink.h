@@ -27,6 +27,7 @@ namespace liquid {
 
 class AbstractArcSink: public QGraphicsObject,
                        public ConnectionSink,
+                       public LayoutItem,
                        protected LayoutItems{
     Q_OBJECT
     public:

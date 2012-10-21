@@ -75,8 +75,14 @@ void AbstractArcSourceInternal::setParentItem(QGraphicsItem* item){
 QGraphicsItem* AbstractArcSourceInternal::ultimateParent(){
     QGraphicsItem* last_parent = this;
     QGraphicsItem* parent = NULL;
-    while((parent = last_parent->parentItem()))
-        last_parent = parent;
+    LayoutItem* as_layoutitem = NULL;
+    while((parent = last_parent->parentItem())){
+        as_layoutitem = dynamic_cast<LayoutItem*>(parent);
+        if(as_layoutitem)
+            return as_layoutitem->ultimateParent();
+        else
+            last_parent = parent;
+    }
     return last_parent;
 }
 
@@ -243,7 +249,6 @@ ArcSource::ArcSource(ArcSourceDelegate* sourceDelegate,
       m_back_line(NULL){
     
     arc->setFrom(this);
-    arc->setZValue(1);
 
     setFlag(ItemHasNoContents);
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -293,7 +298,7 @@ void ArcSource::setGeometry(QRectF const& rect){
     // sets geometry()
     QGraphicsLayoutItem::setGeometry(rect);
     debug(7) << "ArcSource::setGeometry" << rect << "(pos=" << pos() << ")";
-    setPos(rect.topLeft() - boundingRect().topLeft());
+    setPos(QPointF(2, 0) + rect.topLeft() - boundingRect().topLeft());
 }
 
 

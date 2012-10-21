@@ -47,8 +47,14 @@ void AbstractArcSink::setParentItem(QGraphicsItem* item){
 QGraphicsItem* AbstractArcSink::ultimateParent(){
     QGraphicsItem* last_parent = this;
     QGraphicsItem* parent = NULL;
-    while((parent = last_parent->parentItem()))
-        last_parent = parent;
+    LayoutItem* as_layoutitem = NULL;
+    while((parent = last_parent->parentItem())){
+        as_layoutitem = dynamic_cast<LayoutItem*>(parent);
+        if(as_layoutitem)
+            return as_layoutitem->ultimateParent();
+        else
+            last_parent = parent;
+    }
     return last_parent;
 }
 

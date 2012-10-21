@@ -79,7 +79,7 @@ class ItemFridge: public ItemT{
             this->update(this->boundingRect());
         }
 
-        // Thaw if children need to be removed or modified
+        // Thaw if children need to be removed, modified, or hidden
         void thaw(){
             this->setFlag(QGraphicsItem::ItemHasNoContents, m_saved_itemt_has_no_contents);
             foreach(QGraphicsItem* child, this->childItems())

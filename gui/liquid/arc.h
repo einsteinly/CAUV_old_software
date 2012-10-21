@@ -42,17 +42,25 @@ class Arc: public _::AbstractArcSourceInternal,
         AbstractArcSource *source();
         std::set<AbstractArcSink *> sinks(); 
 
+        // ArcSource
+        // this is overloaded so that arcs do not participate in layout
+        virtual QGraphicsItem* ultimateParent(); // !!! should be private 
+
         // QGraphicsItem:
         // overloaded for performance
         virtual QPainterPath shape() const;
         // TODO: also override contains?
 
-    protected:
         virtual QRectF boundingRect() const;
         virtual void paint(QPainter *painter,
                            const QStyleOptionGraphicsItem *option,
                            QWidget *widget = 0);
-    
+    protected:
+        // itemChanged is used to hook the notification when this arc is
+        // actually added to a scene, at which point magic-foo is performed to
+        // draw arcs underneath everything else
+        virtual QVariant itemChange(GraphicsItemChange change, QVariant const& value);
+
     public Q_SLOTS:
         void updateLayout();    
         

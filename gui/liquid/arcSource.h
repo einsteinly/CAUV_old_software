@@ -47,7 +47,8 @@ protected:
 namespace _{
 
 class AbstractArcSourceInternal: public QGraphicsObject,
-                         public ArcSourceDelegate{
+                                 public ArcSourceDelegate,
+                                 public LayoutItem{
     Q_OBJECT
     public:
         AbstractArcSourceInternal(ArcStyle const& of_style,

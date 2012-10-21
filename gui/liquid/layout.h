@@ -19,6 +19,7 @@
 #include <set>
 
 class QGraphicsScene;
+class QGraphicsItem;
 
 namespace liquid{
 
@@ -47,6 +48,11 @@ class LayoutItems{
         static std::set<AbstractArcSink*> g_sinks;
         static std::set<AbstractArcSource*> g_srcs;
         static std::set<Arc*> g_arcs;
+};
+
+class LayoutItem{
+    public:
+        virtual QGraphicsItem* ultimateParent() = 0;
 };
 
 } // namespace liquid

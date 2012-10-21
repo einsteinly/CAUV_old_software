@@ -52,7 +52,10 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
     for(std::set<AbstractArcSink*>::const_iterator i = g_sinks.begin(); i != g_sinks.end(); i++)
         if((*i)->scene() == scene){
             QGraphicsItem* node = (*i)->ultimateParent();
-            assert(node);
+            // arcs are also top-level items, but the override ultimateParent
+            // to return NULL
+            if(!node)
+                continue;
             sink_parent_lut[*i] = node;
             if(!nodes.count(*i)){
                 node_names.insert(node, mkStr() << next_name++);
@@ -62,7 +65,10 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
     for(std::set<AbstractArcSource*>::const_iterator i = g_srcs.begin(); i != g_srcs.end(); i++)
         if((*i)->scene() == scene){
             QGraphicsItem* node = (*i)->ultimateParent();
-            assert(node);
+            // arcs are also top-level items, but the override ultimateParent
+            // to return NULL
+            if(!node)
+                continue;
             src_parent_lut[*i] = node;
             if(!nodes.count(*i)){
                 node_names.insert(node, mkStr() << next_name++);

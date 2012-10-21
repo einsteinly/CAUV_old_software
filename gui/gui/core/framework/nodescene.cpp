@@ -77,13 +77,17 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
     connect(this, SIGNAL(sceneRectChanged(QRectF)), dropArea, SLOT(updateGeometry(QRectF)));
     dropArea->setAcceptedMouseButtons(0);
     addItem(dropArea);
-
+    
+    // !!!! FIXME: background lines should be drawn in
+    // QGraphicsScene::drawBackground or QGraphicsView::drawBackground,
+    // QGraphicsView can cache its background layer efficiently
     // background lines
     for(int x = -sceneSize; x < sceneSize; x = x + 50) {
         int colour = 242;
         //if(x % 100 == 0) colour = 238;
         VanishingLineItem * line = new VanishingLineItem(0.25, -sceneSize, x, sceneSize, x);
         line->setPen(QPen(QColor(colour, colour, colour)));
+        line->setZValue(-1000);
         this->addItem(line);
     }
     for(int y = -sceneSize; y < sceneSize; y = y + 50) {
@@ -91,6 +95,7 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
         //if(y % 100 == 0) colour = 238;
         VanishingLineItem * line = new VanishingLineItem(0.25, y, -sceneSize, y, sceneSize);
         line->setPen(QPen(QColor(colour, colour, colour)));
+        line->setZValue(-1000);
         this->addItem(line);
     }
 

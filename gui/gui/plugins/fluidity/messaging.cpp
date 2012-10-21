@@ -39,17 +39,17 @@ FluidityMessageObserver::~FluidityMessageObserver(){
 
 
 void FluidityMessageObserver::onPipelineDiscoveryResponseMessage(PipelineDiscoveryResponseMessage_ptr m) {
-    info() << *m;
+    info() << mkStr(*m).lengthLimit(120).str();
     addPipeline(m->pipelineName());
 }
 
 void FluidityMessageObserver::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m) {
-    info() << *m;
+    info() << mkStr(*m).lengthLimit(120).str();
     addPipeline(m->pipelineName());
 }
 
 void FluidityMessageObserver::onNodeAddedMessage(NodeAddedMessage_ptr m){
-    info() << *m;
+    info() << mkStr(*m).lengthLimit(120).str();
     addPipeline(m->pipelineName());
 }
 
