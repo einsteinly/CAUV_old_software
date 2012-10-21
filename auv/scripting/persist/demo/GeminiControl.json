@@ -3,7 +3,7 @@
     "contents": {
         "continuous": true, 
         "gain": 70.0, 
-        "interPingPeriod": 0.5, 
+        "interPingPeriod": 0.25, 
         "range": 40.0, 
         "rangeLines": 1000
     }

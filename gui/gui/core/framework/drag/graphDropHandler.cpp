@@ -55,8 +55,8 @@ QGraphicsItem* GraphingDropHandler::handle(boost::shared_ptr<Node> const& node) 
 
     liquid::LiquidNode * ln = new liquid::LiquidNode(Graph_Node_Style());
     ln->setResizable(true);
-    ln->header()->setTitle(QString::fromStdString(node->nodeName()));
-    ln->header()->setInfo(QString::fromStdString(node->nodePath()));
+    ln->setTitle(QString::fromStdString(node->nodeName()));
+    ln->setInfo(QString::fromStdString(node->nodePath()));
     GraphLayoutItem* graph = new GraphLayoutItem(liquid::water::One_Minute);
     // !!! FIXME need some sort of traits to know what is an angle
     boost::shared_ptr<liquid::water::DataSeries> series(

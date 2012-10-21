@@ -38,7 +38,7 @@ AiNode::AiNode(boost::shared_ptr<Node> node, QGraphicsItem *parent) :
 {
     node->connect(node.get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)), this, SLOT(deleteLater()));
 
-    header()->setTitle(QString::fromStdString(node->nodeName()));
+    setTitle(QString::fromStdString(node->nodeName()));
 }
 
 AiNode::~AiNode(){

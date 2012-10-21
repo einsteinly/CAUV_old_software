@@ -190,6 +190,5 @@ void NodeHeader::setWidth(qreal w){
 
     info_pos.ry() = title_rect.bottom() + 1 + m_info_text->boundingRect().top();
     m_info_text->setPos(QPointF(info_pos.toPoint()));
-
 }
 

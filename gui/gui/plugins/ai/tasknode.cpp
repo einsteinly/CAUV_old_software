@@ -200,17 +200,17 @@ void LiquidTaskNode::initButtons(){
     m_resetButton = new liquid::Button(
                 QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
                 );
-    header()->addButton("reset", m_resetButton);
+    addButton("reset", m_resetButton);
 
     m_stopButton = new liquid::Button(
                 QRectF(0,0,24,24), QString(":/resources/icons/stop_button"), NULL, this
                 );
-    header()->addButton("stop", m_stopButton);
+    addButton("stop", m_stopButton);
 
     m_playButton = new liquid::Button(
                 QRectF(0,0,24,24), QString(":/resources/icons/play_button"), NULL, this
                 );
-    header()->addButton("play", m_playButton);
+    addButton("play", m_playButton);
 
     connect(m_resetButton, SIGNAL(pressed()), this, SIGNAL(reset()));
     connect(m_stopButton, SIGNAL(pressed()), this, SIGNAL(stop()));
@@ -264,8 +264,8 @@ void LiquidTaskNode::buildContents(){
     addItem(m_pipelineSinkLabel);
 
     // the item view
-    header()->setTitle(QString::fromStdString(m_node->nodeName()));
-    header()->setInfo(QString::fromStdString(m_node->nodePath()));
+    setTitle(QString::fromStdString(m_node->nodeName()));
+    setInfo(QString::fromStdString(m_node->nodePath()));
     NodeTreeView * view = new NodeTreeView(true);
     m_model = boost::make_shared<NodeItemModel>(m_node);
     view->setModel(m_model.get());

@@ -17,18 +17,12 @@
 
 #include <QGraphicsObject>
 
+#include "forward.h"
+
 class QGraphicsLayoutItem;
 class QGraphicsLinearLayout;
 
 namespace liquid {
-
-struct NodeStyle;
-
-class Button;
-class ResizeHandle;
-class NodeHeader;
-class RequiresCutout;
-class Shadow;
 
 class LiquidNode: public QGraphicsObject{
     Q_OBJECT
@@ -66,7 +60,9 @@ public:
     virtual void setResizable(bool);
 
     virtual NodeStyle style() const;
-    virtual NodeHeader* header() const;
+
+    void setTitle(QString text);
+    void setInfo(QString text);
 
     enum Status{ NotOK, OK };
     Status status() const;
@@ -85,7 +81,7 @@ private:
 protected:
     QSizeF m_size;
 
-    NodeHeader            *m_header;
+    ItemFridge<NodeHeader> *m_header;
     //QGraphicsWidget       *m_buttonsWidget;
     ResizeHandle          *m_resizeHandle;
     QGraphicsWidget       *m_contentWidget;

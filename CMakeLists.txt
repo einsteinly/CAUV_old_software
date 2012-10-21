@@ -109,7 +109,9 @@ include_directories (${CAUV_SOURCE_DIR})
 
 # everything needs boost: 
 SET(Boost_USE_MULTITHREAD ON)
-find_package (Boost REQUIRED COMPONENTS date_time thread program_options iostreams python system filesystem )
+find_package (Boost REQUIRED COMPONENTS python)
+set(Boost_PYTHON_LIBRARIES ${Boost_LIBRARIES})
+find_package (Boost REQUIRED COMPONENTS date_time thread program_options iostreams system filesystem)
 include_directories (SYSTEM ${Boost_INCLUDE_DIRS})
 link_directories (${Boost_LIBRARY_DIRS})
 
