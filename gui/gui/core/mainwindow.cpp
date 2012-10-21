@@ -32,7 +32,7 @@
 
 #include "cauvplugins.h"
 
-#include "model/model.h"
+#include "model/nodeItemModel.h"
 #include "model/registry.h"
 #include "model/nodes/groupingnode.h"
 
@@ -41,6 +41,7 @@
 #include "connectednode.h"
 
 #include "drag/graphDropHandler.h"
+#include "drag/groupDropHandler.h"
 
 #include "elements/style.h"
 

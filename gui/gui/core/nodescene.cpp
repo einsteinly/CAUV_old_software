@@ -22,7 +22,7 @@
 
 #include "model/node.h"
 #include "model/nodes/groupingnode.h"
-#include "model/model.h"
+#include "model/nodeItemModel.h"
 #include "nodepicker.h"
 
 #include <liquid/node.h>

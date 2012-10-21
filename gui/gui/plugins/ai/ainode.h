@@ -21,7 +21,7 @@
 #include <boost/weak_ptr.hpp>
 
 #include <model/nodes/numericnode.h>
-#include <model/model.h>
+#include <model/nodeItemModel.h>
 #include <drag/nodeDragging.h>
 #include <connectednode.h>
 

@@ -25,7 +25,7 @@
 #include <liquid/style.h>
 #include <liquid/nodeHeader.h>
 
-#include <model/model.h>
+#include <model/nodeItemModel.h>
 
 #include <elements/style.h>
 #include <nodepicker.h>

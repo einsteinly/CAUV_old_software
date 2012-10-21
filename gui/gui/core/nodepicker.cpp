@@ -23,7 +23,7 @@
 
 #include "model/nodes/numericnode.h"
 #include "delegates/delegate.h"
-#include "model/model.h"
+#include "model/nodeItemModel.h"
 
 using namespace cauv;
 using namespace cauv::gui;

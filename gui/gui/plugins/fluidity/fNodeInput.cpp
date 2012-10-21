@@ -31,7 +31,7 @@
 #include <model/nodes/groupingnode.h>
 #include <model/nodes/stringnode.h>
 #include <model/nodes/colournode.h>
-#include <model/model.h>
+#include <model/nodeItemModel.h>
 #include <nodepicker.h>
 
 #include "manager.h"

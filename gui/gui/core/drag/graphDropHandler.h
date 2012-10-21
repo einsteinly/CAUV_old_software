@@ -17,18 +17,6 @@ namespace gui {
 class Node;
 class NodeItemModel;
 
-class GroupDropHandler : public DropHandlerInterface<QGraphicsItem * > {
-public:
-    GroupDropHandler(boost::shared_ptr<NodeItemModel> model);
-
-    virtual bool accepts(boost::shared_ptr<Node> const& node);
-    virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node);
-
-protected:
-    boost::shared_ptr<NodeItemModel> m_model;
-};
-
-
 
 class GraphLayoutItem: public QGraphicsLayoutItem, public liquid::water::Graph{
 public:

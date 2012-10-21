@@ -56,33 +56,3 @@ bool NodePathFilter::filter(boost::shared_ptr<Node> const& node){
     return getText().isEmpty() || containsText(node);
 }
 
-
-NodeExclusionFilter::NodeExclusionFilter(QObject *parent) : QObject(parent){
-}
-
-bool NodeExclusionFilter::filter(boost::shared_ptr<Node> const& node){
-    foreach(boost::weak_ptr<Node> const& n, m_nodes){
-        if(boost::shared_ptr<Node> nSharedPtr = n.lock()) {
-            if(nSharedPtr.get() == node.get()) return false;
-        }
-    }
-    return true;
-}
-
-void NodeExclusionFilter::addNode(boost::weak_ptr<Node> node){
-    m_nodes.push_back(node);
-    Q_EMIT filterChanged();
-}
-
-NodeChildrenExclusionFilter::NodeChildrenExclusionFilter(QObject *parent) : NodeExclusionFilter(parent){
-}
-
-bool NodeChildrenExclusionFilter::filter(boost::shared_ptr<Node> const& node){
-    foreach(boost::weak_ptr<Node> const& n, m_nodes){
-        if(boost::shared_ptr<Node> nSharedPtr = n.lock()) {
-            if(nSharedPtr.get() == node->getParent().get()) return false;
-        }
-    }
-    return true;
-}
-

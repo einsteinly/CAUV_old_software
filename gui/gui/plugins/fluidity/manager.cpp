@@ -32,7 +32,7 @@
 #include <liquid/itemFridge.h>
 
 #include <model/node.h>
-#include <model/model.h>
+#include <model/nodeItemModel.h>
 #include <nodescene.h>
 #include <drag/graphDropHandler.h>
 

@@ -5,7 +5,7 @@
 #include <liquid/water/dataSeries.h>
 
 #include "model/node.h"
-#include "model/model.h"
+#include "model/nodeItemModel.h"
 #include "model/nodes/groupingnode.h"
 
 #include "elements/style.h"

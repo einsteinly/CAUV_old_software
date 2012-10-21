@@ -31,7 +31,7 @@
 #include <elements/style.h>
 #include <nodepicker.h>
 
-#include <model/model.h>
+#include <model/nodeItemModel.h>
 #include <model/nodes/groupingnode.h>
 
 #include "ai/tasknode.h"

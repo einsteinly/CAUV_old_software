@@ -18,7 +18,7 @@
 
 #include <debug/cauv_debug.h>
 
-#include <model/model.h>
+#include <model/nodeItemModel.h>
 #include <model/paramvalues.h>
 #include <model/nodes/groupingnode.h>
 #include <model/nodes/vehiclenode.h>

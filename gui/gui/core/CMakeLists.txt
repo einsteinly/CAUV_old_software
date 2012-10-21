@@ -37,7 +37,7 @@ set ( GUI_CORE_SRCS
 
     model/node.cpp
     model/variants.cpp
-    model/model.cpp
+    model/nodeItemModel.cpp
     model/registry.cpp
     model/messaging.cpp
     model/paramvalues.cpp
@@ -54,6 +54,7 @@ set ( GUI_CORE_SRCS
     trees/nodeTreeView.cpp
 
     filter/nodePathFilter.cpp
+    filter/nodeExclusionFilter.cpp
 
     drag/graphDropHandler.cpp
     drag/groupDropHandler.cpp
@@ -75,7 +76,7 @@ set ( GUI_CORE_H
     widgets/videoWidget.h
 
     model/node.h
-    model/model.h
+    model/nodeItemModel.h
     model/registry.h
     model/nodes/numericnode.h
     model/nodes/stringnode.h
@@ -96,6 +97,7 @@ set ( GUI_CORE_H
     trees/nodeTreeView.h
 
     filter/nodePathFilter.h
+    filter/nodeExclusionFilter.h
 
     drag/nodeDragging.h
     )

@@ -13,7 +13,7 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#include "model.h"
+#include "nodeItemModel.h"
 
 #include <QtGui>
 

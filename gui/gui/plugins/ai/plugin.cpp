@@ -28,6 +28,7 @@
 #include <nodepicker.h>
 #include <delegates/booleandelegate.h>
 #include <model/registry.h>
+#include <filter/nodeExclusionFilter.h>
 
 #include <generated/types/GuiaiGroup.h>
 #include <generated/types/message_type.h>

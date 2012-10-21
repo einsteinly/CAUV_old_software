@@ -12,8 +12,8 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef NODEDRAGGING_H
-#define NODEDRAGGING_H
+#ifndef __CAUV_NODEDRAGGING_H__
+#define __CAUV_NODEDRAGGING_H__
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
@@ -82,4 +82,4 @@ namespace cauv {
     } // namespace gui
 } // namespace cauv
 
-#endif // NODEDRAGGING_H
+#endif // __CAUV_NODEDRAGGING_H__
