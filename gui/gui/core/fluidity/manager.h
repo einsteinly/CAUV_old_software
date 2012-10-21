@@ -35,8 +35,8 @@
 #include <utility/bimap.h>
 #include <utility/time.h>
 
-#include <framework/drag/nodeDragging.h>
-#include <framework/fluidity/types.h>
+#include <drag/nodeDragging.h>
+#include <fluidity/types.h>
 
 // - Forward Declarations in ::
 class QGraphicsScene;

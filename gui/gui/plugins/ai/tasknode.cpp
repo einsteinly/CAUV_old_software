@@ -33,8 +33,8 @@
 #include <liquid/button.h>
 #include <liquid/proxyWidget.h>
 
-#include <framework/nodepicker.h>
-#include <framework/elements/style.h>
+#include <nodepicker.h>
+#include <elements/style.h>
 
 #include "ai/conditionnode.h"
 

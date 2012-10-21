@@ -26,7 +26,7 @@
 
 #include <model/variants.h>
 
-#include <framework/connectednodemap.h>
+#include <connectednodemap.h>
 
 namespace cauv{
 namespace gui{

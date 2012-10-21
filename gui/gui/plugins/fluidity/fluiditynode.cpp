@@ -27,10 +27,10 @@
 
 #include <model/model.h>
 
-#include <framework/elements/style.h>
-#include <framework/nodepicker.h>
-#include <framework/fluidity/view.h>
-#include <framework/fluidity/manager.h>
+#include <elements/style.h>
+#include <nodepicker.h>
+#include <fluidity/view.h>
+#include <fluidity/manager.h>
 
 #include "plugin.h"
 

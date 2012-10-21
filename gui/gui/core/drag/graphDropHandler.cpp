@@ -7,8 +7,8 @@
 #include "model/node.h"
 #include "model/nodes/numericnode.h"
 
-#include "framework/elements/style.h"
-#include "framework/nodepicker.h"
+#include "elements/style.h"
+#include "nodepicker.h"
 
 using namespace cauv;
 using namespace cauv::gui;

@@ -32,8 +32,8 @@
 #include <liquid/itemFridge.h>
 
 #include "model/model.h"
-#include "framework/nodescene.h"
-#include "framework/drag/graphDropHandler.h"
+#include "nodescene.h"
+#include "drag/graphDropHandler.h"
 
 #include "model/node.h"
 

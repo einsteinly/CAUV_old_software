@@ -21,7 +21,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
-#include <framework/filter/nodeFilterInterface.h>
+#include <filter/nodeFilterInterface.h>
 
 #include <model/nodeType.h>
 

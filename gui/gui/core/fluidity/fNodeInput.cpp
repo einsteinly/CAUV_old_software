@@ -32,7 +32,7 @@
 #include <model/nodes/stringnode.h>
 #include <model/nodes/colournode.h>
 #include <model/model.h>
-#include <framework/nodepicker.h>
+#include <nodepicker.h>
 
 
 #include "fluidity/manager.h"

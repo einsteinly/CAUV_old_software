@@ -9,7 +9,7 @@
 
 #include <debug/cauv_debug.h>
 
-#include <framework/drag/nodeDragging.h>
+#include <drag/nodeDragging.h>
 
 namespace cauv {
 namespace gui {

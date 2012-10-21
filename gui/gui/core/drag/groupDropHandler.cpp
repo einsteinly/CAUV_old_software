@@ -8,8 +8,8 @@
 #include "model/model.h"
 #include "model/nodes/groupingnode.h"
 
-#include "framework/elements/style.h"
-#include "framework/nodepicker.h"
+#include "elements/style.h"
+#include "nodepicker.h"
 
 using namespace cauv;
 using namespace cauv::gui;

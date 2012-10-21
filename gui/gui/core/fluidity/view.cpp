@@ -31,7 +31,7 @@
 #include "elements/style.h"
 #include "styles/style.h"
 
-#include "framework/nodescene.h"
+#include "nodescene.h"
 
 #include "fluidity/fNode.h"
 #include "fluidity/managedElement.h"

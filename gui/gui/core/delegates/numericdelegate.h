@@ -17,7 +17,7 @@
 
 #include <QtGui>
 
-#include <framework/delegates/delegate.h>
+#include <delegates/delegate.h>
 
 #include <boost/shared_ptr.hpp>
 

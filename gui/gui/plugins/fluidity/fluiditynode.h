@@ -25,8 +25,8 @@
 #include <model/model.h>
 #include <model/node.h>
 
-#include <framework/mainwindow.h>
-#include <framework/connectednode.h>
+#include <mainwindow.h>
+#include <connectednode.h>
 
 
 namespace cauv {

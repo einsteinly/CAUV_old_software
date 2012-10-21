@@ -22,8 +22,8 @@
 
 #include <model/nodes/numericnode.h>
 #include <model/model.h>
-#include <framework/drag/nodeDragging.h>
-#include <framework/connectednode.h>
+#include <drag/nodeDragging.h>
+#include <connectednode.h>
 
 namespace cauv {
     class CauvNode;

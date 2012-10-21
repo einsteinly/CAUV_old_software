@@ -28,7 +28,7 @@
 #include <liquid/node.h>
 #include <liquid/layout.h>
 
-#include <framework/elements/style.h>
+#include <elements/style.h>
 
 using namespace cauv;
 using namespace cauv::gui;

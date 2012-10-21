@@ -28,7 +28,7 @@
 
 #include <model/registry.h>
 
-#include <framework/nodescene.h>
+#include <nodescene.h>
 
 #include "fluiditynode.h"
 #include "messaging.h"

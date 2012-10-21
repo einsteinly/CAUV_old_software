@@ -17,7 +17,7 @@
 
 #include <QtGui>
 
-#include <framework/drag/nodeDragging.h>
+#include <drag/nodeDragging.h>
 
 namespace cauv {
 namespace gui {

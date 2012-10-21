@@ -20,8 +20,8 @@
 #include <Qt>
 #include <QtPlugin>
 
-#include <gui/core/framework/guiactions.h>
-#include <gui/core/framework/connectednodemap.h>
+#include <guiactions.h>
+#include <connectednodemap.h>
 
 
 class QString;

@@ -36,15 +36,15 @@
 #include "model/registry.h"
 #include "model/nodes/groupingnode.h"
 
-#include "framework/nodescene.h"
-#include "framework/nodepicker.h"
-#include "framework/connectednode.h"
+#include "nodescene.h"
+#include "nodepicker.h"
+#include "connectednode.h"
 
-#include "framework/drag/graphDropHandler.h"
+#include "drag/graphDropHandler.h"
 
 #include "fluidity/view.h"
 
-#include "framework/elements/style.h"
+#include "elements/style.h"
 
 #include <liquid/magma/radialMenu.h>
 #include <liquid/magma/style.h>

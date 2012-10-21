@@ -21,7 +21,7 @@
 #include "model/nodes/numericnode.h"
 
 #include "widgets/neutralspinbox.h"
-#include "framework/styles/style.h"
+#include "styles/style.h"
 
 using namespace cauv;
 using namespace cauv::gui;

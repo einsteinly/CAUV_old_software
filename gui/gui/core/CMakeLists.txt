@@ -13,11 +13,9 @@ set ( GUI_CORE_AUX_DIRS
 
 # include files
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} )
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/framework)
 
 # generated files includes
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/framework)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/widgets)
 
 # for <common/includesstuff> etc
@@ -28,6 +26,10 @@ include_directories (${guis_SOURCE_DIR})
 
 set ( GUI_CORE_SRCS
     cauvbasicplugin.cpp
+    nodepicker.cpp
+    mainwindow.cpp
+    nodescene.cpp
+    connectednode.cpp
 
     widgets/neutralspinbox.cpp
     widgets/onoff.cpp
@@ -39,42 +41,41 @@ set ( GUI_CORE_SRCS
     model/messaging.cpp
     model/paramvalues.cpp
 
-    framework/nodepicker.cpp
-    framework/mainwindow.cpp
-    framework/nodescene.cpp
-    framework/connectednode.cpp
+    styles/style.cpp
 
-    framework/styles/style.cpp
+    delegates/delegate.cpp
+    delegates/booleandelegate.cpp
+    delegates/numericdelegate.cpp
+    delegates/colourdelegate.cpp
 
-    framework/delegates/delegate.cpp
-    framework/delegates/booleandelegate.cpp
-    framework/delegates/numericdelegate.cpp
-    framework/delegates/colourdelegate.cpp
+    elements/style.cpp
 
-    framework/elements/style.cpp
+    fluidity/fNode.cpp
+    fluidity/view.cpp
+    fluidity/managedElement.cpp
+    fluidity/manager.cpp
+    fluidity/fNodeInput.cpp
+    fluidity/videoWidget.cpp
 
-    framework/fluidity/fNode.cpp
-    framework/fluidity/view.cpp 
-    framework/fluidity/managedElement.cpp
-    framework/fluidity/manager.cpp
-    framework/fluidity/fNodeInput.cpp
-    framework/fluidity/videoWidget.cpp
+    trees/nodeTreeView.cpp
 
-    framework/trees/nodeTreeView.cpp
+    filter/nodePathFilter.cpp
 
-    framework/filter/nodePathFilter.cpp
-
-    framework/drag/graphDropHandler.cpp
-    framework/drag/groupDropHandler.cpp
-    framework/drag/nodeDragging.cpp
+    drag/graphDropHandler.cpp
+    drag/groupDropHandler.cpp
+    drag/nodeDragging.cpp
     )
 
 set ( GUI_CORE_UIS
-    framework/nodepicker.ui
-    framework/mainwindow.ui
+    nodepicker.ui
+    mainwindow.ui
     )
 
 set ( GUI_CORE_H
+
+    nodepicker.h
+    mainwindow.h
+
     widgets/neutralspinbox.h
     widgets/onoff.h
 
@@ -90,31 +91,27 @@ set ( GUI_CORE_H
     model/nodes/colournode.h
     model/messaging.h
 
-    framework/nodepicker.h
-    framework/mainwindow.h
+    styles/style.h
 
-    framework/styles/style.h
+    delegates/delegate.h
+    delegates/booleandelegate.h
+    delegates/numericdelegate.h
+    delegates/colourdelegate.h
 
-    framework/delegates/delegate.h
-    framework/delegates/booleandelegate.h
-    framework/delegates/numericdelegate.h
-    framework/delegates/colourdelegate.h
+    fluidity/view.h
+    fluidity/manager.h
+    fluidity/fNode.h
+    fluidity/fNodeOutput.h
+    fluidity/fNodeInput.h
+    fluidity/menu.h
+    fluidity/imageSource.h
+    fluidity/videoWidget.h
 
-    framework/fluidity/view.h
-    framework/fluidity/manager.h
-    framework/fluidity/fNode.h
-    framework/fluidity/fNodeOutput.h
-    framework/fluidity/fNodeInput.h
-    framework/fluidity/menu.h
-    framework/fluidity/imageSource.h
-    framework/fluidity/videoWidget.h
+    trees/nodeTreeView.h
 
-    framework/trees/nodeTreeView.h
+    filter/nodePathFilter.h
 
-    framework/filter/nodePathFilter.h
-
-    framework/drag/groupDropHandler.h
-    framework/drag/nodeDragging.h
+    drag/nodeDragging.h
     )
 
 set ( GUI_CORE_RCC

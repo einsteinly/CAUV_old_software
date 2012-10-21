@@ -21,10 +21,10 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
-#include <framework/filter/nodeFilterInterface.h>
-#include <framework/filter/nodePathFilter.h>
+#include <filter/nodeFilterInterface.h>
+#include <filter/nodePathFilter.h>
 
-#include <framework/trees/nodeTreeView.h>
+#include <trees/nodeTreeView.h>
 
 #include <model/nodeType.h>
 

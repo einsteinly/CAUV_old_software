@@ -18,7 +18,7 @@
 
 #include <debug/cauv_debug.h>
 
-#include <framework/elements/style.h>
+#include <elements/style.h>
 
 #include <generated/types/GuiaiGroup.h>
 
