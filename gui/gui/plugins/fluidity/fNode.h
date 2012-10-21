@@ -22,9 +22,8 @@
 
 #include <liquid/node.h>
 
-#include "fluidity/managedElement.h"
-#include "fluidity/types.h"
-
+#include "managedElement.h"
+#include "types.h"
 
 #include <generated/types/LocalNodeInput.h>
 #include <generated/types/LocalNodeOutput.h>

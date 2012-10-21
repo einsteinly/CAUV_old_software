@@ -22,11 +22,11 @@
 #include <liquid/arcSinkLabel.h>
 #include <liquid/proxyWidget.h>
 
-#include "elements/style.h"
+#include <elements/style.h>
 
-#include "fluidity/managedElement.h"
-#include "fluidity/fNode.h"
-#include "fluidity/fNodeIO.h"
+#include <fluidity/managedElement.h>
+#include <fluidity/fNode.h>
+#include <fluidity/fNodeIO.h>
 
 class QGraphicsProxyWidget;
 

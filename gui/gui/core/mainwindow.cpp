@@ -42,8 +42,6 @@
 
 #include "drag/graphDropHandler.h"
 
-#include "fluidity/view.h"
-
 #include "elements/style.h"
 
 #include <liquid/magma/radialMenu.h>

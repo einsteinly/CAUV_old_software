@@ -38,12 +38,12 @@
 #include "elements/style.h"
 #include "elements/nodeInput.h"
 
-#include "fluidity/fNodeOutput.h"
-#include "fluidity/fNodeInput.h"
-#include "fluidity/manager.h"
-#include "fluidity/types.h"
-#include "fluidity/imageSource.h"
-#include "fluidity/videoWidget.h"
+#include "fNodeOutput.h"
+#include "fNodeInput.h"
+#include "manager.h"
+#include "types.h"
+#include "imageSource.h"
+#include "videoWidget.h"
 
 using cauv::gui::f::FNode;
 using cauv::gui::f::FNodeOutput;

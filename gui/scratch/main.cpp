@@ -24,7 +24,7 @@
 #include <common/cauv_node.h>
 
 #include "styles/style.h"
-#include "fluidity/view.h"
+#include "gui/plugins/fluidity/view.h"
 
 class ScratchNode: public cauv::CauvNode, public boost::enable_shared_from_this<ScratchNode>{
     public:

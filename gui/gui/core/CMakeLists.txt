@@ -50,13 +50,6 @@ set ( GUI_CORE_SRCS
 
     elements/style.cpp
 
-    fluidity/fNode.cpp
-    fluidity/view.cpp
-    fluidity/managedElement.cpp
-    fluidity/manager.cpp
-    fluidity/fNodeInput.cpp
-    fluidity/videoWidget.cpp
-
     trees/nodeTreeView.cpp
 
     filter/nodePathFilter.cpp
@@ -97,15 +90,6 @@ set ( GUI_CORE_H
     delegates/booleandelegate.h
     delegates/numericdelegate.h
     delegates/colourdelegate.h
-
-    fluidity/view.h
-    fluidity/manager.h
-    fluidity/fNode.h
-    fluidity/fNodeOutput.h
-    fluidity/fNodeInput.h
-    fluidity/menu.h
-    fluidity/imageSource.h
-    fluidity/videoWidget.h
 
     trees/nodeTreeView.h
 

@@ -31,11 +31,10 @@
 #include <liquid/layout.h>
 #include <liquid/itemFridge.h>
 
-#include "model/model.h"
-#include "nodescene.h"
-#include "drag/graphDropHandler.h"
-
-#include "model/node.h"
+#include <model/node.h>
+#include <model/model.h>
+#include <nodescene.h>
+#include <drag/graphDropHandler.h>
 
 #include "fNode.h"
 #include "imageSource.h"

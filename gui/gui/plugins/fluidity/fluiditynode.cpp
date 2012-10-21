@@ -29,8 +29,9 @@
 
 #include <elements/style.h>
 #include <nodepicker.h>
-#include <fluidity/view.h>
-#include <fluidity/manager.h>
+
+#include "view.h"
+#include "manager.h"
 
 #include "plugin.h"
 

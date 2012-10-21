@@ -34,9 +34,8 @@
 #include <model/model.h>
 #include <nodepicker.h>
 
-
-#include "fluidity/manager.h"
-#include "fluidity/fNodeOutput.h"
+#include "manager.h"
+#include "fNodeOutput.h"
 
 #include <generated/types/LocalNodeInput.h>
 #include <generated/types/SetNodeParameterMessage.h>

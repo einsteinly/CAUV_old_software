@@ -28,17 +28,16 @@
 #include <utility/time.h>
 #include <generated/types/NodeType.h>
 
-#include "elements/style.h"
-#include "styles/style.h"
+#include <model/node.h>
+#include <elements/style.h>
+#include <styles/style.h>
 
-#include "nodescene.h"
+#include <nodescene.h>
 
-#include "fluidity/fNode.h"
-#include "fluidity/managedElement.h"
-#include "fluidity/manager.h"
-#include "fluidity/menu.h"
-
-#include "model/node.h"
+#include "fNode.h"
+#include "managedElement.h"
+#include "manager.h"
+#include "menu.h"
 
 #include <debug/cauv_debug.h>
 
