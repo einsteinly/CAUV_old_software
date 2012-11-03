@@ -41,4 +41,3 @@ target_link_libraries (
     SbgComSerial
     ${BOOST_THREAD_LIB}
 )
-depends_on_messages(control)

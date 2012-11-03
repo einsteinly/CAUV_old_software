@@ -50,4 +50,3 @@ target_link_libraries (
 )
 #cauv_install ( scratch )
 
-depends_on_messages(scratch)

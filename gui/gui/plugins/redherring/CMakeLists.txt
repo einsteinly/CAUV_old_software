@@ -20,7 +20,6 @@ add_library( redherringplugin MODULE
     ${REDHERRING_PLUGIN_UIS_H}
     ${REDHERRING_PLUGIN_MOC_H}
 )
-depends_on_messages(redherringplugin)
 cauv_install_plugin(redherringplugin)
                                       
 target_link_libraries( redherringplugin

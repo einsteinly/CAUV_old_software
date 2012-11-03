@@ -55,7 +55,6 @@ add_library (cauvinterface SHARED
 )
 add_precompiled_header(cauvinterface pch.h)
 
-depends_on_messages(cauvinterface)
 set_target_properties(cauvinterface PROPERTIES PREFIX            "" 
                                                ${CONFIG}_POSTFIX "")
 
