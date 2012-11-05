@@ -18,7 +18,7 @@ import traceback
 import cauv.messaging as msg
 import cauv.node as node
 from cauv.debug import debug, info, warning, error
-from utils import CHIL
+import CHIL
 from utils.hacks import tdToFloatSeconds
 
 

@@ -73,8 +73,8 @@ import blist # BSD license
 import thirdparty.pyparsing as pp # MIT license
 
 # CAUV
-from hacks import sourceRevision, tddiv, tdmul, tdToLongMuSec
-from interpolation import PiecewiseApprox, ZeroOrderPiecewiseApprox, OutOfRange_Low, OutOfRange_High, linearInterp, linearInterp_timedeltas
+from utils.hacks import sourceRevision, tddiv, tdmul, tdToLongMuSec
+from utils.interpolation import PiecewiseApprox, ZeroOrderPiecewiseApprox, OutOfRange_Low, OutOfRange_High, linearInterp, linearInterp_timedeltas
 import cauv.messaging as messaging
 
 

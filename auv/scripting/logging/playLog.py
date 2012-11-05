@@ -12,7 +12,7 @@ import sys
 import cauv
 import cauv.node
 import cauv.messaging as msg
-from utils import CHIL
+import CHIL
 from utils.hacks import tdToFloatSeconds
 from cauv.debug import debug, error, warning, info
 

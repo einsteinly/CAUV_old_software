@@ -1,11 +1,11 @@
-from utils.ordereddict import OrderedDict
+import collections
 import time
 
 class TimeAverage:
 
     def __init__(self, duration):
         self.duration = duration
-        self.entries = OrderedDict()
+        self.entries = collections.OrderedDict()
         
     def setDuration(self, duration):
         self.duration = duration
