@@ -49,37 +49,18 @@ p_BoundedFloat = pp.Forward()
 \# Forward declarations
 #for $s in $structs
 p_${s.name} = pp.Forward()
-    #for $f in $sorted($s.fields)
-        #if $isSTLVector($f.type)
-            $requiredVectorTypes.add($f.type.valType)
-        #else if $isSTLMap($f.type)
-            $requiredMapTypes.add(($f.type.keyType, $f.type.valType))
-        #end if
-    #end for
 #end for
 
 #for $v in $variants
 p_${v.name} = pp.Forward()
 #end for
 
-#for $g in $groups
-#for $m in $g.messages
-    #for $f in $sorted($m.fields)
-        #if $isSTLVector($f.type)
-            #silent $requiredVectorTypes.add($f.type.valType)
-        #else if $isSTLMap($f.type)
-            #silent $requiredMapTypes.add(($f.type.keyType, $f.type.valType))
-        #end if
-    #end for
-#end for
-#end for
-#set $allVecTypes, $allMapTypes = $addNestedTypes($requiredVectorTypes, $requiredMapTypes)
-#for $t in $allVecTypes
+#for $t in $requiredVectorTypes
     #set $vecn = $CPPContainerTypeName(t) + "Vec"
 p_${vecn} = pp.Forward()
 #end for
 
-#for $kt, $vt  in $allMapTypes
+#for $kt, $vt  in $requiredMapTypes
     #set $mapn = $CPPContainerTypeName(kt) + $CPPContainerTypeName(vt) + "Map"
 p_${mapn} = pp.Forward()
 #end for
@@ -134,7 +115,7 @@ def a__vec_gen(T):
     return a__vec
 
 \# Parse Vector Types
-#for $t in $allVecTypes
+#for $t in $requiredVectorTypes
     #set $vecn = $CPPContainerTypeName(t) + "Vec"
     #if $vecn != "byteVec"
 p_${vecn} << pp.Group(l + pp.Optional(pp.delimitedList(p_${toCHILType($t)})) + r)
@@ -161,7 +142,7 @@ def a__map_gen(T):
     return a__map
 
 \# Parse Map Types
-#for $kt, $vt  in $allMapTypes
+#for $kt, $vt  in $requiredMapTypes
     #set $mapn = $CPPContainerTypeName(kt) + $CPPContainerTypeName(vt) + "Map"
 p_${mapn} << pp.Group(l + pp.Optional(pp.delimitedList(l + p_${toCHILType($kt)} + c + p_${toCHILType($vt)} + r)) + r)
 p_${mapn}.setParseAction(a__map_gen(messaging.${mapn}))
