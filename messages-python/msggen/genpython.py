@@ -57,11 +57,8 @@ def addNestedTypes(list_types, map_types, array_types):
     return (list_types | rl | recursed_list,
             map_types | rm | recursed_map,
             array_types | ra | recursed_array)
-    
-def get_output_files(tree):
-    OutputFile = collections.namedtuple("OutputFile", ["template_file", "output_file", "search_list"])
 
-    compilation_units = ["enums", "structs", "variants", "messages", "observers", "containers"]
+def populateContainerTypes(tree):
     requiredMapTypes = set()
     requiredVectorTypes = set()
     requiredArrayTypes = set()
@@ -83,7 +80,14 @@ def get_output_files(tree):
             requiredVectorTypes.add(t.valType)
         if isArray(t):
             requiredArrayTypes.add((t.valType, t.size))
+    return requiredVectorTypes, requiredMapTypes, requiredArrayTypes
+    
+def get_output_files(tree):
+    OutputFile = collections.namedtuple("OutputFile", ["template_file", "output_file", "search_list"])
 
+    compilation_units = ["enums", "structs", "variants", "messages", "observers", "containers"]
+
+    requiredVectorTypes, requiredMapTypes, requiredArrayTypes = populateContainerTypes(tree)
     requiredVectorTypes, requiredMapTypes, requiredArrayTypes = addNestedTypes(requiredVectorTypes, requiredMapTypes, requiredArrayTypes)
     includes,fwddecls = gencpp.getIncludes(requiredMapTypes | requiredVectorTypes | requiredArrayTypes, "<generated/types/%s.h>")
 

@@ -52,6 +52,7 @@ def get_output_files(tree):
 
     source_revision = sourceRevision()
 
+    requiredVectorTypes, requiredMapTypes, requiredArrayTypes = genpython.populateContainerTypes(tree)
     requiredVectorTypes, requiredMapTypes, requiredArrayTypes = genpython.addNestedTypes(requiredVectorTypes, requiredMapTypes, requiredArrayTypes)
 
     search_values = {

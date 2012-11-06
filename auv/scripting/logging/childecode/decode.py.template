@@ -42,9 +42,11 @@ p_str = pp.Optional(pp.Word(hexchars))
 p_str.setParseAction(lambda x: base64.b16decode(x[0]) if len(x) else '')
 
 \# External Type Forward Declarations
-\# TODO: autogenerate these
-p_Image = pp.Forward()
-p_BoundedFloat = pp.Forward()
+#for $i in $included_types
+#if $i.superclass
+p_${i.name} = pp.Forward()
+#end if
+#end for
 
 \# Forward declarations
 #for $s in $structs
@@ -102,7 +104,11 @@ p_${v.name} << (
 #end for
 
 \# Parse definitions for external types:
-p_BoundedFloat << p_BoundedFloatBase
+#for $i in $included_types
+#if $i.superclass
+p_${i.name} << p_${i.superclass.struct.name}
+#end if
+#end for
 
 # Parse action generator for vector types
 def a__vec_gen(T):
@@ -171,6 +177,14 @@ p_${m.name}Message.setParseAction(lambda x: messaging.${m.name}Message(*x[0]))
 #end for
 
 
+msgid_map = { 
+#for $i, $g in $enumerate($groups)
+#for $j, $m in $enumerate($g.messages)
+    $m.id : p_${m.name}Message,
+#end for
+#end for
+}
+
 \# Parse any Message
 ## TODO: this is better than using pyparsing.Optional, but really we want a
 ## decode-tree based thingy (not trivial to generate that from our
@@ -178,17 +192,7 @@ p_${m.name}Message.setParseAction(lambda x: messaging.${m.name}Message(*x[0]))
 def parseMessage(s):
     msgstart = s.find('(')
     msgid = int(s[:msgstart])
-#for $i, $g in $enumerate($groups)
-#for $j, $m in $enumerate($g.messages)
-    #if $i == 0 and $j == 0
-    if msgid == $m.id:
-        return p_${m.name}Message.parseString(s[msgstart:])[0]
-    #else
-    elif msgid == $m.id:
-        return p_${m.name}Message.parseString(s[msgstart:])[0]
-    #end if
-#end for
-#end for
-    else:
+    try:
+        return msgid_map[msgid].parseString(s[msgstart:])[0]
+    except KeyError:
         raise pp.ParseException('Unknown Message ID: %s' % msgid)
-

@@ -321,6 +321,8 @@ struct TimeStamp <utility/time.h>
     secs : int32;
     musecs : int32;
 }
+// Think very very hard about changing the format of the Sonar data. Doing so
+// means updating a whole chunk of past log data to be handled by the new system
 struct SonarDataLine
 {
     data: list<byte>;
