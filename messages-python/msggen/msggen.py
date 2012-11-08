@@ -195,8 +195,5 @@ if options.nowrite:
     print ";".join((os.path.abspath(f) for f in filesWritten))
 
 if options.cmake_out:
-    if filesWritten or not os.path.exists(options.cmake_out):
-        with open(options.cmake_out, "w") as cmake_file:
-            print("writing cmake file {}".format(options.cmake_out))
-            files = "\n".join((os.path.abspath(f) for f in cmake_files))
-            cmake_file.write("SET({}_FILES {})\n".format(options.cmake_prefix, files))
+    files = "\n".join((os.path.abspath(f) for f in cmake_files))
+    writeIfChanged(options.cmake_out, "SET({}_FILES {})\n".format(options.cmake_prefix, files))

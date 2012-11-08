@@ -5,10 +5,9 @@ if (NOT CMAKE_IN_SOURCE AND CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
 endif()
 
 # Initialise install directories
+# Does anyone still use this?
 foreach(DIR "$ENV{HOME}/install"
-            "$ENV{HOME}"
-            "/societies/cauv/install"
-            "/homes/groups/other/sauc-e/install")
+            "$ENV{HOME}")
     if (EXISTS ${DIR}/include OR EXISTS ${DIR}/lib)
         message(STATUS "Adding ${DIR} to prefix path")
         set (CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" "${DIR}")
@@ -39,6 +38,20 @@ if (CAUV_DEBUG_MESSAGES)
 endif()
 
 option(CAUV_BUILD_TESTS "Build test programs" ON)
+option(CAUV_USE_VIRTUALENV "Install into all files into a virtualenv" ON)
+option(CAUV_USE_PREFIX "Use CAUV_BINARY_PREFIX on installed executables" OFF)
+# Custom install which adds a prefix to executables
+set (CAUV_BINARY_PREFIX "cauv-" CACHE STRING "string to prepend to all cauv executables")
+set (CMAKE_SKIP_INSTALL_ALL_DEPENDENCY TRUE)
+if (CAUV_USE_PREFIX)
+    set (CAUV_INSTALL_DIR "cauv/${CMAKE_BUILD_TYPE}")
+    set (CMAKE_DEBUG_POSTFIX "d")
+else()
+    set (CAUV_INSTALL_DIR "")
+endif()
+if (CAUV_USE_VIRTUALENV)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/virtualenv")
+endif()
 
 # Definitions (overridable) for Debug / Release
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG CAUV_DEBUG_LEVEL=1)
@@ -51,11 +64,6 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #message("setting cmake install rpath to ${CMAKE_INSTALL_PREFIX}/lib")
 SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
-# Custom install which adds a prefix to executables
-set (CAUV_BINARY_PREFIX "cauv-" CACHE STRING "string to prepend to all cauv executables")
-
-set (CMAKE_SKIP_INSTALL_ALL_DEPENDENCY TRUE)
-set (CMAKE_DEBUG_POSTFIX "d")
 string(TOUPPER "${CMAKE_BUILD_TYPE}" CONFIG)
 
 function (cauv_install_link FROM TO)
@@ -83,13 +91,19 @@ function (cauv_install TARGET)
         if (NOT TARGET_OUTPUT)
             set(TARGET_OUTPUT "${TARGET}")
         endif()
-        set (TARGET_OLD "${CMAKE_INSTALL_PREFIX}/bin/cauv/${CMAKE_BUILD_TYPE}/${TARGET_OUTPUT}")
-        set (TARGET_NEW "${CMAKE_INSTALL_PREFIX}/bin/${CAUV_BINARY_PREFIX}${TARGET_OUTPUT}${CMAKE_${CONFIG}_POSTFIX}")
+        if (CAUV_USE_PREFIX)
+            set (TARGET_OLD "${CMAKE_INSTALL_PREFIX}/bin/${CAUV_INSTALL_DIR}/${TARGET_OUTPUT}")
+            set (TARGET_NEW "${CMAKE_INSTALL_PREFIX}/bin/${CAUV_BINARY_PREFIX}${TARGET_OUTPUT}${CMAKE_${CONFIG}_POSTFIX}")
 
-        install (TARGETS ${TARGET} DESTINATION bin/cauv/${CMAKE_BUILD_TYPE} )
-        cauv_install_link(${TARGET_NEW} ${TARGET_OLD})
+            install (TARGETS ${TARGET} DESTINATION bin/cauv/${CMAKE_BUILD_TYPE} )
+            cauv_install_link(${TARGET_NEW} ${TARGET_OLD})
+        else()
+            install (TARGETS ${TARGET} DESTINATION bin/)
+        endif()
     else()
-        set_target_properties(${TARGET} PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+        if (CAUV_USE_PREFIX)
+            set_target_properties(${TARGET} PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+        endif()
         install (
             TARGETS ${TARGET}
             RUNTIME DESTINATION bin
