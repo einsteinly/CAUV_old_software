@@ -26,7 +26,7 @@ import cauv.messaging as messaging
 import cauv.control as control
 import cauv.node
 from cauv.debug import debug, error, warning, info
-import base_model
+import simulator.base_model
 
 
 def fmtArr(a):
@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     opts,args  = parser.parse_known_args()
 
-    vehicle_modname = opts.vehicle.lower().replace('-','') + '_model'
+    vehicle_modname = 'simulator.' + opts.vehicle.lower().replace('-','') + '_model'
     vehicle_module = importlib.import_module(vehicle_modname)
 
     node = cauv.node.Node('py-sim',args)
