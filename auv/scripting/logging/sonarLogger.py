@@ -8,7 +8,7 @@ import argparse
 # CAUV
 import cauv.messaging as msg
 import cauv.node as node 
-import messageLogger
+import childecode.messageLogger as messageLogger
 from cauv.debug import debug, info, warning, error
 from utils.hacks import injectBase
 

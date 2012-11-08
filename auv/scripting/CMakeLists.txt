@@ -42,7 +42,7 @@ endif()
 
 
 function(install_module MODULE)
-    install(DIRECTORY ${SRCD}/${MODULE} DESTINATION ${CAUV_PYTHON_INSTALL_PATH}
+    install(DIRECTORY ${MODULE} DESTINATION ${CAUV_PYTHON_INSTALL_PATH}
             FILES_MATCHING PATTERN "*.py")
 endfunction()
 
@@ -55,7 +55,6 @@ function(config_dir DIRECTORY)
 endfunction()
 
 install_module(cauv)
-install_module(logging)
 install_module(utils)
 install_module(simulator)
 install_module(gamepad-maps)

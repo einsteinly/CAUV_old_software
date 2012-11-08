@@ -10,4 +10,8 @@
 #)
 
 python_exe(playLog.py)
-python_exe(messageLogger.py)
+python_exe(logwatch.py)
+python_exe(reIndexLog.py)
+python_exe(sonarLogger.py)
+install_module(childecode)
+install_module(thirdparty) #this should probably be moved to the pip bundle
