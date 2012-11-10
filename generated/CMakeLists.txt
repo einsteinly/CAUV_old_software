@@ -53,7 +53,7 @@ add_custom_target (
 add_custom_command (
     OUTPUT ${GEND}/version.h
     COMMAND hg -R ${CMAKE_SOURCE_DIR} summary | sed "s/^/    /" | xxd -i - ${GEND}/version.h
-    DEPENDS ${CMAKE_SOURCE_DIR}/.hg/last-message.txt
+    DEPENDS ${CMAKE_SOURCE_DIR}/.hg
     COMMENT "Generating version header"
 )
 
