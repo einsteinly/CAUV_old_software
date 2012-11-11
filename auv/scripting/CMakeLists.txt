@@ -57,7 +57,7 @@ endfunction()
 install_module(cauv)
 install_module(utils)
 install_module(simulator)
-install_module(gamepad-maps)
+install_module(gamepad_maps)
 
 python_exe(gamepad_server.py)
 python_exe(ishell.py)
