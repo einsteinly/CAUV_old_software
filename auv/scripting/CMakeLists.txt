@@ -28,7 +28,7 @@ add_dependencies(scripting python-module)
 
 if (${CAUV_USE_VIRTUALENV})
     find_program(VIRTUALENV NAMES virtualenv2 virtualenv)
-    set(VIRTENVD ${CMAKE_BINARY_DIR}/virtualenv)
+    set(VIRTENVD ${CMAKE_INSTALL_PREFIX})
     add_custom_command(
         OUTPUT ${VIRTENVD}/bin/python2.7
         COMMAND ${VIRTUALENV} -p python2.7 --no-site-packages --never-download ${VIRTENVD}
@@ -85,3 +85,5 @@ add_subdirectory(logging)
 add_subdirectory(AI)
 add_subdirectory(CAN)
 add_subdirectory(heimdall)
+
+add_subdirectory(install) #should be last
