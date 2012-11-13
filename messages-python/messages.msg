@@ -165,6 +165,11 @@ enum AICommand : int8 {
     ResumeAll,
     Save,
 }
+enum ProcessCommand : int8 {
+    Start,
+    Stop,
+    Restart,
+}
 enum SensorUIDBase : int32 {
     None = 0,
     Camera =   0x10,  // cameras are 0x10 +- ID: range [0x1--0x1F]
@@ -507,6 +512,9 @@ group zmq_internal
     message DaemonIDMarker : 224
     {
     }
+    message SubscriptionConfirmMarker : 228
+    {
+    }
 
     //these message ids aren't special like the 2 above
     message DaemonConnections : 225
@@ -521,9 +529,6 @@ group zmq_internal
     {
         daemon_id: uint32;
         connect_string : string;
-    }
-    message SubscriptionConfirmMarker : 228
-    {
     }
 }
 
@@ -675,6 +680,12 @@ group telemetry
         estimate_total : float;
         fraction_remaining : float;
     }
+    message ProcessControl : 91
+    {
+        action : ProcessCommand;
+        process : string;
+        command : list<string>;
+    }
     message ProcessStatus : 87
     {
         process : string;
@@ -692,8 +703,8 @@ group telemetry
     {
         location : WGS84Coord;
         track : float;
-        speed: float;
-        climb: float;
+        speed : float;
+        climb : float;
     }
 }
 group image
@@ -1036,6 +1047,7 @@ group gui
     {
         timeout : BoundedFloat;
     }
+
 }
 
 group pl_gui

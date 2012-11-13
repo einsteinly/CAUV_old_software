@@ -73,6 +73,7 @@ python_exe(sim.py)
 python_exe(telemetryLogger.py)
 python_exe(wasd_remote.py)
 python_exe(watch.py)
+python_exe(watchctl.py)
 
 config_dir(sessions)
 config_dir(detector_library)
