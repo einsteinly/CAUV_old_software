@@ -11,7 +11,7 @@ import time
 import watchfuncs
 import traceback
 
-import utils.multitasking
+import utils.daemon
 from cauv.debug import debug, info, warning, error
 
 class SessionNotFound(Exception):
@@ -87,7 +87,7 @@ class WatchProcess:
             if self.pid is not None:
                 info("found PID {} for process {}".format(self.pid, self.p.name))
         if self.pid is None and self.restart:
-            self.pid = utils.multitasking.spawnDaemon(self.exec_proc)
+            self.pid = utils.daemon.spawnDaemon(self.exec_proc)
             info("Started {} with pid {}".format(self.p.name, self.pid))
 
     def kill(self, sig):

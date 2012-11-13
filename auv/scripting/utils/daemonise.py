@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 
-import utils.multitasking
+import utils.daemon
 import sys
 import os
 import argparse
@@ -26,5 +26,5 @@ args = parser.parse_args()
 if not args.command:
     parser.print_help()
     sys.exit(1)
-pid = utils.multitasking.spawnDaemon(functools.partial(exec_task,args))
+pid = utils.daemon.spawnDaemon(functools.partial(exec_task,args))
 print('command run with PID {}'.format(pid))

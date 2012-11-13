@@ -3,7 +3,7 @@
 import sys
 import argparse
 import imp
-import utils.multitasking
+import utils.daemon
 import os
 import pwd
 import utils.watch as watch
@@ -65,7 +65,7 @@ def monitor():
 if args.kill is not None:
     watcher.kill(args.kill)
 elif args.daemonize:
-    utils.multitasking.spawnDaemon(monitor)
+    utils.daemon.spawnDaemon(monitor)
 else:
     try:
         monitor()
