@@ -17,7 +17,6 @@ target_link_libraries (
     opencv_image
     ${OpenCV_LIBS}
 )
-depends_on_messages(gemini_node)
 
 
 add_executable (
@@ -30,5 +29,4 @@ target_link_libraries (
     opencv_image
     ${OpenCV_LIBS}
 )
-depends_on_messages(fake_gemini)
 

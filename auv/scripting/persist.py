@@ -118,21 +118,27 @@ class PersistObserver(msg.MessageObserver):
     def onMembershipChangedMessage(self, m):
         if self.__auto:
             info('received membership changed message, broadcasting parameters...')
+            time.sleep(0.3) #blergh
             sendSavedMessages(self.__node, self.__shelf)
 
     def attachOnMessageFunc(self, name):
         func = OnAnyMessage(name, self.__shelf).onMessage
         setattr(self, 'on%sMessage' % name, func)
 
-def persistMainLoop(cauv_node, shelf, auto, silent = False):
-    po = PersistObserver(cauv_node, shelf, Default_Messages_To_Watch, auto)
+def persistMainLoop(cauv_node, shelf, auto, silent = False, read_only = False, broadcast_rate = None):
+    po = PersistObserver(cauv_node, shelf, Default_Messages_To_Watch if not read_only else [], auto)
     help_str = 'available commands: "set" - broadcast saved '+\
                'parameters, "exit" - stop monitoring and exit, '+\
                '"auto on" / "auto off" - control automatic ' +\
                'parameter broadcast on membership change'
     if silent:
-        while True:
-            time.sleep(10000)
+        if broadcast_rate is None:
+            while True:
+                time.sleep(1000)
+        else:
+            while True:
+                time.sleep(broadcast_rate)
+                sendSavedMessages(cauv_node, shelf)
     else:
         print help_str
         while True:
@@ -160,8 +166,9 @@ if __name__ == '__main__':
     p.add_argument('-n', '--no-auto', dest='auto', default=True,
                  action='store_false', help="don't automatically set parameters" +\
                  "when CAUV Nodes connect to the messaging system")
-    p.add_argument('-s', '--silent', action='store_true',
-                  help="don\'t prompt for commands")
+    p.add_argument('-s', '--silent', action='store_true', help="don\'t prompt for commands")
+    p.add_argument('-o', '--read-only', help="don't save broadcasted messages", action = 'store_true')
+    p.add_argument('-e', '--every', help='broadcast every n seconds', type=int)
 
     opts, args = p.parse_known_args()
 
@@ -170,4 +177,4 @@ if __name__ == '__main__':
     
     if opts.restore:
         sendSavedMessages(cauv_node, shelf)
-    persistMainLoop(cauv_node, shelf, opts.auto, opts.silent)
+    persistMainLoop(cauv_node, shelf, opts.auto, opts.silent, opts.read_only, opts.every)

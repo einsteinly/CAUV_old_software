@@ -38,7 +38,6 @@ add_library( fluidityplugin MODULE
     ${FLUIDITY_PLUGIN_UIS_H}
     ${FLUIDITY_PLUGIN_MOC_H}
 )
-depends_on_messages(fluidityplugin)
 cauv_install_plugin(fluidityplugin)
 add_precompiled_header(fluidityplugin ${guis_SOURCE_DIR}/pch.h)
 

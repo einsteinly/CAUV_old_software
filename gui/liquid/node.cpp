@@ -86,6 +86,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     status(OK);
 
     setSize(Minimum_Size);
+    updateLayout();
 
     setCacheMode(DeviceCoordinateCache);
     m_contentWidget->setCacheMode(DeviceCoordinateCache);
@@ -291,7 +292,7 @@ void LiquidNode::updateLayout(){
 
 void LiquidNode::setSizeFromContents(){
     debug() << "LiquidNode::setSizeFromContents(" << m_contentWidget->size()
-    << "(hint:" <<  m_contentWidget->size() << "))";
+            << "(hint:" <<  m_contentWidget->size() << "))";
 
     const float header_height = m_style.header.height + m_style.bl_radius/2;
     const double header_min_width = m_header->minimumWidth();
@@ -305,7 +306,7 @@ void LiquidNode::setSizeFromContents(){
 
     m_resizeHandle->setX(m_size.width() - m_resizeHandle->size().width());
     m_resizeHandle->setY(m_size.height() - m_resizeHandle->size().height());
-
+    
     m_header->setWidth(m_size.width());
     m_header->freeze();
 }

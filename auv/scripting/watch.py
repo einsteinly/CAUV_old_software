@@ -1,14 +1,18 @@
 #!/usr/bin/env python2.7
 
-import sys
-import argparse
-import imp
-import utils.multitasking
 import os
+import sys
+import imp
 import pwd
+import os.path
+import argparse
+
+import utils.daemon
 import utils.watch as watch
 from cauv.debug import debug, info, warning, error
-from cauv.messaging import debugParseOptions
+import cauv.messaging as messaging
+import cauv.node
+import utils.dirs
 
 parser = argparse.ArgumentParser(description = "Start up and monitor CAUV nodes and other programs", add_help = False)
 
@@ -16,6 +20,8 @@ parser.add_argument("--session", "-s", help="session file to use")
 
 args, unknown = parser.parse_known_args()
 
+if not os.path.exists(args.session):
+    args.session = utils.dirs.config_dir(args.session)
 if args.session:
     session = watch.load_session(args.session)
 try:
@@ -26,16 +32,15 @@ except AttributeError:
 except NameError:
     pass
 
-parser.add_argument("--help",        "-h",  help="print this usage message",                 action='store_true')
+parser.add_argument("--help",        "-h",  help="print this usage message, and help for any session file", action='store_true')
 parser.add_argument("--daemonize",   "-d",  help="run as a daemon",                          action='store_true')
-parser.add_argument("--core-dumps",  "-c",  help="enable core dumps for started processes",  action = 'store_true')
-parser.add_argument("--bin-dir",     "-b",  help="binary files directory",                   default = '.')
-parser.add_argument("--script-dir",  "-p",  help="script files directory",                   default = '.')
+parser.add_argument("--core-dumps",  "-c",  help="enable core dumps for started processes",  action='store_true')
 parser.add_argument("--log-dir",     "-l",  help="log directory for files")
 parser.add_argument("--kill",        "-k",  help="Kill all processes in session",            nargs='?', type=int, const=15)
 parser.add_argument("--kill-after",  "-K",  help="Kill all processes once finished",         nargs='?', type=int, const=3)
-parser.add_argument("--user",        "-u",  help="Default user to run processes as",         default=watch.currentUser())
 parser.add_argument("--tick",        "-t",  help="Time between process checks (seconds)",    default=1.0, type=float)
+#parser.add_argument("--start",       "-r",  help="Processes to start",                       nargs="+", action='append')
+parser.add_argument("--no-node",     "-n",  help="Don't run a CAUV node to start and stop processes", action='store_true')
 
 args = parser.parse_args()
 
@@ -43,14 +48,29 @@ if args.help or not args.session:
     parser.print_help()
     sys.exit(1)
 
-if args.user is None:
-    try:
-        args.user = os.environ["SUDO_USER"]
-    except KeyError:
-        pass
+watcher = watch.Watcher(session.get_processes(args), args.core_dumps, args.log_dir, detach = True)
 
-watcher = watch.Watcher(session.get_processes(args), args.core_dumps, args.log_dir,
-                        args.user, args.script_dir, args.bin_dir, detach=False)
+class WatchObserver(messaging.MessageObserver):
+    def __init__(self, watcher):
+        messaging.MessageObserver.__init__(self)
+        self.node = cauv.node.Node('watch')
+        self.node.addObserver(self)
+        self.watcher = watcher
+        self.node.subMessage(messaging.ProcessControlMessage())
+
+    def onProcessControlMessage(self, msg):
+        try:
+            if msg.action == messaging.ProcessCommand.Start:
+                watcher.start(msg.process)
+            elif msg.action == messaging.ProcessCommand.Stop:
+                watcher.stop(msg.process)
+            elif msg.action == messaging.ProcessCommand.Restart:
+                watcher.restart(msg.process)
+        except KeyError:
+            error("Process {} does not exist!".format(msg.process))
+
+    def report(self):
+        pass
 
 def monitor():
     if args.daemonize:
@@ -59,16 +79,19 @@ def monitor():
         os.dup2(null_fd, sys.stdin.fileno())
         os.dup2(null_fd, sys.stdout.fileno())
         os.dup2(null_fd, sys.stderr.fileno())
-
-    watcher.monitor(args.tick)
+    if args.no_node:
+        watcher.monitor(args.tick)
+    else:
+        observer = WatchObserver(watcher)
+        watcher.monitor(args.tick, observer.report)
     
 if args.kill is not None:
-    watcher.kill(args.kill)
+    watcher.killall(args.kill)
 elif args.daemonize:
-    utils.multitasking.spawnDaemon(monitor)
+    utils.daemon.spawnDaemon(monitor)
 else:
     try:
         monitor()
     finally:
         if args.kill_after is not None:
-            watcher.kill(args.kill_after)
+            watcher.killall(args.kill_after)

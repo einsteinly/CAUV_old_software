@@ -5,54 +5,36 @@ from __future__ import with_statement
 import os
 import sys
 import fnmatch
-from optparse import OptionParser
+import argparse
 
-p = OptionParser(usage="usage: %prog [options] INPUT")
-p.add_option("-l", "--lang",
+p = argparse.ArgumentParser(description="Generate message files from a messages.msg message description file")
+p.add_argument("input", help="messages.msg files")
+p.add_argument("-l", "--lang",
              choices=["c++", "c", "java", "python", "chil"],
              default="c++",
-             metavar="LANG",
-             help="Output language (java, python, c++, or c) [default: %default]")
-p.add_option("-a", "--all",
+             help="Output language")
+p.add_argument("-a", "--all",
              action="store_true",
-             dest="all",
-             default=False,
              help="If set, will write over all files. Otherwise, only writes over if the template files if the md5 sums differ")
-p.add_option("-n", "--nowrite",
+p.add_argument("-n", "--nowrite",
              action="store_true",
-             dest="nowrite",
-             default=False,
              help="If set, will just output the filenames that would have been written")
-p.add_option("-o", "--output",
-             type="string",
-             metavar="FILE",
+p.add_argument("-o", "--output",
              help="Output filename(s) prefix (file extension will be added depending on language) [default: INPUT]")
-p.add_option("-t", "--template-dir", default=os.path.join(os.path.dirname(sys.argv[0]), 'templates'),
-             dest='template_dir', metavar="TEMPLATE_DIR",
-             help="Look for template files here [default: %default]")
-p.add_option("-p", "--package",
-             type="string",
-             default="cauv",
-             metavar="PACKAGE",
-             help="Package to put java files in, ignored for other languages [default: %default]")
-p.add_option("-c", "--cmake-out",
-             type="string",
+p.add_argument("-t", "--template-dir", default=os.path.join(os.path.dirname(sys.argv[0]), 'templates'),
+             help="Look for template files here")
+p.add_argument("-c", "--cmake-out",
              help="Cmake file to write out containing generated files (only written when files would be changed)")
-p.add_option("-v", "--cmake-prefix",
-             type="string",
+p.add_argument("-v", "--cmake-prefix",
              help="Prefix for cmake var set in output cmake file")
-p.add_option("-m", "--marker-file",
-             type="string",
+p.add_argument("-m", "--marker-file",
              help="File which represents last time msggen generated templates")
+p.add_argument("-s", "--messages", nargs="*",
+             help="Messages to generate. Defaults to all")
 
-options, args = p.parse_args()
+options = p.parse_args()
 
-if len(args) < 1:
-    p.error("no input file specified")
-elif len(args) > 1:
-    p.error("only one input file allowed")
-
-messages_file = os.path.abspath(args[0])
+messages_file = os.path.abspath(options.input)
 
 #build speedup. This essentially tracks its own dependencies since it gets run
 #every build anyway
@@ -82,7 +64,7 @@ import genpython
 import genchil
 
 if options.output == None:
-    options.output = args[0]
+    options.output = options.input
 output_dir = os.path.abspath(options.output)
 
 with open(messages_file, "r") as msg_file:
@@ -102,6 +84,38 @@ for group in tree['groups']:
         message.add_to_hash(h)
         message.check_hash = int(h.hexdigest()[0:8],16)
         #print("{:>30} : 0x{:0>8x}".format(message.name, message.check_hash))
+
+if options.messages:
+    import msggenyacc as mgy
+    for group in tree['groups']:
+        for message in group.messages:
+            if message.name in options.messages:
+                message.mark_used()
+    new_tree = {
+        "groups" : [],
+        "structs" : [],
+        "variants" : [],
+        "enums" : [],
+        "base_types" : mgy.base_types,
+        "included_types" : [],
+    }
+    for group in tree['groups']:
+        messages = []
+        for m in group.messages:
+            try:
+                if m.used: 
+                    messages.append(m)
+            except AttributeError:
+                pass
+        new_tree['groups'].append(mgy.Group(group.name, messages))
+    for _type in ("structs", "variants", "enums", "included_types"):
+        for type_in in tree[_type]:
+            try:
+                if type_in.used:
+                    new_tree[_type].append(type_in)
+            except AttributeError:
+                pass
+    tree = mgy.DefinitionTree(new_tree)
 
 msgdir = options.template_dir
 
@@ -181,8 +195,5 @@ if options.nowrite:
     print ";".join((os.path.abspath(f) for f in filesWritten))
 
 if options.cmake_out:
-    if filesWritten or not os.path.exists(options.cmake_out):
-        with open(options.cmake_out, "w") as cmake_file:
-            print("writing cmake file {}".format(options.cmake_out))
-            files = "\n".join((os.path.abspath(f) for f in cmake_files))
-            cmake_file.write("SET({}_FILES {})\n".format(options.cmake_prefix, files))
+    files = "\n".join((os.path.abspath(f) for f in cmake_files))
+    writeIfChanged(options.cmake_out, "SET({}_FILES {})\n".format(options.cmake_prefix, files))

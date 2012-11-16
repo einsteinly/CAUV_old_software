@@ -59,7 +59,6 @@ add_library (
 )
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 cauv_install(pipeline-widget)
-depends_on_messages(pipeline-widget)
 
 target_link_libraries (
     pipeline-widget
