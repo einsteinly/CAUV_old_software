@@ -3,9 +3,13 @@
 #include <liquid/node.h>
 #include <liquid/nodeHeader.h>
 #include <liquid/water/dataSeries.h>
+#include <liquid/connectionSink.h>
+#include <liquid/arcSink.h>
 
 #include "model/node.h"
 #include "model/nodes/numericnode.h"
+
+#include "connectednode.h"
 
 #include "elements/style.h"
 #include "nodepicker.h"
@@ -40,6 +44,23 @@ QSizeF GraphLayoutItem::sizeHint(Qt::SizeHint which, const QSizeF &constraint) c
     }
 }
 
+class LiquidGraphNode : public ConnectedNode,
+                        public liquid::RejectingConnectionSink {
+public:
+    LiquidGraphNode(boost::shared_ptr<NumericNodeBase> node, QGraphicsItem *parent = 0) :
+        ConnectedNode(node, Graph_Node_Style(), parent),
+        m_arc_sink(new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(), this)){
+
+        addItem(m_arc_sink);
+    }
+
+    liquid::ArcSource * getSourceFor(boost::shared_ptr<Node> const&) const{
+        return NULL; //no sources in this node
+    }
+
+    liquid::ArcSink * m_arc_sink;
+};
+
 
 GraphingDropHandler::GraphingDropHandler(boost::shared_ptr<NodeItemModel> model) :
     m_model(model){
@@ -53,7 +74,7 @@ bool GraphingDropHandler::accepts(boost::shared_ptr<Node> const& node){
 QGraphicsItem* GraphingDropHandler::handle(boost::shared_ptr<Node> const& node) {
     debug() << "GraphingDropHandler drop from" << node->nodePath();
 
-    liquid::LiquidNode * ln = new liquid::LiquidNode(Graph_Node_Style());
+    LiquidGraphNode * ln = new LiquidGraphNode(node->to<NumericNodeBase>());
     ln->setResizable(true);
     ln->setTitle(QString::fromStdString(node->nodeName()));
     ln->setInfo(QString::fromStdString(node->nodePath()));
