@@ -21,7 +21,7 @@ sim_processes = [
 ]
 
 barracuda_processes = [
-    Process('control', ['control', '--sbg', '/tmp/ttyV1', '--port', '/dev/ttyVCAN0', '--imu', 'sbg'],
+    Process('control', ['control', '--sbg', '/tmp/ttyV1', '--port', '/tmp/ttyVCAN0', '--imu', 'sbg'],
                 node_pid('Control'), prereq = depends_on('mcb_bridge', 'persist')),
     Process('mcb_bridge', ['mcb_bridge', '--port', '/dev/ttyS0', '--prefix', '/tmp/ttyV'],
                 death = restart(), restart = restart_also('control')),
