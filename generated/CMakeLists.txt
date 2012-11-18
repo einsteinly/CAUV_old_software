@@ -19,7 +19,11 @@ endforeach()
 set(GEN_CMAKE_CMDLINE ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${MSGS} 
     --cmake-out ${GEND}/message_files.cmake --cmake-prefix CAUV_MESSAGE -m ${GEND}/msggen_marker)
 
-execute_process(COMMAND ${GEN_CMAKE_CMDLINE})
+execute_process(COMMAND ${GEN_CMAKE_CMDLINE} RESULT_VARIABLE GENERATION_FAILED)
+
+if(${GENERATION_FAILED})
+    message(FATAL_ERROR "Message generation failed! do you have PLY and Cheetah installed?")
+endif()
 
 include(${GEND}/message_files.cmake)
 
