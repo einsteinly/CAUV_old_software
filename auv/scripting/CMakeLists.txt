@@ -26,21 +26,6 @@ add_dependencies(scripting python-module)
 #    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pylint_m
 #)
 
-if (${CAUV_USE_VIRTUALENV})
-    find_program(VIRTUALENV NAMES virtualenv2 virtualenv)
-    set(VIRTENVD ${CMAKE_INSTALL_PREFIX})
-    add_custom_command(
-        OUTPUT ${VIRTENVD}/bin/python2.7
-        COMMAND ${VIRTUALENV} -p python2.7 --no-site-packages --never-download ${VIRTENVD}
-        COMMENT "Creating virtualenv"
-    )
-    add_custom_target (
-        create-virtualenv ALL
-        DEPENDS ${VIRTENVD}/bin/python2.7
-    )
-endif()
-
-
 function(install_module MODULE)
     install(DIRECTORY ${MODULE} DESTINATION ${CAUV_PYTHON_INSTALL_PATH}
             FILES_MATCHING PATTERN "*.py")
