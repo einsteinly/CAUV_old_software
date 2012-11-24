@@ -15,7 +15,7 @@ get_property (gui_RUNTIME_OUTPUT_DIRECTORY TARGET gui PROPERTY RUNTIME_OUTPUT_DI
 SET(LIBRARY_OUTPUT_PATH ${gui_RUNTIME_OUTPUT_DIRECTORY}/plugins)
 
 function (cauv_install_plugin TARGET)
-    install (TARGETS ${TARGET} LIBRARY DESTINATION bin/cauv/${CMAKE_BUILD_TYPE}/plugins )
+    install (TARGETS ${TARGET} LIBRARY DESTINATION bin/${CAUV_INSTALL_DIR}/plugins )
 endfunction()
 
 # plugin directories

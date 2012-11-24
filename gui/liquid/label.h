@@ -37,6 +37,8 @@ class LiquidLabel: public QLabel{
                  transparent_bg.setBrush(QPalette::ColorGroup(i), QPalette::Window, QBrush(color));
             }
             setPalette(transparent_bg);
+
+            setText("<font color='black'>" + text + "</font");
         }
 };
 

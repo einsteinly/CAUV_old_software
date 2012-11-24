@@ -42,11 +42,15 @@ macro(_pch_get_compile_command out_command _input _output)
     list(APPEND _compile_flags ${_cxx_flags} ${_cxx_flags_type} )
     
     get_filename_component(_absolute_input ${_input} REALPATH)
-    get_filename_component(_indir ${_absolute_input} PATH)
+    get_filename_component(_indir_absolute ${_absolute_input} PATH)
+    get_filename_component(_absolute_source_dir "${CMAKE_SOURCE_DIR}" REALPATH)
+    file(RELATIVE_PATH _indir_rel "${_absolute_source_dir}" "${_indir_absolute}")
+    set(_indir "${CMAKE_SOURCE_DIR}/${_indir_rel}")
     get_property(_indir_includes
         DIRECTORY ${_indir}
         PROPERTY INCLUDE_DIRECTORIES )
     foreach(item ${_indir_includes})
+        message("ASDFASDF: ${_indir} ${_input} ${_indir} ${item}")
         list(APPEND _compile_flags "-isystem" ${item} )
     endforeach()
 
@@ -101,7 +105,8 @@ macro(use_precompiled_header _targetName _header_file )
     ENDIF()
     
     get_filename_component(_absolute_header_file "${_header_file}" REALPATH)
-    file(RELATIVE_PATH _source_relative_header_file "${CMAKE_SOURCE_DIR}" "${_absolute_header_file}")
+    get_filename_component(_absolute_source_dir "${CMAKE_SOURCE_DIR}" REALPATH)
+    file(RELATIVE_PATH _source_relative_header_file "${_absolute_source_dir}" "${_absolute_header_file}")
     get_filename_component(_pch_file "${CMAKE_BINARY_DIR}/${_source_relative_header_file}" REALPATH)
     
     string(REPLACE "/" "_" _pch_target ${_source_relative_header_file})
@@ -147,7 +152,9 @@ macro(add_precompiled_header _target _header_file)
     get_filename_component(_path ${_header_file} PATH)
 
     get_filename_component(_absolute_header_file "${_header_file}" REALPATH)
-    file(RELATIVE_PATH _source_relative_header_file "${CMAKE_SOURCE_DIR}" "${_absolute_header_file}")
+    get_filename_component(_absolute_source_dir "${CMAKE_SOURCE_DIR}" REALPATH)
+    file(RELATIVE_PATH _source_relative_header_file "${_absolute_source_dir}" "${_absolute_header_file}")
+    message("ASDFASDF: ${_absolute_header_file}")
     get_filename_component(_pch_file "${CMAKE_BINARY_DIR}/${_source_relative_header_file}" REALPATH)
     
     set(_output "${_pch_file}.gch")

@@ -21,7 +21,6 @@ if (${CAUV_BUILD_SIM})
         objects/nodetrail.cpp
         FixedNodeTrackerManipulator.cpp
     )
-    depends_on_messages(sim)
     cauv_install(sim)
 
     target_link_libraries (

@@ -14,8 +14,6 @@ from cauv.node import Node
 
 from AI_classes import aiProcess, external_function
 
-from utils.ordereddict import OrderedDict
-
 """
 Processes
 detector process - runs detector classes, and loops through processing

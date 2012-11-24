@@ -49,4 +49,3 @@ target_link_libraries (
 )
 #cauv_install ( fridgetest )
 
-#depends_on_messages(fridgetest)

@@ -126,4 +126,3 @@ target_link_libraries ( gui-core
         pthread
         ${QT_LIBRARIES}
     )
-depends_on_messages(gui-core)

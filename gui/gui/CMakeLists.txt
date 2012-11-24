@@ -57,7 +57,6 @@ else()
         liquid
         ${QT_LIBRARIES}
     )
-    depends_on_messages(gui)
 
     add_custom_target ( guiall
         DEPENDS

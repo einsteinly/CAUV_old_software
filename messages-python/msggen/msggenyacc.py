@@ -43,6 +43,9 @@ class Included(Expr):
         hash.update(str(self.version))
         if self.superclass is not None:
             self.superclass.add_to_hash(hash)
+    def mark_used(self):
+        self.used = True
+        self.superclass.mark_used()
 
 class Struct(Expr):
     def __init__(self, name, fields, include = None):
@@ -58,6 +61,10 @@ class Struct(Expr):
     def add_to_hash(self, hash):
         for field in self.fields:
             field.add_to_hash(hash)
+    def mark_used(self):
+        for field in self.fields:
+            field.mark_used()
+        self.used = True
 
 class Variant(Expr):
     def __init__(self, name, types):
@@ -68,6 +75,10 @@ class Variant(Expr):
     def add_to_hash(self, hash):
         for type in self.types:
             type.add_to_hash(hash)
+    def mark_used(self):
+        self.used = True
+        for type in self.types:
+            type.mark_used()
 
 class Enum(Expr):
     def __init__(self, name, type, values):
@@ -80,6 +91,8 @@ class Enum(Expr):
         self.type.add_to_hash(hash)
         for value in self.values:
             value.add_to_hash(hash)
+    def mark_used(self):
+        self.used = True
 
 class EnumVal(Expr):
     def __init__(self, name, value):
@@ -106,6 +119,10 @@ class Message(Expr):
         hash.update(str(self.id))
         for field in self.fields:
             field.add_to_hash(hash)
+    def mark_used(self):
+        self.used = True
+        for field in self.fields:
+            field.mark_used()
 
 class Field(Expr):
     def __init__(self, name, type, lazy=False, equality=False, compare=False):
@@ -127,6 +144,9 @@ class Field(Expr):
         self.type.add_to_hash(hash)
         hash.update(str(self.lazy))
         #equality/compare doesn't affect serialisation format
+    def mark_used(self):
+        self.used = True
+        self.type.mark_used()
 
 class BaseType(Expr):
     def __init__(self, name):
@@ -135,6 +155,9 @@ class BaseType(Expr):
         return "%s" % (self.name)
     def add_to_hash(self, hash):
         hash.update(self.name)
+    def mark_used(self):
+        self.used = True
+        pass
 
 class EnumType(Expr):
     def __init__(self, enum):
@@ -143,6 +166,9 @@ class EnumType(Expr):
         return "enum %s" % (self.enum.name)
     def add_to_hash(self, hash):
         self.enum.add_to_hash(hash)
+    def mark_used(self):
+        self.used = True
+        self.enum.mark_used()
 
 class StructType(Expr):
     def __init__(self, struct):
@@ -151,6 +177,9 @@ class StructType(Expr):
         return "struct %s" % (self.struct.name)
     def add_to_hash(self, hash):
         self.struct.add_to_hash(hash)
+    def mark_used(self):
+        self.used = True
+        self.struct.mark_used()
 
 class VariantType(Expr):
     def __init__(self, variant):
@@ -159,6 +188,9 @@ class VariantType(Expr):
         return "variant %s" % (self.variant.name)
     def add_to_hash(self, hash):
         self.variant.add_to_hash(hash)
+    def mark_used(self):
+        self.used = True
+        self.variant.mark_used()
 
 class ArrayType(Expr):
     def __init__(self, valType, size):
@@ -170,6 +202,9 @@ class ArrayType(Expr):
         hash.update("array")
         self.valType.add_to_hash(hash)
         hash.update(str(self.size))
+    def mark_used(self):
+        self.used = True
+        self.valType.mark_used()
 
 class ListType(Expr):
     def __init__(self, valType):
@@ -179,6 +214,9 @@ class ListType(Expr):
     def add_to_hash(self, hash):
         hash.update("list")
         self.valType.add_to_hash(hash)
+    def mark_used(self):
+        self.used = True
+        self.valType.mark_used()
 
 class MapType(Expr):
     def __init__(self, keyType, valType):
@@ -190,6 +228,10 @@ class MapType(Expr):
         hash.update("map")
         self.keyType.add_to_hash(hash)
         self.valType.add_to_hash(hash)
+    def mark_used(self):
+        self.used = True
+        self.valType.mark_used()
+        self.keyType.mark_used()
 
 class IncludedType(Expr):
     def __init__(self, included):
@@ -199,7 +241,9 @@ class IncludedType(Expr):
     def add_to_hash(self, hash):
         hash.update("included")
         self.included.add_to_hash(hash)
-    
+    def mark_used(self):
+        self.used = True
+
 class DefinitionTree(dict):
     def __repr__(self):
         return "\n".join(("\n".join((repr(y) for y in self[x])) for x in self))

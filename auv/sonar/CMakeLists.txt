@@ -4,7 +4,6 @@ add_library (
     sonar_accumulator
     sonar_accumulator.cpp
 )
-depends_on_messages (sonar_accumulator)
 
 target_link_libraries (
     sonar_accumulator
@@ -23,7 +22,6 @@ add_executable (
     seanet_packet.cpp
 )
 cauv_install ( sonar )
-depends_on_messages (sonar)
 
 # libs
 target_link_libraries (

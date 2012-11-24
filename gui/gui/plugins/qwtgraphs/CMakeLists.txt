@@ -27,7 +27,6 @@ add_library( qwtgraphsplugin MODULE
     ${QWTGRAPHS_PLUGIN_UIS_H}
     ${QWTGRAPHS_PLUGIN_MOC_H}
 )
-depends_on_messages(qwtgraphsplugin)
 cauv_install_plugin(qwtgraphsplugin)
                                       
 target_link_libraries( qwtgraphsplugin

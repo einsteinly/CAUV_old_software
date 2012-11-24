@@ -4,7 +4,7 @@
 import argparse
 
 # CAUV Modules 
-from utils import CHIL
+import CHIL
 
 def reIndex(dirname):
     reindexer = CHIL.ReIndexer(dirname)

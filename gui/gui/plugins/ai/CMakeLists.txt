@@ -28,7 +28,6 @@ add_library( aiplugin MODULE
     ${AI_PLUGIN_UIS_H}
     ${AI_PLUGIN_MOC_H}
 )
-depends_on_messages(aiplugin)
 cauv_install_plugin(aiplugin)
                                       
 target_link_libraries( aiplugin

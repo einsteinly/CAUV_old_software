@@ -15,10 +15,6 @@ target_link_libraries(
     utility
 )
 
-depends_on_messages(
-    special_messages
-)
-
 add_library(
     opencv_image
 
@@ -32,6 +28,3 @@ target_link_libraries(
     ${OpenCV_LIBS}
 )
 
-depends_on_messages(
-    opencv_image
-)

@@ -25,4 +25,3 @@ target_link_libraries (
     ${Boost_LIBRARIES}
     ${ftdi_LIBRARIES}
 )
-depends_on_messages(module)
