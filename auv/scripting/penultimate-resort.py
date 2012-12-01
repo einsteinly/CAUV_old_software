@@ -25,14 +25,10 @@ class PenultimateResort(msg.MessageObserver):
     
     def onTimedOut(self):
         warning('DIE control, DIE!\n')
+        node.send(msg.ProcessControlMessage(msg.ProcessCommand.Stop, "control", "*", []))
+        node.send(msg.ProcessControlMessage(msg.ProcessCommand.Stop, "mcb_bridge", "*", []))
         os.system('killall -s 9 control')
-        os.system('killall -s 9 control')
-        os.system('killall -s 9 controld')
-        os.system('killall -s 9 cauv-control')
-        os.system('killall -s 9 cauv-controld')
-        os.system('killall -s 9 cauv-controlv2')
-        os.system('killall -s 9 mcb-bridge')
-        os.system('killall -s 9 mcb-bridged')
+        os.system('killall -s 9 mcb_bridge')
     
     def onRemoteControlsAliveMessage(self, m):
         self.lastAliveTime = time.time()
@@ -41,7 +37,7 @@ class PenultimateResort(msg.MessageObserver):
     def onSetPenultimateResortTimeoutMessage(self, m):
         self.lastAliveTime = time.time()
         self.lastTimeoutSet = m.timeout
-        info("new timeout set%d " % self.lastTimeoutSet)
+        info("new timeout set: %d " % self.lastTimeoutSet)
     
     def run(self):
         while True:
@@ -56,12 +52,16 @@ class PenultimateResort(msg.MessageObserver):
     
    
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(usage='usage: %prog')
+    parser = argparse.ArgumentParser(description='Stop control if connection to gamepad_server is lost')
+    parser.add_argument('-t', '--timeout', type=int, help='Timeout in seconds')
     opts, args = parser.parse_known_args()
     
     node = cauv.node.Node('py-penresort',args)
     try:
         d = PenultimateResort(node)
+        if opts.timeout:
+            d.lastAliveTime = time.time()
+            d.lastTimeoutSet = opts.timeout
         d.run()
     finally:
         node.stop()

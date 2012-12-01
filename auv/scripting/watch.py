@@ -4,6 +4,8 @@ import os
 import sys
 import imp
 import pwd
+import time
+import socket
 import os.path
 import argparse
 
@@ -13,6 +15,13 @@ from cauv.debug import debug, info, warning, error
 import cauv.messaging as messaging
 import cauv.node
 import utils.dirs
+import utils.watchfuncs as watchfuncs
+
+try:
+    import psi.process
+except ImportError:
+    psi = None
+    warning("Couldn't load psi, no process state reporting!")
 
 parser = argparse.ArgumentParser(description = "Start up and monitor CAUV nodes and other programs", add_help = False)
 
@@ -59,6 +68,11 @@ class WatchObserver(messaging.MessageObserver):
         self.node.subMessage(messaging.ProcessControlMessage())
 
     def onProcessControlMessage(self, msg):
+        if not (msg.host == '*' or msg.host == socket.gethostname()):
+            return
+        if msg.command and msg.process not in watcher.processes:
+            proc = watchfuncs.Process(msg.process, msg.command)
+            watcher.add_process(proc)
         try:
             if msg.action == messaging.ProcessCommand.Start:
                 watcher.start(msg.process)
@@ -70,7 +84,27 @@ class WatchObserver(messaging.MessageObserver):
             error("Process {} does not exist!".format(msg.process))
 
     def report(self):
-        pass
+        if psi is None:
+            return
+        for process in watcher.processes.values():
+            if process.state == utils.watch.Running:
+                try:
+                    stats = psi.process.Process(process.pid)
+                except psi.process.NoSuchProcessError:
+                    warning("Process dissapeared when looking for stats")
+                    continue
+                curr_time, cputime = time.time(), stats.cputime.float()
+                try:
+                    last_time, last_cputime = process.__last_times
+                    cpu_percent = (cputime - last_cputime) / (curr_time - last_time)
+                except AttributeError:
+                    cpu_percent = 0
+                    pass
+                process.__last_times = (curr_time, cputime)
+                statmsg = messaging.ProcessStatusMessage(process.p.name, 'Running', cpu_percent, stats.rss, stats.nthreads)
+                self.node.send(statmsg)
+            else:
+                pass
 
 def monitor():
     if args.daemonize:

@@ -60,6 +60,8 @@ python_exe(wasd_remote.py)
 python_exe(watch.py)
 python_exe(watchctl.py)
 
+install(PROGRAMS startup/setup_cameras.sh DESTINATION bin/)
+
 config_dir(sessions)
 config_dir(detector_library)
 config_dir(script_library)

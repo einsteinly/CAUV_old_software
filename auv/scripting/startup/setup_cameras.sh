@@ -1,6 +1,7 @@
 #!/bin/bash
-sudo rmmod gspca_ov534
-sudo modprobe ov534
+export SUDO_ASKPASS=/doesnt_exist
+sudo -A rmmod gspca_ov534
+sudo -A modprobe ov534
 
 for file in /dev/video0 /dev/video1 /dev/video2
 do

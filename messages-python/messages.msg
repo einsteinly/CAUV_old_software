@@ -683,6 +683,7 @@ group telemetry
     message ProcessControl : 91
     {
         action : ProcessCommand;
+        host : string;
         process : string;
         command : list<string>;
     }
