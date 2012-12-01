@@ -315,4 +315,6 @@ void ArcSource::paint(QPainter *painter,
     Q_UNUSED(painter);
 }
 
-
+ArcSource::~ArcSource() {
+    m_arc->deleteLater();
+}
