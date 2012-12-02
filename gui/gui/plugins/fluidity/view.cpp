@@ -55,6 +55,20 @@ uint qHash(boost::shared_ptr<T> p){
 FView::FView(boost::shared_ptr<CauvNode> node,
              std::string const& pipeline_name,
              boost::shared_ptr<gui::Node> model_parent,
+             QWidget* parent)
+    : liquid::LiquidView(parent),
+      m_cauv_node(node),
+      m_manager(),
+      m_contextmenu_root(),
+      m_scenerect_update_timer(NULL),
+      m_mode(TopLevel){
+
+    init(pipeline_name, model_parent, NULL, boost::shared_ptr<Manager>(), parent);
+}
+
+FView::FView(boost::shared_ptr<CauvNode> node,
+             std::string const& pipeline_name,
+             boost::shared_ptr<gui::Node> model_parent,
              NodeScene* s,
              boost::shared_ptr<Manager> m,
              QWidget* parent)
@@ -64,11 +78,34 @@ FView::FView(boost::shared_ptr<CauvNode> node,
       m_contextmenu_root(),
       m_scenerect_update_timer(NULL),
       m_mode(TopLevel){
+    
+    init(pipeline_name, model_parent, s, m, parent);
+}
+
+void FView::init(std::string const& pipeline_name,
+                 boost::shared_ptr<gui::Node> model_parent,
+                 NodeScene* s,
+                 boost::shared_ptr<Manager> m,
+                 QWidget* parent){
+    m_manager = m;
+
+    if(!s){
+        s = new NodeScene(parent);
+        // !!! is this really what we want to do?
+        // items aren't added or removed a lot, just updated
+        s->setItemIndexMethod(QGraphicsScene::NoIndex);
+        s->setSceneRect(-4000,-4000,8000,8000);
+    }
+    setScene(s);
+
+    if(!m_manager){
+        m_manager = boost::make_shared<f::Manager>(
+            scene(), model_parent, m_cauv_node.get(), pipeline_name
+        );
+        m_manager->init();
+    }
 
     //initMenu();
-
-    setScene(s);
-    m_manager = m;
 
     setWindowTitle("Fluidity");
 
@@ -146,9 +183,12 @@ FView::~FView(){
     debug() << "~FView()";
     m_manager->teardown();
     m_manager.reset();
+    
     std::vector< std::pair<QPoint, QGraphicsWidget*> >::iterator i;
     for(i = m_overlay_items.begin(); i != m_overlay_items.end(); i++){
-        scene()->removeItem(i->second);
+        if(i->second->scene())
+            i->second->scene()->removeItem(i->second);
+        i->second->deleteLater();
     }
 }
 
@@ -212,6 +252,13 @@ void FView::setMode(Mode const& m){
     if(m_mode != m){
         _initInMode(m);
     }
+}
+
+cauv::gui::NodeScene* FView::scene(){
+    QGraphicsScene* s = QGraphicsView::scene();
+    NodeScene* r = dynamic_cast<NodeScene*>(s);
+    assert(r);
+    return r;
 }
 
 /*#include <utility/time.h>

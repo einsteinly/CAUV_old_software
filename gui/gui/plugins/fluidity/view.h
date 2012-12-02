@@ -48,9 +48,20 @@ class FView: public liquid::LiquidView{
               NodeScene* s,
               boost::shared_ptr<Manager> m,
               QWidget *parent = NULL);
+        
+        FView(boost::shared_ptr<CauvNode> node,
+              std::string const& pipeline_name,
+              boost::shared_ptr<Node> model_parent,
+              QWidget *parent = NULL);
+
+        void init(std::string const& pipeline_name,
+                  boost::shared_ptr<Node> model_parent,
+                  NodeScene* s,
+                  boost::shared_ptr<Manager> m,
+                  QWidget* parent);
 
         ~FView();
-        
+
         enum Mode {TopLevel, Internal};
         void setMode(Mode const& mode);
 
@@ -58,7 +69,7 @@ class FView: public liquid::LiquidView{
 
         boost::shared_ptr<Manager> manager() { return m_manager; }
 
-        void createControlButtons();
+        NodeScene* scene();
 
         Q_SIGNALS:
         void closeRequested();

@@ -39,8 +39,6 @@ class NodeScene;
 
 namespace f {
 class FView;
-class Manager;
-
 } // namespace f
 
 
@@ -84,10 +82,6 @@ protected:
     boost::shared_ptr<FluidityNode> m_node;
     liquid::ProxyWidget* m_contents;
     f::FView* m_view;
-    // !!! when view can be re-used, scene and manager control can be moved
-    // back into view
-    NodeScene* m_scene;
-    boost::shared_ptr<f::Manager> m_manager;
     liquid::ArcSource * m_source;
     boost::weak_ptr<CauvMainWindow> m_in_window;
     QRectF m_orginal_view_rect;

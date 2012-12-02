@@ -77,6 +77,10 @@ LiquidView::LiquidView(QWidget * parent) : QGraphicsView(parent),
                    QPainter::SmoothPixmapTransform);
 }
 
+LiquidView::~LiquidView()
+{
+}
+
 bool LiquidView::event(QEvent *event)
 {
     if (event->type() == QEvent::Gesture)

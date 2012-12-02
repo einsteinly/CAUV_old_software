@@ -30,8 +30,6 @@
 #include <elements/style.h>
 #include <nodepicker.h>
 
-#include <nodescene.h>
-
 #include "view.h"
 #include "manager.h"
 
@@ -64,8 +62,6 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
       m_node(node),
       m_contents(NULL),
       m_view(NULL),
-      m_scene(NULL),
-      m_manager(),
       m_source(new liquid::ArcSource(new FluidtySourceDelegate(node),
                                      new liquid::Arc(Image_Arc_Style()))),
       m_in_window(in_window),
@@ -86,16 +82,7 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
     if(cauv_node){
         std::string pipelineName = m_node->fullPipelineName();
 
-        m_scene = new NodeScene(this);
-        m_manager = boost::make_shared<f::Manager>(m_scene, node, cauv_node.get(), pipelineName);
-        m_manager->init();
-
-        // !!! is this really what we want to do?
-        // items aren't added or removed a lot, just updated
-        m_scene->setItemIndexMethod(QGraphicsScene::NoIndex);
-        m_scene->setSceneRect(-4000,-4000,8000,8000);
-
-        m_view = new f::FView(cauv_node, pipelineName, node, m_scene, m_manager);
+        m_view = new f::FView(cauv_node, pipelineName, node);
         m_view->setMode(f::FView::Internal);
         m_view->setMinimumSize(120, 120);
         
@@ -207,7 +194,7 @@ void LiquidFluidityNode::unMaximise(){
         // ... so create a new one instead:
         boost::shared_ptr<CauvNode> cauv_node = m_view->node();
         m_view->deleteLater();
-        m_view = new f::FView(cauv_node, m_node->fullPipelineName(), m_view->manager()->model(), m_scene, m_manager);
+        m_view = new f::FView(cauv_node, m_node->fullPipelineName(), m_view->manager()->model(), m_view->scene(), m_view->manager());
         m_view->setMode(f::FView::Internal);
         m_contents->setWidget(m_view);
     }
