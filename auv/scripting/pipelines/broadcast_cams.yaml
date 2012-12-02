@@ -1,0 +1,14 @@
+- !node/BroadcastImage
+  camera id: 2
+  jpeg quality: 85
+  image_in<-image_out: !node/Resize
+    interpolation mode: 1
+    scale factor: 0.10000000149011612
+    image_in<-image_out: !node/CameraInput {device id: 1}
+- !node/BroadcastImage
+  camera id: 1
+  jpeg quality: 85
+  image_in<-image_out: !node/Resize
+    interpolation mode: 1
+    scale factor: 0.10000000149011612
+    image_in<-image_out: !node/CameraInput {device id: 0}

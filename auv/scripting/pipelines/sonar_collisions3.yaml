@@ -1,0 +1,30 @@
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image out: !node/DrawEllipses
+    Ellipses<-blobs: !node/Blob
+      expand_size: 5
+      min_area: 300
+      channel (not copied)<-image out (not copied): &Nop_1 !node/Nop
+        image in<-output mask: !node/ThresholdMask
+          threshold (>= is masked): 20
+          channel (not copied)<-image_out: !node/Resize
+            fixed height: 0
+            fixed width: 0
+            interpolation mode: 1
+            scale factor: 0.5
+            image_in<-image (not copied): !node/GaussianBlur
+              sigma: 2.0
+              image<-polar image: !node/SonarShadowFilter
+                object importance: 2.0
+                object size: 0.30000001192092896
+                shadow importance: 0.30000001192092896
+                shadow size: 6.0
+                polar image<-polar image: !node/SonarInput {Resolution: 400, Sonar ID: 2,
+                  derivative: 0, low-pass width: 0, min range: 0, non-maximum epsilon: 1,
+                  non-maximum suppression: 0}
+    image in<-image out (not copied): *Nop_1
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image: !node/PolarImageToXY
+    Resolution: 400
+    polar image<-image out (not copied): *Nop_1

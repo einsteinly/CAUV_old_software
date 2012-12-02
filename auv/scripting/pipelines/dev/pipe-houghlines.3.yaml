@@ -1,0 +1,43 @@
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (not copied): &MixValue_1 !node/MixValue
+    image fac: 1.0
+    mix fac: -1.0
+    ch1<-ch1 value: &Percentile_1 !node/Percentile
+      percentile: 50.0
+      image<-image_out: &Resize_1 !node/Resize
+        interpolation mode: 1
+        scale factor: 0.75
+        image_in<-image: !node/FileInput {filename: /cauv/d2.avi}
+    ch2<-ch2 value: *Percentile_1
+    ch3<-ch3 value: *Percentile_1
+    image<-image copy: !node/Copy
+      image<-image_out: *Resize_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image_out: &Canny_1 !node/Canny
+    L2 gradient: 0
+    aperture size: 3
+    threshold 1: 50.0
+    threshold 2: 80.0
+    image_in<-image_out: !node/Resize
+      interpolation mode: 1
+      scale factor: 0.10000000149011612
+      image_in<-image out: !node/ConvertColour
+        output format: grey
+        image in<-image (not copied): !node/Levels
+          black level: 0
+          white level: 60
+          image<-image (not copied): *MixValue_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image_out: !node/HoughLines
+    maxLineGap: 5
+    minLineLength: 20
+    probabalistic: false
+    rho: 1
+    srn: 0
+    stn: 0
+    theta: 0.01745329238474369
+    threshold: 14
+    image_in<-image_out: *Canny_1

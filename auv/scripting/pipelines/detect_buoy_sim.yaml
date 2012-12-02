@@ -1,0 +1,25 @@
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image out: !node/DrawCircles
+    Circles<-blobs: &Blob_1 !node/Blob
+      area: !!python/object/apply:cauvinterface.Range [100.0, 8000.0]
+      circularity: !!python/object/apply:cauvinterface.Range [0.800000011920929, .inf]
+      convexity: !!python/object/apply:cauvinterface.Range [0.949999988079071, .inf]
+      find_dark: true
+      find_light: true
+      inertiaRatio: !!python/object/apply:cauvinterface.Range [0.10000000149011612,
+        .inf]
+      threshold: !!python/object/apply:cauvinterface.Range [20.0, 240.0]
+      threshold_step: 10
+      image (not copied)<-image (not copied): &GaussianBlur_1 !node/GaussianBlur
+        sigma: 5.0
+        image<-image_out: !node/Resize
+          fixed height: 0
+          fixed width: 0
+          interpolation mode: 1
+          scale factor: 0.25
+          image_in<-image_out: !node/CameraInput {device id: 1, height: 480, width: 640}
+    image in<-image (not copied): *GaussianBlur_1
+- !node/BroadcastCircles
+  name: buoy
+  Circles<-blobs: *Blob_1

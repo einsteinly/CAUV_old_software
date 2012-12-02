@@ -1,0 +1,87 @@
+- !node/DrawKeyPoints
+  KeyPoints<-keypoints: !node/TransformKeyPoints
+    '*x': 11.0
+    '*y': 11.0
+    +x: 0.0
+    +y: 300.0
+    keypoints<-keypoints: &BearingRangeToXY_1 !node/BearingRangeToXY
+      keypoints<-keypoints: &LocalMaxima_1 !node/LocalMaxima
+        delta: 4.0
+        image_in<-image (not copied): &Mix_1 !node/Mix
+          absolute value: false
+          image fac: 1.0
+          mix fac: -1.0
+          image<-image copy: !node/Copy
+            image<-image (not copied): !node/Mix
+              absolute value: false
+              image fac: 2.0
+              mix fac: -4.0
+              image<-image (not copied): &MedianFilter_1 !node/MedianFilter
+                kernel: 3
+                image<-image (not copied): !node/Levels
+                  black level: !BoundedFloat/Wraps '32.0 (0.0-255.0)'
+                  white level: !BoundedFloat/Clamps '128.0 (0.0-256.0)'
+                  image<-image copy: !node/Copy
+                    image<-polar image: &SonarInput_1 !node/SonarInput {Resolution: 800,
+                      Sonar ID: 2, derivative: 0, low-pass width: 0, min range: 0,
+                      non-maximum epsilon: 1, non-maximum suppression: 0}
+              mix<-image (not copied): !node/GaussianBlur
+                sigma: 80.0
+                image<-image copy: !node/Copy
+                  image<-image (not copied): *MedianFilter_1
+          mix<-image (not copied): !node/GaussianBlur
+            sigma: 1.0
+            image<-image copy: !node/Copy
+              image<-image (not copied): *MedianFilter_1
+      polar image<-image (not copied): *Mix_1
+  image in<-image out (not copied): !node/Crop
+    height: 600
+    top left (x): 400
+    top left (y): 100
+    width: 600
+    image in<-image (synced): *SonarInput_1
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image_out: !node/Rotate
+    extend: true
+    radians: 1.5707963705062866
+    image_in<-image_out: !node/Resize
+      fixed height: 0
+      fixed width: 0
+      interpolation mode: 1
+      scale factor: 1.0
+      image_in<-image out: !node/DrawKeyPoints
+        KeyPoints<-keypoints: *LocalMaxima_1
+        image in<-image (not copied): *Mix_1
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-cloud visualisation: !node/SonarSLAM
+    -vis origin x: -5.0
+    -vis origin y: -25.0
+    -vis resolution: 400
+    -vis size: 50.0
+    clear: false
+    euclidean fitness: 1.0000000116860974e-07
+    feature merge distance: 0.05000000074505806
+    graph iters: 10
+    keyframe spacing: 0.5
+    match algorithm: non-linear ICP
+    max correspond dist: 1.0
+    max iters: 20
+    overlap threshold: 0.30000001192092896
+    reject threshold: 0.5
+    score threshold: 20.0
+    transform eps: 9.999999717180685e-10
+    weight test: 0.0
+    xy metres/px: 1.0
+    delta theta<-Value: !node/ClampFloat
+      Max: 0.10000000149011612
+      Min: -0.10000000149011612
+      Value<-max correl location: !node/Correlation1D
+        Image A<-image (not copied): *Mix_1
+        Image B<-image out (not copied): !node/Delay
+          delay (frames): 1
+          image in<-image (not copied): *Mix_1
+    keypoints image<-image (not copied): *Mix_1
+    keypoints<-keypoints: *BearingRangeToXY_1
+    'training: polar keypoints<-keypoints': *LocalMaxima_1

@@ -1,0 +1,44 @@
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image out: !node/DrawLines
+    image in<-image copy: !node/Copy
+      image<-image: &FastMedian_1 !node/FastMedian
+        radius: 1.0
+        image<-image_out: !node/Rotate
+          extend: true
+          radians: 1.570796251296997
+          image_in<-image (not copied): !node/Levels
+            black level<-ch1 value: !node/Percentile
+              percentile: 95.0
+              image<-image out (not copied): &Crop_1 !node/Crop
+                height: 256
+                top left (x): 300
+                top left (y): 128
+                width: 160
+                image in<-image (synced): !node/SonarInput {Resolution: 512, Sonar ID: 2,
+                  derivative: 0, low-pass width: 0, min range: 0, non-maximum epsilon: 1,
+                  non-maximum suppression: 0}
+            image<-image copy: !node/Copy
+              image<-image out (not copied): *Crop_1
+            white level<-ch1 value: !node/Percentile
+              percentile: 99.5
+              image<-image out (not copied): *Crop_1
+    lines<-lines: &MergeSimilarLines_1 !node/MergeSimilarLines
+      angle epsilon: 0.30000001192092896
+      distance epsilon: 0.10000000149011612
+      lines<-lines: !node/HoughLines
+        maxLineGap: 10
+        minLineLength: 60
+        probabilistic: true
+        rho: 1
+        srn: 0
+        stn: 0
+        theta: 0.01745329238474369
+        threshold: 15
+        image in<-image: *FastMedian_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image out (not copied): *Crop_1
+- !node/BroadcastLines
+  name: cam
+  lines<-lines: *MergeSimilarLines_1

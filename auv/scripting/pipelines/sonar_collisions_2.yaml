@@ -1,0 +1,35 @@
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image (not copied): !node/Levels
+    black level: !BoundedFloat/Clamps '0.0 (0.0-255.0)'
+    white level: !BoundedFloat/Clamps '10.0 (0.0-255.0)'
+    image<-image_out: &Resize_1 !node/Resize
+      fixed height: 0
+      fixed width: 0
+      interpolation mode: 1
+      scale factor: 0.5
+      image_in<-polar image: &SonarShadowFilter_1 !node/SonarShadowFilter
+        object importance: 2.0
+        object size: 0.20000000298023224
+        shadow importance: 1.0
+        shadow size: 20.0
+        polar image<-image (not copied): !node/Levels
+          white level: !BoundedFloat/Clamps '255.0 (0.0-255.0)'
+          black level<-ch1 value: !node/Percentile
+            image<-polar image: &SonarInput_1 !node/SonarInput {Resolution: 800, Sonar ID: 2,
+              derivative: 0, low-pass width: 0, min range: 0, non-maximum epsilon: 1,
+              non-maximum suppression: 0}
+            percentile<-value: !node/IntInput {value: 85}
+          image<-image copy: !node/Copy
+            image<-polar image: *SonarInput_1
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-polar image: *SonarShadowFilter_1
+- !node/BroadcastPoints
+  name: avoid_collision
+  points<-points: !node/FirstAboveThreshold
+    threshold: 10
+    image in<-image_out: *Resize_1
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-polar image: *SonarInput_1

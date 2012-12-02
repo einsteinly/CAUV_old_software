@@ -1,0 +1,83 @@
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (not copied): &Levels_1 !node/Levels
+    black level: 0
+    white level: 64
+    image<-image (not copied): &Mix_1 !node/Mix
+      absolute value: true
+      image fac: 1.0
+      mix fac: -1.0
+      image<-image copy: !node/Copy
+        image<-image out (not copied): &Nop_1 !node/Nop
+          image in<-image: &CombineRGB_1 !node/CombineRGB
+            B<-image (not copied): !node/Levels
+              black level<-ch3 value: &Percentile_1 !node/Percentile
+                percentile: 5.0
+                image<-image_out: &Resize_1 !node/Resize
+                  interpolation mode: 1
+                  scale factor: 0.25
+                  image_in<-image out (not copied): !node/Throttle
+                    target frequency: 5.0
+                    image in<-image: !node/FileInput {filename: /Users/james/Desktop/t.avi}
+              image<-B: &SplitRGB_1 !node/SplitRGB
+                image<-image_out: *Resize_1
+              white level<-ch3 value: &Percentile_2 !node/Percentile
+                percentile: 95.0
+                image<-image_out: *Resize_1
+            G<-image (not copied): !node/Levels
+              black level<-ch2 value: *Percentile_1
+              image<-G: *SplitRGB_1
+              white level<-ch2 value: *Percentile_2
+            R<-image (not copied): !node/Levels
+              black level<-ch1 value: *Percentile_1
+              image<-R: *SplitRGB_1
+              white level<-ch1 value: *Percentile_2
+      mix<-image out (not copied): !node/Delay
+        delay (frames): 1
+        image in<-image out (not copied): *Nop_1
+- !node/MedianFilter
+  kernel: 3
+  image<-image (not copied): !node/GaussianBlur
+    sigma: 5.0
+    image<-image: *CombineRGB_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image: *CombineRGB_1
+- !node/MedianFilter
+  kernel: 1
+  image<-image (not copied): *Mix_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image: !node/CombineRGB
+    B<-image out: !node/DrawHistogram
+      histogram<-histogram: !node/Histogram
+        name: Diff-B
+        Number of bins<-value: &IntInput_1 !node/IntInput {value: 10}
+        image_in<-B: &SplitRGB_2 !node/SplitRGB
+          image<-image (not copied): *Levels_1
+    G<-image out: !node/DrawHistogram
+      histogram<-histogram: !node/Histogram
+        name: Diff-G
+        Number of bins<-value: *IntInput_1
+        image_in<-G: *SplitRGB_2
+    R<-image out: !node/DrawHistogram
+      histogram<-histogram: !node/Histogram
+        name: Diff-R
+        Number of bins<-value: *IntInput_1
+        image_in<-R: *SplitRGB_2
+- !node/HistogramSegmentation
+  Bin: 3
+  Number of bins: 10
+  image_in<-G: &SplitRGB_3 !node/SplitRGB
+    image<-image (not copied): *Levels_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (not copied): !node/MedianFilter
+    kernel: 3
+    image<-Pixels: !node/HistogramSegmentationArb
+      Bin max: 256
+      Bin min: 64
+      image_in<-G: *SplitRGB_3
+- !node/ConvertColour
+  output format: grey
+  image in<-G: *SplitRGB_3

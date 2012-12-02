@@ -1,0 +1,36 @@
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (not copied): &Levels_1 !node/Levels
+    black level<-ch1 value: !node/Percentile
+      percentile: 0.10000000149011612
+      image<-V: &SplitHSV_1 !node/SplitHSV
+        image<-image (not copied): &GaussianBlur_1 !node/GaussianBlur
+          sigma: 3.0
+          image<-image_out: !node/Resize
+            interpolation mode: 1
+            scale factor: 0.5
+            image_in<-image: !node/FileInput {filename: /Users/james/Desktop/t/00004.jpg}
+    image<-image copy: !node/Copy
+      image<-image (not copied): *GaussianBlur_1
+    white level<-ch1 value: !node/Percentile
+      percentile: 99.9000015258789
+      image<-V: *SplitHSV_1
+- !node/GuiOutput
+  jpeg quality: 99
+  image_in<-image: !node/CombineRGB
+    B<-image out: !node/DrawHistogram
+      histogram<-histogram: !node/Histogram
+        name: unnamed histogramname for output histogram
+        Number of bins<-value: &IntInput_1 !node/IntInput {value: 24}
+        image_in<-B: &SplitRGB_1 !node/SplitRGB
+          image<-image (not copied): *Levels_1
+    G<-image out: !node/DrawHistogram
+      histogram<-histogram: !node/Histogram
+        name: unnamed histogramname for output histogram
+        Number of bins<-value: *IntInput_1
+        image_in<-G: *SplitRGB_1
+    R<-image out: !node/DrawHistogram
+      histogram<-histogram: !node/Histogram
+        name: unnamed histogramname for output histogram
+        Number of bins<-value: *IntInput_1
+        image_in<-R: *SplitRGB_1
