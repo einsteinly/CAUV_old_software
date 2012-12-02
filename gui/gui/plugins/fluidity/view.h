@@ -32,6 +32,7 @@ class CauvNode;
 namespace gui{
 
 class Node;
+class NodeScene;
 
 namespace f{
 
@@ -44,6 +45,8 @@ class FView: public liquid::LiquidView{
         FView(boost::shared_ptr<CauvNode> node,
               std::string const& pipeline_name,
               boost::shared_ptr<Node> model_parent,
+              NodeScene* s,
+              boost::shared_ptr<Manager> m,
               QWidget *parent = NULL);
 
         ~FView();
@@ -54,6 +57,8 @@ class FView: public liquid::LiquidView{
         boost::shared_ptr<CauvNode> node(){ return m_cauv_node; }
 
         boost::shared_ptr<Manager> manager() { return m_manager; }
+
+        void createControlButtons();
 
         Q_SIGNALS:
         void closeRequested();

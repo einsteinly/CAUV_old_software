@@ -102,6 +102,7 @@ Arc::Arc(ArcStyle const& of_style,
 }
 
 Arc::~Arc(){
+    //debug() << "arc" << this << "destroyed. (" << m_source << "->" << m_sinks.size() << "sinks)";
     LayoutItems::unRegisterConnection(this);
 }
 
@@ -179,7 +180,8 @@ void Arc::removeTo(AbstractArcSink *to){
     m_pending_sinks.erase(to);
     m_ends[to]->deleteLater();
     m_ends.erase(to);
-    updateLayout();
+    if(scene())
+        updateLayout();
 }
 
 void Arc::promotePending(AbstractArcSink *to){
@@ -243,6 +245,9 @@ QVariant Arc::itemChange(GraphicsItemChange change, QVariant const& value){
 void Arc::updateLayout(){
     if(!m_source){
         warning() << "no source!";
+        return;
+    }else if(!scene()){
+        warning() << "no scene!";
         return;
     }
     m_cached_shape_invalid = true;

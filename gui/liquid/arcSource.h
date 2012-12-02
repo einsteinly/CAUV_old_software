@@ -121,13 +121,8 @@ class AbstractArcSource: public _::AbstractArcSourceInternal,
     public:
         AbstractArcSource(ArcStyle const& of_style,
                           ArcSourceDelegate *sourceDelegate,
-                          Arc* arc)
-            : _::AbstractArcSourceInternal(of_style, sourceDelegate, arc),
-              LayoutItems(this){
-        }
-        virtual ~AbstractArcSource(){
-            LayoutItems::unRegisterSourceItem(this);
-        }
+                          Arc* arc);
+        virtual ~AbstractArcSource();
 };
 
 class ArcSource: public AbstractArcSource,

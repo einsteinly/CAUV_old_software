@@ -55,6 +55,8 @@ uint qHash(boost::shared_ptr<T> p){
 FView::FView(boost::shared_ptr<CauvNode> node,
              std::string const& pipeline_name,
              boost::shared_ptr<gui::Node> model_parent,
+             NodeScene* s,
+             boost::shared_ptr<Manager> m,
              QWidget* parent)
     : liquid::LiquidView(parent),
       m_cauv_node(node),
@@ -65,29 +67,12 @@ FView::FView(boost::shared_ptr<CauvNode> node,
 
     //initMenu();
 
-    NodeScene *s = new NodeScene(this);
-
-    // !!! is this really what we want to do?
-    // items aren't added or removed a lot, just updated
-    //s->setItemIndexMethod(QGraphicsScene::NoIndex);
-    s->setSceneRect(-4000,-4000,8000,8000);
-
     setScene(s);
-    m_manager = boost::make_shared<Manager>(s, model_parent, m_cauv_node.get(), pipeline_name);
-    m_manager->init();
+    m_manager = m;
 
     setWindowTitle("Fluidity");
 
     Button *b;
-    //b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/dup_button"));
-    //s->addItem(b);
-    //b->setZValue(1000);
-    //m_overlay_items.push_back(std::make_pair(QPoint(-112, -40), b));
-
-    //b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"));
-    //s->addItem(b);
-    //b->setZValue(1000);
-    //m_overlay_items.push_back(std::make_pair(QPoint(-88, -40), b));
 
     b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/x_button"));
     s->addItem(b);
@@ -161,6 +146,10 @@ FView::~FView(){
     debug() << "~FView()";
     m_manager->teardown();
     m_manager.reset();
+    std::vector< std::pair<QPoint, QGraphicsWidget*> >::iterator i;
+    for(i = m_overlay_items.begin(); i != m_overlay_items.end(); i++){
+        scene()->removeItem(i->second);
+    }
 }
 
 
