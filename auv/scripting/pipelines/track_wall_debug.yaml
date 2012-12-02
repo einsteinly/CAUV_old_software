@@ -1,0 +1,24 @@
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image out: !node/DrawLines
+    image in<-image_out: &Rotate_1 !node/Rotate
+      extend: false
+      radians: -0.7850000262260437
+      image_in<-image (buffer): &SonarInput_1 !node/SonarInput {Resolution: 400, Sonar ID: 2,
+        derivative: 0, low-pass width: 0, min range: 0, non-maximum epsilon: 1, non-maximum suppression: 0}
+    lines<-lines: !node/MeanStd {name: out1True}
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image out: !node/DrawLines
+    image in<-image (buffer): *SonarInput_1
+    lines<-lines: !node/MeanStd {name: out2False}
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image out: !node/DrawLines
+    image in<-image (buffer): *SonarInput_1
+    lines<-lines: !node/MeanStd {name: out1False}
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image out: !node/DrawLines
+    image in<-image_out: *Rotate_1
+    lines<-lines: !node/MeanStd {name: out2True}

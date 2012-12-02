@@ -34,7 +34,7 @@ def toCHILType(t):
         return t.variant.name
     elif isinstance(t, msggenyacc.IncludedType):
         return t.included.name
-    elif isinstance(t, msggenyacc.ListType) or isinstance(t, msggenyacc.MapType):
+    elif isinstance(t, (msggenyacc.ListType, msggenyacc.MapType, msggenyacc.ArrayType)):
         return genpython.CPPContainerTypeName(t)
     else:
         print "ERROR: " + repr(t) + " is not a type"
@@ -48,8 +48,12 @@ def get_output_files(tree):
 
     requiredMapTypes = set()
     requiredVectorTypes = set()
+    requiredArrayTypes = set()
 
     source_revision = sourceRevision()
+
+    requiredVectorTypes, requiredMapTypes, requiredArrayTypes = genpython.populateContainerTypes(tree)
+    requiredVectorTypes, requiredMapTypes, requiredArrayTypes = genpython.addNestedTypes(requiredVectorTypes, requiredMapTypes, requiredArrayTypes)
 
     search_values = {
         "source_revision": source_revision,
@@ -59,7 +63,6 @@ def get_output_files(tree):
         "CPPContainerTypeName": genpython.CPPContainerTypeName,
         "requiredMapTypes": requiredMapTypes,
         "requiredVectorTypes": requiredVectorTypes,
-        "addNestedTypes": genpython.addNestedTypes,
         "toCHILType": toCHILType,
         "isBaseTypes": isBaseType
     }

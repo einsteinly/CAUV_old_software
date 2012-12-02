@@ -1,0 +1,67 @@
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (buffer): &SonarInput_1 !node/SonarInput {derivative: 0, low-pass width: 0,
+    min range: 5000, non-maximum epsilon: 1, non-maximum suppression: 0}
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (not copied): &Levels_1 !node/Levels
+    black level: 2
+    white level: 180
+    image<-image (not copied): !node/GaussianBlur
+      sigma: 3.0
+      image<-image out: !node/Pyramid
+        level: 1
+        image in<-image (not copied): &Mix_1 !node/Mix
+          absolute value: true
+          image fac: 1.0
+          mix fac: 1.0
+          image<-image copy: !node/Copy
+            image<-image copy: !node/Copy
+              image<-image (buffer): *SonarInput_1
+          mix<-image: &FastMedian_1 !node/FastMedian
+            radius: 3
+            image<-image (not copied): !node/Levels
+              black level: 128
+              white level: 135
+              image<-image copy: !node/Copy
+                image<-image (buffer): !node/SonarInput {derivative: 1, low-pass width: 10,
+                  min range: 6000, non-maximum epsilon: 1, non-maximum suppression: 0}
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image out: !node/DrawLines
+    image in<-image out: &Canny_1 !node/Canny
+      L2 gradient: 1
+      aperture size: 3
+      threshold 1: 70.0
+      threshold 2: 60.0
+      image in<-image (not copied): *Levels_1
+    lines<-lines: &HoughLines_1 !node/HoughLines
+      maxLineGap: 4
+      minLineLength: 15
+      probabilistic: true
+      rho: 1
+      srn: 0
+      stn: 0
+      theta: 0.009999999776482582
+      threshold: 20
+      image in<-image out: *Canny_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image out: !node/DrawLines
+    image in<-image (buffer): *SonarInput_1
+    lines<-lines: &MergeSimilarLines_1 !node/MergeSimilarLines
+      angle epsilon: 0.30000001192092896
+      distance epsilon: 0.10000000149011612
+      lines<-lines: *HoughLines_1
+- !node/BroadcastLines
+  name: bay lines
+  lines<-lines: *MergeSimilarLines_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image out: *Canny_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image: *FastMedian_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (not copied): *Mix_1

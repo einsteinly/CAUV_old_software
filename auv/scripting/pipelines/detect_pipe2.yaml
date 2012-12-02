@@ -1,0 +1,51 @@
+- !node/BroadcastFloat
+  name: pipe_det
+  float<-sum sq: !node/SumSquared
+    image<-output mask: !node/ThresholdMask
+      threshold (>= is masked): 30
+      channel (not copied)<-image: &ColourSimilarity_1 !node/ColourSimilarity
+        colour: !colour/RGB '0.1961 0.8314 0.7686 1.0'
+        sigma: 0.5
+        image<-image (not copied): !node/MixValue
+          image fac: 1.0
+          value fac: -1.0
+          image<-image out (not copied): &Nop_1 !node/Nop
+            image in<-image out (not copied): !node/Throttle
+              target frequency: 20.0
+              image in<-image_out: !node/CameraInput {device id: 0, height: 240, width: 320}
+          value<-value: !node/Percentile
+            percentile: !BoundedFloat/Clamps '50.0 (0.0-100.0)'
+            image<-image out (not copied): *Nop_1
+- !node/KMeans
+  K: 2
+  colorise: 1
+  image<-image: *ColourSimilarity_1
+- !node/DrawLines
+  image in<-image: *ColourSimilarity_1
+  lines<-lines: &HoughLines_1 !node/HoughLines
+    maxLineGap: 5
+    minLineLength: 20
+    probabilistic: false
+    rho: 2.0
+    srn: 0
+    stn: 0
+    theta: 0.031415898352861404
+    threshold: 15
+    image in<-image out: !node/Canny
+      L2 gradient: 0
+      aperture size: 5
+      threshold 1: 90.0
+      threshold 2: 150.0
+      image in<-image (not copied): !node/GaussianBlur
+        sigma: 2.0
+        image<-image_out: !node/Resize
+          fixed height: 0
+          fixed width: 0
+          interpolation mode: 1
+          scale factor: 0.10000000149011612
+          image_in<-image: *ColourSimilarity_1
+- !node/BroadcastLines
+  name: pipe_det
+  lines<-lines: *HoughLines_1
+- !node/SumSquared
+  image<-image: *ColourSimilarity_1

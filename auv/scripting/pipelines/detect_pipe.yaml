@@ -1,0 +1,44 @@
+- !node/BroadcastFloat
+  name: pipe_det
+  float<-sum sq: !node/SumSquared
+    image<-image: &ColourSimilarity_1 !node/ColourSimilarity
+      colour: !colour/RGB '0.0 1.0 1.0 1.0'
+      sigma: 1.0
+      image<-image (not copied): !node/MixValue
+        image fac: 1.0
+        value fac: -1.0
+        image<-image out (not copied): &Nop_1 !node/Nop
+          image in<-image out (not copied): !node/Throttle
+            target frequency: 10.0
+            image in<-image_out: !node/CameraInput {device id: 0, height: 240, width: 320}
+        value<-value: !node/Percentile
+          percentile: !BoundedFloat/Clamps '50.0 (0.0-100.0)'
+          image<-image out (not copied): *Nop_1
+- !node/DrawLines
+  image in<-image out: &Canny_1 !node/Canny
+    L2 gradient: 0
+    aperture size: 3
+    threshold 1: 50.0
+    threshold 2: 80.0
+    image in<-image_out: !node/Resize
+      fixed height: 0
+      fixed width: 0
+      interpolation mode: 1
+      scale factor: 0.20000000298023224
+      image_in<-image (not copied): !node/KMeans
+        K: 2
+        colorise: 1
+        image<-image: *ColourSimilarity_1
+  lines<-lines: &HoughLines_1 !node/HoughLines
+    maxLineGap: 5
+    minLineLength: 20
+    probabilistic: false
+    rho: 1.0
+    srn: 0
+    stn: 0
+    theta: 0.01745329238474369
+    threshold: 10
+    image in<-image out: *Canny_1
+- !node/BroadcastLines
+  name: pipe_det
+  lines<-lines: *HoughLines_1

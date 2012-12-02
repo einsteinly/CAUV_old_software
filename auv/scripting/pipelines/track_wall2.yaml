@@ -1,0 +1,28 @@
+- !node/BroadcastLines
+  name: track_wall
+  lines<-lines: &HoughLines_1 !node/HoughLines
+    maxLineGap: 10
+    minLineLength: 2
+    probabilistic: true
+    rho: 1.0
+    srn: 0
+    stn: 0
+    theta: 0.01745329238474369
+    threshold: 20
+    image in<-image: &PolarImageToXY_1 !node/PolarImageToXY
+      Resolution: 400
+      polar image<-polar image: !node/SonarImageEdge
+        line width: 5
+        min amplitude: 30
+        min width: 2
+        polar image<-polar image: !node/BearingRangeCrop
+          bearing end: 60.0
+          bearing start: -60.0
+          range end: 10.0
+          range start: 0.0
+          polar image<-polar image: !node/SonarInput {Resolution: 400, Sonar ID: 2,
+            derivative: 0, low-pass width: 0, min range: 0, non-maximum epsilon: 1,
+            non-maximum suppression: 0}
+- !node/DrawLines
+  image in<-image: *PolarImageToXY_1
+  lines<-lines: *HoughLines_1

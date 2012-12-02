@@ -1,112 +1,167 @@
-import collections
-import errno
-import imp
 import os
 import pwd
-import resource
-import shlex
-import subprocess
+import imp
 import sys
 import time
-import watchfuncs
+import errno
+import shlex
+import os.path
+import resource
 import traceback
+import subprocess
+import collections
 
-import utils.multitasking
+
+import utils.daemon
 from cauv.debug import debug, info, warning, error
 
 class SessionNotFound(Exception):
     pass
 
 def load_session(filename):
+    sys.path.append(os.path.dirname(filename))
     for suffix, mode, type in imp.get_suffixes():
         if filename.endswith(suffix):
             with open(filename, mode) as session_file:
-                return imp.load_module("session", session_file, "session.py", (suffix, mode, type))
-    raise SessionNotFound()
+                return imp.load_module("session", session_file, "/tmp/" + session_file.name, (suffix, mode, type))
+    raise SessionNotFound("Could not find session {}".format(filename))
+
+class StateType(object):
+    def __hash__(self):
+        return hash(id(self))
+
+Stopped    = StateType()
+Starting   = StateType()
+Running    = StateType()
+Restarting = StateType()
+Stopping   = StateType()
+Zombie     = StateType()
 
 class WatchProcess:
-    def __init__(self, process, settings):
+    def __init__(self, process, watcher, detach):
         self.p = process
-        self.pid = None
-        self.restart = True
-        self.settings = settings
-
-    def exec_proc(self):
-        format_dict = {'SDIR': os.path.abspath(self.settings.script_dir), "BDIR": os.path.abspath(self.settings.bin_dir), "D": ''}
-        command = self.p.cmds[0].format(**format_dict)
-        work_dir = self.p.work_dir.format(**format_dict)
-        os.chdir(work_dir)
-
-        if self.p.user is None:
-            username = self.settings.user
+        if self.p.autostart:
+            self.state = Starting
         else:
-            username = self.p.user
-        debug('running \'{}\' in directory {} as {}'.format(command, work_dir, username))
+            self.state = Stopped
+        self.pid = None
+        self.proc = None
+        self.watcher = watcher
+        self.sigs = []
+
+    def stopped(self):
+        return
+
+    def starting(self):
+        pid = self.p.get_pid()
+        if pid is not None:
+            self.pid = pid
+            info("found PID {} for process {}".format(self.pid, self.p.name))
+            self.state = Running
+            return
+        if self.p.prereq(self):
+            try:
+                with open(os.devnull, "rw") as nullf:
+                    self.proc = subprocess.Popen(self.p.cmd, stdout = nullf,
+                                                             stdin = nullf,
+                                                             stderr = nullf)
+            except Exception:
+                error("Error starting up process {}".format(self.p.name))
+                error(traceback.format_exc().encode('ascii', 'replace'))
+                self.restart = False
+
+            self.pid = self.proc.pid
+            info("Started {} with pid {}".format(self.p.name, self.pid))
+            self.state = Running
+
+    def running(self):
+        if self.pid_running():
+            return
+        self.pid = None
+        self.state = Stopped
+        warning("Process {} died!".format(self.p.name))
         try:
-            uid, gid = pwd.getpwnam(username)[2:4]
-            if sys.platform == 'darwin':
-                # no such thing as a saved id...
-                os.setgid(gid)
-                os.setuid(uid)
-            else:
-                os.setresgid(gid,gid,gid)
-                os.setresuid(uid,uid,uid)
+            self.p.death_callback(self)
+        except Exception:
+            error("Error in process {} death_callback:".format(self.p.name))
+            error(traceback.format_exc().encode('ascii', 'replace'))
+            error("Not restarting {}".format(self.p.name))
+            self.state = Stopped
+
+    def pid_running(self):
+        if self.pid is None:
+            return False
+        try:
+            os.kill(self.pid, 0)
+            return True
         except OSError as e:
-            if e.errno == errno.EPERM:
-                warning("Can't change user. Running as current user instead")
+            if e.errno == errno.ESRCH:
+                return False
             else:
                 raise
 
-        argv = shlex.split(command)
-
-        if self.settings.detach:
-            null_fd = os.open("/dev/null", os.O_RDWR)
-            os.dup2(null_fd, sys.stdin.fileno())
-            os.dup2(null_fd, sys.stdout.fileno())
-            os.dup2(null_fd, sys.stderr.fileno())
-
+    def stopping(self):
+        if not self.pid_running():
+            if self.state == Restarting:
+                self.p.restart_callback(self)
+                self.state = Starting
+            else:
+                self.state = Stopped
+            return
         try:
-            os.execlp(argv[0], *argv)
-            error("Exec returned for some reason?")
-        except Exception as e:
-            import traceback
-            error(traceback.format_exc())
+            sig = self.sigs.pop(0)
+        except IndexError:
+            error("No more signals to try for killing {}. Giving up!".format(self.p.name))
+            self.state = Zombie
+            return
+        try:
+            info("Killing process {} with signal {}".format(self.p.name, sig))
+            os.kill(self.pid, sig)
+        except OSError:
+            error("Error killing process {}: {}".format(self.p.name,
+                    traceback.format_exc().encode('ascii', 'replace')))
 
     def tick(self):
-        if self.pid is not None:
-            try:
-                os.kill(self.pid, 0)
-            except OSError as e:
-                if e.errno == errno.ESRCH:
-                    self.pid = None
-            if self.pid is None:
-                warning("Process {} died!".format(self.p.name))
-                self.restart = self.p.death_callback(self.p)
-        if self.pid is None:
-            self.pid = self.p.pid_func()
-            if self.pid is not None:
-                info("found PID {} for process {}".format(self.pid, self.p.name))
-        if self.pid is None and self.restart:
-            self.pid = utils.multitasking.spawnDaemon(self.exec_proc)
-            info("Started {} with pid {}".format(self.p.name, self.pid))
+        {
+            Stopped : self.stopped,
+            Starting : self.starting,
+            Running : self.running,
+            Restarting : self.stopping,
+            Stopping : self.stopping,
+            Zombie : self.stopped,
+        }[self.state]()
+        if self.proc:
+            self.proc.poll()
 
-    def kill(self, sig):
-        if self.pid is None:
-            self.pid = self.p.pid_func()
-        if self.pid is not None:
-            info("Killing PID {} ({})".format(self.pid, self.p.name))
-            try:
-                os.kill(self.pid, sig)
-            except OSError as e:
-                error("Could not kill PID: {}".format(e))
-        else:
-            warning("Could not find PID for {}".format(self.p.name))
+    def start(self):
+        if self.state in (Starting, Running):
+            warning("{} is already running".format(self.p.name))
+            return
+        self.state = Starting
+
+    def stop(self, sigs):
+        if self.state not in (Starting, Running):
+            warning("Asked to stop {} which is not running".format(self.p.name))
+            return
+        info("Stopping {}".format(self.p.name))
+        self.sigs = sigs
+        if self.state == Starting:
+            self.state = Stopped
+            return
+        self.state = Stopping
+
+    def restart(self, sigs = []):
+        if self.state == Zombie:
+            warning("Not restarting zombie process {}".format(self.p.name))
+            return
+        self.sigs = sigs
+        self.state = Restarting
 
 def setup_core_dumps():
-    core_pattern = "/tmp/corefiles/%e.%d.%t.%p"
+    core_pattern = "/var/tmp/cauv_corefiles/%e.%d.%t.%p"
     try:
         try:
-            os.mkdir("/tmp/corefiles", 0777)
+            os.mkdir("/var/tmp/cauv_corefiles", 0777)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 error("Could not create corefile directory")
@@ -116,7 +171,7 @@ def setup_core_dumps():
                 with open("/proc/sys/kernel/core_pattern", "w") as pattern_w_file:
                     pattern_w_file.write(core_pattern)
         soft, hard = resource.getrlimit(resource.RLIMIT_CORE)
-        resource.setrlimit(resource.RLIMIT_CORE, (min(hard, 10*1024*1024), hard))
+        resource.setrlimit(resource.RLIMIT_CORE, (min(hard, 10*1024*1024), hard)) #10MB max
     except IOError as e:
         if e.errno == errno.EACCES:
             error("Could not change core pattern: not running as root?")
@@ -125,14 +180,9 @@ def setup_core_dumps():
         else:
             raise
     
-Settings = collections.namedtuple('Settings', ['user', 'script_dir', 'bin_dir', 'detach'])
-
-def currentUser():
-    return pwd.getpwuid(os.getuid())[0]
-
 class Watcher:
-    def __init__(self, processes = None, core_dumps = False, log_dir = None,
-            default_user = currentUser(), script_dir = '', bin_dir = '', detach = True):
+    def __init__(self, processes = None, core_dumps = False, log_dir = None, detach = True):
+        self.detach = detach
         if core_dumps:
             setup_core_dumps()
         if processes is None:
@@ -140,17 +190,39 @@ class Watcher:
         if log_dir:
             os.environ["CAUV_LOG_DIR"] = log_dir
 
-        self.settings = Settings(default_user, script_dir, bin_dir, detach)
+        self.processes = {p.name : WatchProcess(p, self, detach) for p in processes}
 
-        self.processes = [WatchProcess(p, self.settings) for p in processes]
-
-    def monitor(self, tick_time = 1):
+    def monitor(self, tick_time = 1, tick_cb = None):
         while True:
-            for p in self.processes:
+            for p in self.processes.values():
                 p.tick()
+            if tick_cb is not None:
+                tick_cb()
             time.sleep(tick_time)
 
-    def kill(self, signal=15):
-        for p in self.processes:
+    def add_process(self, process):
+        self.processes[process.name] = WatchProcess(process, self, self.detach)
+
+    def stop(self, process, signals=None):
+        if signals is None:
+            signals = [15,0,0,0,9]
+        self.processes[process].stop(signals)
+
+    def start(self, process):
+        self.processes[process].start()
+
+    def restart(self, process, signals=None):
+        if signals is None:
+            signals = [15,0,0,0,9]
+        self.processes[process].restart(signals)
+
+    def is_running(self, process):
+        try:
+            return self.processes[process].state == Running
+        except KeyError:
+            return False
+
+    def killall(self, signal=15):
+        for p in self.processes.values():
             p.kill(signal)
 

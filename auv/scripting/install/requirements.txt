@@ -1,0 +1,11 @@
+Cheetah
+PSI
+ply
+pylint
+pyserial
+pyzmq==2.2.0
+urwid
+ipython
+blist
+numpy
+pyyaml

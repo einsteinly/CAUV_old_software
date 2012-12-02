@@ -1,0 +1,26 @@
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image_out: !node/HoughLines
+    maxLineGap: 3
+    minLineLength: 15
+    probabalistic: true
+    rho: 1
+    srn: 0
+    stn: 0
+    theta: 0.10000000149011612
+    threshold: 10
+    image_in<-image_out: !node/Canny
+      L2 gradient: 0
+      aperture size: 3
+      threshold 1: 10.0
+      threshold 2: 80.0
+      image_in<-image (not copied): !node/MedianFilter
+        kernel: 9
+        image<-image (not copied): !node/Levels
+          black level: 50
+          white level: 100
+          image<-H: !node/SplitHSV
+            image<-image_out: !node/Resize
+              interpolation mode: 1
+              scale factor: 0.10000000149011612
+              image_in<-image: !node/FileInput {filename: /media/JWYATT13M-E/d3}

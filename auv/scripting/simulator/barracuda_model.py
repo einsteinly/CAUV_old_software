@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 
-# Standard Library Modules
+# Standard Library Modules 
 import operator
 import datetime
 import math
@@ -31,7 +31,7 @@ from cauv.debug import debug, error, warning, info
 #                      x
 #      hbow            |              hstern
 #    .....|............|..............|....
-#  y <----X-----red-he-o-rring--------X---->  prop
+#  y <----X-----barracuda--------X---->  prop
 #    .....|...........................|....
 #
 #
@@ -42,7 +42,7 @@ from cauv.debug import debug, error, warning, info
 #                      |
 #      vbow            |              vstern
 #     ..|..............|................|..
-#  y <--X-------red-he-o-rring----------X-->  prop
+#  y <--X-------barracuda----------X-->  prop
 #    ...|...............................|..
 #
 # Weight: expect to be slightly negative, taking into account buoyancy, and

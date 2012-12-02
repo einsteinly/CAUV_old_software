@@ -1,0 +1,57 @@
+- !node/BroadcastLines
+  name: cam
+  lines<-lines: &HoughLines_1 !node/HoughLines
+    maxLineGap: 10
+    minLineLength: 10
+    probabilistic: true
+    rho: 1
+    srn: 0
+    stn: 0
+    theta: 0.01745329238474369
+    threshold: 20
+    image in<-image_out: &Rotate_1 !node/Rotate
+      extend: false
+      radians: 1.5700000524520874
+      image_in<-image out (not copied): !node/Crop
+        height: 200
+        top left (x): 180
+        top left (y): 100
+        width: 240
+        image in<-image: !node/PolarImageToXY
+          Resolution: 400
+          polar image<-image (not copied): !node/Mix
+            absolute value: true
+            image fac: 1.0
+            mix fac: 1.0
+            image<-polar image: !node/SonarImageEdge
+              line width: 4
+              min amplitude: 20
+              min width: 4
+              polar image<-image copy: !node/Copy
+                image<-polar image: &SonarInput_1 !node/SonarInput {Resolution: 400,
+                  Sonar ID: 2, derivative: 0, low-pass width: 0, min range: 0, non-maximum epsilon: 1,
+                  non-maximum suppression: 0}
+            mix<-polar image: !node/SonarImageEdge
+              line width: 4
+              min amplitude: 40
+              min width: 4
+              polar image<-image copy: !node/Copy
+                image<-polar image: *SonarInput_1
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image out: !node/DrawLines
+    image in<-image_out: !node/Rotate
+      extend: false
+      radians: 1.5700000524520874
+      image_in<-image out (not copied): !node/Crop
+        height: 200
+        top left (x): 180
+        top left (y): 100
+        width: 240
+        image in<-image: !node/PolarImageToXY
+          Resolution: 400
+          polar image<-polar image: *SonarInput_1
+    lines<-lines: *HoughLines_1
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image_out: *Rotate_1

@@ -1,0 +1,48 @@
+- !node/BroadcastLines
+  name: cam
+  lines<-lines: &HoughLines_1 !node/HoughLines
+    maxLineGap: 1
+    minLineLength: 20
+    probabilistic: true
+    rho: 1
+    srn: 0
+    stn: 0
+    theta: 0.009999999776482582
+    threshold: 3
+    image in<-image out: &Canny_1 !node/Canny
+      L2 gradient: 0
+      aperture size: 3
+      threshold 1: 60.0
+      threshold 2: 300.0
+      image in<-image (not copied): &Levels_1 !node/Levels
+        black level<-ch1 value: !node/Percentile
+          percentile: 0.800000011920929
+          image<-image_out: &Resize_1 !node/Resize
+            fixed height: 0
+            fixed width: 0
+            interpolation mode: 1
+            scale factor: 1.0
+            image_in<-image (not copied): !node/MedianFilter
+              kernel: 5
+              image<-image (synced): &SonarInput_1 !node/SonarInput {Resolution: 400,
+                Sonar ID: 2, derivative: 0, low-pass width: 0, min range: 0, non-maximum epsilon: 1,
+                non-maximum suppression: 0}
+        image<-image copy: !node/Copy
+          image<-image_out: *Resize_1
+        white level<-ch1 value: !node/Percentile
+          percentile: 99.5
+          image<-image_out: *Resize_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image out: !node/DrawLines
+    image in<-image (not copied): *Levels_1
+    lines<-lines: *HoughLines_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (not copied): *Levels_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (synced): *SonarInput_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image out: *Canny_1

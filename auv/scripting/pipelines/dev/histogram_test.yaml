@@ -1,0 +1,29 @@
+- !node/FileOutput
+  filename: /Users/james/Desktop/t/histogram-%c.jpg
+  jpeg quality: 95
+  png compression: 9
+  image_in<-image out: &DrawHistogram_1 !node/DrawHistogram
+    histogram<-histogram: !node/Histogram
+      Number of bins: 256
+      name: unnamed histogramname for output histogram
+      image_in<-image (not copied): &Levels_1 !node/Levels
+        black level<-ch1 value: !node/Percentile
+          percentile: 1.0
+          image<-image_out: &Resize_1 !node/Resize
+            interpolation mode: 1
+            scale factor: 0.5
+            image_in<-H: !node/SplitHSV
+              image<-image (not copied): !node/GaussianBlur
+                sigma: 3.0
+                image<-image: !node/FileInput {filename: /Users/james/Desktop/t/00004.jpg}
+        image<-image copy: !node/Copy
+          image<-image_out: *Resize_1
+        white level<-ch1 value: !node/Percentile
+          percentile: 99.0
+          image<-image_out: *Resize_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (not copied): *Levels_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image out: *DrawHistogram_1

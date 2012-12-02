@@ -1,0 +1,72 @@
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image (not copied): &Levels_1 !node/Levels
+    black level<-value: !node/Percentile
+      percentile: !BoundedFloat/Clamps '1.0 (0.0-100.0)'
+      image<-image (not copied): &GaussianBlur_1 !node/GaussianBlur
+        sigma: 1.0
+        image<-G: !node/SplitRGB
+          image<-image (not copied): !node/MixValue
+            image fac: 1.0
+            value fac: 1.0
+            image<-image copy: !node/Copy
+              image<-image_out: &Resize_1 !node/Resize
+                fixed height: 0
+                fixed width: 0
+                interpolation mode: 1
+                scale factor: 0.4000000059604645
+                image_in<-image out (not copied): !node/Throttle
+                  target frequency: 10.0
+                  image in<-image_out: !node/CameraInput {device id: 0, height: 480,
+                    width: 640}
+            value<-value: !node/Percentile
+              percentile: !BoundedFloat/Clamps '50.0 (0.0-100.0)'
+              image<-image_out: *Resize_1
+    image<-image copy: !node/Copy
+      image<-image (not copied): *GaussianBlur_1
+    white level<-value: !node/Percentile
+      percentile: !BoundedFloat/Clamps '99.0 (0.0-100.0)'
+      image<-image (not copied): *GaussianBlur_1
+- !node/ClampInt {Max: 256, Min: 50, Value: 167}
+- !node/BroadcastHistogram
+  name: buoy_hue
+  histogram<-histogram: !node/Histogram
+    Number of bins: 180
+    name: unused
+    image_in<-H: &SplitHSV_1 !node/SplitHSV
+      image<-image_out: !node/Resize
+        fixed height: 0
+        fixed width: 0
+        interpolation mode: 1
+        scale factor: 0.5
+        image_in<-image_out: *Resize_1
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '70.0 (0.0-100.0)'
+  image_in<-image_out: !node/Resize
+    fixed height: 0
+    fixed width: 0
+    interpolation mode: 1
+    scale factor: 0.5
+    image_in<-image_out: !node/HoughCircles
+      maxRadius: 20
+      method: 3
+      minDist: 15.0
+      minRadius: 1
+      name: buoy
+      param1: 1.0
+      param2: 10.0
+      scale: 1.0
+      image_in<-image out: !node/Canny
+        L2 gradient: 0
+        aperture size: 3
+        threshold 1: 40.0
+        threshold 2: 75.0
+        image in<-image (not copied): !node/MedianFilter
+          kernel: 7
+          image<-image (not copied): *Levels_1
+- !node/BroadcastHistogram
+  name: buoy_value
+  histogram<-histogram: !node/Histogram
+    Number of bins: 256
+    name: unused
+    image_in<-V: *SplitHSV_1

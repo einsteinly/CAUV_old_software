@@ -30,7 +30,6 @@ target_link_libraries (
 
     ${common_links}
 )
-depends_on_messages(common)
 
 # dynamic lib:
 add_library (
@@ -43,7 +42,6 @@ target_link_libraries (
 
     ${common_links}
 )
-depends_on_messages(common-shared)
 cauv_install(common-shared)
 
 add_dependencies(common logo-headers version-header)

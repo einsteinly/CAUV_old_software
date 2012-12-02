@@ -21,7 +21,6 @@ target_link_libraries(
     ${rt_LIBRARY}
 )
 
-depends_on_messages(zeromq_msg)
 
 add_executable(
     zmq_test 
@@ -35,7 +34,6 @@ target_link_libraries(
     common
     zeromq_msg 
 )
-depends_on_messages(zmq_test)
 
 if (NS3_FOUND)
     add_executable(
