@@ -29,17 +29,17 @@ parser.add_argument("--session", "-s", help="session file to use")
 
 args, unknown = parser.parse_known_args()
 
-if not os.path.exists(args.session):
-    args.session = utils.dirs.config_dir(args.session)
 if args.session:
+    if not os.path.exists(args.session):
+        args.session = utils.dirs.config_dir(args.session)
     session = watch.load_session(args.session)
-try:
-    arg_group = parser.add_argument_group(title=args.session)
-    session.get_arguments(arg_group)
-except AttributeError:
-    pass
-except NameError:
-    pass
+    try:
+        arg_group = parser.add_argument_group(title=args.session)
+        session.get_arguments(arg_group)
+    except AttributeError:
+        pass
+    except NameError:
+        pass
 
 parser.add_argument("--help",        "-h",  help="print this usage message, and help for any session file", action='store_true')
 parser.add_argument("--daemonize",   "-d",  help="run as a daemon",                          action='store_true')
@@ -91,7 +91,7 @@ class WatchObserver(messaging.MessageObserver):
                 try:
                     stats = psi.process.Process(process.pid)
                 except psi.process.NoSuchProcessError:
-                    warning("Process dissapeared when looking for stats")
+                    warning("Process {} dissapeared when looking for stats".format(process.p.name))
                     continue
                 curr_time, cputime = time.time(), stats.cputime.float()
                 try:

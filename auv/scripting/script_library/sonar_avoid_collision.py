@@ -5,7 +5,7 @@ import math
 import time
 
 # CAUV:
-from AI_classes import aiScript, aiScriptOptions
+from AI.base import aiScript, aiScriptOptions
 from cauv.debug import debug, info, warning, error
 import cauv.messaging as msg
 import cauv.pipeline  as pipeline

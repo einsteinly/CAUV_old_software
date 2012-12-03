@@ -4,7 +4,7 @@ import detector_library
 
 from cauv.debug import debug, warning, error, info
 
-from AI_classes import subclassDict
+from AI.base import subclassDict
 
 class conditionOptions(object):
     def __init__(self, options={}):

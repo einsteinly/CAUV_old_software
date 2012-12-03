@@ -1,4 +1,4 @@
-from AI_classes import aiDetector, aiDetectorOptions
+from AI.base import aiDetector, aiDetectorOptions
 
 import time
 

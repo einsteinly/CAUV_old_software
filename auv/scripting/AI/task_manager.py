@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python2.7
 """
 immediate processing
 -stop script requests
@@ -26,9 +26,9 @@ import traceback
 
 from collections import deque
 
-from AI_classes import aiProcess, external_function, RepeatTimer
-from AI_tasks import tasks as task_classes
-from AI_conditions import conditions as condition_classes
+from AI.base import aiProcess, external_function, RepeatTimer
+from AI.tasks import tasks as task_classes
+from AI.conditions import conditions as condition_classes
 
 from utils.conv import BoostMapToDict
 import utils.event as event

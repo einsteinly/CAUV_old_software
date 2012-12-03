@@ -1,5 +1,5 @@
-from AI_conditions import conditions as c
-from AI_classes import subclassDict, aiOptions, aiScriptOptions
+from AI.conditions import conditions as c
+from AI.base import subclassDict, aiOptions, aiScriptOptions
 
 from cauv.debug import debug, warning, error, info
 

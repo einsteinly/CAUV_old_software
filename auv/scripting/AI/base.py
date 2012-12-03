@@ -79,10 +79,6 @@ class aiProcess(event.EventLoop, messaging.MessageObserver):
         self.node.subMessage(messaging.AIMessage())
         self.node.subMessage(messaging.AIlogMessage())
         self.node.subMessage(messaging.AIKeepAliveMessage())
-        self._keep_alive = True
-        self._man_id = manager_id
-        self._keep_alive_thread = threading.Thread(target=self._keep_alive_loop)
-        self._keep_alive_thread.daemon = True
         self.process_name = process_name
         self.ai = aiAccess(self.node, self.process_name)
         self.running = True
@@ -99,15 +95,6 @@ class aiProcess(event.EventLoop, messaging.MessageObserver):
     #the 'most child' process should call this at the end of its init method
     def _register(self):
         self.node.addObserver(self)
-        self._keep_alive_thread.start()
-        
-    def onAIKeepAliveMessage(self, m):
-        if m.managerId == self._man_id:
-            self._keep_alive = True
-        else:
-            #if there is another manager running, then kill this script
-            self._keep_alive = False
-            warning("Old process still running!!!!!")
 
     def onAIMessage(self, m):
         message = cPickle.loads(m.msg)
@@ -124,18 +111,6 @@ class aiProcess(event.EventLoop, messaging.MessageObserver):
             except KeyError:
                 error("Unknown function {} called by {}".format(message.function, message.calling_process))
             
-    def _keep_alive_loop(self):
-        try:
-            while True:
-                time.sleep(5)
-                if self._keep_alive:
-                    self._keep_alive = False
-                else:
-                    raise Exception("AI_manager died.")
-        except:
-            thread.interrupt_main()
-            debug("Killed thread since AI_manager died")
-
     def log(self, message):
         debug(message)
         try:

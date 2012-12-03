@@ -69,6 +69,7 @@ class WatchProcess:
                 error("Error starting up process {}".format(self.p.name))
                 error(traceback.format_exc().encode('ascii', 'replace'))
                 self.restart = False
+                return
 
             self.pid = self.proc.pid
             info("Started {} with pid {}".format(self.p.name, self.pid))

@@ -11,7 +11,7 @@ import traceback
 import argparse
 from cauv.debug import error, info
 
-from AI_classes import aiScriptOptions, aiScriptState
+from AI.base import aiScriptOptions, aiScriptState
 
 parser = argparse.ArgumentParser(description = "Script Parent")
 parser.add_argument("task")

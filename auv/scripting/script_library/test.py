@@ -1,4 +1,4 @@
-from AI_classes import aiScript, aiScriptOptions
+from AI.base import aiScript, aiScriptOptions
 
 from cauv.debug import info, warning, error, debug
 

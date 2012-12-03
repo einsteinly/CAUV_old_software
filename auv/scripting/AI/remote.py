@@ -2,7 +2,7 @@
 import cauv.messaging as messaging
 from cauv.debug import info, error, debug, warning
 
-from AI_classes import aiProcess
+from AI.base import aiProcess
 
 import cPickle
 import IPython

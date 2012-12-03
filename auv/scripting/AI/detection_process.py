@@ -7,7 +7,7 @@ import traceback
 import argparse
 import utils.event as event
 
-from AI_classes import aiProcess, external_function, aiDetectorOptions
+from AI.base import aiProcess, external_function, aiDetectorOptions
 
 MAX_WAITING_TIME = 1
 
