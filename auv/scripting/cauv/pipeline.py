@@ -4,19 +4,11 @@ import messaging
 from debug import debug, warning, error, info
 
 import threading
-import pickle
 import copy
 
-#pylint: disable=E1101
-
-def fromNPV(npv):
-    return npv.value
-
-def toNPV(value):
-    return messaging.ParamValue.create(value);
- 
 class Node:
     def __init__(self, id, type, parameters = None, inputarcs = None, outputarcs = None):
+        self.id = id
         self.type = type
         self.params = parameters  # param : value
         self.inarcs = inputarcs   # input : (node id, output)
@@ -36,116 +28,14 @@ class State:
     def __repr__(self):
         return str(self.nodes)
 
+#pylint: disable=E1101
 
-#
-# BEWARE:
-#  This little bit of unpickle machinery allows old saved pipelines to be
-#  loaded if any of the data structures or messages involved in setting the
-#  pipeline state change.
-#
-#  You SHOULD NOT RELY ON THESE HOOKS on anything other than a temporary basis:
-#  once you can load your old pipeline, save it in the new format, check that
-#  it works, then remove all copies of the old pipeline, and remove the hook
-#  code that you add here.
-#
+def fromNPV(npv):
+    return npv.value
 
-def makeNewLocalNodeInput(input, subtype, schedType=messaging.InputSchedType.Must_Be_New, compatible_subtypes=None):
-    if compatible_subtypes is None:
-        compatible_subtypes = [subtype]
-    if subtype == messaging.ParamValueType.BoundedFloatType:
-        compatible_subtypes.append(messaging.ParamValueType.floatType)
-        compatible_subtypes.append(messaging.ParamValueType.int32Type)
-    if subtype == messaging.ParamValueType.floatType:
-        compatible_subtypes.append(messaging.ParamValueType.BoundedFloatType)
-    if subtype == messaging.ParamValueType.int32Type:
-        compatible_subtypes.append(messaging.ParamValueType.BoundedFloatType)
-    return messaging.LocalNodeInput(input, subtype, schedType, compatible_subtypes)
-
-Unpickle_Filters = {
-    'LocalNodeInput' : makeNewLocalNodeInput,
-}
-
-class FilterUnpickler(pickle.Unpickler):
-    def __init__(self, file):
-        pickle.Unpickler.__init__(self, file)
-
-    def load_reduce(self):
-        stack = self.stack
-        args = stack.pop()
-        func = stack[-1]
-        if func.__name__ in Unpickle_Filters:
-            warning('filtering pickle load of %s(%s)' % (func.__name__, args))
-            value = Unpickle_Filters[func.__name__](*args)
-        else:
-            value = func(*args)
-        stack[-1] = value
-    pickle.Unpickler.dispatch[pickle.REDUCE] = load_reduce
-
-
-#
-# SIMILARLY, don't rely on these filters to image pipeline node parameters
-# either: they're designed to scale into a progressive migrations system
-# (multiple filters could easily be applied progressively), but performance
-# would necessarily get pretty awful pretty quickly
-#
-
-def filterPercentileNodeParameters(params_in):
-    params_out = {}
-    for param, value in params_in.items():
-        param_key = param.input if isinstance(param, messaging.LocalNodeInput) else param
-        if param_key == 'percentile' and isinstance(value, float):
-            params_out[param] = messaging.BoundedFloat(value, 0, 100, messaging.BoundedFloatType.Clamps)
-        else:
-            params_out[param] = value;
-    return params_out
-
-def filterClampXNodeParameters(params_in):
-    params_out = {}
-    range_max = None
-    range_min = None
-    for param, value in params_in.items():
-        param_key = param.input if isinstance(param, messaging.LocalNodeInput) else param
-        if param_key == 'Max':
-            range_max = value
-        elif param_key == 'Min':
-            range_min = value
-        else:
-            params_out[param] = value;
-    if range_min is not None and range_max is not None:
-        params_out['Range'] = messaging.Range(float(range_min), float(range_max))
-    return params_out
-
-def filterLevelsNodeParameters(params_in):
-    params_out = {}
-    for param, value in params_in.items():
-        param_key = param.input if isinstance(param, messaging.LocalNodeInput) else param
-        if param_key == 'black level' and isinstance(value, int):
-            params_out[param] = messaging.BoundedFloat(float(value), 0, 255, messaging.BoundedFloatType.Clamps)
-        elif param_key == 'white level' and isinstance(value, int):
-            params_out[param] = messaging.BoundedFloat(float(value), 0, 255, messaging.BoundedFloatType.Clamps)
-        else:
-            params_out[param] = value;
-    return params_out
-
-def filterGuiOutputNodeParameters(params_in):
-    params_out = {}
-    for param, value in params_in.items():
-        param_key = param.input if isinstance(param, messaging.LocalNodeInput) else param
-        if param_key == 'jpeg quality' and isinstance(value, int):
-            params_out[param] = messaging.BoundedFloat(float(value), 0, 100, messaging.BoundedFloatType.Clamps)
-        else:
-            params_out[param] = value;
-    return params_out
-
-
-NodeParam_Filters = {
-    messaging.NodeType.Percentile : filterPercentileNodeParameters,
-    #messaging.NodeType.ClampInt   : filterClampXNodeParameters,
-    #messaging.NodeType.ClampFloat : filterClampXNodeParameters,
-    messaging.NodeType.Levels     : filterLevelsNodeParameters,
-    messaging.NodeType.GuiOutput  : filterGuiOutputNodeParameters
-}
-
+def toNPV(value):
+    return messaging.ParamValue.create(value);
+ 
 class ConvenientObject(object):
     def __init__(self, model, node_id):
         self.model = model
@@ -288,18 +178,6 @@ class Model(messaging.MessageObserver):
             saved = FilterUnpickler(inf).load()
             self.set(saved, timeout)
     
-    @staticmethod
-    def loadFile(inf):
-        '''Load a pipeline file from disk, and return its contents. This does not manipulate the image pipeline.'''
-        #saved = pickle.load(inf)
-        saved = FilterUnpickler(inf).load()
-        return saved
-    
-    # !!! TODO: this should probably be a classmethod
-    def dumpFile(self, outf, state):
-        '''Save a passed pipeline state to a file. This does not manipulate the image pipeline.'''
-        pickle.dump(outf, state)
-
     def get(self, timeout=3.0):
         '''Grab the state from the image pipeline, save it and return it.'''
         graph = self.__getSynchronousGraphDescription(timeout)
@@ -343,87 +221,15 @@ class Model(messaging.MessageObserver):
                 #print
         return s
     
-    def set(self, state, timeout=3.0, clear=True):
+    def set(self, state):
         '''Set the state of the image pipeline based on 'state'.'''
         debug("Setting pipeline %s." %(self.pipeline_name))
-        try:
-            nodeTypes = {node_id: messaging.NodeType(node.type) for (node_id, node) in state.nodes.iteritems()}
-            nodeArcs = {node_id: {key: messaging.NodeOutput(output[0], output[1], messaging.OutputType(0), 0) for key, output in node.inarcs.iteritems()} for (node_id, node) in state.nodes.iteritems()}
-            nodeParams = {node_id: node.params for (node_id, node) in state.nodes.iteritems()}
-            self.send(messaging.SetPipelineMessage(self.pipeline_name, nodeTypes, nodeArcs, nodeParams))
-        except:
-            error("Pipeline could not be loaded in one step, falling back to adding nodes individually)")
-            if clear: self.clear()
-            id_map = {}
-            node_map = {}
-            # first ensure all nodes are present
-            for old_id, node in state.nodes.items():
-                try:
-                    id_map[old_id] = self.addSynchronous(node.type, timeout)
-                except RuntimeError, e:
-                    error(str(e) + ": attempted to add node %s" % node.type)
-                    debug('attempting to continue...')
-                    id_map[old_id] = None
-                node_map[old_id] = node
-                #print id_map[old_id], 'is new id for', old_id, node.type, node.params
-            connected_inputs = set()
-            for old_id, node in state.nodes.items():
-                for input in node.inarcs.keys():
-                    if isinstance(input, messaging.LocalNodeInput):
-                        input_key = input.input
-                    else:
-                        input_key = input
-                    (other, output) = node.inarcs[input]
-                    if other != 0 and id_map[other] is not None:
-                        connected_inputs.add((old_id, input_key))
-            # then set all parameter values (for non-connected parameters only)
-            for old_id, node in state.nodes.items():
-                id = id_map[old_id]
-                if id is None:
-                    warning('skipping parameters for node that was not added: %s' %
-                            str(node.params))
-                    continue
-                if node.type in NodeParam_Filters:
-                    warning('filtering parameters of type %s node' % messaging.NodeType(node.type))
-                    params = NodeParam_Filters[node.type](node.params)
-                    debug('Filtered parameters:\n%s' % params)
-                else:
-                    params = node.params
-                for param in params.keys():
-                    if isinstance(param, messaging.LocalNodeInput):
-                        param_key = param.input
-                    else:
-                        param_key = param
-                    if (old_id, param_key) in connected_inputs:
-                        debug('skipping setting connected parameter: %s:%s' % (old_id, param))
-                        continue
-                    debug('%d.%s = %s (%s)' % (id, param, params[param], type(params[param])))
-                    try:
-                        self.setParameterSynchronous(id, param_key, toNPV(params[param]), timeout)
-                    except RuntimeError, e:
-                        error(str(e) + ": attempted to set parameter %s to %s" % ((id, param_key), params[param]))
-                        debug('attempting to continue...')
-            # finally add links
-            for old_id, node in state.nodes.items():
-                # strictly speaking only one of these should be necessary, since
-                # arcs have two ends...
-                id = id_map[old_id]
-                if id is None:
-                    warning('skipping arcs for node that was not added: %s' %
-                            str(node.inarcs))
-                    continue
-                for input in node.inarcs.keys():
-                    if isinstance(input, messaging.LocalNodeInput):
-                        input_key = input.input
-                    else:
-                        input_key = input
-                    (other, output) = node.inarcs[input]
-                    if other != 0 and id_map[other] is not None:
-                        try:
-                            self.addArcSynchronous(id_map[other], output, id, input_key, timeout)
-                        except RuntimeError, e:
-                            error(str(e) + ': attempted to add arc %s --> %s' % ((id_map[other], output),(id, input)))
-                            debug('attempting to continue...')
+        nodeTypes = {node_id: messaging.NodeType(node.type) for (node_id, node) in state.nodes.iteritems()}
+        nodeArcs = {node_id: {key: messaging.NodeOutput(output[0], output[1], messaging.OutputType(0), 0) 
+                                for key, output in node.inarcs.iteritems()}
+                      for (node_id, node) in state.nodes.iteritems()}
+        nodeParams = {node_id: node.params for (node_id, node) in state.nodes.iteritems()}
+        self.send(messaging.SetPipelineMessage(self.pipeline_name, nodeTypes, nodeArcs, nodeParams))
    
     def send(self, msg):
         '''Send a message to the pipeline group.'''
@@ -614,31 +420,6 @@ class Model(messaging.MessageObserver):
         else:
             pass
             #warning('ignoring message about unknown arc being added')
-
-    #def onArcRemovedMessage(self, m):
-    #    if not self.checkName(m): return
-    #    #print m
-    #    pass
-
-    #def onStatusMessage(self, m):
-    #    if not self.checkName(m): return
-    #    #print m
-    #    pass
-
-    #def onInputStatusMessage(self, m):
-    #    if not self.checkName(m): return
-    #    #print m
-    #    pass
-    
-    #def onOutputStatusMessage(self, m):
-    #    if not self.checkName(m): return
-    #    #print m
-    #    pass
-    
-    #def onGuiImageMessage(self, m):
-    #    if not self.checkName(m): return
-    #    #print m
-    #    pass
 
     def __getSynchronousGraphDescription(self, timeout=3.0):
         self.description_ready_condition.acquire()

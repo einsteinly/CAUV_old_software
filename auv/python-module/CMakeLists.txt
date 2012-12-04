@@ -30,7 +30,11 @@ set(CAUV_PYTHON_INSTALL_PATH ${CMAKE_INSTALL_PREFIX}/${PYTHON_PACKAGES_PATH} CAC
 set(PYTHON_GEN_CMAKE_CMDLINE ${PYMSGD}/msggen.py -l "python" -o ${BINDIR} ${MSGS} 
     --cmake-out ${BINDIR}/message_files.cmake --cmake-prefix CAUV_MESSAGE_PYTHON -m ${BINDIR}/msggen_marker)
 
-execute_process(COMMAND ${PYTHON_GEN_CMAKE_CMDLINE})
+execute_process(COMMAND ${PYTHON_GEN_CMAKE_CMDLINE} RESULT_VARIABLE GENERATION_FAILED)
+
+if(${GENERATION_FAILED})
+    message(FATAL_ERROR "Message generation failed! do you have PLY and Cheetah installed?")
+endif()
 
 include(${BINDIR}/message_files.cmake)
 

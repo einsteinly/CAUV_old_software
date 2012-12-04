@@ -4,7 +4,7 @@ import cauv
 import cauv.messaging as msg
 from cauv.debug import debug, info, warning, error
 
-from AI_classes import aiScript, aiScriptOptions
+from AI.base import aiScript, aiScriptOptions
 
 import time
 import math

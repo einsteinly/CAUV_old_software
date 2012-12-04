@@ -85,6 +85,7 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
         m_view = new f::FView(cauv_node, pipelineName, node);
         m_view->setMode(f::FView::Internal);
         m_view->setMinimumSize(120, 120);
+        
         m_contents = new liquid::ProxyWidget(this);
         m_contents->setWidget(m_view);
         m_contents->setMinimumSize(120, 120);
@@ -193,7 +194,7 @@ void LiquidFluidityNode::unMaximise(){
         // ... so create a new one instead:
         boost::shared_ptr<CauvNode> cauv_node = m_view->node();
         m_view->deleteLater();
-        m_view = new f::FView(cauv_node, m_node->fullPipelineName(), m_view->manager()->model());
+        m_view = new f::FView(cauv_node, m_node->fullPipelineName(), m_view->manager()->model(), m_view->scene(), m_view->manager());
         m_view->setMode(f::FView::Internal);
         m_contents->setWidget(m_view);
     }

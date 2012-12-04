@@ -1,0 +1,39 @@
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image out: !node/DrawLines
+    image in<-image_out: &Resize_1 !node/Resize
+      fixed height: 0
+      fixed width: 0
+      interpolation mode: 1
+      scale factor: 0.10000000149011612
+      image_in<-image (not copied): !node/Levels
+        black level: !BoundedFloat/Clamps '0.0 (0.0-255.0)'
+        white level: !BoundedFloat/Clamps '1.0 (0.0-255.0)'
+        image<-cluster ids: !node/RelabelClusters
+          C0: 100
+          C1: 0
+          C2: 0
+          cluster ids<-cluster ids: &KMeans_1 !node/KMeans
+            K: 3
+            colorise: 1
+            image<-image_out: !node/NetInput {camera id: 2}
+          image<-image (not copied): *KMeans_1
+    lines<-lines: &MergeSimilarLines_1 !node/MergeSimilarLines
+      angle epsilon: 0.30000001192092896
+      distance epsilon: 0.10000000149011612
+      lines<-lines: !node/HoughLines
+        maxLineGap: 5
+        minLineLength: 20
+        probabilistic: true
+        rho: 0.10000000149011612
+        srn: 0
+        stn: 0
+        theta: 0.01745329238474369
+        threshold: 20
+        image in<-image_out: *Resize_1
+- !node/Centre
+  name: pipe
+  image_in<-image_out: *Resize_1
+- !node/BroadcastLines
+  name: pipe
+  lines<-lines: *MergeSimilarLines_1

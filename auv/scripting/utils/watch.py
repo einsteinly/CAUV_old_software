@@ -5,10 +5,12 @@ import sys
 import time
 import errno
 import shlex
+import os.path
 import resource
 import traceback
 import subprocess
 import collections
+
 
 import utils.daemon
 from cauv.debug import debug, info, warning, error
@@ -17,6 +19,7 @@ class SessionNotFound(Exception):
     pass
 
 def load_session(filename):
+    sys.path.append(os.path.dirname(filename))
     for suffix, mode, type in imp.get_suffixes():
         if filename.endswith(suffix):
             with open(filename, mode) as session_file:
@@ -66,6 +69,7 @@ class WatchProcess:
                 error("Error starting up process {}".format(self.p.name))
                 error(traceback.format_exc().encode('ascii', 'replace'))
                 self.restart = False
+                return
 
             self.pid = self.proc.pid
             info("Started {} with pid {}".format(self.p.name, self.pid))
@@ -179,6 +183,7 @@ def setup_core_dumps():
     
 class Watcher:
     def __init__(self, processes = None, core_dumps = False, log_dir = None, detach = True):
+        self.detach = detach
         if core_dumps:
             setup_core_dumps()
         if processes is None:
@@ -195,6 +200,9 @@ class Watcher:
             if tick_cb is not None:
                 tick_cb()
             time.sleep(tick_time)
+
+    def add_process(self, process):
+        self.processes[process.name] = WatchProcess(process, self, self.detach)
 
     def stop(self, process, signals=None):
         if signals is None:

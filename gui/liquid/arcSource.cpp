@@ -240,6 +240,26 @@ void AbstractArcSourceInternal::connectParentSignals(QGraphicsItem* p){
     }
 }
 
+// - AbstractArcSource
+AbstractArcSource::AbstractArcSource(ArcStyle const& of_style,
+                                     ArcSourceDelegate *sourceDelegate,
+                                     Arc* arc)
+    : _::AbstractArcSourceInternal(of_style, sourceDelegate, arc),
+      LayoutItems(this){
+}
+
+AbstractArcSource::~AbstractArcSource(){
+    LayoutItems::unRegisterSourceItem(this);
+    // manage the lifetime of m_arc even though the arc isn't a child - there's
+    // still a 1:1 relationship. This is managed in AbstractArcSource not in
+    // AbstractArcSourceInternal because arcs themselves derive from
+    // AbstractArcSourceInternal
+    //debug() << "~AbstractArcSource" << this << "arc scene" << m_arc->scene() << "m_arc:" << m_arc;
+    m_arc->hide();
+    if(m_arc->scene())
+        m_arc->scene()->removeItem(m_arc);
+    m_arc->deleteLater();
+}
 
 // - ArcSource
 ArcSource::ArcSource(ArcSourceDelegate* sourceDelegate,
@@ -314,5 +334,3 @@ void ArcSource::paint(QPainter *painter,
     Q_UNUSED(widget);
     Q_UNUSED(painter);
 }
-
-

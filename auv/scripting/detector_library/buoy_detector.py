@@ -1,4 +1,4 @@
-from AI_classes import aiDetector, aiDetectorOptions
+from AI.base import aiDetector, aiDetectorOptions
 from cauv.debug import debug, info, warning, error
 
 import cauv.pipeline as pipeline

@@ -8,7 +8,7 @@ import cauv.node
 from utils.control import PIDController
 from utils.timeaverage import TimeAverage
 from cauv.debug import debug, info, warning, error
-from AI_classes import aiScript, aiScriptOptions
+from AI.base import aiScript, aiScriptOptions
 
 import threading
 from math import degrees, cos, sin

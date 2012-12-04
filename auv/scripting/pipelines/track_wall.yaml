@@ -1,0 +1,4 @@
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image (synced): !node/SonarInput {Resolution: 400, Sonar ID: 2, derivative: 0,
+    low-pass width: 0, min range: 0, non-maximum epsilon: 1, non-maximum suppression: 0}

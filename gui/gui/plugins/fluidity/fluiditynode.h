@@ -35,6 +35,7 @@ class CauvNode;
 namespace gui {
 
 class GroupingNode;
+class NodeScene;
 
 namespace f {
 class FView;

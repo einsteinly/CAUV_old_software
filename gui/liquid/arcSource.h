@@ -121,13 +121,8 @@ class AbstractArcSource: public _::AbstractArcSourceInternal,
     public:
         AbstractArcSource(ArcStyle const& of_style,
                           ArcSourceDelegate *sourceDelegate,
-                          Arc* arc)
-            : _::AbstractArcSourceInternal(of_style, sourceDelegate, arc),
-              LayoutItems(this){
-        }
-        virtual ~AbstractArcSource(){
-            LayoutItems::unRegisterSourceItem(this);
-        }
+                          Arc* arc);
+        virtual ~AbstractArcSource();
 };
 
 class ArcSource: public AbstractArcSource,
@@ -135,7 +130,7 @@ class ArcSource: public AbstractArcSource,
     public:
         ArcSource(ArcSourceDelegate* sourceDelegate,
                   Arc* arc);
-        virtual ~ArcSource(){ }
+        virtual ~ArcSource(){}
         
         virtual QSizeF sizeHint(Qt::SizeHint which,
                                 const QSizeF &constraint=QSizeF()) const;

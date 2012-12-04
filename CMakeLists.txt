@@ -50,7 +50,7 @@ else()
     set (CAUV_INSTALL_DIR "")
 endif()
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/virtualenv")
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/virtualenv" CACHE PATH "Install directory" FORCE)
 endif()
 
 # Definitions (overridable) for Debug / Release
