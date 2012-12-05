@@ -10,7 +10,7 @@ if (${CAUV_USE_VIRTUALENV})
     set(VIRTENVD ${CMAKE_INSTALL_PREFIX})
     add_custom_command(
         OUTPUT ${VIRTENVD}/bin/python2.7
-        COMMAND ${VIRTUALENV} -p python2.7 --no-site-packages ${VIRTENVD}
+        COMMAND ${VIRTUALENV} -p python2.7 --system-site-packages ${VIRTENVD}
         COMMENT "Creating virtualenv"
     )
 
@@ -25,7 +25,7 @@ if (${CAUV_USE_VIRTUALENV})
     )
     add_custom_command (
         OUTPUT ${VIRTENVD}/install_marker
-        COMMAND source ${VIRTENVD}/bin/activate && 
+        COMMAND . ${VIRTENVD}/bin/activate && 
                 pip install -r ${SRCD}/requirements.txt --download-cache ${CMAKE_CURRENT_BINARY_DIR}/cache &&
                 touch ${VIRTENVD}/install_marker
         DEPENDS ${SRCD}/requirements.txt

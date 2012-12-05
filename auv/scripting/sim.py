@@ -62,6 +62,10 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--vehicle', dest='vehicle',
         help='name of vehicle to model', default='barracuda')
     parser.add_argument('-p', '--profile', dest='profile', action='store_true')
+    parser.add_argument('-x', '--currentx', type=float, dest='currentx', default=0)
+    parser.add_argument('-y', '--currenty', type=float, dest='currenty', default=0)
+    parser.add_argument('-z', '--currentz', type=float, dest='currentz', default=0)
+	    
 
     opts,args  = parser.parse_known_args()
 
@@ -71,7 +75,7 @@ if __name__ == '__main__':
     node = cauv.node.Node('py-sim',args)
     model = None
     try: 
-        model = vehicle_module.Model(node, profile=opts.profile)
+        model = vehicle_module.Model(node, profile=opts.profile, currentx=opts.currentx, currenty=opts.currenty, currentz=opts.currentz)
         runLoop(model, node)
     finally:
         if model is not None:
