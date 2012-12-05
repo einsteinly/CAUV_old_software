@@ -17,7 +17,7 @@ barracuda_processes = [
                 death = restart()),
     Process('camera_setup', ['setup_cameras.sh']),
     Process('camera_server', ['camera_server']),
-    Process('pipeline', ['img-pipeline'],
+    Process('pipeline', ['img-pipeline'], node_pid('img-pipe'),
                 death = restart(), prereq = depends_on('camera_server', 'camera_setup')),
     Process('p-resort', ['penultimate-resort.py']),
     Process('setup', ['true'],
