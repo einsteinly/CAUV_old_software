@@ -404,8 +404,8 @@ class aiScriptState(object):
         
 class aiScript(aiProcess):
     debug_values = []
-    def __init__(self, task_name, script_opts, persistent_state, manager_id):
-        aiProcess.__init__(self, task_name, manager_id)
+    def __init__(self, task_name, script_opts, persistent_state):
+        aiProcess.__init__(self, task_name)
         self.die_flag = threading.Event() #for any subthreads
         self.exit_confirmed = threading.Event()
         self.pl_confirmed = threading.Event()

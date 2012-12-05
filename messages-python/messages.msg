@@ -685,7 +685,21 @@ group telemetry
         action : ProcessCommand;
         host : string;
         process : string;
+    }
+    message EditProcess : 92
+    {
+        host : string;
+        process : string;
         command : list<string>;
+        autostart : bool;
+        node_id : string;
+        prereq : list<string>;
+        restart : int8;
+    }
+    message ProcessEnded : 93
+    {
+        host : string;
+        process : string;
     }
     message ProcessStatus : 87
     {

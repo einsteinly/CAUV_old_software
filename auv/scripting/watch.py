@@ -63,16 +63,21 @@ class WatchObserver(messaging.MessageObserver):
     def __init__(self, watcher):
         messaging.MessageObserver.__init__(self)
         self.node = cauv.node.Node('watch')
+        #give watcher acces to node
+        watcher._node = self.node
         self.node.addObserver(self)
         self.watcher = watcher
         self.node.subMessage(messaging.ProcessControlMessage())
+        self.node.subMessage(messaging.EditProcessMessage())
 
     def onProcessControlMessage(self, msg):
+        #Check we are the host that should be acting on this message
         if not (msg.host == '*' or msg.host == socket.gethostname()):
             return
-        if msg.command and msg.process not in watcher.processes:
-            proc = watchfuncs.Process(msg.process, msg.command)
-            watcher.add_process(proc)
+        #Check that a valid name was given
+        if msg.process not in watcher.processes:
+            return
+        #now try acting on the specified process
         try:
             if msg.action == messaging.ProcessCommand.Start:
                 watcher.start(msg.process)
@@ -81,7 +86,29 @@ class WatchObserver(messaging.MessageObserver):
             elif msg.action == messaging.ProcessCommand.Restart:
                 watcher.restart(msg.process)
         except KeyError:
+            error(str(watcher.processes))
             error("Process {} does not exist!".format(msg.process))
+            
+    def onEditProcessMessage(self, msg):
+        if not (msg.host == '*' or msg.host == socket.gethostname()):
+            return
+        #info("Setting process {} to command {} with autostart {}, node id {}, prerequisites {} and restart {}".format(msg.process,
+        #                        msg.command,msg.autostart,msg.node_id,msg.prereq,msg.restart))
+        if msg.process not in watcher.processes:
+            proc = watchfuncs.Process(msg.process, msg.command)
+            watcher.add_process(proc)
+        else:
+            proc = watcher.processes[msg.process].p
+            proc.cmd = msg.command
+        proc.autostart = msg.autostart
+        proc.get_pid = watchfuncs.node_pid(msg.node_id)
+        proc.prereq = watchfuncs.depends_on(*msg.prereq)
+        if msg.restart < 0:
+            proc.death = watchfuncs.restart()
+        elif msg.restart == 0:
+            proc.death = watchfuncs.ignore
+        if msg.restart > 0:
+            proc.death = watchfuncs.restart(msg.restart)
 
     def report(self):
         if psi is None:

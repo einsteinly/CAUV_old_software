@@ -18,7 +18,6 @@ parser.add_argument("task")
 parser.add_argument("script")
 parser.add_argument("--options", "-o", default = {}, type = cPickle.loads)
 parser.add_argument("--state", "-s", default = {}, type = cPickle.loads)
-parser.add_argument('--manager_id', dest='manager_id', default='', action='store', help="id of relevent ai manager")
 
 args = parser.parse_args()
 
@@ -48,7 +47,7 @@ except AttributeError:
     state_class = aiScriptState
 
 #create class instaces, and run
-script = script_class(args.task, options_class(args.options), state_class(args.state), args.manager_id)
+script = script_class(args.task, options_class(args.options), state_class(args.state))
 try:
     #start receiving messages
     script._register()

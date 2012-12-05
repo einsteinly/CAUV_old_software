@@ -6,6 +6,7 @@ barracuda_processes = [
     Process('detector_control', ['detection_process.py'], node_pid('ai_detector_control'), death = restart()),
     Process('location', ['location.py'], node_pid('ai_location')),
     Process('task_manager', ['task_manager.py'], node_pid('ai_task_manager'), death = restart(), prereq = depends_on('pipeline_manager', 'auv_control', 'detector_control', 'location')),
+    Process('ai_script', ['scriptparent.py'], death = report_death),
 ]
 
 def get_processes(args):

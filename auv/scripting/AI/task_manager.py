@@ -23,6 +23,7 @@ import cPickle
 import shelve
 import argparse
 import traceback
+import socket
 
 from collections import deque
 
@@ -55,6 +56,7 @@ class taskManager(aiProcess):
         self.node.subMessage(messaging.RequestAIStateMessage())
         self.node.subMessage(messaging.ScriptControlMessage())
         self.node.subMessage(messaging.AIControlMessage())
+        self.node.subMessage(messaging.ProcessEndedMessage())
         #start paused
         self.all_paused = True
         #Tasks - list of tasks that (in right conditions) should be called
@@ -67,9 +69,9 @@ class taskManager(aiProcess):
         self.detectors_last_known = deque()
         self.detector_conditions = {}
         #Details on whats currently running
-        self.running_script = None
         self.current_task = None
         self.current_priority = -1
+        self.script_ended = False
         #dict of data known by task manager used by conditions
         self.tm_info = {'latitude':None,
                         'longitude':None,
@@ -220,6 +222,12 @@ class taskManager(aiProcess):
     @event.event_func
     def onRequestAIStateMessage(self, msg):
         self.gui_send_all()
+        
+    def onProcessEndedMessage(self, msg):
+        #really this ought to check that it's the right process as well
+        if socket.gethostname() != msg.host:
+            return
+        self.script_ended = True
     
     #MESSAGES TO GUI
     def gui_update_task(self, task):
@@ -439,36 +447,27 @@ class taskManager(aiProcess):
             self.gui_update_task(self.current_task)
             self.current_task = None
             self.current_priority = -1
+        self.script_ended = False
         self.ai.auv_control.set_current_task_id(None)
-        if self.running_script:
-            try:
-                self.running_script.kill()
-            except OSError:
-                debug('Could not kill running script (probably already dead)')
-        self.running_script = None
+        self.node.send(messaging.ProcessControlMessage(messaging.ProcessCommand.Stop, socket.gethostname(), "ai_script"))
         info('Stopping Script')
 
     def start_script(self, task):
         if self.all_paused:
             return
+        #stop old script
+        self.stop_script()
         #start the new script
-        #self.ai.auv_control.signal(task.id)
         info('Starting script: %s  (Task %s)' %(task.options.script_name, task.id))
-        # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
-        script = subprocess.Popen(['python2.7','./AI_scriptparent.py', str(task.id),
+        self.script_ended = False
+        self.node.send(messaging.EditProcessMessage(socket.gethostname(), "ai_script", ['scriptparent.py', str(task.id),
                                    task.options.script_name, 
                                    '--options',
                                    cPickle.dumps(task.get_script_options()), 
                                    '--state',
-                                   cPickle.dumps(task.persist_state),
-                                   '--manager_id',
-                                   self._man_id])
-        #set relevent parameters
-        if self.current_task:
-            #stop any old script
-            self.stop_script()
+                                   cPickle.dumps(task.persist_state)], False, task.id, [], 0))
+        self.node.send(messaging.ProcessControlMessage(messaging.ProcessCommand.Start, socket.gethostname(), "ai_script"))
         #set self as current script/task
-        self.running_script = script
         self.current_task = task
         #inform auv control that script is running
         self.ai.auv_control.set_current_task_id(task.id)
@@ -484,13 +483,9 @@ class taskManager(aiProcess):
     @event.repeat_event(TASK_CHECK_INTERVAL, True)
     def process_periodic(self):
         #check running script, clear up if has died
-        if self.running_script:
-            if self.running_script.poll():
-                self.running_script = None
-                self.current_priority = -1
-                self.active = False
-                self.gui_update_task(self.current_task)
-                self.current_task = None
+        if self.current_task:
+            if self.script_ended:
+                self.stop_script()
         #check detectors, sort out anything that has gone wrong here
         try:
             running_detectors = self.detectors_last_known.pop()

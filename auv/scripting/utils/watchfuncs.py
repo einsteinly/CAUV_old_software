@@ -3,10 +3,12 @@ import os
 import errno
 import collections
 import subprocess
+import socket
 
 # CAUV
 import utils.zmqfuncs
 from cauv.debug import debug, info, warning, error
+import cauv.messaging as messaging
 
 def node_pid(node_name, vehicle_dir = utils.zmqfuncs.get_vehicle_dir()):
     def get_pid():
@@ -69,6 +71,13 @@ def panic(proc):
 
 def ignore(proc):
     pass
+
+def report_death(proc):
+    try:
+        info("Notifying about death of {}".format(proc.p.name))
+        proc.watcher._node.send(messaging.ProcessEndedMessage(socket.gethostname(),proc.p.name))
+    except AttributeError:
+        error("Failed to notify as no access to messaging system node")
 
 def no_deps(proc):
     return True

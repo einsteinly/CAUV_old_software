@@ -135,6 +135,7 @@ class WatchProcess:
             self.proc.poll()
 
     def start(self):
+        #if already running, dont run
         if self.state in (Starting, Running):
             warning("{} is already running".format(self.p.name))
             return
