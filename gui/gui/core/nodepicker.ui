@@ -26,71 +26,11 @@
    <property name="spacing">
     <number>5</number>
    </property>
-   <property name="leftMargin">
-    <number>5</number>
-   </property>
-   <property name="topMargin">
-    <number>10</number>
-   </property>
-   <property name="rightMargin">
-    <number>5</number>
-   </property>
-   <property name="bottomMargin">
+   <property name="margin">
     <number>5</number>
    </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLabel" name="label">
-       <property name="palette">
-        <palette>
-         <active>
-          <colorrole role="WindowText">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>110</red>
-             <green>110</green>
-             <blue>110</blue>
-            </color>
-           </brush>
-          </colorrole>
-         </active>
-         <inactive>
-          <colorrole role="WindowText">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>110</red>
-             <green>110</green>
-             <blue>110</blue>
-            </color>
-           </brush>
-          </colorrole>
-         </inactive>
-         <disabled>
-          <colorrole role="WindowText">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>69</red>
-             <green>69</green>
-             <blue>69</blue>
-            </color>
-           </brush>
-          </colorrole>
-         </disabled>
-        </palette>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>11</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>LIVE DATA</string>
-       </property>
-      </widget>
-     </item>
      <item>
       <widget class="QLineEdit" name="filter">
        <property name="styleSheet">
@@ -205,7 +145,7 @@ QTreeView::branch:alternate {
   <customwidget>
    <class>cauv::gui::NodeTreeView</class>
    <extends>QTreeView</extends>
-   <header>nodepicker.h</header>
+   <header>trees/nodeTreeView.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -87,6 +87,7 @@ Max_Roll_Moment  = Max_Yaw_Moment / 5
 # Hydrodynamic model:
 # Drag: Newtons per metre per second, modelled from measured terminal velocity:
 # (this is a simple exponential model)
+Current = np.array((1,0,0))
 Drag_F = np.array((Seabotix_Max_Thrust*2 / 1.0, # x (sideways)
                    Seabotix_Max_Thrust   / 2.0, # y (forwards)
                    Seabotix_Max_Thrust*2 / 0.6)) # z (up/down)
@@ -97,10 +98,11 @@ Drag_J = np.array((Max_Yaw_Moment / 1.6,   # yaw
                    Max_Pitch_Moment / 1.6)) # pitch
 
 class Model(base_model.Model):
-    def __init__(self, node, profile=False):
+    def __init__(self, node, profile=False, currentx=0, currenty=0, currentz=0):
         self.tzero = None
         self.last_t = self.relativeTime()
         self.last_state_sent = self.relativeTime()
+	self.current = np.array((currentx, currenty, currentz))
         base_model.Model.__init__(self, node, profile=profile)
 
     def relativeTime(self):
@@ -148,8 +150,7 @@ class Model(base_model.Model):
         hstern_force = HStern_Vec * s.HStern * Force_Per_Unit_Vector_Thrust
         vstern_force = VStern_Vec * s.VStern * Force_Per_Unit_Vector_Thrust
         prop_force   = Prop_Vec * s.Prop * Force_Per_Unit_Prop_Thrust
-        drag_force   = -Drag_F * self.orientation.inverse().rotate(self.velocity);
-
+        drag_force   = -Drag_F * self.orientation.inverse().rotate((self.velocity)-(self.current));
         local_force = sum(
             (hbow_force, vbow_force, hstern_force, vstern_force, prop_force, drag_force)
         )

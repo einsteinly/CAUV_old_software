@@ -36,6 +36,7 @@ public:
             QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
             if (keyEvent->key() == Qt::Key_Escape) {
                 edit->clear();
+                edit->hide();
                 return true;
             } else
                 return false;
@@ -95,11 +96,13 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     ui->view->registerListFilter(pathFilter);
     ui->filter->connect(ui->filter, SIGNAL(textChanged(QString)), pathFilter.get(), SLOT(setText(QString)));
     ui->filter->connect(ui->filter, SIGNAL(textChanged(QString)), this, SLOT(setHighlighting(QString)));
+    ui->filter->connect(ui->filter, SIGNAL(editingFinished()), this, SLOT(setFilterVisisble()));
 
     // and auto completion of the path filter
     QCompleter * completer = new NodePathCompleter(ui->view->model());
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     ui->filter->setCompleter(completer);
+    ui->filter->hide();
 
     // if the tree changes whilst we're being filtered we need to re-apply filters
     root->connect(root->rootNode().get(), SIGNAL(structureChanged()), ui->view, SLOT(applyFilters()));
@@ -118,13 +121,23 @@ void NodePicker::setHighlighting(QString text){
     }
 }
 
+void NodePicker::setFilterVisisble(){
+    if(ui->filter->text().isEmpty()){
+        ui->filter->hide();
+    } else{
+        ui->filter->show();
+    }
+}
+
 void NodePicker::redirectKeyboardFocus(QKeyEvent* event){
     if(event->key() == Qt::Key_Escape) {
         ui->filter->setText("");
+        ui->filter->hide();
         return;
     }
     if(!event->text().isEmpty() && event->text().at(0).isLetterOrNumber()) {
         ui->filter->setText("");
+        ui->filter->show();
         ui->filter->setFocus();
         ui->filter->setText(event->text().simplified());
     }

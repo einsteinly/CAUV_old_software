@@ -53,7 +53,8 @@ public:
     void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
 
 public Q_SLOTS:
-        void setHighlighting(QString);
+    void setHighlighting(QString);
+    void setFilterVisisble();
 
 protected Q_SLOTS:
     void redirectKeyboardFocus(QKeyEvent* key);
