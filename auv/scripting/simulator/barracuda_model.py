@@ -87,7 +87,7 @@ Max_Roll_Moment  = Max_Yaw_Moment / 5
 # Hydrodynamic model:
 # Drag: Newtons per metre per second, modelled from measured terminal velocity:
 # (this is a simple exponential model)
-Current = np.array((1,0,0))
+
 Drag_F = np.array((Seabotix_Max_Thrust*2 / 1.0, # x (sideways)
                    Seabotix_Max_Thrust   / 2.0, # y (forwards)
                    Seabotix_Max_Thrust*2 / 0.6)) # z (up/down)
