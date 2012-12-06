@@ -41,6 +41,7 @@ EphemeralArcEnd::EphemeralArcEnd(QGraphicsItem* parent, ArcStyle const& of_style
     : AbstractArcSink(parent),
       m_back_poly(endArrow(of_style.back, this)),
       m_front_poly(endArrow(of_style.front, this)),
+      //m_ia(new InteractionArea(this, 4)),
       m_style(of_style){
     setFill(false);
     setFlag(ItemIsMovable);
@@ -51,6 +52,8 @@ EphemeralArcEnd::EphemeralArcEnd(QGraphicsItem* parent, ArcStyle const& of_style
     m_back_poly->setCacheMode(DeviceCoordinateCache);
     m_front_poly->setCacheMode(DeviceCoordinateCache);
     
+    //m_ia->freezeDelegateShape();
+
 #ifdef QT_PROFILE_GRAPHICSSCENE
     setProfileName("liquid::EphemeralArcEnd");
     m_back_poly->setProfileName("liquid::EphemeralArcEnd::back_poly");

@@ -16,6 +16,7 @@
 #define __LIQUID_EPHEMERAL_ARC_END__
 
 #include "arcSink.h"
+#include "interactionArea.h"
 
 namespace liquid{
 
@@ -54,6 +55,8 @@ class EphemeralArcEnd: public AbstractArcSink{
         
         QGraphicsPolygonItem *m_back_poly;
         QGraphicsPolygonItem *m_front_poly;
+
+        //InteractionArea *m_ia;
         
         ArcStyle const& m_style;
 };
