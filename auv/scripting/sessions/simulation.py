@@ -21,8 +21,8 @@ def get_arguments(group):
                         default = 'saucemap')
 def get_processes(args):
     if args.map == 'rivermap':
-        processes.append(Process('sim', ['sim', '-f', utils.dirs.config_dir('environment/rivermap.obj')], node_pid('sim'), prereq = depends_on('control', 'pipeline')))
+        processes.append(Process('sim', ['sim', '-f', utils.dirs.config_dir('environment/rivermap.obj'), '-g'], node_pid('sim'), prereq = depends_on('control', 'pipeline')))
     elif args.map == 'saucemap':
-        processes.append(Process('sim', ['sim', '-f', utils.dirs.config_dir('environment/saucemap.obj')], node_pid('sim'), prereq = depends_on('control', 'pipeline')))
+        processes.append(Process('sim', ['sim', '-f', utils.dirs.config_dir('environment/saucemap.obj'), '-g'], node_pid('sim'), prereq = depends_on('control', 'pipeline')))
     processes.extend(ai_procs.get_processes(args))
     return processes
