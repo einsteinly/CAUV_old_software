@@ -120,4 +120,4 @@ def load(inf):
 
 def dump(outf, state):
     '''Save a passed pipeline state to a file. This does not manipulate the image pipeline.'''
-    pickle.dump(outf, state)
+    pickle.dump(state, outf)
