@@ -116,6 +116,7 @@ Manager::Manager(NodeScene *scene,
 
 Manager::~Manager(){
     debug() << "~Manager()";
+    teardown();
     delete m_layout_soon_timer;
 }
 
