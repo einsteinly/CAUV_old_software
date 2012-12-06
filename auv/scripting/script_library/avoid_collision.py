@@ -1,9 +1,9 @@
 #!/usr/bin/env python2.7
+import time
 
-from AI.base import aiScript, aiScriptOptions
 from cauv.debug import debug, info, warning, error
 
-import time
+from AI.base.script import aiScript, aiScriptOptions
 
 class scriptOptions(aiScriptOptions):
     class Meta:

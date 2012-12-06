@@ -10,7 +10,7 @@ import argparse
 import utils.event as event
 from math import radians
 
-from AI.base import aiProcess, external_function
+from AI.base.proc import aiProcess, external_function
 from utils.coordinates import LLACoord, NorthEastDepthCoord, River_Cam_Datum
 from simulator import barracuda_model
 

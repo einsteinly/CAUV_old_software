@@ -1,4 +1,4 @@
-from AI.base import aiScript, aiScriptOptions, aiScriptState
+from AI.base.script import aiScript, aiScriptOptions, aiScriptState
 from cauv.debug import debug, warning, error, info
 from utils.boundedtypes import MotorValue
 

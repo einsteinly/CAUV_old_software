@@ -1,4 +1,4 @@
-from AI.base import aiScript, aiScriptOptions, aiScriptState, CommunicationError
+from AI.base.script import aiScript, aiScriptOptions, aiScriptState, CommunicationError
 from cauv.debug import debug, warning, error, info
 import cauv.messaging as msg
 

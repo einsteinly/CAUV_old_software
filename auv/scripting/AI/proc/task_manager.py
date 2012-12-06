@@ -27,7 +27,7 @@ import socket
 
 from collections import deque
 
-from AI.base import aiProcess, external_function, RepeatTimer
+from AI.base.proc import aiProcess, external_function
 from AI.tasks import tasks as task_classes
 from AI.conditions import conditions as condition_classes
 
