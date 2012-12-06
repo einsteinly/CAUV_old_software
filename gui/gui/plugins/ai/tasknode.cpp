@@ -178,7 +178,8 @@ LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem
     boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
     connect(pipelines.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
 
-    info() << "shit is connected up";
+    boost::shared_ptr<GroupingNode> ai = vehicle->findOrCreate<GroupingNode>("ai");
+    connect(ai.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
 
     highlightRunningStatus(node->get());
 }
