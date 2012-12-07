@@ -1,12 +1,13 @@
-from AI.base import aiDetector, aiDetectorOptions
-from cauv.debug import debug, info, warning, error
-
-import cauv.node
-import cauv.messaging as messaging
-from utils.timeaverage import TimeAverage
 import time
 import threading
 import math
+
+import cauv.node
+import cauv.messaging as messaging
+from cauv.debug import debug, info, warning, error
+from utils.timeaverage import TimeAverage
+
+from AI.base.detector import aiDetector, aiDetectorOptions
 
 class detectorOptions(aiDetectorOptions):
     Threshold = 0.39

@@ -2,7 +2,7 @@ from cauv.debug import debug, info, error, warning
 
 import time
 
-from AI.base import aiScript
+from AI.base.script import aiScript
 
 class script(aiScript):
     def run(self):

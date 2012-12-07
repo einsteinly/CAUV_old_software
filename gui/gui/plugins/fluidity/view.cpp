@@ -181,9 +181,6 @@ void FView::init(std::string const& pipeline_name,
 
 FView::~FView(){
     debug() << "~FView()";
-    m_manager->teardown();
-    m_manager.reset();
-    
     std::vector< std::pair<QPoint, QGraphicsWidget*> >::iterator i;
     for(i = m_overlay_items.begin(); i != m_overlay_items.end(); i++){
         if(i->second->scene())

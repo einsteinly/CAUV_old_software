@@ -3,8 +3,7 @@ import threading
 import detector_library
 
 from cauv.debug import debug, warning, error, info
-
-from AI.base import subclassDict
+from utils.subclass import subclassDict
 
 class conditionOptions(object):
     def __init__(self, options={}):

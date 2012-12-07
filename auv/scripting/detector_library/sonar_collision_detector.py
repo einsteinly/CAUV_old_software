@@ -1,9 +1,10 @@
-from AI.base import aiDetector, aiDetectorOptions
+import time
+from collections import deque
+
 from cauv.debug import debug, info, warning, error
 from cauv import messaging
 
-import time
-from collections import deque
+from AI.base.detector import aiDetector, aiDetectorOptions
 
 class detectorOptions(aiDetectorOptions):
     points_name = 'avoid_collision'

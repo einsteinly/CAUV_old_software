@@ -1,6 +1,6 @@
-from AI.base import aiDetector, aiDetectorOptions
-
 import time
+
+from AI.base.detector import aiDetector, aiDetectorOptions
 
 class detectorOptions(aiDetectorOptions):
     test_value = "HELLO"

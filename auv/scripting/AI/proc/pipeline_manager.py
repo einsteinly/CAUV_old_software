@@ -1,10 +1,12 @@
 #!/usr/bin/env python2.7
-from AI.base import aiProcess, external_function
+from AI.base.proc import aiProcess, external_function
 
 from cauv.debug import info, warning, error, debug
 from cauv import messaging
 import cauv.pipeline
+import cauv.yamlpipe
 import utils.event as event
+import utils.dirs
 
 import threading, os, os.path, cPickle, time
 import traceback, argparse, Queue, collections
@@ -31,7 +33,7 @@ class pipelineManager(aiProcess):
         self.running_pls = {}
         
         self.load_pl_data()
-        
+        info(str(self.pipelines))
         #start receiving messages
         self._register()
 
@@ -47,9 +49,10 @@ class pipelineManager(aiProcess):
             pass
         
         #scan the pipelines
-        pipeline_files = glob(os.path.join('pipelines', '*.pipe')) + \
-                         glob(os.path.join('pipelines', 'temp', '*.pipe'))
-
+        info(utils.dirs.config_dir('pipelines'))
+        pipeline_files = glob(os.path.join(utils.dirs.config_dir('pipelines'), '*.yaml')) + \
+                         glob(os.path.join(utils.dirs.config_dir('pipelines'), 'temp', '*.yaml'))
+        info(str(pipeline_files))
         pipeline_names = [os.path.basename(x).rsplit('.',1)[0] for x in pipeline_files]
         pipeline_groups = collections.defaultdict(list) #pipeline main name: filenames
         for name, filename in zip(pipeline_names, pipeline_files):
@@ -70,7 +73,8 @@ class pipelineManager(aiProcess):
             warning('Multiple pipelines with same name (%s).' %(name))
         #load pipeline
         try:
-            pl_state = cauv.pipeline.Model.loadFile(open(filename))
+            with open(filename) as inf:
+                pl_state = cauv.yamlpipe.load(inf)
             #check node types
             for node_id, node in pl_state.nodes.iteritems():
                 if node.type in (messaging.NodeType.FileInput, messaging.NodeType.DirectCameraInput):

@@ -34,6 +34,7 @@ else()
         arcSinkLabel.cpp
         arcSourceLabel.cpp
         shadow.cpp
+        interactionArea.cpp
     )
 
     set (

@@ -1,7 +1,9 @@
-from AI.conditions import conditions as c
-from AI.base import subclassDict, aiOptions, aiScriptOptions
-
 from cauv.debug import debug, warning, error, info
+from utils.subclass import subclassDict
+
+from AI.conditions import conditions as c
+from AI.base.option import aiOptions
+from AI.base.script import aiScriptOptions
 
 class taskOptions(aiOptions):
     script_name = ''

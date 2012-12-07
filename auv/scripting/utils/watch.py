@@ -158,6 +158,22 @@ class WatchProcess:
             return
         self.sigs = sigs
         self.state = Restarting
+        
+    def kill(self, signal):
+        #if we call this we also want to kill any leftover linked processes
+        self.stop(signal)
+        last_pid = -1
+        while True:
+            pid = self.p.get_pid()
+            if last_pid == pid:
+                warning("Unkillable process {}, pid {}, ignoring".format(self.p.name, pid))
+                break
+            if pid is not None:
+                info("Found {}, pid {}, stopping".format(self.p.name, pid))
+                os.kill(pid, signal)
+            else:
+                break
+            last_pid = pid
 
 def setup_core_dumps():
     core_pattern = "/var/tmp/cauv_corefiles/%e.%d.%t.%p"

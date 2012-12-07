@@ -9,7 +9,7 @@ import argparse
 import utils.event as event
 import utils.morse
 
-from AI.base import aiProcess, external_function, force_calling_process
+from AI.base.proc import aiProcess, external_function, force_calling_process
 
 #TODO basically the actual functionality of control, the ability to stop the sub, block script_ids etc
 
