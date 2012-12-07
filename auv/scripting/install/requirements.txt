@@ -9,3 +9,4 @@ ipython
 blist
 numpy
 pyyaml
+pysensors
