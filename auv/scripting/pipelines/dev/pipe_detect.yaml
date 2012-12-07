@@ -1,0 +1,45 @@
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image_out: !node/HoughLines
+    maxLineGap: 2
+    minLineLength: 30
+    name: pipe
+    probabilistic: true
+    rho: 1
+    srn: 0
+    stn: 0
+    theta: 0.10000000149011612
+    threshold: 30
+    image_in<-image (not copied): !node/GaussianBlur
+      sigma: 1.0
+      image<-image_out: !node/Canny
+        L2 gradient: 0
+        aperture size: 3
+        threshold 1: 50.0
+        threshold 2: 100.0
+        image_in<-image (not copied): &Levels_1 !node/Levels
+          black level<-ch1 value: !node/Percentile
+            percentile: 1.0
+            image<-image (not copied): &MedianFilter_1 !node/MedianFilter
+              kernel: 9
+              image<-image_out: !node/Resize
+                interpolation mode: 1
+                scale factor: 0.10000000149011612
+                image_in<-V: &SplitHSV_1 !node/SplitHSV
+                  image<-image: !node/FileInput {filename: /home/jason/Dev/CAUV/TestData/pipe5.avi}
+          image<-image (not copied): *MedianFilter_1
+          white level<-ch1 value: !node/Percentile
+            percentile: 99.0
+            image<-image (not copied): *MedianFilter_1
+- !node/Centre
+  name: pipe
+  image_in<-Pixels: &HistogramSegmentation_1 !node/HistogramSegmentation
+    Bin: 1
+    Number of bins: 3
+    image_in<-H: *SplitHSV_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-Pixels: *HistogramSegmentation_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (not copied): *Levels_1

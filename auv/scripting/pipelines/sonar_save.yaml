@@ -1,0 +1,17 @@
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (synced): &SonarInput_1 !node/SonarInput {}
+- !node/VideoFileOutput
+  filename: out.%d.%t.%c.avi
+  image<-image: !node/CombineRGB
+    B<-image (buffer): *SonarInput_1
+    G<-image (buffer): *SonarInput_1
+    R<-image (buffer): *SonarInput_1
+- !node/FileOutput
+  filename: out.%d.%t.%c.jpg
+  jpeg quality: 98
+  png compression: 9
+  image_in<-image: !node/CombineRGB
+    B<-image (synced): *SonarInput_1
+    G<-image (synced): *SonarInput_1
+    R<-image (synced): *SonarInput_1

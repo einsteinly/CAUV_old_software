@@ -35,3 +35,9 @@ if (${CAUV_BUILD_SIM})
         ${OPENTHREADS_LIBRARY}
     )
 endif()
+
+function(config_dir DIRECTORY)
+    install(DIRECTORY ${DIRECTORY} DESTINATION config/)
+endfunction()
+
+config_dir(environment)

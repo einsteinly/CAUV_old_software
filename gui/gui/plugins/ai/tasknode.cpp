@@ -178,7 +178,8 @@ LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem
     boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
     connect(pipelines.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
 
-    info() << "shit is connected up";
+    boost::shared_ptr<GroupingNode> ai = vehicle->findOrCreate<GroupingNode>("ai");
+    connect(ai.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
 
     highlightRunningStatus(node->get());
 }
@@ -234,26 +235,32 @@ void LiquidTaskNode::ensureConnected(){
         source->arc()->addTo(m_conditionSink);
     }
 
-
-    boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
-    boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
-    foreach(std::string const& id, m_node->getPipelineIds()) {
-        try {
-            boost::shared_ptr<Node> node = pipelines->findFromPath<Node>(QString::fromStdString(id));
-            ConnectedNode * cn = ConnectedNode::nodeFor(node);
-            if(!cn) {
-                error() << "Node ConnectedNode not registered for " << id;
-                continue;
+    // there's an inter-plugin dependancy here
+    // the ai plugin gets access to the pipeline nodes via a fixed location
+    // in the model.
+    try {
+        boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
+        boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
+        foreach(std::string const& id, m_node->getPipelineIds()) {
+            try {
+                boost::shared_ptr<Node> node = pipelines->findFromPath<Node>(QString::fromStdString(id));
+                ConnectedNode * cn = ConnectedNode::nodeFor(node);
+                if(!cn) {
+                    error() << "Node ConnectedNode not registered for " << id;
+                    continue;
+                }
+                liquid::ArcSource * source = cn->getSourceFor(node);
+                if(!source){
+                    warning() << id << "does not have an ArcSource";
+                    continue;
+                }
+                source->arc()->addTo(m_pipelineSink);
+            } catch (std::out_of_range){
+                warning() << "Pipeline node not found for task";
             }
-            liquid::ArcSource * source = cn->getSourceFor(node);
-            if(!source){
-                warning() << id << "does not have an ArcSource";
-                continue;
-            }
-            source->arc()->addTo(m_pipelineSink);
-        } catch (std::out_of_range){
-            warning() << "Pipeline node not found for task";
         }
+    } catch (std::out_of_range){
+        warning() << "LiquidTaskNode::ensureConnected() - vehicle not found while connecting nodes";
     }
 }
 

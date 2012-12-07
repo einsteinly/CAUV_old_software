@@ -4,6 +4,8 @@ import os
 import sys
 import imp
 import pwd
+import time
+import socket
 import os.path
 import argparse
 
@@ -13,6 +15,13 @@ from cauv.debug import debug, info, warning, error
 import cauv.messaging as messaging
 import cauv.node
 import utils.dirs
+import utils.watchfuncs as watchfuncs
+
+try:
+    import psi.process
+except ImportError:
+    psi = None
+    warning("Couldn't load psi, no process state reporting!")
 
 parser = argparse.ArgumentParser(description = "Start up and monitor CAUV nodes and other programs", add_help = False)
 
@@ -20,17 +29,17 @@ parser.add_argument("--session", "-s", help="session file to use")
 
 args, unknown = parser.parse_known_args()
 
-if not os.path.exists(args.session):
-    args.session = utils.dirs.config_dir(args.session)
 if args.session:
+    if not os.path.exists(args.session):
+        args.session = utils.dirs.config_dir(args.session)
     session = watch.load_session(args.session)
-try:
-    arg_group = parser.add_argument_group(title=args.session)
-    session.get_arguments(arg_group)
-except AttributeError:
-    pass
-except NameError:
-    pass
+    try:
+        arg_group = parser.add_argument_group(title=args.session)
+        session.get_arguments(arg_group)
+    except AttributeError:
+        pass
+    except NameError:
+        pass
 
 parser.add_argument("--help",        "-h",  help="print this usage message, and help for any session file", action='store_true')
 parser.add_argument("--daemonize",   "-d",  help="run as a daemon",                          action='store_true')
@@ -54,11 +63,21 @@ class WatchObserver(messaging.MessageObserver):
     def __init__(self, watcher):
         messaging.MessageObserver.__init__(self)
         self.node = cauv.node.Node('watch')
+        #give watcher acces to node
+        watcher._node = self.node
         self.node.addObserver(self)
         self.watcher = watcher
         self.node.subMessage(messaging.ProcessControlMessage())
+        self.node.subMessage(messaging.EditProcessMessage())
 
     def onProcessControlMessage(self, msg):
+        #Check we are the host that should be acting on this message
+        if not (msg.host == '*' or msg.host == socket.gethostname()):
+            return
+        #Check that a valid name was given
+        if msg.process not in watcher.processes:
+            return
+        #now try acting on the specified process
         try:
             if msg.action == messaging.ProcessCommand.Start:
                 watcher.start(msg.process)
@@ -67,10 +86,52 @@ class WatchObserver(messaging.MessageObserver):
             elif msg.action == messaging.ProcessCommand.Restart:
                 watcher.restart(msg.process)
         except KeyError:
+            error(str(watcher.processes))
             error("Process {} does not exist!".format(msg.process))
+            
+    def onEditProcessMessage(self, msg):
+        if not (msg.host == '*' or msg.host == socket.gethostname()):
+            return
+        #info("Setting process {} to command {} with autostart {}, node id {}, prerequisites {} and restart {}".format(msg.process,
+        #                        msg.command,msg.autostart,msg.node_id,msg.prereq,msg.restart))
+        if msg.process not in watcher.processes:
+            proc = watchfuncs.Process(msg.process, msg.command)
+            watcher.add_process(proc)
+        else:
+            proc = watcher.processes[msg.process].p
+            proc.cmd = msg.command
+        proc.autostart = msg.autostart
+        proc.get_pid = watchfuncs.node_pid(msg.node_id)
+        proc.prereq = watchfuncs.depends_on(*msg.prereq)
+        if msg.restart < 0:
+            proc.death = watchfuncs.restart()
+        elif msg.restart == 0:
+            proc.death = watchfuncs.ignore
+        if msg.restart > 0:
+            proc.death = watchfuncs.restart(msg.restart)
 
     def report(self):
-        pass
+        if psi is None:
+            return
+        for process in watcher.processes.values():
+            if process.state == utils.watch.Running:
+                try:
+                    stats = psi.process.Process(process.pid)
+                except psi.process.NoSuchProcessError:
+                    warning("Process {} dissapeared when looking for stats".format(process.p.name))
+                    continue
+                curr_time, cputime = time.time(), stats.cputime.float()
+                try:
+                    last_time, last_cputime = process.__last_times
+                    cpu_percent = (cputime - last_cputime) / (curr_time - last_time)
+                except AttributeError:
+                    cpu_percent = 0
+                    pass
+                process.__last_times = (curr_time, cputime)
+                statmsg = messaging.ProcessStatusMessage(process.p.name, 'Running', cpu_percent, stats.rss, stats.nthreads)
+                self.node.send(statmsg)
+            else:
+                pass
 
 def monitor():
     if args.daemonize:

@@ -1,0 +1,62 @@
+- !node/GuiOutput
+  jpeg quality: 95
+  image_in<-image: !node/CombineRGB
+    B<-image: !node/RunningAverage
+      alpha: 0.20000000298023224
+      image<-image out (not copied): &Crop_1 !node/Crop {height: 100, top left (x): 400,
+        top left (y): 350, width: 60}
+    G<-image: !node/RunningAverage
+      alpha: 0.4000000059604645
+      image<-image out (not copied): *Crop_1
+    R<-image: !node/RunningAverage
+      alpha: 0.6000000238418579
+      image<-image out (not copied): *Crop_1
+- !node/GuiOutput
+  jpeg quality: 95
+  image_in<-image out: !node/DrawKeyPoints
+    KeyPoints<-keypoints: &LocalMaxima_1 !node/LocalMaxima
+      delta: 1.0
+      image_in<-image: &RunningAverage_1 !node/RunningAverage
+        alpha: 1.0
+        image<-image (not copied): !node/GaussianBlur
+          sigma: 2.0
+          image<-image copy: !node/Copy
+            image<-image out (not copied): *Crop_1
+    image in<-image: *RunningAverage_1
+- !node/GlobalMaximum
+  image_in<-image: *RunningAverage_1
+- !node/BroadcastKeyPoints
+  name: sonar_local_maxima_xypx
+  keypoints<-keypoints: *LocalMaxima_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-polar image: &SonarInput_1 !node/SonarInput {Resolution: 800, Sonar ID: 2,
+    derivative: 0, low-pass width: 0, min range: 0, non-maximum epsilon: 1, non-maximum suppression: 0}
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image out: !node/DrawKeyPoints
+    KeyPoints<-keypoints: !node/TransformKeyPoints
+      '*x': -128.0
+      '*y': 30.0
+      +x: 128.0
+      +y: 0.0
+      keypoints<-keypoints: &LocalMaxima_2 !node/LocalMaxima
+        delta: 1.0
+        image_in<-image (not copied): &GaussianBlur_1 !node/GaussianBlur
+          sigma: 3.0
+          image<-polar image: !node/SonarShadowFilter
+            object importance: 2.0
+            object size: 0.30000001192092896
+            shadow importance: 0.30000001192092896
+            shadow size: 6.0
+            polar image<-image (not copied): !node/Levels
+              white level: 255
+              black level<-ch1 value: !node/Percentile
+                percentile: 85.0
+                image<-polar image: *SonarInput_1
+              image<-image copy: !node/Copy
+                image<-polar image: *SonarInput_1
+    image in<-image (not copied): *GaussianBlur_1
+- !node/BroadcastKeyPoints
+  name: sonar_local_maxima_bearing_range
+  keypoints<-keypoints: *LocalMaxima_2

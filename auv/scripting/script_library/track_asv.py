@@ -1,5 +1,5 @@
 from cauv.debug import debug, info, warning, error 
-from AI_classes import aiScript, aiScriptOptions
+from AI.base.script import aiScript, aiScriptOptions
 
 from math import atan2
 

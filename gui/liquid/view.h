@@ -26,6 +26,7 @@ class LiquidView : public QGraphicsView
     Q_OBJECT
 public:
     LiquidView(QWidget * parent = NULL);
+    virtual ~LiquidView();
 
     virtual float scaleFactor();
     virtual void setScaleFactor(float scaleFactor);

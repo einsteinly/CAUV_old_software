@@ -1,0 +1,136 @@
+- !node/SonarShadowFilter
+  object importance: 1.0
+  object size: 0.20000000298023224
+  shadow importance: 0.800000011920929
+  shadow size: 2.0
+  polar image<-image (not copied): !node/Mix
+    absolute value: false
+    image fac: 1.0
+    mix fac: -2.0
+    image<-image (not copied): !node/Mix
+      absolute value: false
+      image fac: -0.20000000298023224
+      mix fac: 1.0
+      image<-image (not copied): !node/GaussianBlur
+        sigma: 20.0
+        image<-image copy: !node/Copy
+          image<-image (not copied): &Levels_1 !node/Levels
+            black level<-value: !node/Percentile
+              percentile: !BoundedFloat/Wraps '0.0 (0.0-100.0)'
+              image<-image copy: &Copy_1 !node/Copy
+                image<-polar image: &BearingRangeCrop_2 !node/BearingRangeCrop
+                  bearing end: 60.0
+                  bearing start: -60.0
+                  range end: 50.0
+                  range start: 1.0
+                  polar image<-polar image: !node/SonarInput {Resolution: 1000, Sonar ID: 2,
+                    derivative: 0, low-pass width: 0, min range: 0, non-maximum epsilon: 1,
+                    non-maximum suppression: 0}
+            image<-image copy: *Copy_1
+            white level<-A*Afac + B*Bfac: !node/MathAddMultColour
+              Afac: 1.0
+              B: !colour/RGB '1.0 1.0 1.0 1.0'
+              Bfac: 0.4000000059604645
+              A (triggers exec)<-value: !node/Percentile
+                percentile: !BoundedFloat/Wraps '99.0 (0.0-100.0)'
+                image<-image copy: *Copy_1
+      mix<-image (not copied): *Levels_1
+    mix<-image (not copied): !node/GaussianBlur
+      sigma: 60.0
+      image<-image copy: !node/Copy
+        image<-image (not copied): *Levels_1
+- !node/VideoFileOutput
+  filename: slam-sauce-2012-%c.avi
+  image<-cloud visualisation: &SonarSLAM_1 !node/SonarSLAM
+    -vis origin x: -40.0
+    -vis origin y: -40.0
+    -vis resolution: 600
+    -vis size: 80.0
+    clear: true
+    consensus tolerance: 0.20000000298023224
+    euclidean fitness: 1.0000000116860974e-07
+    feature merge distance: 0.4000000059604645
+    graph iters: 10
+    grid step: 7.0
+    keyframe spacing: 1.0
+    load map: false
+    map dir: /tmp/cauv/slam/persistence
+    match algorithm: ICP
+    match consensus: 4
+    max correspond dist: 0.5
+    max iters: 15
+    max matches: 10
+    overlap threshold: 0.20000000298023224
+    ransac iterations: 0
+    read only: false
+    reject threshold: 0.3499999940395355
+    score threshold: 0.15000000596046448
+    transform eps: 9.999999974752427e-07
+    weight test: -1.0
+    xy metres/px: 0.009999999776482582
+    delta theta<-Value: !node/ClampFloat
+      Max: 0.05000000074505806
+      Min: -0.05000000074505806
+      Value<-max correl location: !node/Correlation1D
+        Image A<-polar image: &BearingRangeCrop_1 !node/BearingRangeCrop
+          bearing end: 50.0
+          bearing start: -50.0
+          range end: 120.0
+          range start: 0.0
+          polar image<-image out (not copied): &Nop_1 !node/Nop
+            image in<-polar image: !node/SonarShadowFilter
+              object importance: 5.0
+              object size: 1.0
+              shadow importance: 0.5
+              shadow size: 2.0
+              polar image<-polar image: !node/BearingRangeCrop
+                bearing end: 60.0
+                bearing start: -60.0
+                range end: 40.0
+                range start: 1.0
+                polar image<-polar image: !node/SonarInput {Resolution: 1000, Sonar ID: 2,
+                  derivative: 0, low-pass width: 0, min range: 0, non-maximum epsilon: 1,
+                  non-maximum suppression: 0}
+        Image B<-image out (not copied): !node/Delay
+          delay (frames): 1
+          image in<-polar image: *BearingRangeCrop_1
+    keypoints image<-image out (not copied): *Nop_1
+    keypoints<-keypoints: !node/BearingRangeToXY
+      keypoints<-keypoints: &FASTCorners_1 !node/FASTCorners
+        non-maximum suppression: true
+        threshold: 50
+        image in<-image out (not copied): *Nop_1
+      polar image<-image out (not copied): *Nop_1
+    'training: polar keypoints<-keypoints': *FASTCorners_1
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-cloud visualisation: *SonarSLAM_1
+- !node/LearnedKeyPoints
+  bootstrap keypoints: !!python/object/apply:cauvinterface.KeyPointVec ["\0\0\0\0"]
+  questions: 200
+  'training: goodness': !!python/object/apply:cauvinterface.int32Vec ["\0\0\0\0"]
+  'training: keypoints': !!python/object/apply:cauvinterface.KeyPointVec ["\0\0\0\0"]
+  trees: 100
+- !node/MedianFilter
+  kernel: 3
+  image<-polar image: *BearingRangeCrop_2
+- !node/Resize
+  fixed height: 0
+  fixed width: 0
+  interpolation mode: 1
+  scale factor: 1.0
+  image_in<-image out: !node/DrawKeyPoints
+    KeyPoints<-keypoints: !node/LocalMaxima
+      delta: 2.0
+      image_in<-image out (not copied): *Nop_1
+    image in<-image out (not copied): *Nop_1
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image_out: !node/Resize
+    fixed height: 0
+    fixed width: 0
+    interpolation mode: 1
+    scale factor: 1.0
+    image_in<-image out: !node/DrawKeyPoints
+      KeyPoints<-keypoints: *FASTCorners_1
+      image in<-image out (not copied): *Nop_1

@@ -76,7 +76,7 @@ void SimCamera::tick(double timestamp) {
     if(image->valid() && output_limit.click()) {
         image->flipVertical();
         cv::Mat data = cv::Mat(width, height, CV_8UC3, image->data(), 0);
-        boost::shared_ptr<ImageMessage> msg = boost::make_shared<ImageMessage>(cam_id, cauv::Image(data), cauv::now());
+        boost::shared_ptr<ImageMessage> msg = boost::make_shared<ImageMessage>(cam_id, boost::make_shared<cauv::Image>(data), cauv::now());
         sim_node->send(msg, UNRELIABLE_MSG);
     }
 }

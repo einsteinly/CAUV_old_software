@@ -26,21 +26,6 @@ add_dependencies(scripting python-module)
 #    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pylint_m
 #)
 
-if (${CAUV_USE_VIRTUALENV})
-    find_program(VIRTUALENV NAMES virtualenv2 virtualenv)
-    set(VIRTENVD ${CMAKE_INSTALL_PREFIX})
-    add_custom_command(
-        OUTPUT ${VIRTENVD}/bin/python2.7
-        COMMAND ${VIRTUALENV} -p python2.7 --no-site-packages --never-download ${VIRTENVD}
-        COMMENT "Creating virtualenv"
-    )
-    add_custom_target (
-        create-virtualenv ALL
-        DEPENDS ${VIRTENVD}/bin/python2.7
-    )
-endif()
-
-
 function(install_module MODULE)
     install(DIRECTORY ${MODULE} DESTINATION ${CAUV_PYTHON_INSTALL_PATH}
             FILES_MATCHING PATTERN "*.py")
@@ -58,6 +43,9 @@ install_module(cauv)
 install_module(utils)
 install_module(simulator)
 install_module(gamepad_maps)
+install_module(AI)
+install_module(detector_library)
+install_module(script_library)
 
 python_exe(gamepad_server.py)
 python_exe(ishell.py)
@@ -75,9 +63,9 @@ python_exe(wasd_remote.py)
 python_exe(watch.py)
 python_exe(watchctl.py)
 
+install(PROGRAMS startup/setup_cameras.sh DESTINATION bin/)
+
 config_dir(sessions)
-config_dir(detector_library)
-config_dir(script_library)
 config_dir(missions)
 config_dir(pipelines)
 config_dir(persist)

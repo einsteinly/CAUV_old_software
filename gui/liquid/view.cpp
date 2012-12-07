@@ -23,6 +23,8 @@
 
 #include <debug/cauv_debug.h>
 
+#include <utility/rounding.h>
+
 using namespace liquid;
 
 class ZoomFilter : public QObject {
@@ -64,8 +66,9 @@ LiquidView::LiquidView(QWidget * parent) : QGraphicsView(parent),
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     //setTransformationAnchor(QGraphicsView::NoAnchor);
-    setTransformationAnchor(QGraphicsView::AnchorViewCenter);
-    
+    //setTransformationAnchor(QGraphicsView::AnchorViewCenter);
+    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+
     centerOn(0,0);
     
     const int cache_kbytes = 1024 * 64; // 64 MB, default is 10
@@ -75,6 +78,10 @@ LiquidView::LiquidView(QWidget * parent) : QGraphicsView(parent),
     setRenderHints(QPainter::Antialiasing |
                    QPainter::TextAntialiasing |
                    QPainter::SmoothPixmapTransform);
+}
+
+LiquidView::~LiquidView()
+{
 }
 
 bool LiquidView::event(QEvent *event)
@@ -97,33 +104,46 @@ bool LiquidView::gestureEvent(QGestureEvent *event)
 
 void LiquidView::scaleAround(QPoint point, qreal scaleFactor){
 
-    if(scaleFactor * transform().m11() >= maxScale()){
-        scaleFactor = maxScale() / transform().m11();
+    if(scaleFactor * viewportTransform().m11() >= maxScale()){
+        scaleFactor = maxScale() / viewportTransform().m11();
     }
-    if(scaleFactor * transform().m11() < minScale()){
-        scaleFactor = minScale() / transform().m11();
+    if(scaleFactor * viewportTransform().m11() < minScale()){
+        scaleFactor = minScale() / viewportTransform().m11();
     }
 
     QPointF around = mapToScene(point);
 
     qDebug() << around;
 
-    /*
-
-    QMatrix translation(1, 0, 0, 1, around.x(), around.y());
-    QMatrix reverseTranslation(1, 0, 0, 1, -around.x(), -around.y());
-
-    float scalar = transform().m11() * scaleFactor;
+    float scalar = viewportTransform().m11() * scaleFactor;
     scalar = clamp(minScale(), scalar, maxScale());
-    QMatrix scale(scalar, 0, 0, scalar, 1, 1);
+    QTransform scaleTransform = QTransform::fromScale(scalar, scalar);
+
+
+    QTransform translation = QTransform::fromTranslate(around.x(), around.y());
+    QTransform reverseTranslation = QTransform::fromTranslate(-around.x() * scalar, -around.y() * scalar);
+
+
+    //qDebug() << translation;
+
 
     // some weird behaviour here (on mac at least)
     // the initial scaling work for a bit, then it goes mental
     // not sure why yet...
-    //setTransform(QTransform((reverseTranslation * scale) * translation));
-    setTransform(QTransform(scale));*/
-    
-    scale(scaleFactor, scaleFactor);
+    //setTransform(QTransform((reverseTranslation * scaleMatrix) * translation));
+    //setTransform(QTransform(scale));
+    //QTransform final = (translation * scaleTransform) * reverseTranslation;
+    QTransform final = scaleTransform;
+
+
+    setMatrix(final.toAffine());
+
+    //setTransform(scaleTransform);
+
+    //scrollContentsBy(translation.dx(), translation.dy());
+    //
+
+    //scale(scaleFactor, scaleFactor);
 }
 
 
@@ -159,10 +179,16 @@ void LiquidView::keyPressEvent(QKeyEvent *event){
     QGraphicsView::keyPressEvent(event);
     if(!event->isAccepted()){
         switch(event->key()){
-            case Qt::Key_L:
-                event->accept();
-                LayoutItems::updateLayout(scene());
-                break;
+        case Qt::Key_L:
+            event->accept();
+            LayoutItems::updateLayout(scene());
+            break;
+        case Qt::Key_F:
+            event->accept();
+            qDebug() << "viewportTransform" << viewportTransform();
+            qDebug() << "transform" << transform();
+            qDebug() << "matrix" << matrix();
+            break;
 
         #ifdef QT_PROFILE_GRAPHICSSCENE
             case Qt::Key_P:

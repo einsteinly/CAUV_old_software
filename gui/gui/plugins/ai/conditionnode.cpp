@@ -125,9 +125,13 @@ LiquidConditionNode::LiquidConditionNode(
     node->connect(node.get(), SIGNAL(onUpdate(QVariant const&)), this, SLOT(highlightStatus(QVariant const&)));
     node->connect(node.get(), SIGNAL(pipelineIdAdded(std::string)), this, SLOT(ensureConnected()));
 
-    boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
-    boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
-    connect(pipelines.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
+    try {
+        boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
+        boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
+        connect(pipelines.get(), SIGNAL(structureChanged()), this, SLOT(ensureConnected()));
+    } catch (std::out_of_range){
+        error() << "LiquidConditionNode() - Vehicle node not found while attaching events";
+    }
 }
 
 void LiquidConditionNode::highlightStatus(QVariant const& status){
@@ -192,25 +196,30 @@ void LiquidConditionNode::ensureConnected(){
 
     info() << "connecting up LiquidConditionNode";
 
-    boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
-    boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
+    try {
+        boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
+        boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
 
-    foreach(std::string const& id, m_node->getPipelineIds()) {
-        try {
-            boost::shared_ptr<Node> node = pipelines->findFromPath<Node>(QString::fromStdString(id));
-            ConnectedNode * cn = ConnectedNode::nodeFor(node);
-            if(!cn) {
-                error() << "Node ConnectedNode not registered for " << id;
-                continue;
+        foreach(std::string const& id, m_node->getPipelineIds()) {
+            try {
+                boost::shared_ptr<Node> node = pipelines->findFromPath<Node>(QString::fromStdString(id));
+                ConnectedNode * cn = ConnectedNode::nodeFor(node);
+                if(!cn) {
+                    error() << "Node ConnectedNode not registered for " << id;
+                    continue;
+                }
+                liquid::ArcSource * source = cn->getSourceFor(node);
+                if(!source){
+                    warning() << id << "does not have an ArcSource";
+                    continue;
+                }
+                source->arc()->addTo(m_sink);
+            } catch (std::out_of_range){
+                warning() << "Fluidity node not found for condition" << id;
             }
-            liquid::ArcSource * source = cn->getSourceFor(node);
-            if(!source){
-                warning() << id << "does not have an ArcSource";
-                continue;
-            }
-            source->arc()->addTo(m_sink);
-        } catch (std::out_of_range){
-            warning() << "Fluidity node not found for condition" << id;
         }
+    } catch (std::out_of_range){
+        error() << "LiquidConditionNode::ensureConnected() - Vehicle node not found while attaching events";
     }
+
 }

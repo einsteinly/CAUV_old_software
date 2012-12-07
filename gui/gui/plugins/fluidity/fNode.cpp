@@ -380,6 +380,7 @@ void FNode::fadeAndRemove(){
 
 void FNode::remove(){
     debug() << "FNode::remove() (scene=" << scene() << ")" << this;
+    hide();
     scene()->removeItem(this);
     deleteLater();
 }

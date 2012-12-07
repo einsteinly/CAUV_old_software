@@ -1,16 +1,16 @@
-from AI_classes import aiDetector, aiDetectorOptions
-from cauv.debug import debug, info, warning, error
-
-import cauv.pipeline as pipeline
-from cauv.messaging import floatXYZ
-
 import time
 import sys
 import math
 
+import cauv.pipeline as pipeline
+from cauv.messaging import floatXYZ
+from cauv.debug import debug, info, warning, error
+
 from utils import vecops
-from utils.hacks import incFloat 
+from utils.hacks import incFloat
 from utils.detectors import ColourDetector
+
+from AI.base.detector import aiDetector, aiDetectorOptions
 
 class detectorOptions(aiDetectorOptions):
     Sightings_Period   = 5.0 # seconds, period to consider sightings of the buoy for

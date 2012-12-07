@@ -6,6 +6,11 @@ import cauv.node
 import cauv.messaging as messaging
 import cauv.pipeline as pipeline
 from cauv.debug import debug, warning, error, info
+try:
+    import cauv.yamlpipe
+except ImportError as e:
+    error("Failed to import yamlpipe, only pickle load/save availible")
+import cauv.picklepipe
 
 import time
 import argparse
@@ -19,19 +24,25 @@ def savepl(node, fname, timeout=3.0, name='default'):
         saved = model.get(timeout)
         
         info('Pickling...')
-        model.dumpFile(saved, outf)
+        if fname.endswith('.pipe'):
+            cauv.picklepipe.dump(outf, saved)
+        else:
+            cauv.yamlpipe.dump(outf, saved)
 
 
-def loadpl(node, fname, timeout=3.0, name='default', clear=True):
+def loadpl(node, fname, name='default'):
     with open(fname, 'rb') as inf:
         info('Initializing pipeline model (%s)...' % name)
         model = pipeline.Model(node, name)
 
-        info('UnPickling...')
-        saved = model.loadFile(inf)
+        info('Loading...')
+        if fname.endswith('.pipe'):
+            saved = cauv.picklepipe.load(inf)
+        else:
+            saved = cauv.yamlpipe.load(inf)
         
         info('Setting pipeline state...')
-        model.set(saved, timeout, clear)
+        model.set(saved)
 
 def clearpl(node, name='default'):
     info('Initializing pipeline model (%s)...' % name)
@@ -43,16 +54,15 @@ def clearpl(node, name='default'):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--file", dest="fname", default="pipeline.pipe")
-    parser.add_argument("-n", "--pipeline-name", dest="name", default="default")
-    parser.add_argument("-t", "--timeout", dest="timeout", type=float, default=3.0)
-    parser.add_argument('clear', action='store_true', default=False)
-    parser.add_argument('verb', choices=('load', 'save', 'clear', 'add'))
+    parser.add_argument("-n", "--pipeline-name", default="default")
+    parser.add_argument("-t", "--timeout", type=float, default=3.0)
+    parser.add_argument("verb", choices=('load', 'save', 'clear'))
+    parser.add_argument("file", help='pipeline file')
 
     opts, unknown_args = parser.parse_known_args()
-    fname = opts.fname
+    fname = opts.file
     timeout = opts.timeout
-    name = opts.name
+    name = opts.pipeline_name
     
     info('Connecting...')
     node = cauv.node.Node("py-plsave", unknown_args)
@@ -62,17 +72,10 @@ if __name__ == '__main__':
         elif opts.verb == 'save':
             savepl(node, fname, timeout, name)
         elif opts.verb == 'load':
-            loadpl(node, fname, timeout, name)
-        elif opts.verb == 'add':
-            loadpl(node, fname, timeout, name, False)
+            loadpl(node, fname, name)
         info('Done.')
     except:
         import traceback
         error(traceback.format_exc())
     finally:
         node.stop()
-
-
-
-    
-

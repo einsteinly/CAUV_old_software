@@ -1,0 +1,30 @@
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image out: !node/DrawLines
+    image in<-output mask: &ThresholdMask_1 !node/ThresholdMask
+      threshold (>= is masked): 20
+      channel (not copied)<-image copy: !node/Copy
+        image<-image (not copied): &GaussianBlur_1 !node/GaussianBlur
+          sigma: 1.0
+          image<-image (not copied): !node/Levels
+            black level: 128
+            white level: 135
+            image<-image copy: !node/Copy
+              image<-image (buffer): !node/SonarInput {derivative: 1, low-pass width: 10,
+                min range: 5000, non-maximum epsilon: 1, non-maximum suppression: 0}
+    lines<-lines: &HoughLines_1 !node/HoughLines
+      maxLineGap: 10
+      minLineLength: 80
+      probabilistic: true
+      rho: 1
+      srn: 0
+      stn: 0
+      theta: 0.01745329238474369
+      threshold: 20
+      image in<-output mask: *ThresholdMask_1
+- !node/BroadcastLines
+  name: bay lines
+  lines<-lines: *HoughLines_1
+- !node/GuiOutput
+  jpeg quality: 85
+  image_in<-image (not copied): *GaussianBlur_1

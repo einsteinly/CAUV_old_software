@@ -1,2 +1,4 @@
 from glob import glob
-__all__ = [f[17:-3] for f in glob('detector_library/*.py') if f[17:-3]!='__init__']
+from imp import find_module
+path = find_module('detector_library')[1]
+__all__ = [f[len(path)+1:-3] for f in glob(path+'/*.py') if f[-11:-3]!='__init__']
