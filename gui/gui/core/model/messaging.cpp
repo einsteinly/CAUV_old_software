@@ -194,6 +194,13 @@ void MessageHandler<GroupingNode, BatteryUseMessage>::onBatteryUseMessage (
     m_node->findOrCreate<NumericNode<float> >("remaining")->setInverted(true);
 }
 
+void MessageHandler<GroupingNode, CPUTemperatureMessage>::onCPUTemperatureMessage (
+        CPUTemperatureMessage_ptr message){
+    m_node->findOrCreate<NumericNode<float> >("core0")->typedUpdate(message->core0());
+    m_node->findOrCreate<NumericNode<float> >("core1")->typedUpdate(message->core1());
+}
+
+
 void MessageHandler<GroupingNode, ProcessStatusMessage>::onProcessStatusMessage (
         ProcessStatusMessage_ptr message){
     boost::shared_ptr<GroupingNode> process = m_node->findOrCreate<GroupingNode>(message->process());

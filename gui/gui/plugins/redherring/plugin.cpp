@@ -90,7 +90,10 @@ void RedHerring::initialise() {
     attachObserver(power, boost::make_shared<MessageHandler<GroupingNode, BatteryUseMessage> >(power));
     boost::shared_ptr<GroupingNode> processes = telemetry->findOrCreate<GroupingNode>("processes");
     attachObserver(processes, boost::make_shared<MessageHandler<GroupingNode, ProcessStatusMessage> >(processes));
-
+    boost::shared_ptr<GroupingNode> cputemperature = telemetry->findOrCreate<GroupingNode>("cputemperature");
+    attachObserver(cputemperature, boost::make_shared<MessageHandler<GroupingNode, CPUTemperatureMessage> >(cputemperature));
+    //boost::shared_ptr<NumericNode<float> > core0 = cputemperature->findOrCreate<NumericNode<float> >("core0");
+    //boost::shared_ptr<NumericNode<float> > core1 = cputemperature->findOrCreate<NumericNode<float> >("core1");
 
     // watchdogs
     boost::shared_ptr<GroupingNode> watchdogs = findOrCreate<GroupingNode>("watchdogs");

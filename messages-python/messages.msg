@@ -680,6 +680,11 @@ group telemetry
         estimate_total : float;
         fraction_remaining : float;
     }
+    message CPUTemperature : 22
+    {
+        core0 : float;
+        core1 : float;
+    }
     message ProcessControl : 91
     {
         action : ProcessCommand;

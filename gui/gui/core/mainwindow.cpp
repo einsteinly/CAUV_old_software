@@ -224,6 +224,7 @@ void CauvMainWindow::onRun()
     this->subMessage(ControllerStateMessage());
     this->subMessage(PressureMessage());
     this->subMessage(BatteryUseMessage());
+    this->subMessage(CPUTemperatureMessage());
     this->subMessage(ProcessStatusMessage());
     this->subMessage(SonarControlMessage());
     this->subMessage(PenultimateResortTimeoutMessage());
