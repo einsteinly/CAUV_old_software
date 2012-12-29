@@ -7,6 +7,9 @@ if (${CAUV_USE_VIRTUALENV})
                             "Either disable CAUV_USE_VIRTUALENV or change CMAKE_INSTALL_PREFIX")
     endif()
     find_program(VIRTUALENV NAMES virtualenv2 virtualenv)
+    if (${VIRTUALENV} STREQUAL "VIRTUALENV-NOTFOUND")
+        message(FATAL_ERROR "virtualenv not found")
+    endif()
     set(VIRTENVD ${CMAKE_INSTALL_PREFIX})
     add_custom_command(
         OUTPUT ${VIRTENVD}/bin/python2.7
