@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 project (utility)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${AUV_BINARY_DIR}/bin")

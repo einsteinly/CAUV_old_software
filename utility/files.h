@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef UTILITY_FILES_H_
 #define UTILITY_FILES_H_
 

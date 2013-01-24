@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #include "pid.h"
 #include <utility/math.h>
 #include <utility/rounding.h>

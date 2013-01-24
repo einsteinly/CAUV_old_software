@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 
 option(CAUV_BUILD_MCB_BRIDGE "True if the MCB bridge shoudl be built" ON)
 

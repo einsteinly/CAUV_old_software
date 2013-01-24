@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef __BLOB_NODE_H__
 #define __BLOB_NODE_H__
 

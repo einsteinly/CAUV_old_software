@@ -1,4 +1,10 @@
 #!/usr/bin/env python2.7
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 import cauv.node
 from cauv import control
 from cauv.debug import debug, warning, error, info

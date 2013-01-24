@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #include "sim_imu.h"
 #include <generated/types/StateMessage.h>
 #include <generated/types/PressureMessage.h>

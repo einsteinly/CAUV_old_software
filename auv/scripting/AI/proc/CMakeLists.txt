@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 
 python_exe(control_manager.py)
 python_exe(detection_process.py)

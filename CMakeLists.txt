@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 cmake_minimum_required (VERSION 2.8)
 
 if (NOT CMAKE_IN_SOURCE AND CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)

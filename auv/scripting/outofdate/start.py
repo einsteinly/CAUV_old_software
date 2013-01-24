@@ -1,3 +1,9 @@
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 #from AI_classes import aiScript, aiScriptOptions, aiScriptState
 #from cauv.debug import debug, warning, error, info
 #from utils.boundedtypes import MotorValue

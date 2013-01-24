@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 project (guis)
 
 option(CAUV_BUILD_GUI "Whether or not to use the GUI" ON)

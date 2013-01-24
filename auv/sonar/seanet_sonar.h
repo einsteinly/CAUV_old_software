@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef __CAUV_SEANET_SONAR_H__
 #define __CAUV_SEANET_SONAR_H__
 

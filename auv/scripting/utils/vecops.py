@@ -1,3 +1,9 @@
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 from cauv.messaging import floatXYZ
 
 def add(v1, v2):

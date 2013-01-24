@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef ZEROMQ_ADDRESSES_H
 #define ZEROMQ_ADDRESSES_H
 #include <string>

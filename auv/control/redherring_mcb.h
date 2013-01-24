@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef __CAUV_REDHERRING_MCB_H__
 #define __CAUV_REDHERRING_MCB_H__
 #include "mcb.h"

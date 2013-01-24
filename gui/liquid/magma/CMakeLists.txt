@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 project (magma)
 
 option(MAGMA_DEBUG_LAYOUT "Draw layout debugging helpers" OFF)

@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 #This also needs work
 #set (MSGD ${SRCD}/../../messages-python/)
 #set (CHILD ${SRCD}/logging/childecode)

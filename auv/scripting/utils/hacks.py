@@ -1,3 +1,9 @@
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 # Okay, so some of these aren't really hacks, just things that don't belong
 # anywhere else yet.
 

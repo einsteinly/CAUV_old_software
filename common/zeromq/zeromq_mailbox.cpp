@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #include "zeromq_mailbox.h"
 #include "zeromq_addresses.h"
 

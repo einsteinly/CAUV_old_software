@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef __BLOCKINGQUEUEBOOST_H__
 #define __BLOCKINGQUEUEBOOST_H__
 

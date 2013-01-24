@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 \#include "groupmap.h"
 /***  This is a generated file, do not edit ***/
 

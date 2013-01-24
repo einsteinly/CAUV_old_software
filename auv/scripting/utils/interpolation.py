@@ -1,4 +1,10 @@
 #
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
+#
 # This module defines a dictionary type that will interpolate between values
 # for keys that do not exist in the dictionary. Two interpolation methods
 # (zero-order hold, and linear) are provided.

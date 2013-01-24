@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef __OVERKEY_RENDERABLE_H__
 #define __OVERKEY_RENDERABLE_H__
 

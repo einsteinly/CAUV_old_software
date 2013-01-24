@@ -1,3 +1,9 @@
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 from AI_classes import aiProcess
 
 from IPython.frontend.terminal.embed import InteractiveShellEmbed

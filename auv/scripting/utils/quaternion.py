@@ -1,3 +1,9 @@
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 ''' The CAUV Quaternion Library: because We Couldn't Find One That Worked'''
 
 # Standard Library

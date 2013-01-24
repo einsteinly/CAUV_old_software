@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef __SIM_ATTENUATOR_H__
 #define __SIM_ATTENUATOR_H__
 

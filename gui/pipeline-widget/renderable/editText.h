@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef __EDIT_TEXT_RENDERABLE_H__
 #define __EDIT_TEXT_RENDERABLE_H__
 

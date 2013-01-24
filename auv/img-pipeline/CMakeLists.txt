@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 # subdirs
 if(CAUV_BUILD_TESTS)
     add_subdirectory (tests)

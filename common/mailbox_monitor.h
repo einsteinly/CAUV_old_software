@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef CAUV_MAILBOX_MONITOR_H
 #define CAUV_MAILBOX_MONITOR_H
 #include <boost/shared_ptr.hpp>

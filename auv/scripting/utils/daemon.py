@@ -1,3 +1,9 @@
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 # CAUV utility module: multi-tasking classes and functions
 
 def spawnDaemon(func):

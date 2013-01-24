@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 find_package(ftdi REQUIRED)
 include_directories (${ftdi_INCLUDE_DIRS})
 link_directories (${ftdi_LIBRARY_DIRS})

@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #include "ratelimit.h"
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 

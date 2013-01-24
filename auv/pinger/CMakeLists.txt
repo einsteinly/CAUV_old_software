@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 add_custom_command ( 

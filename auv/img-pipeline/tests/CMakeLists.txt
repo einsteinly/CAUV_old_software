@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 # img-pipeline-tester
 add_executable(
     img-pipeline-tester EXCLUDE_FROM_ALL

@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef CAUV_BARRACUDA_OBJ_H
 #define CAUV_BARRACUDA_OBJ_H
 

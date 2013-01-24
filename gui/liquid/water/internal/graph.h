@@ -1,16 +1,8 @@
-/* Copyright 2012 Cambridge Hydronautics Ltd.
- *
- * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
- * society for all purposes other than publication of this source code.
+/* Copyright 2012-2013 Cambridge Hydronautics Ltd.
  *
  * See license.txt for details.
- *
- * Please direct queries to the officers of Cambridge Hydronautics:
- *     James Crosby    james@camhydro.co.uk
- *     Andy Pritchard   andy@camhydro.co.uk
- *     Leszek Swirski leszek@camhydro.co.uk
- *     Hugo Vincent     hugo@camhydro.co.uk
  */
+
 
 #ifndef __LIQUID_WATER_GRAPH_IMPL_H__
 #define __LIQUID_WATER_GRAPH_IMPL_H__

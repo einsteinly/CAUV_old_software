@@ -1,3 +1,9 @@
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 from glob import glob
 from imp import find_module
 path = find_module('detector_library')[1]

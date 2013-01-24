@@ -1,4 +1,10 @@
 #!/usr/bin/env python2.7
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 # listens for timeout messages an counts down when the other end is silent
 
 import cauv.messaging as msg

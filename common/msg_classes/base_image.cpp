@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #include "base_image.h"
 #include <utility/serialisation.h>
 #include <boost/make_shared.hpp>

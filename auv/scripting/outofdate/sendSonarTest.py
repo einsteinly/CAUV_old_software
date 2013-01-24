@@ -1,3 +1,9 @@
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 import cauv
 import cauv.messaging as msg
 import cauv.pipeline as pipeline

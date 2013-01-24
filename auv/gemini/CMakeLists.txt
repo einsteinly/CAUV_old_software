@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 
 include_directories (${AUV_SOURCE_DIR}/lib/GeminiSDK/Src/SDK)
 

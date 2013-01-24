@@ -1,4 +1,10 @@
 #!/usr/bin/env python2.7
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 """
 run command: /bin/sh ./run.sh AI_scriptparent.py TASK_NAME SCRIPT_NAME
 where SCRIPT_NAME is the name of the script in the script_library folder

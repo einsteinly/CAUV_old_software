@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef __PIPELINE_WIDGET_H__
 #define __PIPELINE_WIDGET_H__
 

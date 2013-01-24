@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 find_package(ZeroMq REQUIRED)
 find_package(Crossroads REQUIRED)
 find_package(Ns3 QUIET)

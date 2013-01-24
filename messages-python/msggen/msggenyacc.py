@@ -1,3 +1,9 @@
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 import ply.yacc as yacc
 
 # Get the token map from the lexer.  This is required.

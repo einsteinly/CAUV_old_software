@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 project (fluidityplugin)
 
 set ( FLUIDITY_PLUGIN_SRCS

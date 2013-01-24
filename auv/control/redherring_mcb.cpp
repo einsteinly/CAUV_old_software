@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 //Ye gods, this needs to be put back together in some kind of sane manner
 void sendAlive(boost::shared_ptr<MCBModule> mcb)
 {

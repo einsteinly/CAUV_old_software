@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #include "workarounds.h" // _must_ be first
 #include <boost/python.hpp>
 #include <boost/utility.hpp>

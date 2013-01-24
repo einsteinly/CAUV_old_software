@@ -1,3 +1,8 @@
+/* Copyright 2013 Cambridge Hydronautics Ltd.
+ *
+ * See license.txt for details.
+ */
+
 #ifndef FRAMES_H_
 #define FRAMES_H_
 #include <stdint.h>

@@ -1,3 +1,8 @@
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 find_package (OpenCV REQUIRED)
 
 option(CAUV_USE_DC1394 "Use libdc1394" ON)

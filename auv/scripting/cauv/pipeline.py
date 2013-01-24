@@ -1,3 +1,9 @@
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 '''This module provides an interface for manipulating the image processing pipeline.'''
 
 import messaging

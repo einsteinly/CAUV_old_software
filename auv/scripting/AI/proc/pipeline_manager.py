@@ -1,4 +1,10 @@
 #!/usr/bin/env python2.7
+#
+# Copyright 2013 Cambridge Hydronautics Ltd.
+#
+# See license.txt for details.
+#
+
 from AI.base.proc import aiProcess, external_function
 
 from cauv.debug import info, warning, error, debug
