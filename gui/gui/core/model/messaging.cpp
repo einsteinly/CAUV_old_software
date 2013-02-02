@@ -12,7 +12,7 @@ using namespace cauv::gui;
 /* Motor message handling */
 
 boost::shared_ptr<const Message> MessageHandler<MotorNode, MotorStateMessage>::generate() {
-    return boost::make_shared<MotorMessage>(boost::get<MotorID::e>(m_node->nodeId()), (int8_t) m_node->typedGet());
+    return boost::make_shared<MotorMessage>(ControlLockToken(0,0,10000), boost::get<MotorID::e>(m_node->nodeId()), (int8_t) m_node->typedGet());
 }
 
 void MessageHandler<MotorNode, MotorStateMessage>::onMotorStateMessage(MotorStateMessage_ptr message){
@@ -24,7 +24,7 @@ void MessageHandler<MotorNode, MotorStateMessage>::onMotorStateMessage(MotorStat
 /* Autopilot message handling */
 
 template<class T> boost::shared_ptr<const Message> generateAutopilotEnabledMessage(boost::shared_ptr<AutopilotNode> node){
-    return boost::make_shared<T>(node->typedGet(), node->findOrCreate<NumericNode<float> >("target")->typedGet());
+    return boost::make_shared<T>(ControlLockToken(0,0,10000), node->typedGet(), node->findOrCreate<NumericNode<float> >("target")->typedGet());
 }
 
 template<class T> void updateAutopilotNode(boost::shared_ptr<AutopilotNode> node,
@@ -234,6 +234,7 @@ void MessageHandler<SonarNode, SonarControlMessage>::onSonarControlMessage(
 
 boost::shared_ptr<const Message> MessageHandler<SonarNode, SonarControlMessage>::generate() {
     return boost::make_shared<SonarControlMessage>(
+                ControlLockToken(0,0,10000),
                 m_node->direction()->typedGet(), m_node->width()->typedGet(),
                 m_node->gain()->typedGet(), m_node->range()->typedGet(),
                 m_node->rangeRes()->typedGet(), m_node->angularRes()->typedGet());

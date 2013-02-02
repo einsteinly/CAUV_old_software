@@ -15,6 +15,8 @@
 #include <generated/message_observers.h>
 #include <generated/types/MotorID.h>
 #include <generated/types/MotorMap.h>
+#include <generated/types/ControlLockToken.h>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include "imu.h"
 #include "mcb.h"
@@ -76,6 +78,11 @@ class ControlLoops : public MessageObserver, public IMUObserver, public MCBObser
         //from MCB
         virtual void onDepth(float fore, float aft);
 
+        struct TokenLock {
+            cauv::ControlLockToken current_token;
+            boost::posix_time::ptime current_tok_time;
+        };
+
     protected:
         boost::shared_ptr<MCB> m_mcb;
         bool m_control_enabled[Controller::NumValues];
@@ -114,6 +121,10 @@ class ControlLoops : public MessageObserver, public IMUObserver, public MCBObser
         MotorMap m_vbow_map;
         MotorMap m_hstern_map;
         MotorMap m_vstern_map;
+
+        TokenLock depth_lock;
+        TokenLock pitch_lock;
+        TokenLock position_lock;
 
         unsigned m_max_motor_delta;
         unsigned m_motor_updates_per_second;

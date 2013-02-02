@@ -164,8 +164,34 @@ void ControlLoops::onDepth(float fore, float aft)
     }
 }
 
+bool check_lock_token(ControlLoops::TokenLock &lock, const cauv::ControlLockToken &token) {
+    boost::posix_time::ptime current_time = boost::posix_time::microsec_clock::universal_time();
+    if ((current_time - lock.current_tok_time).total_milliseconds() < lock.current_token.timeout) {
+        //token has not timed out
+        if (token.priority < lock.current_token.priority) {
+            return false; //lower priority always loses
+        }
+        if (token.priority == lock.current_token.priority &&
+            token.token > lock.current_token.token) {
+            return false; //use token (which should be unique, and is currently the start time of the process) as tiebreaker
+        }
+    }
+    //New lock token has won (either from same process or higher priority process, or timeout)
+    if (lock.current_token.token != token.token) {
+        info() << "Lock Token" << token.token << "(Priority"
+               << token.priority << ")won over token" << lock.current_token.token;
+    }
+    lock.current_token = token;
+    lock.current_tok_time = current_time;
+    return true;
+}
+
 void ControlLoops::onMotorMessage(MotorMessage_ptr m)
 {
+    if (!check_lock_token(position_lock, m->lock_token())) {
+        return;
+    }
+
     debug(2) << "Set manual motor demand based on motor message:" << *m;
 
     switch(m->motorId())
@@ -222,20 +248,26 @@ void update_controller_status(PIDControl &p, bool &enabled, T &m) {
 
 void ControlLoops::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr m)
 {
-    update_controller_status(m_controllers    [Controller::Bearing],
-                             m_control_enabled[Controller::Bearing], m);
+    if (check_lock_token(position_lock, m->lock_token())) {
+        update_controller_status(m_controllers    [Controller::Bearing],
+                                 m_control_enabled[Controller::Bearing], m);
+    }
 }
 
 void ControlLoops::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr m)
 {
-    update_controller_status(m_controllers    [Controller::Pitch],
-                             m_control_enabled[Controller::Pitch], m);
+    if (check_lock_token(pitch_lock, m->lock_token())) {
+        update_controller_status(m_controllers    [Controller::Pitch],
+                                 m_control_enabled[Controller::Pitch], m);
+    }
 }
 
 void ControlLoops::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr m)
 {
-    update_controller_status(m_controllers    [Controller::Depth],
-                             m_control_enabled[Controller::Depth], m);
+    if (check_lock_token(depth_lock, m->lock_token())) {
+        update_controller_status(m_controllers    [Controller::Depth],
+                                 m_control_enabled[Controller::Depth], m);
+    }
 }
 
 void ControlLoops::onMotorRampRateMessage(MotorRampRateMessage_ptr m)

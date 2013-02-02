@@ -8,7 +8,7 @@ from cauv.debug import info, warning, error, debug
 
 class AUV(messaging.MessageObserver):
     '''The AUV class provides an interface to control the AUV's control loops, motors, and other hardware.'''
-    def __init__(self, node):
+    def __init__(self, node, priority = 0, timeout = 10):
         messaging.MessageObserver.__init__(self)
         self.__node = node
         node.addObserver(self)
@@ -19,10 +19,16 @@ class AUV(messaging.MessageObserver):
         self.bearingCV = threading.Condition()
         self.depthCV = threading.Condition()
         self.pitchCV = threading.Condition()
+        self.priority = 0
+        self.token = int(time.time() * 1000) & 0xffffffff
+        info("Control Token: {}".format(self.token))
+        self.timeout = timeout #seconds
 
     def send(self, msg):
-        '''Send a message to the control group.'''
-        self.__node.send(msg, "control")
+        self.__node.send(msg)
+
+    def get_token(self):
+        return messaging.ControlLockToken(self.token, self.priority, self.timeout * 1000)
 
     def stop(self):
         '''Stop all motors, deactivate the control loops.'''
@@ -50,14 +56,16 @@ class AUV(messaging.MessageObserver):
     def bearing(self, bearing):
         '''Set a bearing (degrees CW from north) and activate the bearing control loop, or deactivate bearing control if 'None' is passed.'''
         if bearing is not None:
-            self.send(messaging.BearingAutopilotEnabledMessage(True, bearing))
+            self.send(messaging.BearingAutopilotEnabledMessage(self.get_token(), True, bearing))
         else:
-            self.send(messaging.BearingAutopilotEnabledMessage(False, 0))
+            self.send(messaging.BearingAutopilotEnabledMessage(self.get_token(), False, 0))
     
     # additional rate parameter (degrees per second) would ideally be
     # implemented by the control loops
     def bearingAndWait(self, bearing, epsilon = 5, timeout = 30, rate=90):
-        '''Set a bearing (degrees CW from north) and activate the bearing control loop, do not return until the bearing is achieved within 'epsilon' degrees'''
+        '''Set a bearing (degrees CW from north) and activate the bearing control loop,
+           do not return until the bearing is achieved within 'epsilon' degrees.
+           Limit the rate of rotation to 'rate' degrees per second'''
         if bearing is None:
             raise ValueError("Cannot wait for 'None' bearing.")
         startTime = time.time()
@@ -140,9 +148,9 @@ class AUV(messaging.MessageObserver):
     def depth(self, depth):
         '''Set a depth (metres) and activate the depth control loop, or deactivate depth control if 'None' is passed.'''
         if depth is not None:
-            self.send(messaging.DepthAutopilotEnabledMessage(True, depth))
+            self.send(messaging.DepthAutopilotEnabledMessage(self.get_token(), True, depth))
         else:
-            self.send(messaging.DepthAutopilotEnabledMessage(False, 0))
+            self.send(messaging.DepthAutopilotEnabledMessage(self.get_token(), False, 0))
 
     def depthAndWait(self, depth, epsilon = 0.25, timeout = 30):
         '''Set a depth (metres) and activate the depth control loop, do not return until the depth is achieved within 'epsilon' metres'''
@@ -159,9 +167,9 @@ class AUV(messaging.MessageObserver):
     def pitch(self, pitch):
         '''Set a pitch (degrees up) and activate the pitch control loop, or deactivate pitch control if 'None' is passed.'''
         if pitch is not None:
-            self.send(messaging.PitchAutopilotEnabledMessage(True, pitch))
+            self.send(messaging.PitchAutopilotEnabledMessage(self.get_token(), True, pitch))
         else:
-            self.send(messaging.PitchAutopilotEnabledMessage(False, 0))
+            self.send(messaging.PitchAutopilotEnabledMessage(self.get_token(), False, 0))
 
     def pitchAndWait(self, pitch, epsilon = 5, timeout = 30):
         '''Set a pitch (degrees up) and activate the pitch control loop, do not return until the pitch is achieved within 'epsilon' degrees'''
@@ -175,13 +183,10 @@ class AUV(messaging.MessageObserver):
             else:
                 break
 
-    def bearingParams(self, kp, ki, kd, scale=1.0, Ap=1, Ai=1, Ad=1, thr=1, maxError=1000):
-        '''Set the bearing control loop parameters.
+    PID_params_docstring = '''
+      See the relevant persist files for the values normally used.
 
-            This is a sensible example:
-                bearingParams(3.5, 0, 35, -1, 1.3, 1.3, 1, 1, 150)
-            
-            Basic parameters:
+      Basic parameters:
 
             kp    : proportional control constant
             ki    : integral control constant
@@ -203,94 +208,64 @@ class AUV(messaging.MessageObserver):
                        to +- this value. The proportional and derivative errors
                        are also clamped into the range +- maxError
 
+    '''
+
+    def bearingParams(self, kp, ki, kd, scale=1.0, Ap=1, Ai=1, Ad=1, thr=1, maxError=1000):
+        '''Set the bearing control loop parameters.
+
+            This is a sensible example:
+                bearingParams(3.5, 0, 35, -1, 1.3, 1.3, 1, 1, 150)
         '''
+      
         self.send(messaging.BearingAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
+
+    bearingParams.__doc__ += PID_params_docstring
 
     def depthParams(self, kp, ki, kd, scale=1.0, Ap=1, Ai=1, Ad=1, thr=1, maxError=1000):
         '''Set the depth control loop parameters.
             
             This is a sensible example:
                 depthParams(40, 0.6, 500, 1, 2, 2, 2, 1, 40)
-                    
-            Basic parameters:
-
-            kp    : proportional control constant
-            ki    : integral control constant
-            kd    : derivative control constant
-            
-            More parameters:
-
-            scale : scale applied to all parameters (normally 1)
-            Ap    : adaptive control: proportional control is allowed to vary
-                    between kp/Ap and kp*Ap
-            Ai    : adaptive control: integral control is allowed to vary
-                    between ki/Ai and ki*Ai
-            Ad    : adaptive control: derivative control is allowed to vary
-                    between kd/Ad and kd*Ad
-            thr   : adaptive control: (error/thr) controls the amount kp and ki
-                    are increased from their minimum values, and the amount kd
-                    is decreased from its maximum value
-            maxError : prevent integral wind-up by clamping the inegral error
-                       to +- this value. The proportional and derivative errors
-                       are also clamped into the range +- maxError
         '''
         self.send(messaging.DepthAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
+
+    depthParams.__doc__ += PID_params_docstring
 
     def pitchParams(self, kp, ki, kd, scale=1.0, Ap=1, Ai=1, Ad=1, thr=1, maxError=1000):
         '''Set the pitch control loop parameters.
             
             This is a sensible example:
                 pitchParams(0.5, 0.1, 10, 1, 1, 1, 1, 1, 5)
-             
-            Basic parameters:
-
-            kp    : proportional control constant
-            ki    : integral control constant
-            kd    : derivative control constant
-            
-            More parameters:
-
-            scale : scale applied to all parameters (normally 1)
-            Ap    : adaptive control: proportional control is allowed to vary
-                    between kp/Ap and kp*Ap
-            Ai    : adaptive control: integral control is allowed to vary
-                    between ki/Ai and ki*Ai
-            Ad    : adaptive control: derivative control is allowed to vary
-                    between kd/Ad and kd*Ad
-            thr   : adaptive control: (error/thr) controls the amount kp and ki
-                    are increased from their minimum values, and the amount kd
-                    is decreased from its maximum value
-            maxError : prevent integral wind-up by clamping the inegral error
-                       to +- this value. The proportional and derivative errors
-                       are also clamped into the range +- maxError
         '''
         self.send(messaging.PitchAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
+
+    pitchParams.__doc__ += PID_params_docstring
 
     def prop(self, value):
         '''Set the prop speed. Positive is forwards, range -127:127'''
         debug("cauv.control.Node.prop(%s)" % value, 5)
         self.checkRange(value)
-        self.send(messaging.MotorMessage(messaging.MotorID.Prop, value))
+        self.send(messaging.MotorMessage(self.get_token(), messaging.MotorID.Prop, value))
 
     def hbow(self, value):
         '''Set the horizontal bow thruster speed. Positive is ????, range -127:127'''
         self.checkRange(value)
-        self.send(messaging.MotorMessage(messaging.MotorID.HBow, value))
+        self.send(messaging.MotorMessage(self.get_token(), messaging.MotorID.HBow, value))
    
     def vbow(self, value):
         '''Set the vertical bow thruster speed. Positive is ????, range -127:127'''
         self.checkRange(value)
-        self.send(messaging.MotorMessage(messaging.MotorID.VBow, value))
+        self.send(messaging.MotorMessage(self.get_token(), messaging.MotorID.VBow, value))
 
     def hstern(self, value):
         '''Set the horizontal stern thruster speed. Positive is ????, range -127:127'''
         self.checkRange(value)
-        self.send(messaging.MotorMessage(messaging.MotorID.HStern, value))
+        self.send(messaging.MotorMessage(self.get_token(), messaging.MotorID.HStern, value))
 
     def vstern(self, value):
         '''Set the vertical stern thruster speed. Positive is ????, range -127:127'''
         self.checkRange(value)
-        self.send(messaging.MotorMessage(messaging.MotorID.VStern, value))
+        self.send(messaging.MotorMessage(self.get_token(), messaging.MotorID.VStern, value))
         
     def forwardlights(self, value, duty_cycle=255, cycle_period=1000):
         '''Set the forwards light power. Value range 0-255, duty cycle 0=off 255=on 127=50% on 50% off, cycle_period=milliseconds/cycle'''
@@ -312,11 +287,6 @@ class AUV(messaging.MessageObserver):
         if not (value>=0 and value<256):
             raise ValueError("invalid light value: %d" % value)
 
-    def cut(self, strength):
-        '''Control the cutting device: 1=cut, 0=don't cut.'''
-        # strength is 0 = off, 1 = on
-        self.send(messaging.CuttingDeviceMessage(strength))
-    
     def motorMap(self, motor_id, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
         '''Apply linear mapping to motor power values.
         
@@ -336,37 +306,39 @@ class AUV(messaging.MessageObserver):
         self.send(messaging.SetMotorMapMessage(motor_id, m))
 
     def propMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
-        '''see doc for motorMap'''
         self.motorMap(messaging.MotorID.Prop, zero_plus, zero_minus, max_plus, max_minus)
+    propMap.__doc__ = motorMap.__doc__
 
     def hbowMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
-        '''see doc for motorMap'''
         self.motorMap(messaging.MotorID.HBow, zero_plus, zero_minus, max_plus, max_minus)
+    hbowMap.__doc__ = motorMap.__doc__
 
     def vbowMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
-        '''see doc for motorMap'''
         self.motorMap(messaging.MotorID.VBow, zero_plus, zero_minus, max_plus, max_minus)
+    vbowMap.__doc__ = motorMap.__doc__
 
     def vsternMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
-        '''see doc for motorMap'''
         self.motorMap(messaging.MotorID.VStern, zero_plus, zero_minus, max_plus, max_minus)
+    vsternMap.__doc__ = motorMap.__doc__
 
     def hsternMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
-        '''see doc for motorMap'''
         self.motorMap(messaging.MotorID.HStern, zero_plus, zero_minus, max_plus, max_minus)
+    hsternMap.__doc__ = motorMap.__doc__
 
     def v(self, value):
+        '''Go vertically with a given prop value'''
         self.checkRange(value)
         self.vbow(value)
         self.vstern(value)
 
     def strafe(self, value):
-        debug("cauv.control.Node.strafe(%s)" % value, 5)
+        '''go sideways with a given prop value'''
         self.checkRange(value)
         self.hbow(value)
         self.hstern(value)
 
     def r(self, value):
+        '''Rotate with a given prop value'''
         self.checkRange(value)
         self.hbow(value)
         self.hstern(-value)
