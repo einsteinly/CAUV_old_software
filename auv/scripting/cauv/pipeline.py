@@ -1,9 +1,3 @@
-#
-# Copyright 2013 Cambridge Hydronautics Ltd.
-#
-# See license.txt for details.
-#
-
 '''This module provides an interface for manipulating the image processing pipeline.'''
 
 import messaging
@@ -11,6 +5,7 @@ from debug import debug, warning, error, info
 
 import threading
 import copy
+import os
 
 class Node:
     def __init__(self, id, type, parameters = None, inputarcs = None, outputarcs = None):
@@ -31,6 +26,24 @@ class Node:
 class State:
     def __init__(self):
         self.nodes = {} # id : Node
+    def fixup_inputs(self):
+        """Ensure the pipeline uses the right node of CameraInput/DirectCameraInput/NetInput"""
+        node_type = os.getenv("CAUV_CAMERA_INPUT_NODE")
+        if node_type is None:
+            node_type = "shared"
+        node_type = {
+            "direct" : messaging.NodeType.DirectCameraInput,
+            "shared" : messaging.NodeType.CameraInput,
+            "net" : messaging.NodeType.NetInput
+        }[node_type.lower()]
+        for node_id, node in self.nodes.items():
+            if node.type in (messaging.NodeType.CameraInput, 
+                             messaging.NodeType.DirectCameraInput,
+                             messaging.NodeType.NetInput):
+                new_node = Node(node_id, node_type)
+                new_node.outarcs = node.outarcs
+                new_node.params = node.params
+                self.nodes[node_id] = new_node
     def __repr__(self):
         return str(self.nodes)
 
@@ -125,7 +138,6 @@ class ConvenientNode(ConvenientObject):
     def x(self):
         return self.model.removeSynchronous(self.node_id)
 
-
 class Model(messaging.MessageObserver):
     '''The Model class represents an image pipeline, and provides methods to manipulate its state.'''
     def __init__(self, node, pipeline_name = "default"):
@@ -165,24 +177,11 @@ class Model(messaging.MessageObserver):
         debug('Clearing pipeline %s' %(self.pipeline_name))
         self.send(messaging.ClearPipelineMessage(self.pipeline_name))
 
-    def save(self, picklefname, timeout=3.0):
-        '''Save the pipeline to file 'picklefname'.'''
-        with open(picklefname, 'wb') as outf:
-            saved = self.get(timeout)
-            pickle.dump(saved, outf)
-            
     def pause(self):
         self.send(messaging.SetPipelineStateMessage(self.pipeline_name, messaging.PipelineState.Pause))
             
     def play(self):
         self.send(messaging.SetPipelineStateMessage(self.pipeline_name, messaging.PipelineState.Play))
-    
-    def load(self, picklefname, timeout=3.0):
-        '''Load the pipeline from 'picklefname', this will clear any existing pipeline.'''
-        with open(picklefname, 'rb') as inf:
-            #saved = pickle.load(inf)
-            saved = FilterUnpickler(inf).load()
-            self.set(saved, timeout)
     
     def get(self, timeout=3.0):
         '''Grab the state from the image pipeline, save it and return it.'''
@@ -240,7 +239,6 @@ class Model(messaging.MessageObserver):
     def send(self, msg):
         '''Send a message to the pipeline group.'''
         self.__node.send(msg, "pipeline")
-    
 
     def addNode(self, type, timeout=3.0):
         '''Return a Node object (corresponding to a node in the image pipeline) that can be used to manipulate the corresponding image pipeline node.'''
