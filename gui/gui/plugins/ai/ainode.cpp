@@ -12,7 +12,7 @@
 
 #include <elements/style.h>
 
-#include <generated/types/GuiaiGroup.h>
+#include <generated/types/AiGroup.h>
 
 #include <liquid/nodeHeader.h>
 

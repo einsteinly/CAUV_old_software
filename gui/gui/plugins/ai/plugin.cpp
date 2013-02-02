@@ -22,7 +22,7 @@
 #include <model/registry.h>
 #include <filter/nodeExclusionFilter.h>
 
-#include <generated/types/GuiaiGroup.h>
+#include <generated/types/AiGroup.h>
 #include <generated/types/message_type.h>
 
 #include "aimessaging.h"
