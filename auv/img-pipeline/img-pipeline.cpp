@@ -57,14 +57,12 @@ void ImagePipelineNode::onAddNodeMessage(AddNodeMessage_ptr m)
     spawnNewPipeline(m->pipelineName());
 }
 
-void ImagePipelineNode::onRemoveNodeMessage(RemoveNodeMessage_ptr m)
+void ImagePipelineNode::onRemoveNodeMessage(RemoveNodeMessage_ptr)
 {
-    spawnNewPipeline(m->pipelineName());
 }
 
-void ImagePipelineNode::onGraphRequestMessage(GraphRequestMessage_ptr m)
+void ImagePipelineNode::onGraphRequestMessage(GraphRequestMessage_ptr)
 {
-    spawnNewPipeline(m->pipelineName());
 }
 
 void ImagePipelineNode::onSetPipelineMessage(SetPipelineMessage_ptr m)
@@ -72,9 +70,8 @@ void ImagePipelineNode::onSetPipelineMessage(SetPipelineMessage_ptr m)
     spawnNewPipeline(m->pipelineName());
 }
 
-void ImagePipelineNode::onClearPipelineMessage(ClearPipelineMessage_ptr m)
+void ImagePipelineNode::onClearPipelineMessage(ClearPipelineMessage_ptr)
 {
-    spawnNewPipeline(m->pipelineName());
 }
 
 void ImagePipelineNode::onRun()

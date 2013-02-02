@@ -448,7 +448,7 @@ void ImageProcessor::onForceExecRequestMessage(ForceExecRequestMessage_ptr m){
 }
 
 void ImageProcessor::onClearPipelineMessage(ClearPipelineMessage_ptr m){
-    if(!_filterMatches(m))
+    if(!_filterMatchesPartial(m))
         return;
     try{
         lock_t l(m_nodes_lock);    

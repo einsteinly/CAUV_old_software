@@ -115,6 +115,15 @@ class ImageProcessor: public MessageObserver
             return false;
         }
 
+        template<typename message_T>
+        bool _filterMatchesPartial(boost::shared_ptr<const message_T> msg) {
+            lock_t l(m_name_lock);
+            if (m_name.find(msg->pipelineName()) == 0) {
+                return true;
+            }
+            return false;
+        }
+
         void _addNode(node_ptr_t const& p, node_id const& id) throw();
         void _addNode(node_ptr_t const& p) throw();
         void _removeNode(node_id const& id) throw(id_error);
