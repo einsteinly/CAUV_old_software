@@ -483,6 +483,17 @@ struct LocationSequence
     eq type : SequenceType;
 }
 
+enum ScriptExitStatus : int8 {
+    Success, TempFailure, PermFailure
+}
+
+struct ControlLockToken
+{
+    eq token : uint32;
+    cmp priority : int32;
+    timeout : uint32; //milliseconds
+}
+
 variant ParamValue
 {
     int32, float, string, bool,
@@ -557,12 +568,14 @@ group control
 {
     message Motor : 2
     {
+        lock_token : ControlLockToken;
         motorId : MotorID;
         speed : int8;
     }
 
     message BearingAutopilotEnabled : 60
     {
+        lock_token : ControlLockToken;
         enabled : bool;
         target : float;
     }
@@ -581,6 +594,7 @@ group control
 
     message DepthAutopilotEnabled : 61
     {
+        lock_token : ControlLockToken;
         enabled : bool;
         target : float;
     }
@@ -607,6 +621,7 @@ group control
 
     message PitchAutopilotEnabled : 62
     {
+        lock_token : ControlLockToken;
         enabled : bool;
         target : float;
     }
@@ -623,12 +638,6 @@ group control
         maxError : float;
     }
 
-    message Script : 102
-    {
-        request : ScriptExecRequest;
-    }
-
-
     message MotorRampRate : 83
     {
         maxDelta : int32;
@@ -641,11 +650,6 @@ group control
         mapping : MotorMap;
     }
     
-    // redherring only
-    message ResetMCB : 85
-    {
-    }
-
     message CalibrateNoRotation : 90
     {
         duration : uint16;
@@ -775,6 +779,7 @@ group sonarctl
 {
     message SonarControl : 32
     {
+        lock_token : ControlLockToken;
         direction : uint16;
         width : uint16;
         gain : uint8;
@@ -784,6 +789,7 @@ group sonarctl
     }
     message GeminiControl : 33
     {
+        lock_token : ControlLockToken;
         range : float;  // in m (0-50)
         gain : float;   // percentage (0-100)
         rangeLines : uint32; // 0-4096: used for range compression setting: the
@@ -1167,9 +1173,11 @@ group ai
     {
         managerId : string;
     }
-}
-group guiai
-{
+    message ScriptExit : 219
+    {
+        task : string;
+        status : ScriptExitStatus;
+    }
     message AddTask : 202
     {
         taskType : string;
@@ -1248,6 +1256,11 @@ group guiai
     message AIControl : 217
     {
         command : AICommand;
+    }
+    message DetectorFired : 220
+    {
+        conditionId : string;
+        timeout : int32; //ms
     }
 }
 
