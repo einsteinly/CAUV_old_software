@@ -27,12 +27,17 @@ class BlobNode: public Node{
 
             registerOutputID("blobs", std::vector<Circle>());
 
-            registerParamID<Range>("threshold",Range(20,240));
+            registerParamID<float>("threshold_min",20);
+            registerParamID<float>("threshold_max",240);
             registerParamID<int>("threshold_step",10);
-            registerParamID<Range>("area",Range(100,8000));
-            registerParamID<Range>("circularity",Range(0.8,std::numeric_limits<float>::infinity()));
-            registerParamID<Range>("inertiaRatio",Range(0.1,std::numeric_limits<float>::infinity()));
-            registerParamID<Range>("convexity",Range(0.95,std::numeric_limits<float>::infinity()));
+            registerParamID<float>("area_min",100);
+            registerParamID<float>("area_max",8000);
+            registerParamID<float>("circularity_max",std::numeric_limits<float>::infinity());
+            registerParamID<float>("circularity_min",0.8);
+            registerParamID<float>("inertiaRatio_min",0.1);
+            registerParamID<float>("inertiaRatio_max",std::numeric_limits<float>::infinity());
+            registerParamID<float>("convexity_min",0.95);
+            registerParamID<float>("convexity_max",std::numeric_limits<float>::infinity());
             registerParamID<bool>("find_dark",true);
             registerParamID<bool>("find_light",true);
 
@@ -84,19 +89,19 @@ class BlobNode: public Node{
                 return;
 
             cv::SimpleBlobDetector::Params blobDetectorParams;
-            blobDetectorParams.filterByArea = param<Range>("area").min > 0 || param<Range>("area").max < std::numeric_limits<float>::infinity();
-            blobDetectorParams.minArea = param<Range>("area").min;
-            blobDetectorParams.maxArea = param<Range>("area").max;
-            blobDetectorParams.filterByCircularity = param<Range>("circularity").min > 0 || param<Range>("circularity").max < std::numeric_limits<float>::infinity();
-            blobDetectorParams.minCircularity = param<Range>("circularity").min;
-            blobDetectorParams.filterByInertia = param<Range>("inertiaRatio").min > 0 || param<Range>("inertiaRatio").max < std::numeric_limits<float>::infinity();
-            blobDetectorParams.minInertiaRatio = param<Range>("inertiaRatio").min;
-            blobDetectorParams.filterByConvexity = param<Range>("convexity").min > 0 || param<Range>("convexity").max < std::numeric_limits<float>::infinity();
-            blobDetectorParams.minConvexity = param<Range>("convexity").min;
+            blobDetectorParams.filterByArea = param<float>("area_min") > 0 || param<float>("area_max") < std::numeric_limits<float>::infinity();
+            blobDetectorParams.minArea = param<float>("area_min");
+            blobDetectorParams.maxArea = param<float>("area_max");
+            blobDetectorParams.filterByCircularity = param<float>("circularity_min") > 0 || param<float>("circularity_max") < std::numeric_limits<float>::infinity();
+            blobDetectorParams.minCircularity = param<float>("circularity_min");
+            blobDetectorParams.filterByInertia = param<float>("inertiaRatio_min") > 0 || param<float>("inertiaRatio_max") < std::numeric_limits<float>::infinity();
+            blobDetectorParams.minInertiaRatio = param<float>("inertiaRatio_min");
+            blobDetectorParams.filterByConvexity = param<float>("convexity_min") > 0 || param<float>("convexity_max") < std::numeric_limits<float>::infinity();
+            blobDetectorParams.minConvexity = param<float>("convexity_min");
             #if CV_MAJOR_VERSION >= 2 && CV_MINOR_VERSION > 2
-            blobDetectorParams.maxCircularity = param<Range>("circularity").max;
-            blobDetectorParams.maxInertiaRatio = param<Range>("inertiaRatio").max;
-            blobDetectorParams.maxConvexity = param<Range>("convexity").max;
+            blobDetectorParams.maxCircularity = param<float>("circularity_max");
+            blobDetectorParams.maxInertiaRatio = param<float>("inertiaRatio_max");
+            blobDetectorParams.maxConvexity = param<float>("convexity_max");
             #endif
             if (find_dark && find_light)
                 blobDetectorParams.filterByColor = false;

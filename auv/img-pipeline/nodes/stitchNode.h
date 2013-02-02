@@ -34,11 +34,11 @@ class StitchNode: public Node{
 
     protected:
         void doWork(in_image_map_t& inputs, out_map_t& r){
-            bool first_run = false;
+            //bool first_run = false;
 
             if(!m_buffer){
                 // first run, take a copy of the input
-                first_run = true;
+                //first_run = true;
                 m_buffer = boost::make_shared<Image>(*inputs[Image_In_Name]);
                 r["Last Stitch Location"] = _mkLocation(0,0);
                 r["Last Stitch Orientation"] = 0.0f;

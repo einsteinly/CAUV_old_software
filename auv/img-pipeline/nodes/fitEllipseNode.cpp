@@ -225,11 +225,11 @@ void cauv::imgproc::FitEllipseNode::doWork(in_image_map_t& inputs, out_map_t& r)
     const double maxRatio = 2;
     const int earlyTerminationPercentage = 90;
 
-    if(dx.depth() != CV_32F | dx.channels() > 1)
+    if(dx.depth() != CV_32F || dx.channels() > 1)
         throw(parameter_error("Image x gradient must be one channel float."));
-    if(dy.depth() != CV_32F | dy.channels() > 1)
+    if(dy.depth() != CV_32F || dy.channels() > 1)
         throw(parameter_error("Image y gradent must be one channel float."));
-    if(edges.depth() != CV_8U | edges.channels() > 1)
+    if(edges.depth() != CV_8U || edges.channels() > 1)
         throw(parameter_error("Edge image must be one channel unsigned bytes."));
 
     if (dx.rows != dy.rows || dx.rows != edges.rows
