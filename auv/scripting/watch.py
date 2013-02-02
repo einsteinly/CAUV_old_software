@@ -103,12 +103,14 @@ class WatchObserver(messaging.MessageObserver):
         proc.autostart = msg.autostart
         proc.get_pid = watchfuncs.node_pid(msg.node_id)
         proc.prereq = watchfuncs.depends_on(*msg.prereq)
-        if msg.restart < 0:
-            proc.death = watchfuncs.restart()
+        if msg.restart == -101: #magic number ahoy!
+            proc.death_callback = watchfuncs.report_death
+        elif msg.restart < 0:
+            proc.death_callback = watchfuncs.restart()
         elif msg.restart == 0:
-            proc.death = watchfuncs.ignore
-        if msg.restart > 0:
-            proc.death = watchfuncs.restart(msg.restart)
+            proc.death_callback = watchfuncs.ignore
+        elif msg.restart > 0:
+            proc.death_callback = watchfuncs.restart(msg.restart)
 
     def report(self):
         if psi is None:

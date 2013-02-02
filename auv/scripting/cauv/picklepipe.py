@@ -1,9 +1,3 @@
-#
-# Copyright 2013 Cambridge Hydronautics Ltd.
-#
-# See license.txt for details.
-#
-
 from debug import debug, warning, error, info
 import messaging
 

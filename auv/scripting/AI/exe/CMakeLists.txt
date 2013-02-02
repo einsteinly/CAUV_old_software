@@ -3,4 +3,4 @@
 # See license.txt for details.
 #
 
-add_subdirectory(exe)
+python_exe(task_manager.py)

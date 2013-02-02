@@ -1,9 +1,3 @@
-#
-# Copyright 2013 Cambridge Hydronautics Ltd.
-#
-# See license.txt for details.
-#
-
 import fcntl
 import traceback
 import cPickle as pickle

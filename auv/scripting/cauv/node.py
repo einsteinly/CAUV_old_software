@@ -1,11 +1,5 @@
 #!/usr/bin/env python2.7
 #
-# Copyright 2013 Cambridge Hydronautics Ltd.
-#
-# See license.txt for details.
-#
-
-#
 # This module provides an as-user-friendly-as-possible wrapper around the
 # 'messaging' module (which exports the c++ messaging interface directly)
 #
