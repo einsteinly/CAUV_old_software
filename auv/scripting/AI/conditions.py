@@ -60,9 +60,8 @@ class TimeCondition(Condition):
     This condition only remains true for a certain time
     """
     class DefaultOptions(options.Options):
-        timeout = 30
-    def __init__(self, *args, **kargs):
-        Condition.__init__(self, *args, **kargs)
+        def __init__(self):
+            self.timeout = 30
     def reset(self):
         self.start_time = time.time()
     def get_state(self):
