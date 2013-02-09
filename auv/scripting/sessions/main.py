@@ -9,7 +9,6 @@ import utils.dirs
 
 import socket
 import networking
-import ai_procs
 
 barracuda_processes = [
     Process('persist',    ['persist.py', '--silent', '--restore', '--persistence-dir',
@@ -45,5 +44,4 @@ def get_processes(args):
         p += laptop_processes
     elif args.hw == 'barracuda':
         p += barracuda_processes
-        p += ai_procs.get_processes(args)
     return p
