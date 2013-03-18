@@ -512,6 +512,13 @@ variant ParamValue
     list<Colour>,
 }
 
+struct OptionWithMeta
+{
+    value : ParamValue;
+    dynamic : bool;
+    docstring : string;
+}
+
 //these are zmq messaging specific
 group zmq_internal
 { 
@@ -1024,12 +1031,6 @@ group can_status
     {
         location : Component;
     }
-
-    // reinstated for reherring compatibility
-    message RedHerringBatteryStatus : 152
-     {
-         voltage : uint16;
-     }
 }
 
 group gui
@@ -1167,17 +1168,9 @@ group pl_gui
 
 group ai
 {
-    message AI : 200
-    {
-        msg : string;
-    }
     message AIlog : 201
     {
         msg : string;
-    }
-    message AIKeepAlive : 199
-    {
-        managerId : string;
     }
     message ScriptExit : 219
     {
@@ -1207,16 +1200,14 @@ group ai
     {
         taskId : string;
         conditionIds : list<string>;
-        taskOptions : map<string, ParamValue>;
-        dynamicScriptOptions : map<string, ParamValue>;
-        staticScriptOptions : map<string, ParamValue>;
+        taskOptions : map<string, OptionWithMeta>;
+        scriptOptions : map<string, OptionWithMeta>;
         isCurrentlyRunning : bool;
-        pipelineIds : list<string>;
     }
     message ScriptState : 207
     {
         taskId : string;
-        debugValues : map<string, ParamValue>;
+        debugValues : map<string, OptionWithMeta>;
     }
     message AddCondition : 208
     {
@@ -1238,9 +1229,8 @@ group ai
     message ConditionState : 212
     {
         conditionId : string;
-        conditionOptions : map<string, ParamValue>;
-        debugValues : map<string, ParamValue>;
-        pipelineIds : list<string>;
+        conditionOptions : map<string, OptionWithMeta>;
+        debugValues : map<string, OptionWithMeta>;
         conditionValue: bool;
     }
     message TaskTypes : 213

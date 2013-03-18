@@ -6,16 +6,38 @@ import time
 
 from cauv.debug import info, warning, error, debug
 
-class AUV(messaging.MessageObserver):
-    '''The AUV class provides an interface to control the AUV's control loops, motors, and other hardware.'''
-    def __init__(self, node, priority = 0, timeout = 10):
+class AUV_readonly(messaging.MessageObserver):
+    '''Provides access to telemetry data'''
+    def __init__(self, node):
         messaging.MessageObserver.__init__(self)
         self.__node = node
-        node.addObserver(self)
         node.subMessage(messaging.TelemetryMessage())
         self.current_bearing = None
         self.current_depth = None
         self.current_pitch = None
+        node.addObserver(self)
+    
+    def getBearing(self):
+        '''Return the current bearing: may return None!'''
+        return self.current_bearing
+    
+    def getDepth(self):
+        '''Return the current depth: may return None!'''
+        return self.current_depth
+
+    def getPitch(self):
+        '''Return the current pitch: may return None!'''
+        return self.current_pitch
+    
+    def onTelemetryMessage(self, m):
+        self.current_bearing = m.orientation.yaw
+        self.current_depth = m.depth
+        self.current_pitch = m.orientation.pitch
+
+class AUV(AUV_readonly):
+    '''The AUV class provides an interface to control the AUV's control loops, motors, and other hardware.'''
+    def __init__(self, node, priority = 0, timeout = 10):
+        AUV_readonly.__init__(self, node)
         self.bearingCV = threading.Condition()
         self.depthCV = threading.Condition()
         self.pitchCV = threading.Condition()
@@ -40,18 +62,6 @@ class AUV(messaging.MessageObserver):
         self.bearing(None)
         self.pitch(None)
         self.depth(None)
-    
-    def getBearing(self):
-        '''Return the current bearing: may return None!'''
-        return self.current_bearing
-    
-    def getDepth(self):
-        '''Return the current depth: may return None!'''
-        return self.current_depth
-
-    def getPitch(self):
-        '''Return the current pitch: may return None!'''
-        return self.current_pitch
 
     def bearing(self, bearing):
         '''Set a bearing (degrees CW from north) and activate the bearing control loop, or deactivate bearing control if 'None' is passed.'''
@@ -348,9 +358,7 @@ class AUV(messaging.MessageObserver):
             raise ValueError("invalid motor value: %d" % value)
     
     def onTelemetryMessage(self, m):
-        self.current_bearing = m.orientation.yaw
-        self.current_depth = m.depth
-        self.current_pitch = m.orientation.pitch
+        AI_readonly.onTelemetryMessage(self, m)
         self.bearingCV.acquire()
         self.depthCV.acquire()
         self.pitchCV.acquire()

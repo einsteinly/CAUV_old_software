@@ -23,7 +23,7 @@ class Condition(object):
         _type = self.get_type()
         if name is not None:
             if name in self.instances:
-                warning("Duplicate Detector name {}!".format(name))
+                warning("Duplicate condition name {}!".format(name))
                 name = None
             else:
                 self.name = name

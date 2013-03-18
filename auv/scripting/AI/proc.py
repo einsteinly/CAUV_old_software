@@ -5,7 +5,10 @@ import cauv.node as node
 import cauv.yamlpipe
 import cauv.pipeline
 import utils.dirs
+
 import os.path
+import threading
+import traceback
 
 import time
 import argparse
@@ -18,11 +21,30 @@ class Proc(msg.MessageObserver):
         pass
     class DefaultState(object):
         pass
-    class Debug(object):
+    class Debug(options.Options):
         pass
+    
+    def __init__(self, node_name):
+        msg.MessageObserver.__init__(self)
+        self.node = node.Node(node_name)
+        self.auv = control.AUV_readonly(self.node)
+        if hasattr(self, "report"):
+            self._reporting_thread = threading.Thread(target=self._report_loop)
+            self._die_flag = threading.Event()
+            self._reporting_thread.start()
+            
+    def _report_loop(self):
+        while not self._die_flag.wait(self.get_report_frequency()):
+            try:
+                self.report()
+            except Exception as e:
+                error(traceback.format_exc().encode('ascii','ignore'))
+        
+    def start_listening(self):
+        self.node.addObserver(self)
 
     def log(self, message):
-        info("AI log: " + message)
+        info("AI log: " + "location {}, bearing {}, time {}".format([self.getDepth(), self.auv.getBearing(),time.time()]) + message)
 
     def map_pl_name(self, name):
         return "ai/{}_{}".format(self.options._task_name, name).lower()
@@ -35,6 +57,11 @@ class Proc(msg.MessageObserver):
         model = cauv.pipeline.Model(self.node, self.map_pl_name(pipeline_name))
         pipeline.fixup_inputs()
         model.set(pipeline)
+        
+    def cleanup(self):
+        instance._die_flag.set()
+        instance.unload_pipeline("")
+        info("Pipelines cleaned up")
 
     def unload_pipeline(self, pipeline_name):
         pl_delete = self.map_pl_name(pipeline_name)

@@ -25,6 +25,7 @@ tags
 *out.*.avi
 *.profile
 *.chil
+*.kate-swp
 .DS_Store
 .clang_complete
 Makefile

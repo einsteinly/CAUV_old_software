@@ -80,8 +80,7 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
     #SETUP FUNCTIONS
     def __init__(self, opts):
         super(TaskManager, self).__init__()
-        self.node = cauv.node.Node("task-manager")
-        self.node.addObserver(self)
+        self.node = cauv.node.Node("task_manager")
         self.node.subMessage(messaging.AddTaskMessage())
         self.node.subMessage(messaging.RemoveTaskMessage())
         self.node.subMessage(messaging.SetTaskStateMessage())
@@ -106,6 +105,7 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
         if opts.mission_save:
             self.load_mission(open(opts.mission_save))
         self.gui_send_all()
+        self.node.addObserver(self)
 
     def load_mission(self, stream):
         task_list = AI.mission.load(stream, ai_state = self.ai_state)
@@ -265,22 +265,17 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
 
     #MESSAGES TO GUI
     def gui_update_task(self, task):
-        task_opts = task.options.to_flat_dict()
-        script_opts = task.script.options.to_flat_dict()
         self.node.send(messaging.TaskStateMessage(task.name,
                 [t.name for t in task.conditions],
-                task_opts,
-                script_opts,
-                {}, #no static options currently
-                task.state.active,
-                [])) #pipeline connections need a bit more thought
+                task.options.to_boost_with_meta(),
+                task.script.options.to_boost_with_meta(),
+                task.state.active))
 
     def gui_update_condition(self, condition):
         self.node.send(messaging.ConditionStateMessage(
             condition.name,
-            condition.options.to_flat_dict(),
+            condition.options.to_boost_with_meta(),
             {},
-            [],
             condition.get_state()))
 
     def gui_send_all(self):

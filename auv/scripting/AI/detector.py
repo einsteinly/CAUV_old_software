@@ -4,10 +4,11 @@ import cauv.node as node
 
 class Detector(proc.Proc):
     def __init__(self):
-        proc.Proc.__init__(self)
+        proc.Proc.__init__(self, self.__class__.__name__ + "Detector")
         self.options = self.get_options()
-        self.node = node.Node(self.__class__.__name__ + "Script")
-        self.node.addObserver(self)
+        
+    def report(self):
+        self.node.send(msg.DetectorStateMessage(self.Debug.to_flat_dict()))
 
     def fire(self, timeout):
         if timeout == 0:
@@ -24,5 +25,4 @@ class Detector(proc.Proc):
         try:
             ret = instance.run()
         finally:
-            instance.unload_pipeline("")
-            info("Detector pipelines cleaned up")
+            instance.cleanup()

@@ -15,6 +15,7 @@
 #include <liquid/arcSinkLabel.h>
 
 #include <model/nodes/numericnode.h>
+#include <generated/types/OptionWithMeta.h>
 
 #include "ainode.h"
 
@@ -41,19 +42,15 @@ class AiTaskNode : public BooleanNode {
     void removePipelineId(std::string const& pipe);
     std::set<std::string> getPipelineIds();
 
-    boost::shared_ptr<Node> setDebug(std::string const& name, ParamValue value);
+    boost::shared_ptr<Node> setDebug(std::string const& name, OptionWithMeta value);
     void removeDebug(std::string const& name);
     std::map<std::string, boost::shared_ptr<Node> > getDebugValues();
 
-    boost::shared_ptr<Node> setStaticOption(std::string const& name, ParamValue value);
-    void removeStaticOption(std::string const& name);
-    std::map<std::string, boost::shared_ptr<Node> > getStaticOptions();
+    boost::shared_ptr<Node> setScriptOption(std::string const& name, OptionWithMeta value);
+    void removeScriptOption(std::string const& name);
+    std::map<std::string, boost::shared_ptr<Node> > getScriptOptions();
 
-    boost::shared_ptr<Node> setDynamicOption(std::string const& name, ParamValue value);
-    void removeDynamicOption(std::string const& name);
-    std::map<std::string, boost::shared_ptr<Node> > getDynamicOptions();
-
-    boost::shared_ptr<Node> setTaskOption(std::string const& name, ParamValue value);
+    boost::shared_ptr<Node> setTaskOption(std::string const& name, OptionWithMeta value);
     void removeTaskOption(std::string const& name);
     std::map<std::string, boost::shared_ptr<Node> > getTaskOptions();
 
@@ -67,8 +64,7 @@ class AiTaskNode : public BooleanNode {
     std::set<boost::shared_ptr<AiConditionNode> > m_conditions;
     std::set<std::string> m_pipelineIds;
     std::map<std::string, boost::shared_ptr<Node> > m_debug;
-    std::map<std::string, boost::shared_ptr<Node> > m_staticOptions;
-    std::map<std::string, boost::shared_ptr<Node> > m_dynamicOptions;
+    std::map<std::string, boost::shared_ptr<Node> > m_scriptOptions;
     std::map<std::string, boost::shared_ptr<Node> > m_taskOptions;
 
 };

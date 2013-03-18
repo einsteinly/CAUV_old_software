@@ -50,6 +50,7 @@ namespace cauv {
 
         public:
             typedef std::map<std::string, ParamValue> param_map_t;
+            typedef std::map<std::string, OptionWithMeta> option_meta_map_t;
             AiMessageObserver(boost::shared_ptr< Node > parent);
             virtual ~AiMessageObserver();
             virtual void onConditionStateMessage(ConditionStateMessage_ptr m);

@@ -16,29 +16,33 @@ from utils import vecops
 from utils.hacks import incFloat
 from utils.detectors import ColourDetector
 
-from AI.base.detector import aiDetector, aiDetectorOptions
+import AI
 
-class detectorOptions(aiDetectorOptions):
-    Sightings_Period   = 5.0 # seconds, period to consider sightings of the buoy for
-    Required_Confidence = 0.9
-    Required_Sightings = 5
-    Circles_Name = 'buoy'
-    Histogram_Name_A = 'buoy_hue'
-    Histogram_Name_B = 'buoy_hue'
-    Histogram_Bins_A = xrange(60,120) # of 0--180 range
-    Histogram_Bins_B = xrange(50,75) # of 0--180 range
-    Stddev_Mult = 0.2 # lower --> higher confidence when multiple circles with different centres are visible
-    Optimal_Colour_Frac_A = 0.003 # highest colour detection confidence when the specified bin contains this value
-    Optimal_Colour_Frac_B = 0.008 # highest colour detection confidence when the specified bin contains this value
-    Colour_Weight_A  = -20.0 # respective weightings in confidence
-    Colour_Weight_B  =  0.4 #
-    Circles_Weight   =  1.6 #
-    
-    class Meta:
-        pipelines = ['detect_buoy_sim']
-
-class detector(aiDetector):
-    debug_values = ['confidence', 'circles_confidence', 'colour_confidence_A', 'colour_confidence_B']
+class BuoyDetector(AI.Detector):
+    class DefaultOptions(AI.Detector.DefaultOptions):
+        def __init__(self):
+            self.Sightings_Period = 5.0 # seconds, period to consider sightings of the buoy for
+            self.Required_Confidence = 0.9
+            self.Required_Sightings = 5
+            self.Circles_Name = 'buoy'
+            self.Histogram_Name_A = 'buoy_hue'
+            self.Histogram_Name_B = 'buoy_hue'
+            self.Histogram_Bins_A = xrange(60,120) # of 0--180 range
+            self.Histogram_Bins_B = xrange(50,75) # of 0--180 range
+            self.Stddev_Mult = 0.2 # lower --> higher confidence when multiple circles with different centres are visible
+            self.Optimal_Colour_Frac_A = 0.003 # highest colour detection confidence when the specified bin contains this value
+            self.Optimal_Colour_Frac_B = 0.008 # highest colour detection confidence when the specified bin contains this value
+            self.Colour_Weight_A  = -20.0 # respective weightings in confidence
+            self.Colour_Weight_B  =  0.4 #
+            self.Circles_Weight   =  1.6 #
+    #'detect_buoy_sim'
+    class Debug(AI.Detector.Debug):
+        def __init__(self):
+            self.confidence = 0
+            self.circles_confidence = 0
+            self.colour_confidence_A = 0
+            self.colour_confidence_B = 0
+            
     def __init__(self, node, opts):
         aiDetector.__init__(self, node, opts)
         self.circles_messages = {}   # map time received : message
@@ -156,3 +160,5 @@ class detector(aiDetector):
             good = True
         if not good:
             debug('ignoring histogram message: %s' % m.name, 2)
+            
+Detector = BuoyDetector
