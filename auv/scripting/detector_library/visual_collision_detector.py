@@ -10,13 +10,14 @@ from cauv.debug import debug, info, warning, error
 import cauv.pipeline as pipeline
 from utils.movingaverage import MovingAverage
 
-from AI.base.detector import aiDetector, aiDetectorOptions
+import AI
 
-class detectorOptions(aiDetectorOptions):
-    Channel = 'Value'
-    No_Trigger = 3
+class VisualCollisionDetector(AI.Detector):
+    class DefaultOptions(AI.Detector.DefaultOptions):
+        def __init__(self):
+            self.Channel = 'Value'
+            self.No_Trigger = 3
 
-class detector(aiDetector):
     def __init__(self, node, opts):
         aiDetector.__init__(self, node, opts)
         self.request_pl('histogram.pipe')
@@ -66,3 +67,7 @@ class detector(aiDetector):
             debug('Standard error of skewness: %g' % self.skewMovingMean.movingError)
             debug('Standard error of mean: %g' % self.meanMovingMean.movingError)
 
+Detector = VisualCollisionDetector
+
+if __name__ == "__main__":
+    VisualCollisionDetector.entry()
