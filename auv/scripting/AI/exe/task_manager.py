@@ -40,7 +40,6 @@ import AI.mission
 import script_library
 import detector_library
 
-from utils.conv import BoostMapToDict
 import utils.event as event
 
 """          
@@ -140,8 +139,6 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
 
     @event.event_func
     def onSetTaskStateMessage(self, msg):
-        task_opts = BoostMapToDict(msg.taskOptions)
-        script_opts = BoostMapToDict(msg.scriptOptions)
         try:
             task = self.tasks[msg.taskId]
         except KeyError:
@@ -154,8 +151,8 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
             except KeyError:
                 error("Condition {} does not exist!".format(c))
         task.conditions = task_conditions
-        task.options.from_flat_dict(task_opts)
-        task.script.options.from_dict(script_opts)
+        task.options.from_boost_dict(msg.taskOptions)
+        task.script.options.from_boost_dict(msg.scriptOptions)
         self.gui_update_task(task)
 
     @event.event_func
@@ -269,20 +266,19 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
     def gui_update_task(self, task):
         self.node.send(messaging.TaskStateMessage(task.name,
                 [t.name for t in task.conditions],
-                task.options.to_boost_with_meta(),
-                task.script.options.to_boost_with_meta(),
+                task.options.to_boost_dict(),
+                task.script.options.to_boost_dict(),
                 task.state.active))
 
     def gui_update_condition(self, condition):
         self.node.send(messaging.ConditionStateMessage(
             condition.name,
-            condition.options.to_boost_with_meta(),
-            {},
+            condition.options.to_boost_dict(),
             condition.get_state()))
 
     def gui_send_all(self):
         #send type info
-        task_types = [k for k,v in script_library.__dict__.items() if hasattr(v, "Script")]
+        task_types = script_library.index
         condition_types = AI.conditions.get_conditions().keys()
         self.node.send(messaging.TaskTypesMessage(task_types))
         self.node.send(messaging.ConditionTypesMessage(condition_types))

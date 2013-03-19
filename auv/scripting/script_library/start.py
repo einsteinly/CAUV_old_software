@@ -12,7 +12,7 @@ class Start(AI.Script):
             self.to_gate_time = 24
             self.forward_time = 5
             self.back_time = 7
-            self.forward_speed = 100, MotorValue
+            self.forward_speed = AI.OptionWithMeta(100, opt_type=MotorValue)
             self.bearing = 260
             
     class DefaultState(AI.Script.DefaultState):

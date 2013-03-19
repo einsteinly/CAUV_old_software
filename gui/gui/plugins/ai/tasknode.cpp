@@ -71,7 +71,7 @@ std::set<std::string> AiTaskNode::getPipelineIds(){
     return m_pipelineIds;
 }
 
-boost::shared_ptr<Node> AiTaskNode::setDebug(std::string const& name, OptionWithMeta value_with_meta){
+boost::shared_ptr<Node> AiTaskNode::setDebug(std::string const& name, ParamWithMeta value_with_meta){
     if (!m_debug[name]) {
         m_debug[name] = paramValueToNode(nid_t(name), value_with_meta.value);
         findOrCreate<GroupingNode>("debug")->addChild(m_debug[name]);
@@ -89,7 +89,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getDebugValues(){
     return m_debug;
 }
 
-boost::shared_ptr<Node> AiTaskNode::setScriptOption(std::string const& name, OptionWithMeta value_with_meta){
+boost::shared_ptr<Node> AiTaskNode::setScriptOption(std::string const& name, ParamWithMeta value_with_meta){
     if (!m_scriptOptions[name]) {
         m_scriptOptions[name] = paramValueToNode(nid_t(name), value_with_meta.value);
         findOrCreate<GroupingNode>("options")->addChild(m_scriptOptions[name]);
@@ -107,7 +107,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getScriptOptions(){
     return m_scriptOptions;
 }
 
-boost::shared_ptr<Node> AiTaskNode::setTaskOption(std::string const& name, OptionWithMeta value_with_meta){
+boost::shared_ptr<Node> AiTaskNode::setTaskOption(std::string const& name, ParamWithMeta value_with_meta){
     if (!m_taskOptions[name]) {
         m_taskOptions[name] = paramValueToNode(nid_t(name), value_with_meta.value);
         findOrCreate<GroupingNode>("options")->addChild(m_taskOptions[name]);

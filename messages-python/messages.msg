@@ -512,7 +512,7 @@ variant ParamValue
     list<Colour>,
 }
 
-struct OptionWithMeta
+struct ParamWithMeta
 {
     value : ParamValue;
     dynamic : bool;
@@ -1200,14 +1200,14 @@ group ai
     {
         taskId : string;
         conditionIds : list<string>;
-        taskOptions : map<string, OptionWithMeta>;
-        scriptOptions : map<string, OptionWithMeta>;
+        taskOptions : map<string, ParamWithMeta>;
+        scriptOptions : map<string, ParamWithMeta>;
         isCurrentlyRunning : bool;
     }
     message ScriptState : 207
     {
         taskId : string;
-        debugValues : map<string, OptionWithMeta>;
+        debugValues : map<string, ParamWithMeta>;
     }
     message AddCondition : 208
     {
@@ -1229,9 +1229,13 @@ group ai
     message ConditionState : 212
     {
         conditionId : string;
-        conditionOptions : map<string, OptionWithMeta>;
-        debugValues : map<string, OptionWithMeta>;
+        conditionOptions : map<string, ParamWithMeta>;
         conditionValue: bool;
+    }
+    message ConditionDebugState : 218
+    {
+        conditionId : string;
+        debugValues : map<string, ParamWithMeta>;
     }
     message TaskTypes : 213
     {

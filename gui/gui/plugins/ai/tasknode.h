@@ -15,7 +15,7 @@
 #include <liquid/arcSinkLabel.h>
 
 #include <model/nodes/numericnode.h>
-#include <generated/types/OptionWithMeta.h>
+#include <generated/types/ParamWithMeta.h>
 
 #include "ainode.h"
 
@@ -42,15 +42,15 @@ class AiTaskNode : public BooleanNode {
     void removePipelineId(std::string const& pipe);
     std::set<std::string> getPipelineIds();
 
-    boost::shared_ptr<Node> setDebug(std::string const& name, OptionWithMeta value);
+    boost::shared_ptr<Node> setDebug(std::string const& name, ParamWithMeta value);
     void removeDebug(std::string const& name);
     std::map<std::string, boost::shared_ptr<Node> > getDebugValues();
 
-    boost::shared_ptr<Node> setScriptOption(std::string const& name, OptionWithMeta value);
+    boost::shared_ptr<Node> setScriptOption(std::string const& name, ParamWithMeta value);
     void removeScriptOption(std::string const& name);
     std::map<std::string, boost::shared_ptr<Node> > getScriptOptions();
 
-    boost::shared_ptr<Node> setTaskOption(std::string const& name, OptionWithMeta value);
+    boost::shared_ptr<Node> setTaskOption(std::string const& name, ParamWithMeta value);
     void removeTaskOption(std::string const& name);
     std::map<std::string, boost::shared_ptr<Node> > getTaskOptions();
 

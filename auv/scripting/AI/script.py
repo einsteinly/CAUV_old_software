@@ -25,14 +25,13 @@ class Script(proc.Proc):
         self.node.subMessage(msg.SetTaskStateMessage())
         
     def report(self):
-        self.node.send(msg.ScriptStateMessage(self.Debug.to_boost_with_meta()))
+        self.node.send(msg.ScriptStateMessage(self.Debug.to_boost_dict()))
 
     def onSetTaskStateMessage(self, m):
         if m.taskId != self.task_name:
             return
         debug("Setting options")
-        #strip out non dynamic options
-        self.options.from_flat_dict(opts)
+        self.options.from_boost_dict(m.scriptOptions)
 
     @classmethod
     def entry(cls):

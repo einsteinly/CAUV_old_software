@@ -44,7 +44,7 @@ AiConditionNode::~AiConditionNode(){
 }
 
 
-boost::shared_ptr<Node> AiConditionNode::setDebug(std::string const& name, OptionWithMeta value_with_meta){
+boost::shared_ptr<Node> AiConditionNode::setDebug(std::string const& name, ParamWithMeta value_with_meta){
     boost::shared_ptr<GroupingNode> debug = findOrCreate<GroupingNode>("debug");
     if (!m_debug[name]) {
         m_debug[name] = paramValueToNode(nid_t(name), value_with_meta.value);
@@ -63,7 +63,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiConditionNode::getDebugValues(
     return m_debug;
 }
 
-boost::shared_ptr<Node> AiConditionNode::setOption(std::string const& name, OptionWithMeta value_with_meta){
+boost::shared_ptr<Node> AiConditionNode::setOption(std::string const& name, ParamWithMeta value_with_meta){
     boost::shared_ptr<GroupingNode> options = findOrCreate<GroupingNode>("options");
     if (!m_options[name]) {
         m_options[name] = paramValueToNode(nid_t(name), value_with_meta.value);

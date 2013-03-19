@@ -17,7 +17,7 @@
 
 #include <model/nodes/numericnode.h>
 #include <ai/ainode.h>
-#include <generated/types/OptionWithMeta.h>
+#include <generated/types/ParamWithMeta.h>
 
 namespace cauv {
 namespace gui {
@@ -32,11 +32,11 @@ class AiConditionNode : public BooleanNode {
         AiConditionNode(const nid_t id);
         virtual ~AiConditionNode();
 
-        boost::shared_ptr<Node> setDebug(std::string const& name, OptionWithMeta value);
+        boost::shared_ptr<Node> setDebug(std::string const& name, ParamWithMeta value);
         void removeDebug(std::string const& name);
         std::map<std::string, boost::shared_ptr<Node> > getDebugValues();
 
-        boost::shared_ptr<Node> setOption(std::string const& name, OptionWithMeta value);
+        boost::shared_ptr<Node> setOption(std::string const& name, ParamWithMeta value);
         void removeOption(std::string const& name);
         std::map<std::string, boost::shared_ptr<Node> > getOptions();
 

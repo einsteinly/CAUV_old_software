@@ -57,7 +57,7 @@ void AiMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
     boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
     boost::shared_ptr<AiTaskNode> task = tasks->findOrCreate<AiTaskNode>(m->taskId());
 
-    foreach(option_meta_map_t::value_type i, m->debugValues()){
+    foreach(param_meta_map_t::value_type i, m->debugValues()){
         task->setDebug(i.first, i.second);
     }
 }
@@ -76,11 +76,11 @@ void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
 
     task->update(m->isCurrentlyRunning());
 
-    foreach(option_meta_map_t::value_type i, m->scriptOptions()){
+    foreach(param_meta_map_t::value_type i, m->scriptOptions()){
         task->setScriptOption(i.first, i.second)->setMutable(true);
     }
 
-    foreach(option_meta_map_t::value_type i, m->taskOptions()){
+    foreach(param_meta_map_t::value_type i, m->taskOptions()){
         task->setTaskOption(i.first, i.second)->setMutable(true);
     }
 
@@ -117,11 +117,17 @@ void AiMessageObserver::onConditionStateMessage(ConditionStateMessage_ptr m){
 
     condition->update(m->conditionValue());
 
-    foreach(option_meta_map_t::value_type i, m->conditionOptions()){
+    foreach(param_meta_map_t::value_type i, m->conditionOptions()){
         condition->setOption(i.first, i.second)->setMutable(true);
     }
+}
 
-    foreach(option_meta_map_t::value_type i, m->debugValues()){
+void AiMessageObserver::onConditionDebugStateMessage(ConditionDebugStateMessage_ptr m){
+    boost::shared_ptr<GroupingNode> ai = m_parent->findOrCreate<GroupingNode>("ai");
+    boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
+    boost::shared_ptr<AiConditionNode> condition = conditions->findOrCreate<AiConditionNode>(m->conditionId());
+
+    foreach(param_meta_map_t::value_type i, m->debugValues()){
         condition->setDebug(i.first, i.second);
     }
 }
