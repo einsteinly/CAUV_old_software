@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 #
 # Copyright 2013 Cambridge Hydronautics Ltd.
 #
@@ -35,7 +36,9 @@ class BuoyDetector(AI.Detector):
             self.Colour_Weight_A  = -20.0 # respective weightings in confidence
             self.Colour_Weight_B  =  0.4 #
             self.Circles_Weight   =  1.6 #
-    #'detect_buoy_sim'
+            self.Process_Frequency = AI.OptionWithMeta(0.5, dynamic=True, docstring="Frequency of processing image pipeline data.")
+            self.Fire_Time = AI.OptionWithMeta(0.5, dynamic=True, docstring="How long the detector stays on after finding the buoy.")
+            
     class Debug(AI.Detector.Debug):
         def __init__(self):
             self.confidence = 0
@@ -43,8 +46,9 @@ class BuoyDetector(AI.Detector):
             self.colour_confidence_A = 0
             self.colour_confidence_B = 0
             
-    def __init__(self, node, opts):
-        aiDetector.__init__(self, node, opts)
+    def __init__(self):
+        AI.Detector.__init__(self)
+        self.load_pipeline('detect_buoy_sim')
         self.circles_messages = {}   # map time received : message
         self.colour_detector_A = ColourDetector(
             self.options.Sightings_Period,
@@ -67,53 +71,50 @@ class BuoyDetector(AI.Detector):
     def relativeTime(self):
         return time.time() - self.tzero
 
-    def process(self):
-        # process recorded observations of circles, and set self.detected True
-        # / False as necessary
-        self.process_c += 1
-        tnow = self.relativeTime()
-        self.cullOldSightings(tnow - self.options.Sightings_Period)
-        sightings = []
-        numcircles = len(self.circles_messages.items())
-        for t, m in  self.circles_messages.items():
-            sightings.append(self.detectionConfidence(m))
-        if numcircles:
-            self.circles_confidence = self.options.Circles_Weight * sum(sightings[:numcircles]) / numcircles
-        else:
-            self.circles_confidence = 0
-        self.colour_confidence_A = self.options.Colour_Weight_A * self.colour_detector_A.confidence()
-        self.colour_confidence_B = self.options.Colour_Weight_B * self.colour_detector_B.confidence()
-        self.confidence = self.circles_confidence + self.colour_confidence_A + self.colour_confidence_B
-        info('buoy detector processing %d sightings, confidence=%g (circles=%g,colour_A=%g,colour_B=%g)' % (
-            len(sightings), self.confidence, self.circles_confidence, self.colour_confidence_A, self.colour_confidence_B
-        ))
-        debug('mean frac: A=%g B=%g' % (self.colour_detector_A.frac(), self.colour_detector_B.frac()))
-        if self.confidence >= self.options.Required_Confidence and \
-           len(sightings) >= self.options.Required_Sightings:
-            info('buoy detected, confidence = %g, %d sightings' % (self.confidence, len(sightings)))
-            self.detected = True
-            #warning('self.detected = True is commented out')
-        else:
-            self.detected = False
-        if self.process_c in (1, 76, 287):
-            self.log("I wonder if anyone knows I'm in here")
-        elif self.process_c in (58,):
-            self.log("So, is it possible to specify any item in an uncountably infinite set with a strictly finite set of operators.")
-        elif self.process_c in (190,):
-            self.log("Is there even a buoy down here?! I've been looking for it for aaaggeeessss")
-        elif self.process_c in (95, 198, 476, 689):
-            self.log("dum di dum di dum di dummmmm")
-        elif self.process_c in (39, 287, 5871):
-            self.log("If we stayyyy here, we'll dieee here, there's nothing else to sayyyyyyyyyyy....")
-        elif self.process_c in (127, 498, 271):
-            self.log("I walk a lonely road, The only one that I have ever known.... da dum, da da, du dum, di da, dum dum")
+    def run(self):
+        while True:
+            # process recorded observations of circles, and set self.detected True
+            # / False as necessary
+            self.process_c += 1
+            tnow = self.relativeTime()
+            self.cullOldSightings(tnow - self.options.Sightings_Period)
+            sightings = []
+            numcircles = len(self.circles_messages.items())
+            for t, m in  self.circles_messages.items():
+                sightings.append(self.detectionConfidence(m))
+            if numcircles:
+                self.circles_confidence = self.options.Circles_Weight * sum(sightings[:numcircles]) / numcircles
+            else:
+                self.circles_confidence = 0
+            self.colour_confidence_A = self.options.Colour_Weight_A * self.colour_detector_A.confidence()
+            self.colour_confidence_B = self.options.Colour_Weight_B * self.colour_detector_B.confidence()
+            self.confidence = self.circles_confidence + self.colour_confidence_A + self.colour_confidence_B
+            info('buoy detector processing %d sightings, confidence=%g (circles=%g,colour_A=%g,colour_B=%g)' % (
+                len(sightings), self.confidence, self.circles_confidence, self.colour_confidence_A, self.colour_confidence_B
+            ))
+            debug('mean frac: A=%g B=%g' % (self.colour_detector_A.frac(), self.colour_detector_B.frac()))
+            if self.confidence >= self.options.Required_Confidence and \
+            len(sightings) >= self.options.Required_Sightings:
+                info('buoy detected, confidence = %g, %d sightings' % (self.confidence, len(sightings)))
+                self.detected = True
+                #warning('self.detected = True is commented out')
+            else:
+                self.detected = False
+            if self.process_c in (1, 76, 287):
+                self.log("I wonder if anyone knows I'm in here")
+            elif self.process_c in (58,):
+                self.log("So, is it possible to specify any item in an uncountably infinite set with a strictly finite set of operators.")
+            elif self.process_c in (190,):
+                self.log("Is there even a buoy down here?! I've been looking for it for aaaggeeessss")
+            elif self.process_c in (95, 198, 476, 689):
+                self.log("dum di dum di dum di dummmmm")
+            elif self.process_c in (39, 287, 5871):
+                self.log("If we stayyyy here, we'll dieee here, there's nothing else to sayyyyyyyyyyy....")
+            elif self.process_c in (127, 498, 271):
+                self.log("I walk a lonely road, The only one that I have ever known.... da dum, da da, du dum, di da, dum dum")
+                
+            time.sleep(self.options.Process_Frequency)
     
-    def die(self):
-        try:
-            self.drop_all_pl()
-        except Exception, e:
-            warning('Buoy Detector pipeline drop request failed: %s' % e)
-
     def detectionConfidence(self, message):
         if len(message.circles) == 0:
             return 0
@@ -162,3 +163,6 @@ class BuoyDetector(AI.Detector):
             debug('ignoring histogram message: %s' % m.name, 2)
             
 Detector = BuoyDetector
+
+if __name__ == "__main__":
+    BuoyDetector.entry()

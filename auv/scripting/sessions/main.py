@@ -36,7 +36,7 @@ laptop_processes = [
 ]
 
 def get_arguments(group):
-    group.add_argument('--hw', choices = ['sim', 'barracuda'], help="Hardware to run on",
+    group.add_argument('--hw', choices = ['laptop', 'barracuda'], help="Hardware to run on",
                         default = 'laptop' if socket.gethostname().find('barracuda') == -1 else 'barracuda')
 
 def get_processes(args):

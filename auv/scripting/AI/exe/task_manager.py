@@ -183,6 +183,8 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
                 task.conditions.remove(condition)
             except ValueError:
                 pass
+        if isinstance(condition, AI.conditions.DetectorCondition):
+            self.stop_detector(condition)
         del self.conditions[msg.conditionId]
         self.node.send(messaging.ConditionRemovedMessage(msg.conditionId))
 

@@ -44,7 +44,7 @@ class Proc(msg.MessageObserver):
         self.node.addObserver(self)
 
     def log(self, message):
-        info("AI log: " + "location {}, bearing {}, time {}".format([self.getDepth(), self.auv.getBearing(),time.time()]) + message)
+        info("AI log: location {}, bearing {}, time {}: ".format(self.auv.getDepth(), self.auv.getBearing(), time.time()) + message)
 
     def map_pl_name(self, name):
         return "ai/{}_{}".format(self.options._task_name, name).lower()
@@ -59,8 +59,8 @@ class Proc(msg.MessageObserver):
         model.set(pipeline)
         
     def cleanup(self):
-        instance._die_flag.set()
-        instance.unload_pipeline("")
+        self._die_flag.set()
+        self.unload_pipeline("")
         info("Pipelines cleaned up")
 
     def unload_pipeline(self, pipeline_name):

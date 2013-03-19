@@ -1,20 +1,22 @@
-from AI.base.script import aiScript, aiScriptOptions, aiScriptState
+import AI
 from cauv.debug import debug, warning, error, info
 
 import time
 
-class scriptOptions(aiScriptOptions):
-    depth = 4
-    angle = 45
-    prop = 127
-    bearing = 260
-    forward_time = 10
-    vert_prop = 127
-    
-class scriptState(aiScriptState):
-    already_run = False
-
-class script(aiScript):
+class Breach(AI.Script):
+    class DefaultOptions(AI.Script.DefaultOptions):
+        def __init__(self):
+            self.depth = 4
+            self.angle = 45
+            self.prop = 127
+            self.bearing = 260
+            self.forward_time = 10
+            self.vert_prop = 127
+        
+    class DefaultState(AI.Script.DefaultState):
+        def __init__(self):
+            self.already_run = False
+        
     def run(self):
         if self.persist.already_run:
             return
@@ -40,4 +42,7 @@ class script(aiScript):
         self.prop(0)
         self.stop()
         
-        
+Script = Breach
+
+if __name__ == "__main__":
+    Breach.entry()        

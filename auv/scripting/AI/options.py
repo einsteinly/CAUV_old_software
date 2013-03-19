@@ -106,7 +106,7 @@ class Options(object):
                 try:
                     opts[option] = value.to_dict()
                 except AttributeError:
-                    warning("Value {} ({}) cannot be represented".format(option, value.value))
+                    warning("Value {} ({}) cannot be represented".format(option, value))
         return opts
     
     
@@ -118,7 +118,7 @@ class Options(object):
         opts = {}
         for option, raw_value in self.iteroptions():
             if isinstance(raw_value, OptionWithMeta):
-                value = value
+                value = raw_value
             else:
                 value = OptionWithMeta(raw_value)
             try:

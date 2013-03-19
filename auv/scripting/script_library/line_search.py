@@ -1,24 +1,25 @@
-from AI.base.script import aiScript, aiScriptOptions, aiScriptState
+import AI
 from cauv.debug import debug, warning, error, info
 
 import time
 
-class scriptOptions(aiScriptOptions):
-    bearing = 80
-    useBearing = True
-    depth = 2
-    useDepth = True
-    first_power = 100 #motor power
-    first_time = 25
-    power = 60
-    time = 10
-    repeat = 10 #repeat infinity = -1
-    
-class scriptState(aiScriptState):
-    already_run = False
+class LineSearch(AI.Script):
+    class DefaultOptions(AI.Script.DefaultOptions):
+        def __init__(self):
+            self.bearing = 80
+            self.useBearing = True
+            self.depth = 2
+            self.useDepth = True
+            self.first_power = 100 #motor power
+            self.first_time = 25
+            self.power = 60
+            self.time = 10
+            self.repeat = 10 #repeat infinity = -1
+        
+    class DefaultState(AI.Script.DefaultState):
+        def __init__(self):
+            self.already_run = False
 
-class script(aiScript):
-    debug_values = ['runsRemaining', 'current_heading']
     def __init__(self, *args, **kwargs):
         aiScript.__init__(self, *args, **kwargs)
         self.runsRemaining = self.options.repeat
@@ -46,3 +47,9 @@ class script(aiScript):
             self.runsRemaining -= 1
             self.current_heading = (self.current_heading +180)%360
         return 'FAILURE'
+    
+
+Script = LineSearch
+
+if __name__ == "__main__":
+    LineSearch.entry()

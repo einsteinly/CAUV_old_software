@@ -111,7 +111,9 @@ def _generate_detectors():
     module_obj = sys.modules[__name__]
     #basically we want to create a whole load of new classes based on this one and some data from the detector library
     for detector_name, detector in detector_library.__dict__.iteritems():
+        info(str(detector))
         if not hasattr(detector, "Detector"):
+            info(detector_name)
             continue
         name = detector_name + 'Condition'
         detector_class = type(name, (DetectorCondition,), {})

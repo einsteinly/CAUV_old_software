@@ -23,7 +23,6 @@ class Script(proc.Proc):
         self.task_name = self.options._task_name
         self.auv = control.AUV(self.node)
         self.node.subMessage(msg.SetTaskStateMessage())
-        self.start_listening()
         
     def report(self):
         self.node.send(msg.ScriptStateMessage(self.Debug.to_boost_with_meta()))
@@ -39,6 +38,7 @@ class Script(proc.Proc):
     def entry(cls):
         cls.get_options()
         instance = cls()
+        instance.start_listening()
 
         ret = False
         try:

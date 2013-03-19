@@ -1,23 +1,24 @@
-from AI.base.script import aiScript, aiScriptOptions, aiScriptState
+import AI
 from cauv.debug import debug, warning, error, info
 from utils.boundedtypes import MotorValue
 
 import time
 
-class scriptOptions(aiScriptOptions):
-    useDepth = True
-    depth = 1.0
-    to_gate_time = 24
-    forward_time = 5
-    back_time = 7
-    forward_speed = 100, MotorValue
-    bearing = 260
-        
-class scriptState(aiScriptState):
-    already_run = False
-
-class script(aiScript):
-    debug_values = ['persist.already_run']
+class Start(AI.Script):
+    class DefaultOptions(AI.Script.DefaultOptions):
+        def __init__(self):
+            self.useDepth = True
+            self.depth = 1.0
+            self.to_gate_time = 24
+            self.forward_time = 5
+            self.back_time = 7
+            self.forward_speed = 100, MotorValue
+            self.bearing = 260
+            
+    class DefaultState(AI.Script.DefaultState):
+        def __init__(self):
+            self.already_run = False
+            
     def run(self):
         if self.persist.already_run:
             return 'SUCCESS'
@@ -44,3 +45,8 @@ class script(aiScript):
         debug("Heading blindly in this direction until something stops me or %d seconds elapse" %(self.options.forward_time))
         self.auv.prop(0)
         return 'SUCCESS'
+
+Script = Start
+
+if __name__ == "__main__":
+    Start.entry()

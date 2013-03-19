@@ -1,4 +1,4 @@
-from AI.base.script import aiScript, aiScriptOptions
+import AI
 
 from cauv.debug import info, warning, debug, error
 
@@ -6,21 +6,29 @@ from utils.coordinates import LLACoord
 
 from math import atan, degrees
 import time
-
-class scriptOptions(aiScriptOptions):
-    error = 0.5
-    speed = 50
-    checking_interval = 1.0
-    class Meta:
-        dynamic = ['error',]
     
-class script(aiScript):
-    debug_values = ['last_set.latitude', 'last_set.longitude', 'heading_to.latitude', 'heading_to.longitude', 'auv.lla.latitude', 'auv.lla.longitude']
+class WaypointDemo(AI.Script):
+    class DefaultOptions(AI.Script.DefaultOptions):
+        def __init__(self):
+            self.error = 0.5
+            self.speed = 50
+            self.checking_interval = 1.0
+        
+    class Debug(AI.Script.Debug):        
+        def __init__(self):
+            self.last_set_latitude = 0
+            self.last_set_longitude = 0
+            self.heading_to_latitude = 0
+            self.heading_to_longitude = 0
+            self.current_latitude = 0
+            self.current_longitude = 0
+        
     def __init__(self, *args, **kwargs):
         aiScript.__init__(self, *args, **kwargs)
         self.waypoints = []
         self.last_set = None
         self.heading_to = None
+        
     def run(self):
         #self.waypoints = [LLACoord(52.116692, 0.11779199999999999, -5), LLACoord(52.11655659246135, 0.11757541474764843, -5), LLACoord(52.116454731281465, 0.11774114908661013, -5)]
         while True:
@@ -72,3 +80,9 @@ class script(aiScript):
             self.auv.prop(0)
             debug("Arrived at waypoint")
         return "SUCCESS"
+
+
+Script = WaypointDemo
+
+if __name__ == "__main__":
+    WaypointDemo.entry()
