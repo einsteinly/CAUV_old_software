@@ -7,9 +7,7 @@
 #ifndef __BROADCAST_ELLIPSESNODE_H__
 #define __BROADCAST_ELLIPSESNODE_H__
 
-#include <map>
 #include <vector>
-#include <string>
 #include <cmath>
 
 #include <opencv2/core/core.hpp>
@@ -17,44 +15,24 @@
 
 #include <generated/types/EllipsesMessage.h>
 
-#include "../node.h"
-#include "outputNode.h"
-
+#include "broadcastNode.h"
 
 namespace cauv{
 namespace imgproc{
 
-class BroadcastEllipsesNode: public OutputNode{
+class BroadcastEllipsesNode: public BroadcastNode {
     public:
         BroadcastEllipsesNode(ConstructArgs const& args)
-            : OutputNode(args){
+            : BroadcastNode (args){
         }
 
         void init(){
-            // fast node:
-            m_speed = fast;
-            
-            // no inputs:
-            
-            // no outputs
-            
-            // parameters:
-            registerParamID< std::vector<Ellipse> >(
-                "Ellipses", std::vector<Ellipse>(), "Ellipses to broadcast", Must_Be_New
-            ); 
-            registerParamID<std::string>("name",
-                                         "unnamed ellipses",
-                                         "name for ellipses");
+            broadcastInit< std::vector<Ellipse> >("ellipses");
         }
 
     protected:
         void doWork(in_image_map_t&, out_map_t&){
-            const std::string name = param<std::string>("name");
-            const std::vector<Ellipse> ellipses = param< std::vector<Ellipse> >("Ellipses");
-            
-            if(ellipses.size()) {
-                sendMessage(boost::make_shared<EllipsesMessage>(name, ellipses));
-            }
+            broadcastInput< std::vector<Ellipse>, EllipsesMessage>();
         }
 
     // Register this node type

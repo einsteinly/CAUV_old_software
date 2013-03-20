@@ -881,48 +881,56 @@ group processing
     message Lines : 130
     {
         name : string;
+        pipeline : string;
         lines : list<Line>;
     }
 
     message Circles : 131
     {
         name : string;
+        pipeline : string;
         circles : list<Circle>;
     }
 
     message Ellipses : 137
     {
         name : string;
+        pipeline : string;
         ellipses : list<Ellipse>;
     }
 
     message Corners : 132
     {
         name : string;
+        pipeline : string;
         corners : list<Corner>;
     }
 
     message KeyPoints : 135
     {
         name : string;
+        pipeline : string;
         keypoints : list<KeyPoint>;
     }
 
     message Points : 136
     {
         name : string;
+        pipeline : string;
         points : list<floatXY>;
     }
 
     message Histogram : 133
     {
         name : string;
+        pipeline : string;
         bins : list<float>;
     }
 
     message Centre : 134
     {
         name : string;
+        pipeline : string;
         x : float;
         y : float;
     }
@@ -930,6 +938,7 @@ group processing
     message Float : 138
     {
         name : string;
+        pipeline : string;
         value : float;
     }
 }
