@@ -118,6 +118,8 @@ if __name__ == '__main__':
     node = cauv.node.Node('py-gmpd')
     try:
         auv = control.AUV(node)
+        auv.priority = 10
+        auv.timeout = 10
         d = GamepadServer(node, args.rate, args.deadband)
         
         if d.hasGamepad:

@@ -10,7 +10,7 @@ class AUV_readonly(messaging.MessageObserver):
     '''Provides access to telemetry data'''
     def __init__(self, node):
         messaging.MessageObserver.__init__(self)
-        self.__node = node
+        self.node = node
         node.subMessage(messaging.TelemetryMessage())
         self.current_bearing = None
         self.current_depth = None
@@ -47,7 +47,7 @@ class AUV(AUV_readonly):
         self.timeout = timeout #seconds
 
     def send(self, msg):
-        self.__node.send(msg)
+        self.node.send(msg)
 
     def get_token(self):
         return messaging.ControlLockToken(self.token, self.priority, self.timeout * 1000)
@@ -280,17 +280,17 @@ class AUV(AUV_readonly):
     def forwardlights(self, value, duty_cycle=255, cycle_period=1000):
         '''Set the forwards light power. Value range 0-255, duty cycle 0=off 255=on 127=50% on 50% off, cycle_period=milliseconds/cycle'''
         self.checkLightValue(value)
-        self.__node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
+        self.node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
         
     def downlights(self, value, duty_cycle=255, cycle_period=1000):
         '''Set the forwards light power. Value range 0-255, duty cycle 0=off 255=on 127=50% on 50% off, cycle_period=milliseconds/cycle'''
         self.checkLightValue(value)
-        self.__node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
+        self.node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
 
     def strobe(self, value, duty_cycle=8, cycle_period=2000):
         '''Set the forwards light power. Value range 0-255, duty cycle 0=off 255=on 127=50% on 50% off, cycle_period=milliseconds/cycle'''
         self.checkLightValue(value)
-        self.__node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
+        self.node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
         
     def checkLightValue(self, value):
         '''Raise an error if 'value' is not in the range accepted for light control.'''

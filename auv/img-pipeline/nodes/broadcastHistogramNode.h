@@ -17,44 +17,24 @@
 
 #include <generated/types/HistogramMessage.h>
 
-#include "../node.h"
-#include "outputNode.h"
-
+#include "broadcastNode.h"
 
 namespace cauv{
 namespace imgproc{
 
-class BroadcastHistogramNode: public OutputNode{
+class BroadcastHistogramNode: public BroadcastNode {
     public:
         BroadcastHistogramNode(ConstructArgs const& args)
-            : OutputNode(args){
+            : BroadcastNode (args){
         }
 
-        void init(){
-            // fast node:
-            m_speed = fast;
-            
-            // no inputs:
-            
-            // no outputs
-            
-            // parameters:
-            registerParamID< std::vector<float> >("histogram",
-                                                  std::vector<float>(),
-                                                  "histogram to broadcast",
-                                                  Must_Be_New);
-            registerParamID<std::string>("name",
-                                         "unnamed histogram",
-                                         "name for histogram");
+        void init() {
+            broadcastInit< std::vector<float> >("histogram");
         }
 
     protected:
         void doWork(in_image_map_t&, out_map_t&){
-            const std::string name = param<std::string>("name");
-            const std::vector<float> histogram = param< std::vector<float> >("histogram");
-            
-            if(histogram.size())
-                sendMessage(boost::make_shared<HistogramMessage>(name, histogram));
+            broadcastInput< std::vector<float>, HistogramMessage > ();
         }
 
     // Register this node type
