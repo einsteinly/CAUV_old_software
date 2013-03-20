@@ -10,7 +10,7 @@ from math import pi
 class SeaSprite:
     def __init__(self, node):
         '''Python interface to the SeaSprite scanning sonar.'''        
-        self.__node = node
+        self.node = node
         self.current_direction = 0
         self.current_width = 6400
         self.current_gain = 255
@@ -84,7 +84,7 @@ class SeaSprite:
 
     def update(self):
         '''Send the current config to the sonar.'''        
-        self.__node.send(messaging.SonarControlMessage(
+        self.node.send(messaging.SonarControlMessage(
             self.current_direction,
             self.current_width,
             self.current_gain,
@@ -99,12 +99,19 @@ Sonar = SeaSprite
 class Gemini:
     def __init__(self, node):
         '''Python interface to the Gemini multibeam sonar.'''
-        self.__node  = node
+        self.node  = node
         self.current_range = 20 # m
         self.current_gain  = 60 # 0--100
         self.range_lines = 1000 # ~200 - ~8000?, about 1024 is sensible
         self.ping_continuous = False
         self.inter_ping_delay = 0.5 # seconds, can safely be set to zero
+        self.priority = 0
+        self.token = int(time.time() * 1000) & 0xffffffff
+        info("Gemini Control Token: {}".format(self.token))
+        self.timeout = timeout #seconds
+
+    def get_token(self):
+        return messaging.ControlLockToken(self.token, self.priority, self.timeout * 1000)
     
     def range(self, r):
         '''Set the range in metres (1--120); longer ranges produce lots more data but support lower frame-rates.'''
@@ -132,8 +139,8 @@ class Gemini:
         # previous ping, it can safely be set to zero
         #if self.ping_continuous and self.inter_ping_delay < 0.05 + 2.0 * self.current_range / 1400:
         #    warning('setting a dangerously low inter-ping value!')
-        self.__node.send(messaging.GeminiControlMessage(
-            self.current_range, self.current_gain, self.range_lines, self.ping_continuous, self.inter_ping_delay
+        self.node.send(messaging.GeminiControlMessage(
+            self.get_token(), self.current_range, self.current_gain, self.range_lines, self.ping_continuous, self.inter_ping_delay
         ))
     
     def __repr__(self):
