@@ -36,7 +36,7 @@ def savepl(node, fname, timeout=3.0, name='default'):
             cauv.yamlpipe.dump(outf, saved)
 
 
-def loadpl(node, fname, name='default'):
+def loadpl(node, fname, name='default', cam_input='shared'):
     with open(fname, 'rb') as inf:
         info('Initializing pipeline model (%s)...' % name)
         model = pipeline.Model(node, name)
@@ -48,6 +48,7 @@ def loadpl(node, fname, name='default'):
             saved = cauv.yamlpipe.load(inf)
         
         info('Setting pipeline state...')
+        saved.fixup_inputs(cam_input)
         model.set(saved)
 
 def clearpl(node, name='default'):
@@ -62,6 +63,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--pipeline-name", default="default")
     parser.add_argument("-t", "--timeout", type=float, default=3.0)
+    parser.add_argument("-i", "--input", default = "net", choices = ["net", "shared", "direct"])
     parser.add_argument("verb", choices=('load', 'save', 'clear'))
     parser.add_argument("file", help='pipeline file')
 
@@ -78,7 +80,7 @@ if __name__ == '__main__':
         elif opts.verb == 'save':
             savepl(node, fname, timeout, name)
         elif opts.verb == 'load':
-            loadpl(node, fname, name)
+            loadpl(node, fname, name, opts.input)
         info('Done.')
     except:
         import traceback
