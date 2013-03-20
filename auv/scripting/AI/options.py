@@ -176,7 +176,7 @@ class Options(object):
         return dict_to_cmd_opts(flatten_dict(self.to_dict(cmd_representable_types)))
 
 def add_options_to_argparse(parser, options):
-    for option, value_with_meta in sorted(options.to_flat_dict_with_meta):
+    for option, value_with_meta in sorted(options.to_flat_dict_with_meta().iteritems()):
         arg_type = type(value_with_meta.value)
         if arg_type == bool:
             arg_type = bool_constructor

@@ -73,7 +73,7 @@ std::set<std::string> AiTaskNode::getPipelineIds(){
 
 boost::shared_ptr<Node> AiTaskNode::setDebug(std::string const& name, ParamWithMeta value_with_meta){
     if (!m_debug[name]) {
-        m_debug[name] = paramValueToNode(nid_t(name), value_with_meta.value);
+        m_debug[name] = paramWithMetaToNode(nid_t(name), value_with_meta);
         findOrCreate<GroupingNode>("debug")->addChild(m_debug[name]);
     }
     m_debug[name]->update(variantToQVariant(value_with_meta.value));
@@ -91,7 +91,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getDebugValues(){
 
 boost::shared_ptr<Node> AiTaskNode::setScriptOption(std::string const& name, ParamWithMeta value_with_meta){
     if (!m_scriptOptions[name]) {
-        m_scriptOptions[name] = paramValueToNode(nid_t(name), value_with_meta.value);
+        m_scriptOptions[name] = paramWithMetaToNode(nid_t(name), value_with_meta);
         findOrCreate<GroupingNode>("options")->addChild(m_scriptOptions[name]);
     }
     m_scriptOptions[name]->update(variantToQVariant(value_with_meta.value));
@@ -109,7 +109,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getScriptOptions(){
 
 boost::shared_ptr<Node> AiTaskNode::setTaskOption(std::string const& name, ParamWithMeta value_with_meta){
     if (!m_taskOptions[name]) {
-        m_taskOptions[name] = paramValueToNode(nid_t(name), value_with_meta.value);
+        m_taskOptions[name] = paramWithMetaToNode(nid_t(name), value_with_meta);
         findOrCreate<GroupingNode>("options")->addChild(m_taskOptions[name]);
     }
     m_taskOptions[name]->update(variantToQVariant(value_with_meta.value));

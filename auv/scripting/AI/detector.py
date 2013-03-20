@@ -1,4 +1,5 @@
 from cauv.debug import debug, warning, error, info
+from cauv import messaging as msg
 import proc
 import cauv.node as node
 

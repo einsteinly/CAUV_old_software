@@ -54,6 +54,7 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
         virtual const children_list_t getChildren() const;
         virtual bool isMutable() const;
         virtual void setMutable(bool mut);
+        virtual void setDocstring(std::string const& docstring);
 
         // QAbstractItemModel helpers
         virtual int row() const;
@@ -178,6 +179,7 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
 
         const nid_t m_id;
         bool m_mutable;
+        std::string m_docstring;
 
         typedef boost::mutex mutex_t;
         typedef boost::unique_lock<mutex_t> lock_t;

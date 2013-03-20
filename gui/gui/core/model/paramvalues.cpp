@@ -59,3 +59,10 @@ template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & operan
     node->typedUpdate(operand);
     return node;
 }
+
+boost::shared_ptr<Node> cauv::gui::paramWithMetaToNode(nid_t id, ParamWithMeta & param_with_meta)
+{
+    boost::shared_ptr<Node> node = paramValueToNode(id, param_with_meta.value);
+    node->setDocstring(param_with_meta.docstring);
+    return node;
+}
