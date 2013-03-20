@@ -2,9 +2,9 @@ from cauv.debug import debug, info, error, warning
 
 import time
 
-from AI.base.script import aiScript
+import AI
 
-class script(aiScript):
+class Surface(AI.Script):
     def run(self):
         self.log('Mission time limit reached, surfacing.')
         self.auv.depthAndWait(0, timeout=10)
@@ -13,3 +13,8 @@ class script(aiScript):
             info('Surface script still alive, waiting to be manually killed')
             time.sleep(5)
             
+
+Script = Surface
+
+if __name__ == "__main__":
+    Surface.entry()

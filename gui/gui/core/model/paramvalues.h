@@ -9,6 +9,8 @@
 
 #include <model/variants.h>
 
+#include <generated/types/ParamWithMeta.h>
+
 #include <QVariant>
 
 namespace cauv {
@@ -40,7 +42,7 @@ namespace cauv {
         return boost::apply_visitor(ParamValueToNode(id), boostVariant);
     }
 
-
+    boost::shared_ptr<Node> paramWithMetaToNode(nid_t id, ParamWithMeta & param_with_meta);
 
     template<class T>
     std::map<std::string, ParamValue> nodeMapToParamValueMap(const std::map<std::string, boost::shared_ptr<T> > nodes){

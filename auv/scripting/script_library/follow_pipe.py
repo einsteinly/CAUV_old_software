@@ -8,47 +8,51 @@ import cauv.node
 from utils.control import PIDController
 from utils.timeaverage import TimeAverage
 from cauv.debug import debug, info, warning, error
-from AI.base.script import aiScript, aiScriptOptions
+import AI
 
 import threading
 from math import degrees, cos, sin, pi
 import time
 
-class scriptOptions(aiScriptOptions):
-    #Pipeline details
-    ellipses_name = 'pipe'
-    lines_name = 'pipe'
-    follows = 2
-    #Timeouts
-    ready_timeout = 30
-    lost_timeout = 15
-    # Calibration
-    pipe_end     = 0.1 # of image (range +0.5 to -0.5)
-    use_depth = False
-    target_width = 0.05 # of image
-    width_error  = 0.1 # of image
-    centre_error = 0.2 # of image
-    align_error  = 10   # degrees 
-    average_time = 1   # seconds
-    angle_consistency = 0.4
-    # Control
-    prop_speed = 40
-    strafe_kP  = -100 # if we are to the left of the pipe then the pipe is on the right, so has positive center error
-    #we want to move right, ie negative strafe, so set kP negative
-    depth_kP = -1 # if we are too high the width is too small so the error appears negative
-    #we want to dive, ie positive value to add to depth, so kP is negative
-    initial_direction = 260
-
-    class Meta:
-        dynamic = [
-            'ready_timeout', 'lost_timeout',
-            'prop_speed', 'average_time',
-        ]
-        pipelines = ['follow_pipe2']
-
-
-class script(aiScript):
-    debug_values = ['centre_error', 'angle_error', 'depth_error', 'angle', 'centred', 'depthed', 'aligned', 'pipeEnded', 'yVal']
+class FollowPipe(AI.Script):
+    class DefaultOptions(AI.Script.DefaultOptions):
+        def __init__(self):
+            #Pipeline details
+            self.ellipses_name = 'pipe'
+            self.lines_name = 'pipe'
+            self.follows = 2
+            #Timeouts
+            self.ready_timeout = 30
+            self.lost_timeout = 15
+            # Calibration
+            self.pipe_end     = 0.1 # of image (range +0.5 to -0.5)
+            self.use_depth = False
+            self.target_width = 0.05 # of image
+            self.width_error  = 0.1 # of image
+            self.centre_error = 0.2 # of image
+            self.align_error  = 10   # degrees 
+            self.average_time = 1   # seconds
+            self.angle_consistency = 0.4
+            # Control
+            self.prop_speed = 40
+            self.strafe_kP  = -100 # if we are to the left of the pipe then the pipe is on the right, so has positive center error
+            #we want to move right, ie negative strafe, so set kP negative
+            self.depth_kP = -1 # if we are too high the width is too small so the error appears negative
+            #we want to dive, ie positive value to add to depth, so kP is negative
+            self.initial_direction = 260
+        
+    class Debug:
+        def __init___(self):
+            self.centre_error = 0
+            self.angle_error = 0
+            self.depth_error = 0
+            self.angle = 0
+            self.centred = 0
+            self.depthed = 0
+            self.aligned = 0
+            self.pipeEnded = 0
+            self.yVal = 0
+            
     def __init__(self, *args, **kwargs):
         aiScript.__init__(self, *args, **kwargs) 
         self.node.join("processing")
@@ -197,6 +201,7 @@ class script(aiScript):
   
 
     def run(self):
+        self.load_pipeline('follow_pipe2')
         # first we need to check we've actually found the pipe
         # the detector doesn't really look for the pipe it just looks
         # for yellow things in the downward camera, so there might be
@@ -245,4 +250,7 @@ class script(aiScript):
         info('Finished pipe following')
         return 'SUCCESS'
 
+Script = FollowPipe
 
+if __name__ == "__main__":
+    FollowPipe.entry()  

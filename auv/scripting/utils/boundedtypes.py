@@ -5,9 +5,16 @@
 #
 
 from cauv import messaging
+from numbers import Number
 
 class BoundedBase(object):
     def __new__(self, value):
+        if isinstance(value, Number):
+            pass
+        elif isinstance(value, messaging.BoundedFloat):
+            value = value.value
+        else:
+            raise TypeError('Could not convert type {} to Bounded'.format(type(value)))
         if self.lower<=value and value<=self.upper: # pylint: disable=E1101
             return value
         elif self.wraps: #pylint: disable=E1101

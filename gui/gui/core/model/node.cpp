@@ -140,6 +140,10 @@ void Node::setMutable(bool mut){
     m_mutable = mut;
 }
 
+void Node::setDocstring(std::string const& docstring){
+    m_docstring = docstring;
+}
+
 boost::shared_ptr<Node> Node::getRoot() {
     boost::shared_ptr<Node> node = shared_from_this();
 

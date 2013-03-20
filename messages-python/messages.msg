@@ -512,6 +512,13 @@ variant ParamValue
     list<Colour>,
 }
 
+struct ParamWithMeta
+{
+    value : ParamValue;
+    dynamic : bool;
+    docstring : string;
+}
+
 //these are zmq messaging specific
 group zmq_internal
 { 
@@ -689,35 +696,6 @@ group telemetry
         core0 : float;
         core1 : float;
     }
-    message ProcessControl : 91
-    {
-        action : ProcessCommand;
-        host : string;
-        process : string;
-    }
-    message EditProcess : 92
-    {
-        host : string;
-        process : string;
-        command : list<string>;
-        autostart : bool;
-        node_id : string;
-        prereq : list<string>;
-        restart : int8;
-    }
-    message ProcessEnded : 93
-    {
-        host : string;
-        process : string;
-    }
-    message ProcessStatus : 87
-    {
-        process : string;
-        status : string;
-        cpu : float;
-        mem : float;
-        threads : uint32;
-    }
     message Location : 88
     {
         location : WGS84Coord;
@@ -796,6 +774,41 @@ group sonarctl
                              // number of returned lines depends only on range!
         continuous : bool;
         interPingPeriod : float; // seconds (musec resolution)
+    }
+}
+group processes
+{
+    message RequestProcessStatus : 94
+    {
+    }
+    message ProcessControl : 91
+    {
+        action : ProcessCommand;
+        host : string;
+        process : string;
+    }
+    message EditProcess : 92
+    {
+        host : string;
+        process : string;
+        command : list<string>;
+        autostart : bool;
+        node_id : string;
+        prereq : list<string>;
+        restart : int8;
+    }
+    message ProcessEnded : 93
+    {
+        host : string;
+        process : string;
+    }
+    message ProcessStatus : 87
+    {
+        process : string;
+        status : string;
+        cpu : float;
+        mem : float;
+        threads : uint32;
     }
 }
 group pipeline
@@ -1027,12 +1040,6 @@ group can_status
     {
         location : Component;
     }
-
-    // reinstated for reherring compatibility
-    message RedHerringBatteryStatus : 152
-     {
-         voltage : uint16;
-     }
 }
 
 group gui
@@ -1170,17 +1177,9 @@ group pl_gui
 
 group ai
 {
-    message AI : 200
-    {
-        msg : string;
-    }
     message AIlog : 201
     {
         msg : string;
-    }
-    message AIKeepAlive : 199
-    {
-        managerId : string;
     }
     message ScriptExit : 219
     {
@@ -1210,16 +1209,14 @@ group ai
     {
         taskId : string;
         conditionIds : list<string>;
-        taskOptions : map<string, ParamValue>;
-        dynamicScriptOptions : map<string, ParamValue>;
-        staticScriptOptions : map<string, ParamValue>;
+        taskOptions : map<string, ParamWithMeta>;
+        scriptOptions : map<string, ParamWithMeta>;
         isCurrentlyRunning : bool;
-        pipelineIds : list<string>;
     }
     message ScriptState : 207
     {
         taskId : string;
-        debugValues : map<string, ParamValue>;
+        debugValues : map<string, ParamWithMeta>;
     }
     message AddCondition : 208
     {
@@ -1241,10 +1238,13 @@ group ai
     message ConditionState : 212
     {
         conditionId : string;
-        conditionOptions : map<string, ParamValue>;
-        debugValues : map<string, ParamValue>;
-        pipelineIds : list<string>;
+        conditionOptions : map<string, ParamWithMeta>;
         conditionValue: bool;
+    }
+    message ConditionDebugState : 218
+    {
+        conditionId : string;
+        debugValues : map<string, ParamWithMeta>;
     }
     message TaskTypes : 213
     {

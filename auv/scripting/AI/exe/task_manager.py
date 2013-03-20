@@ -40,7 +40,6 @@ import AI.mission
 import script_library
 import detector_library
 
-from utils.conv import BoostMapToDict
 import utils.event as event
 
 """          
@@ -80,8 +79,7 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
     #SETUP FUNCTIONS
     def __init__(self, opts):
         super(TaskManager, self).__init__()
-        self.node = cauv.node.Node("task-manager")
-        self.node.addObserver(self)
+        self.node = cauv.node.Node("task_manager")
         self.node.subMessage(messaging.AddTaskMessage())
         self.node.subMessage(messaging.RemoveTaskMessage())
         self.node.subMessage(messaging.SetTaskStateMessage())
@@ -106,6 +104,7 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
         if opts.mission_save:
             self.load_mission(open(opts.mission_save))
         self.gui_send_all()
+        self.node.addObserver(self)
 
     def load_mission(self, stream):
         task_list = AI.mission.load(stream, ai_state = self.ai_state)
@@ -140,8 +139,6 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
 
     @event.event_func
     def onSetTaskStateMessage(self, msg):
-        task_opts = BoostMapToDict(msg.taskOptions)
-        script_opts = BoostMapToDict(msg.scriptOptions)
         try:
             task = self.tasks[msg.taskId]
         except KeyError:
@@ -154,8 +151,8 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
             except KeyError:
                 error("Condition {} does not exist!".format(c))
         task.conditions = task_conditions
-        task.options.from_flat_dict(task_opts)
-        task.script.options.from_dict(script_opts)
+        task.options.from_boost_dict(msg.taskOptions)
+        task.script.options.from_boost_dict(msg.scriptOptions)
         self.gui_update_task(task)
 
     @event.event_func
@@ -183,6 +180,8 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
                 task.conditions.remove(condition)
             except ValueError:
                 pass
+        if isinstance(condition, AI.conditions.DetectorCondition):
+            self.stop_detector(condition)
         del self.conditions[msg.conditionId]
         self.node.send(messaging.ConditionRemovedMessage(msg.conditionId))
 
@@ -265,27 +264,21 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
 
     #MESSAGES TO GUI
     def gui_update_task(self, task):
-        task_opts = task.options.to_flat_dict()
-        script_opts = task.script.options.to_flat_dict()
         self.node.send(messaging.TaskStateMessage(task.name,
                 [t.name for t in task.conditions],
-                task_opts,
-                script_opts,
-                {}, #no static options currently
-                task.state.active,
-                [])) #pipeline connections need a bit more thought
+                task.options.to_boost_dict(),
+                task.script.options.to_boost_dict(),
+                task.state.active))
 
     def gui_update_condition(self, condition):
         self.node.send(messaging.ConditionStateMessage(
             condition.name,
-            condition.options.to_flat_dict(),
-            {},
-            [],
+            condition.options.to_boost_dict(),
             condition.get_state()))
 
     def gui_send_all(self):
         #send type info
-        task_types = [k for k,v in script_library.__dict__.items() if hasattr(v, "Script")]
+        task_types = script_library.index
         condition_types = AI.conditions.get_conditions().keys()
         self.node.send(messaging.TaskTypesMessage(task_types))
         self.node.send(messaging.ConditionTypesMessage(condition_types))

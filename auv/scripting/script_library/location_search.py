@@ -1,4 +1,4 @@
-from AI.base.script import aiScript, aiScriptOptions, aiScriptState, CommunicationError
+import AI
 from cauv.debug import debug, warning, error, info
 import cauv.messaging as msg
 
@@ -7,33 +7,29 @@ from utils.coordinates import Simulation_Datum, NorthEastDepthCoord
 from math import ceil, sqrt, atan, degrees
 import time
     
-class scriptOptions(aiScriptOptions):
-    locations = msg.LocationSequence([(Simulation_Datum+NorthEastDepthCoord(-5, -5, 0)).toWGS84(),
-                                      (Simulation_Datum+NorthEastDepthCoord(-15, -5, 0)).toWGS84(),
-                                      (Simulation_Datum+NorthEastDepthCoord(5, -10, 0)).toWGS84(),],
-                                     msg.SequenceType.Path)
-    speed = 127
-    timeout = 120
-    position_error = 0.5
-    spiral_loops = 2 #number of times to go round
-    spiral_power = 127 #motor power
-    spiral_unit = 5
-    spiral_stop_time = 2
-    attempts = 5
-    depth = 1
-    use_depth = False
+class LocationSearch(AI.Script):
+    class DefaultOptions(AI.Script.DefaultOptions):
+        def __init__(self):
+            self.locations = msg.LocationSequence([(Simulation_Datum+NorthEastDepthCoord(-5, -5, 0)).toWGS84(),
+                                            (Simulation_Datum+NorthEastDepthCoord(-15, -5, 0)).toWGS84(),
+                                            (Simulation_Datum+NorthEastDepthCoord(5, -10, 0)).toWGS84(),],
+                                            msg.SequenceType.Path)
+            self.speed = 127
+            self.timeout = 120
+            self.position_error = 0.5
+            self.spiral_loops = 2 #number of times to go round
+            self.spiral_power = 127 #motor power
+            self.spiral_unit = 5
+            self.spiral_stop_time = 2
+            self.attempts = 5
+            self.depth = 1
+            self.use_depth = False
     
-    class Meta:
-        dynamic = ['spiral_loops',
-                   'spiral_power',
-                   'spiral_unit',
-                   'spiral_stop_time',]
-    
-class scriptState(aiScriptState):
-    checked = []
-    partially_checked = []
-    
-class script(aiScript):
+    class DefaultState(AI.Script.DefaultState):
+        def __init__(self):
+            self.checked = []
+            self.partially_checked = []
+            
     def run(self):
         if self.options.use_depth:
             self.auv.depth(self.options.depth)
@@ -94,3 +90,8 @@ class script(aiScript):
         info('Ran out of locations to search')
         self.log('Ran out of locations to search')
         return 'SUCCESS'
+
+Script = LocationSearch
+
+if __name__ == "__main__":
+    LocationSearch.entry()

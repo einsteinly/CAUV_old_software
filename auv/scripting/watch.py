@@ -69,6 +69,12 @@ class WatchObserver(messaging.MessageObserver):
         self.watcher = watcher
         self.node.subMessage(messaging.ProcessControlMessage())
         self.node.subMessage(messaging.EditProcessMessage())
+        self.node.subMessage(messaging.RequestProcessStatusMessage())
+        self.report_all = True #report all on first loop
+        
+    def onRequestProcessStatusMessage(self, msg):
+        #Rebroadcast all process states
+        self.report_all = True
 
     def onProcessControlMessage(self, msg):
         #Check we are the host that should be acting on this message
@@ -132,17 +138,21 @@ class WatchObserver(messaging.MessageObserver):
                 process.__last_times = (curr_time, cputime)
                 statmsg = messaging.ProcessStatusMessage(process.p.name, 'Running', cpu_percent, stats.rss, stats.nthreads)
                 self.node.send(statmsg)
-            else:
-                pass
+            elif self.report_all:
+                statmsg = messaging.ProcessStatusMessage(process.p.name, 'Not Running', 0, 0, 0)
+                self.node.send(statmsg)
+        self.report_all = False #dont report all until requested to again
 
 def monitor():
     if args.daemonize:
+        #redirect output appropriately
         os.chdir("/")
         null_fd = os.open("/dev/null", os.O_RDWR)
         os.dup2(null_fd, sys.stdin.fileno())
         os.dup2(null_fd, sys.stdout.fileno())
         os.dup2(null_fd, sys.stderr.fileno())
     if args.no_node:
+        #no access to the messaging system, so don't carry out reporting
         watcher.monitor(args.tick)
     else:
         observer = WatchObserver(watcher)

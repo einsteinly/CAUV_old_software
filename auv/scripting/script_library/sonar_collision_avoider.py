@@ -1,26 +1,24 @@
-from AI.base.script import aiScript, aiScriptOptions
+import AI
 from cauv.debug import debug, info, warning, error
 from cauv import messaging
 
 from collections import deque
 import time, Queue
 
-class scriptOptions(aiScriptOptions):
-    points_name = 'avoid_collision'
-    monitor_fraction = 0.25
-    reverse_to_distance = 3.0
-    reverse_time = 2 #seconds
-    use_time = True
-    use_distance = True
-    class Meta:
-        dynamic = ['monitor_fraction', 'reverse_to_distance', 'reverse_time',
-                   'points_name', 'use_distance', 'use_time']
-        pipelines = ['sonar_collisions_2']
 
-class script(aiScript):
-    debug_values = ['start_time', 'mean_distance_closest']
+class SonarCollisionAvoider(AI.Script):
+    class DefaultOptions(AI.Script.DefaultOptions):
+        def __init__(self):
+            self.points_name = 'avoid_collision'
+            self.monitor_fraction = 0.25
+            self.reverse_to_distance = 3.0
+            self.reverse_time = 2 #seconds
+            self.use_time = True
+            self.use_distance = True
+            self.pipeline = 'sonar_collisions_2'
+            
     def __init__(self, *arg, **kwargs):
-        aiScript.__init__(self, *arg, **kwargs)
+        AI.Script.__init__(self, *arg, **kwargs)
         self.messages = Queue.Queue()
         self.node.subMessage(messaging.PointsMessage())
         self.start_time = time.time()
@@ -52,3 +50,9 @@ class script(aiScript):
             debug("Mean %f" %(self.mean_distance_closest))
             time.sleep(0.5)
         self.auv.prop(0)
+        
+
+Script = SonarCollisionAvoider
+
+if __name__ == "__main__":
+    SonarCollisionAvoider.entry()
