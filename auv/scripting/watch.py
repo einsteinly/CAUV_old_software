@@ -136,10 +136,10 @@ class WatchObserver(messaging.MessageObserver):
                     cpu_percent = 0
                     pass
                 process.__last_times = (curr_time, cputime)
-                statmsg = messaging.ProcessStatusMessage(process.p.name, 'Running', cpu_percent, stats.rss, stats.nthreads)
+                statmsg = messaging.ProcessStatusMessage(socket.gethostname(), process.p.name, 'Running', cpu_percent, stats.rss, stats.nthreads)
                 self.node.send(statmsg)
             elif self.report_all:
-                statmsg = messaging.ProcessStatusMessage(process.p.name, 'Not Running', 0, 0, 0)
+                statmsg = messaging.ProcessStatusMessage(socket.gethostname(), process.p.name, 'Not Running', 0, 0, 0)
                 self.node.send(statmsg)
         self.report_all = False #dont report all until requested to again
 

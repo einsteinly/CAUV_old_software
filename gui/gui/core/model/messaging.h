@@ -29,7 +29,6 @@
 #include <generated/types/PressureMessage.h>
 #include <generated/types/BatteryUseMessage.h>
 #include <generated/types/CPUTemperatureMessage.h>
-#include <generated/types/ProcessStatusMessage.h>
 #include <generated/types/SonarControlMessage.h>
 #include <generated/types/PenultimateResortTimeoutMessage.h>
 #include <generated/types/SetPenultimateResortTimeoutMessage.h>
@@ -172,7 +171,6 @@ MESSAGE_OBSERVER(GroupingNode, TelemetryMessage)
 MESSAGE_OBSERVER(GroupingNode, PressureMessage)
 MESSAGE_OBSERVER(GroupingNode, BatteryUseMessage)
 MESSAGE_OBSERVER(GroupingNode, CPUTemperatureMessage)
-MESSAGE_OBSERVER(GroupingNode, ProcessStatusMessage)
 MESSAGE_OBSERVER(ImageNode, ImageMessage)
 NODE_GENERATOR(ImageNode, ImageMessage)
 MESSAGE_OBSERVER_GENERATOR(SonarNode, SonarControlMessage)

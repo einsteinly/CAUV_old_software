@@ -804,6 +804,7 @@ group processes
     }
     message ProcessStatus : 87
     {
+        host : string;
         process : string;
         status : string;
         cpu : float;
