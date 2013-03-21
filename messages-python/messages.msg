@@ -806,6 +806,7 @@ group processes
     {
         host : string;
         process : string;
+        running : bool;
         status : string;
         cpu : float;
         mem : float;

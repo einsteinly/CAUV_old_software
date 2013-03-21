@@ -9,8 +9,21 @@
 #include <model/nodes/groupingnode.h>
 #include <model/paramvalues.h>
 
+#include <debug/cauv_debug.h>
+
 using namespace cauv;
 using namespace cauv::gui;
+
+boost::shared_ptr<const Message> MessageGenerator<ProcessNode, ProcessControlMessage>::generate() {
+    boost::shared_ptr<HostNode> host = m_node->getClosestParentOfType<HostNode>();
+    std::string process_id = boost::get<std::string>(m_node->nodeId());
+    std::string host_id = boost::get<std::string>(host->nodeId());
+    
+    if (m_node->get().toBool()){
+        return boost::make_shared<ProcessControlMessage>(ProcessCommand::Start, host_id, process_id);
+    }
+    return boost::make_shared<ProcessControlMessage>(ProcessCommand::Stop, host_id, process_id);
+}
 
 ProcessSubscribeObserver::ProcessSubscribeObserver() {
     //?
@@ -32,12 +45,12 @@ ProcessMessageObserver::~ProcessMessageObserver() {
 
 void ProcessMessageObserver::onProcessStatusMessage(ProcessStatusMessage_ptr m){
     boost::shared_ptr<GroupingNode> processes = m_parent->findOrCreate<GroupingNode>("processes");
+    debug() << "findOrCreate host";
     boost::shared_ptr<HostNode> host = processes->findOrCreate<HostNode>(m->host());
+    debug() << "findOrCreate process";
     boost::shared_ptr<ProcessNode> process = host->findOrCreate<ProcessNode>(m->process());
+    debug() << "findOrCreate update";
     
-    process->findOrCreate<NumericNode<float> >("cpu")->typedUpdate(m->cpu());
-    process->findOrCreate<NumericNode<float> >("mem")->typedUpdate(m->mem());
-    process->findOrCreate<NumericNode<unsigned int> >("threads")->typedUpdate(m->threads());
-    process->findOrCreate<StringNode>("status")->update(m->status());
-
+    process->setStats(m->cpu(),m->mem(),m->threads(),m->status());
+    process->update(m->running());
 }
