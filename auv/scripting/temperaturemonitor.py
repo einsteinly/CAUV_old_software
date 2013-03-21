@@ -14,8 +14,8 @@ def main():
     parser.add_argument("--interval", type = int, default = 2, help = 'Sets time interval between each update on CPU temperature')
     args = parser.parse_args()
 
-    while True:
-        sensors.init()
+    sensors.init()
+    while True:        
         for chip in sensors.iter_detected_chips():
             ##print '%s at %s:' % (chip, chip.adapter_name)
             temperatures = []
