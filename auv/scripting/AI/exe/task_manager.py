@@ -192,8 +192,8 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
         except KeyError:
             error("Condition {} does not exist!".format(msg.conditionId))
             return
-        condition_opts = BoostMapToDict(msg.conditionOptions)
-        condition.options.from_flat_dict(condition_opts)
+
+        condition.options.from_boost_dict(msg.conditionOptions)
 
     @event.event_func
     def onScriptControlMessage(self, msg):

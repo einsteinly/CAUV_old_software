@@ -358,7 +358,7 @@ class AUV(AUV_readonly):
             raise ValueError("invalid motor value: %d" % value)
     
     def onTelemetryMessage(self, m):
-        AI_readonly.onTelemetryMessage(self, m)
+        AUV_readonly.onTelemetryMessage(self, m)
         self.bearingCV.acquire()
         self.depthCV.acquire()
         self.pitchCV.acquire()
