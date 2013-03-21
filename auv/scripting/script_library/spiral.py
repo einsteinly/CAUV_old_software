@@ -1,4 +1,4 @@
-from AI.base.script import aiScript, aiScriptOptions
+import AI
 from cauv.debug import debug, warning, error, info
 
 import time
@@ -6,18 +6,15 @@ import traceback
 
 #TODO ?make the AUV turn slower so that detectors get a chance to fire
 #do a preliminary 360 degree sweep
-
-class scriptOptions(aiScriptOptions):
-    loops = 10 #number of times to go round
-    power = 60 #motor power
-    unit = 7
-    depth = 2
-    stop_time = 1.5
-    class Meta:
-        dynamic = ['power', 'unit', 'stop_time']
-    
-
-class script(aiScript):
+class Spiral(AI.Script):
+    class DefaultOptions(AI.Script.DefaultOptions):
+        def __init__(self):
+            self.loops = 10 #number of times to go round
+            self.power = 60 #motor power
+            self.unit = 7
+            self.depth = 2
+            self.stop_time = 1.5
+            
     def run(self):
         self.log('Attempting spiral search...')
         # Starting search at north direction
@@ -60,3 +57,7 @@ class script(aiScript):
                 self.auv.bearingAndWait(bearing)
             self.log('Completed %d loops.' %(i*0.5,))
 
+Script = Spiral
+
+if __name__ == "__main__":
+    Spiral.entry()

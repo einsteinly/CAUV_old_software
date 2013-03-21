@@ -8,43 +8,38 @@ import cauv.node
 from utils.control import PIDController
 from utils.timeaverage import TimeAverage
 from cauv.debug import debug, info, warning, error
-from AI.base.script import aiScript, aiScriptOptions
+import AI
 
 import threading
 from math import degrees, cos, sin
 import time
 
-class scriptOptions(aiScriptOptions):
-    #Pipeline details
-    lines_name = 'cam'
-    #Timeouts
-    ready_timeout = 30
-    lost_timeout = 5
-    # Calibration
-    centre_error = 0.05 # of image
-    align_error  = 10   # degrees 
-    # Control
-    prop_speed = 100
-    max_search_angle = 65
-    search_angle_increment = 5
-    strafe_kPID  = (-280, 0, 0)
+class FollowCam(AI.Script):
+    class DefaultOptions(AI.Script.DefaultOptions):
+        def __init__(self):
+            #Pipeline details
+            self.lines_name = 'cam'
+            #Timeouts
+            self.ready_timeout = 30
+            self.lost_timeout = 5
+            # Calibration
+            self.centre_error = 0.05 # of image
+            self.align_error  = 10   # degrees 
+            # Control
+            self.prop_speed = 100
+            self.max_search_angle = 65
+            self.search_angle_increment = 5
+            self.strafe_kPID  = (-280, 0, 0)
 
-    
-    class Meta:
-        dynamic = [
-            'ready_timeout', 'lost_timeout',
-            'strafe_kPID', 'centre_error',
-            'prop_speed', 'align_error'
-        ]
-        pipelines = ['river-edges2']
-
-
-class script(aiScript):
-    debug_values = ['detected', 'centred', 'aligned', 'ready']
-    def __init__(self, script_name, opts, state):
-        aiScript.__init__(self, script_name, opts, state) 
-        self.node.join("processing")
+    class Debug(AI.Script.Debug):
+        def __init__(self):
+            self.detected = False
+            self.centred = False
+            self.aligned = False
+            self.ready = False
         
+    def __init__(self):
+        AI.Script.__init__(self)
         # parameters to say if the auv is in the middle and aligned to the pipe
         self.centred = threading.Event()
         self.aligned = threading.Event()
@@ -161,6 +156,7 @@ class script(aiScript):
 
 
     def run(self):
+        self.load_pipeline('river-edges2')
         self.log('Cam follow: Initiating following river cam.')
     
         while True:
@@ -189,18 +185,10 @@ class script(aiScript):
 
                 else:
                     time.sleep(1)
-            
-    def stop(self):
-        self.auv.prop(0)
-        self.drop_pl(follow_cam_file)
-        self.log('Cam follow: Stopping followoing River Cam.')
-        info('Cam follow: Stopping River Cam following')
 
 
-if __name__=="__main__":
-        cam_follower=script('cam_follow', scriptOptions())
-        try:
-            cam_follower.run()
-        finally:
-            cam_follower.stop()
 
+Script = FollowCam
+
+if __name__ == "__main__":
+    FollowCam.entry()        

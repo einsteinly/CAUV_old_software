@@ -7,19 +7,23 @@ import cauv.messaging as messaging
 from cauv.debug import debug, info, warning, error
 from utils.timeaverage import TimeAverage
 
-from AI.base.detector import aiDetector, aiDetectorOptions
+import AI
 
-class detectorOptions(aiDetectorOptions):
-    Threshold = 0.39
-    Float_Name = 'pipe_det'
-    Lines_Name = 'pipe_det'
-    Angular_Discrepancy = 0.5
-    useLines = True
-    class Meta:
-        pipelines = ['detect_pipe']
+class PipeDetector(AI.Detector):
+    class detectorOptions(AI.Detector.DefaultOptions):
+        def __init__(self):
+            self.Threshold = 0.39
+            self.Float_Name = 'pipe_det'
+            self.Lines_Name = 'pipe_det'
+            self.Angular_Discrepancy = 0.5
+            self.useLines = True
+            self.pipelines = 'detect_pipe'
 
-class detector(aiDetector):
-    debug_values = ['detected', 'colour_trigger']
+    class Debug(AI.Detector.Debug):
+        def __init__(self):
+            self.detected = False
+            self.colour_trigger = 0
+            
     def __init__(self, node, opts):
         aiDetector.__init__(self, node, opts)
         self.start_time = time.time()
@@ -65,8 +69,7 @@ class detector(aiDetector):
         else:
             self.detected = False
 
-if __name__ == '__main__':
-    dt = detector()
-    while True:
-        dt.process()
-        time.sleep(1)
+Detector = PipeDetector
+
+if __name__ == "__main__":
+    PipeDetector.entry()

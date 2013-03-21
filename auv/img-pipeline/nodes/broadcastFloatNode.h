@@ -13,40 +13,24 @@
 
 #include <generated/types/FloatMessage.h>
 
-#include "../node.h"
-#include "outputNode.h"
-
+#include "broadcastNode.h"
 
 namespace cauv{
 namespace imgproc{
 
-class BroadcastFloatNode: public OutputNode{
+class BroadcastFloatNode: public BroadcastNode {
     public:
         BroadcastFloatNode(ConstructArgs const& args)
-            : OutputNode(args){
+            : BroadcastNode(args){
         }
 
         void init(){
-            // fast node:
-            m_speed = fast;
-            
-            // no inputs
-            
-            // no outputs
-            
-            // parameters:
-            registerParamID< float >("float", 0,
-                                                   "the float to draw", Must_Be_New); 
-            registerParamID<std::string>("name", "unnamed float",
-                                         "name for detected set of float");
+            broadcastInit< float >("float");
         }
 
     protected:
         void doWork(in_image_map_t&, out_map_t&){
-            const std::string name = param<std::string>("name");
-            const float fl = param< float >("float");
-
-            sendMessage(boost::make_shared<FloatMessage>(name, fl));
+            broadcastInput<float, FloatMessage>();
         }
     private:
 

@@ -4,7 +4,10 @@
 # See license.txt for details.
 #
 
-from glob import glob
-from imp import find_module
-path = find_module('detector_library')[1]
-__all__ = [f[len(path)+1:-3] for f in glob(path+'/*.py') if f[-11:-3]!='__init__']
+import buoy_detector
+import pipe_detector
+import sonar_collision_detector
+import test
+import visual_collision_detector
+
+index = [k for k,v in locals().items() if hasattr(v, "Detector")]

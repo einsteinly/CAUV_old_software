@@ -20,6 +20,7 @@
 #include <generated/types/SetConditionStateMessage.h>
 #include <generated/types/ConditionRemovedMessage.h>
 #include <generated/types/ConditionStateMessage.h>
+#include <generated/types/ConditionDebugStateMessage.h>
 #include <generated/types/TaskTypesMessage.h>
 #include <generated/types/ConditionTypesMessage.h>
 #include <generated/types/RequestAIStateMessage.h>
@@ -50,9 +51,11 @@ namespace cauv {
 
         public:
             typedef std::map<std::string, ParamValue> param_map_t;
+            typedef std::map<std::string, ParamWithMeta> param_meta_map_t;
             AiMessageObserver(boost::shared_ptr< Node > parent);
             virtual ~AiMessageObserver();
             virtual void onConditionStateMessage(ConditionStateMessage_ptr m);
+            virtual void onConditionDebugStateMessage(ConditionDebugStateMessage_ptr m);
             virtual void onConditionRemovedMessage(ConditionRemovedMessage_ptr m);
             virtual void onTaskTypesMessage(TaskTypesMessage_ptr m);
             virtual void onConditionTypesMessage(ConditionTypesMessage_ptr m);

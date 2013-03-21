@@ -26,18 +26,23 @@ class ConcreteGamepadMapping(GamepadMapping):
             D-Pad: Depth/Bearing in 0.1 m/5 degree increments.
         
         X turns everything off.
+        A sets the gamepad to a low priority so AI can override.
+        B sets the gamepad to a high priority (the default)
         """
     
     def buttonPressed(self, button):
-        #if button == self.xbox_buttons.A:
-        #    info("Running prop")
-        #    self.auv.prop(127)
         if button == self.xbox_buttons.X:
             info("Stop!")
             self.auv.stop()
             self.bearing_state = False
             self.pitch_state = False
             self.depth_state = False
+
+        if button == self.xbox_buttons.A:
+            self.auv.priority = -1
+
+        if button == self.xbox_buttons.B:
+            self.auv.priority = 10
             
         #all the following controls are default locked
         if self.Locked:
@@ -81,7 +86,6 @@ class ConcreteGamepadMapping(GamepadMapping):
             self.JOY_RPressed = False
         
     def handleAxis(self, axisId, value):
-        #all the following controls are default locked
         if axisId == self.xbox_axes.RT:
             if value > 0.5:
                 self.Locked = False
@@ -96,6 +100,7 @@ class ConcreteGamepadMapping(GamepadMapping):
                 if self.pitch_state:
                     self.auv.pitch(self.pitch)
         
+        #all the following controls are default locked
         if self.Locked:
             return
         if axisId == self.xbox_axes.JOY_R_X:

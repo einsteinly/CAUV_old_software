@@ -26,9 +26,10 @@ class Node:
 class State:
     def __init__(self):
         self.nodes = {} # id : Node
-    def fixup_inputs(self):
+    def fixup_inputs(self, node_type = None):
         """Ensure the pipeline uses the right node of CameraInput/DirectCameraInput/NetInput"""
-        node_type = os.getenv("CAUV_CAMERA_INPUT_NODE")
+        if node_type is None:
+            node_type = os.getenv("CAUV_CAMERA_INPUT_NODE")
         if node_type is None:
             node_type = "shared"
         node_type = {

@@ -3,7 +3,7 @@
 import cauv
 import cauv.messaging as msg
 from cauv.debug import debug, info, warning, error 
-from AI.base.script import aiScript, aiScriptOptions
+import AI
 from utils.control import PIDController
 from utils.coordinates import Simulation_Datum, NorthEastDepthCoord
 
@@ -16,37 +16,33 @@ from collections import deque
 class InsufficientDataError(ValueError):
     pass
 
-class scriptOptions(aiScriptOptions):
-    strafekP = 1000 #controls strafe speed, int [-127, 127]
-    strafeLimit = 60
-    wallDistancekP = -1000
-    depth = 2 #depth in metres
-    useDepth = True
-    maximumRunTime = 200 #run time in seconds
-    forwardAngle = math.pi/4
-    changeDifference = 0.01
-    maximumBearingChange = 5
-    targetDistance = 0.1
-    initialLocation = (Simulation_Datum+NorthEastDepthCoord(-18, 5, 0)).toWGS84()
-    initalBearing = 80
-    linesName = 'track_wall'
+class TrackWall(AI.Script):
+    class DefaultOptions(AI.Script.DefaultOptions):
+        def __init__(self):
+            self.strafekP = 1000 #controls strafe speed, int [-127, 127]
+            self.strafeLimit = 60
+            self.wallDistancekP = -1000
+            self.depth = 2 #depth in metres
+            self.useDepth = True
+            self.maximumRunTime = 200 #run time in seconds
+            self.forwardAngle = math.pi/4
+            self.changeDifference = 0.01
+            self.maximumBearingChange = 5
+            self.targetDistance = 0.1
+            self.initialLocation = (Simulation_Datum+NorthEastDepthCoord(-18, 5, 0)).toWGS84()
+            self.initalBearing = 80
+            self.linesName = 'track_wall'
+            self.pipeline = 'track_wall2'
     
-    class Meta:
-        # list of options that can be changed while the script is running
-        dynamic = [
-                'strafekP',
-                'strafeLimit',
-                'wallDistancekP',
-                'maximumBearingChange',
-                'targetDistance',
-                ]
-        pipelines = ['track_wall2']
-
-
-class script(aiScript):
-    debug_values = ['angle1', 'angle2', 'distance1', 'distance2']
-    def __init__(self, script_name, opts, state):
-        aiScript.__init__(self, script_name, opts, state)
+    class Debug(AI.Script.Debug):
+        def __init__(self):
+            self.angle1 = 0
+            self.angle2 = 0
+            self.distance1 = 0
+            self.distance2 = 0
+            
+    def __init__(self):
+        AI.Script.__init__(self)
         self.angle1 = 0
         self.angle2 = 0
         self.distance1 = 0
@@ -301,3 +297,9 @@ class script(aiScript):
         while time.time()-start_time < self.options.maximumRunTime:
             time.sleep(1)
             #really should have some other end condition aside from time
+            
+
+Script = TrackWall
+
+if __name__ == "__main__":
+    TrackWall.entry()

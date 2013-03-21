@@ -23,7 +23,7 @@ class Condition(object):
         _type = self.get_type()
         if name is not None:
             if name in self.instances:
-                warning("Duplicate Detector name {}!".format(name))
+                warning("Duplicate condition name {}!".format(name))
                 name = None
             else:
                 self.name = name
@@ -60,9 +60,8 @@ class TimeCondition(Condition):
     This condition only remains true for a certain time
     """
     class DefaultOptions(options.Options):
-        timeout = 30
-    def __init__(self, *args, **kargs):
-        Condition.__init__(self, *args, **kargs)
+        def __init__(self):
+            self.timeout = 30
     def reset(self):
         self.start_time = time.time()
     def get_state(self):
@@ -112,7 +111,9 @@ def _generate_detectors():
     module_obj = sys.modules[__name__]
     #basically we want to create a whole load of new classes based on this one and some data from the detector library
     for detector_name, detector in detector_library.__dict__.iteritems():
+        info(str(detector))
         if not hasattr(detector, "Detector"):
+            info(detector_name)
             continue
         name = detector_name + 'Condition'
         detector_class = type(name, (DetectorCondition,), {})

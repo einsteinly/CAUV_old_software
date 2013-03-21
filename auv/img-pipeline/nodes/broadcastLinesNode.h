@@ -18,41 +18,25 @@
 #include <generated/types/LinesMessage.h>
 
 #include "../node.h"
-#include "outputNode.h"
+#include "broadcastNode.h"
 
 
 namespace cauv{
 namespace imgproc{
 
-class BroadcastLinesNode: public OutputNode{
+class BroadcastLinesNode: public BroadcastNode{
     public:
         BroadcastLinesNode(ConstructArgs const& args)
-            : OutputNode(args){
+            : BroadcastNode(args){
         }
 
-        void init(){
-            // slow node:
-            m_speed = fast;
-            
-            // no inputs:
-            
-            // no outputs
-            
-            // parameters:
-            registerParamID< std::vector<Line> >("lines",
-                                                 std::vector<Line>(),
-                                                 "lines to braodcast",
-                                                 Must_Be_New);
-            registerParamID<std::string>("name", "unnamed lines",
-                                         "name for detected set of lines");
+        void init() {
+            broadcastInit< std::vector<Line> >("lines");
         }
 
     protected:
         void doWork(in_image_map_t&, out_map_t&){
-            const std::string name = param<std::string>("name");
-            const std::vector<Line> lines = param< std::vector<Line> >("lines");
-
-            sendMessage(boost::make_shared<LinesMessage>(name, lines));
+            broadcastInput<std::vector<Line>, LinesMessage>();
         }
     // Register this node type
     DECLARE_NFR;

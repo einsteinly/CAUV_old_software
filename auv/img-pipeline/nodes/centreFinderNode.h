@@ -75,7 +75,7 @@ class CentreFinderNode : public OutputNode{
                 x = ((float) totalX) / ((float) sum);
                 y = ((float) totalY) / ((float) sum);
             }
-            sendMessage(boost::make_shared<CentreMessage>(name, x / img.cols, y / img.rows));
+            sendMessage(boost::make_shared<CentreMessage>(name, plName(), x / img.cols, y / img.rows));
         }
 
     //Register this node type

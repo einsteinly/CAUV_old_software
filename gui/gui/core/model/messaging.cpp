@@ -192,17 +192,6 @@ void MessageHandler<GroupingNode, CPUTemperatureMessage>::onCPUTemperatureMessag
     m_node->findOrCreate<NumericNode<float> >("core1")->typedUpdate(message->core1());
 }
 
-
-void MessageHandler<GroupingNode, ProcessStatusMessage>::onProcessStatusMessage (
-        ProcessStatusMessage_ptr message){
-    boost::shared_ptr<GroupingNode> process = m_node->findOrCreate<GroupingNode>(message->process());
-    process->findOrCreate<NumericNode<float> >("cpu")->typedUpdate(message->cpu());
-    process->findOrCreate<NumericNode<float> >("mem")->typedUpdate(message->mem());
-    process->findOrCreate<NumericNode<unsigned int> >("threads")->typedUpdate(message->threads());
-    process->findOrCreate<StringNode>("status")->update(message->status());
-}
-
-
 /* Image messages handling */
 
 void MessageHandler<ImageNode, ImageMessage>::onImageMessage (

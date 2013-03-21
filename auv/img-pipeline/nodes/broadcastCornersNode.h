@@ -16,40 +16,24 @@
 
 #include <generated/types/CornersMessage.h>
 
-#include "../node.h"
-#include "outputNode.h"
-
+#include "broadcastNode.h"
 
 namespace cauv{
 namespace imgproc{
 
-class BroadcastCornersNode: public OutputNode{
+class BroadcastCornersNode: public BroadcastNode {
     public:
         BroadcastCornersNode(ConstructArgs const& args)
-            : OutputNode(args){
+            : BroadcastNode(args){
         }
 
         void init(){
-            // fast node:
-            m_speed = fast;
-            
-            // no inputs
-            
-            // no outputs
-            
-            // parameters:
-            registerParamID< std::vector<Corner> >("corners", std::vector<Corner>(),
-                                                   "the corners to draw", Must_Be_New); 
-            registerParamID<std::string>("name", "unnamed corners",
-                                         "name for detected set of corners");
+            broadcastInit< std::vector<Corner> >("corners");
         }
 
     protected:
         void doWork(in_image_map_t&, out_map_t&){
-            const std::string name = param<std::string>("name");
-            const std::vector<Corner> corners = param< std::vector<Corner> >("corners");
-
-            sendMessage(boost::make_shared<CornersMessage>(name, corners));
+            broadcastInput< std::vector<Corner>, CornersMessage>();
         }
     private:
 

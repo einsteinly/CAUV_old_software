@@ -18,19 +18,17 @@
 #include <generated/types/CirclesMessage.h>
 
 #include "../node.h"
-#include "outputNode.h"
-
 
 namespace cauv{
 namespace imgproc{
 
-class HoughCirclesNode: public OutputNode{
+class HoughCirclesNode: public Node{
     public:
         HoughCirclesNode(ConstructArgs const& args)
-            : OutputNode(args){
+            : Node(args){
         }
 
-        void init(){
+        void init() {
             // slow node:
             m_speed = slow;
             
@@ -38,7 +36,7 @@ class HoughCirclesNode: public OutputNode{
             registerInputID("image_in", Const);
             
             // one output
-            registerOutputID("image_out");
+            registerOutputID("circles", std::vector<Circle>());
             
             // parameters:
             registerParamID<int>("method", CV_HOUGH_GRADIENT);
@@ -48,8 +46,6 @@ class HoughCirclesNode: public OutputNode{
             registerParamID<float>("param2", 100);
             registerParamID<int>("minRadius", 10);
             registerParamID<int>("maxRadius", 20);
-            registerParamID<std::string>("name", "unnamed hough circles",
-                                         "name for detected set of circle");
         }
 
     protected:
@@ -64,30 +60,11 @@ class HoughCirclesNode: public OutputNode{
             const float p2 = param<float>("param2");
             const int min_rad = param<int>("minRadius");
             const int max_rad = param<int>("maxRadius");
-            const std::string name = param<std::string>("name");
 
             cv::vector<cv::Vec3f> circles;
             cv::Mat in = img->mat();            
             try{
                 cv::HoughCircles(in, circles, method, dp, min_dist, p1, p2, min_rad, max_rad);
-                
-                if(numChildren()){
-                    // then produce an output image overlay
-                    cv::Mat out;
-                    
-                    // make a colour copy to draw pretty circles on
-                    cvtColor(in, out, CV_GRAY2BGR);
-
-                    for(unsigned i = 0; i < circles.size(); i++){
-                        cv::Point centre(cvRound(circles[i][0]), cvRound(circles[i][1]));
-                        int radius = cvRound(circles[i][2]);
-                        // dot at centre:
-                        cv::circle(out, centre, 3, cv::Scalar(0, 255, 0), -1, 8, 0);
-                        // circle outline:
-                        cv::circle(out, centre, radius, cv::Scalar(0, 0, 255), 3, 8, 0);
-                    }
-                    r["image_out"] = boost::make_shared<Image>(out);
-                }
             }catch(cv::Exception& e){
                 error() << "HoughCirclesNode:\n\t"
                         << e.err << "\n\t"
@@ -96,7 +73,7 @@ class HoughCirclesNode: public OutputNode{
             
             // convert coordinates from pixels (top left origin) to 0-1 float,
             // top left origin // TODO: check this
-            std::vector<Circle> msg_circles;
+            std::vector<Circle> out_circles;
             const float width = in.cols;
             const float height = in.rows;
             for(unsigned i = 0; i < circles.size(); i++){
@@ -104,10 +81,9 @@ class HoughCirclesNode: public OutputNode{
                 c.centre.x = circles[i][0] / width;
                 c.centre.y = circles[i][1] / height;
                 c.radius = circles[i][2] * 2 / (width + height);
-                msg_circles.push_back(c);
+                out_circles.push_back(c);
             }
-            sendMessage(boost::make_shared<CirclesMessage>(name, msg_circles));
-            
+            r["circles"] = out_circles;
         }
 
     // Register this node type

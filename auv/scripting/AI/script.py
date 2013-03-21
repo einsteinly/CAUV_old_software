@@ -16,34 +16,35 @@ import collections
 import options
 
 class Script(proc.Proc):
+            
     def __init__(self):
-        proc.Proc.__init__(self)
+        proc.Proc.__init__(self, self.__class__.__name__ + "Script")
         self.options = self.get_options()
         self.task_name = self.options._task_name
-        self.node = node.Node(self.__class__.__name__ + "Script")
         self.auv = control.AUV(self.node)
         self.node.subMessage(msg.SetTaskStateMessage())
-        self.node.addObserver(self)
+        
+    def report(self):
+        self.node.send(msg.ScriptStateMessage(self.Debug.to_boost_dict()))
 
     def onSetTaskStateMessage(self, m):
         if m.taskId != self.task_name:
             return
         debug("Setting options")
-        opts = BoostMapToDict(m.scriptOptions)
-        self.options.from_flat_dict(opts)
+        self.options.from_boost_dict(m.scriptOptions)
 
     @classmethod
     def entry(cls):
         cls.get_options()
         instance = cls()
+        instance.start_listening()
 
         ret = False
         try:
             ret = instance.run()
         finally:
             instance.auv.stop()
-            instance.unload_pipeline("")
-            info("Script pipelines cleaned up")
+            instance.cleanup()
         if ret or ret is None:
             status = msg.ScriptExitStatus.Success
             info("Script completed successfully")

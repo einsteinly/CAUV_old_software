@@ -135,7 +135,6 @@ class CircleBuoy(AI.Script):
             time.sleep(1)
         start_bearing = self.auv.current_bearing
         total_right_angles_turned = 0
-        exit_status = 'SUCCESS'
         info('Waiting for circles...')
         last_bearing = self.auv.current_bearing
         while total_right_angles_turned < self.options.TotalRightAnglesToTurn:
@@ -153,13 +152,15 @@ class CircleBuoy(AI.Script):
                     self.auv.strafe(self.options.Strafe_Speed)
                 if time_since_seen > self.options.Give_Up_Seconds_Between_Sights:
                     self.log('Buoy Circling: lost sight of the buoy!')
-                    raise Exception('lost the buoy: giving up!')
+                    return False
             #note travelling left, so turning clockwise ie bearing increasing
-            bearing_diff = abs(self.auv.current_bearing - last_bearing)
-            if min(bearing_diff, 360-bearing_diff) > 90: #assume we don't turn to fast
-                last_bearing = (last_bearing+90)%360
-                total_right_angles_turned += 1
+            if (self.auv.current_bearing != None):
+                bearing_diff = abs(self.auv.current_bearing - last_bearing)
+                if min(bearing_diff, 360-bearing_diff) > 90: #assume we don't turn to fast
+                    last_bearing = (last_bearing+90)%360
+                    total_right_angles_turned += 1
         self.log('Buoy Circling: completed successfully')
+        return
 
 Script = CircleBuoy
 

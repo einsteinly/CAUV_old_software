@@ -16,40 +16,25 @@
 
 #include <generated/types/KeyPointsMessage.h>
 
-#include "../node.h"
-#include "outputNode.h"
+#include "broadcastNode.h"
 
 
 namespace cauv{
 namespace imgproc{
 
-class BroadcastKeypointsNode: public OutputNode{
+class BroadcastKeypointsNode: public BroadcastNode {
     public:
         BroadcastKeypointsNode(ConstructArgs const& args)
-            : OutputNode(args){
+            : BroadcastNode (args){
         }
 
         void init(){
-            // fast node:
-            m_speed = fast;
-            
-            // no inputs
-            
-            // no outputs
-            
-            // parameters:
-            registerParamID< std::vector<cauv::KeyPoint> >("keypoints", std::vector<cauv::KeyPoint>(),
-                                                   "the keypoints to draw", Must_Be_New); 
-            registerParamID<std::string>("name", "unnamed keypoints",
-                                         "name for detected set of keypoints");
+            broadcastInit< std::vector<cauv::KeyPoint> >("keypoints");
         }
 
     protected:
         void doWork(in_image_map_t&, out_map_t&){
-            const std::string name = param<std::string>("name");
-            const std::vector<cauv::KeyPoint> keypoints = param< std::vector<cauv::KeyPoint> >("keypoints");
-
-            sendMessage(boost::make_shared<KeyPointsMessage>(name, keypoints));
+            broadcastInput< std::vector<cauv::KeyPoint>, KeyPointsMessage >();
         }
     private:
 

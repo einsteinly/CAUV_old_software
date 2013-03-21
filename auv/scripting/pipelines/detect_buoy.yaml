@@ -27,7 +27,6 @@
     white level<-value: !node/Percentile
       percentile: !BoundedFloat/Clamps '99.0 (0.0-100.0)'
       image<-image (not copied): *GaussianBlur_1
-- !node/ClampInt {Max: 256, Min: 50, Value: 167}
 - !node/BroadcastHistogram
   name: buoy_hue
   histogram<-histogram: !node/Histogram
@@ -40,30 +39,24 @@
         interpolation mode: 1
         scale factor: 0.5
         image_in<-image_out: *Resize_1
-- !node/GuiOutput
-  jpeg quality: !BoundedFloat/Clamps '70.0 (0.0-100.0)'
-  image_in<-image_out: !node/Resize
-    fixed height: 0
-    fixed width: 0
-    interpolation mode: 1
-    scale factor: 0.5
-    image_in<-image_out: !node/HoughCircles
-      maxRadius: 20
-      method: 3
-      minDist: 15.0
-      minRadius: 1
-      name: buoy
-      param1: 1.0
-      param2: 10.0
-      scale: 1.0
-      image_in<-image out: !node/Canny
-        L2 gradient: 0
-        aperture size: 3
-        threshold 1: 40.0
-        threshold 2: 75.0
-        image in<-image (not copied): !node/MedianFilter
-          kernel: 7
-          image<-image (not copied): *Levels_1
+- !node/BroadcastCircles
+  name: buoy
+  circles<-circles: !node/HoughCircles
+    maxRadius: 20
+    method: 3
+    minDist: 15.0
+    minRadius: 1
+    param1: 1.0
+    param2: 10.0
+    scale: 1.0
+    image_in<-image out: !node/Canny
+      L2 gradient: 0
+      aperture size: 3
+      threshold 1: 40.0
+      threshold 2: 75.0
+      image in<-image (not copied): !node/MedianFilter
+        kernel: 7
+        image<-image (not copied): *Levels_1
 - !node/BroadcastHistogram
   name: buoy_value
   histogram<-histogram: !node/Histogram

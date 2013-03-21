@@ -17,44 +17,24 @@
 
 #include <generated/types/CirclesMessage.h>
 
-#include "../node.h"
-#include "outputNode.h"
-
+#include "broadcastNode.h"
 
 namespace cauv{
 namespace imgproc{
 
-class BroadcastCirclesNode: public OutputNode{
+class BroadcastCirclesNode: public BroadcastNode {
     public:
         BroadcastCirclesNode(ConstructArgs const& args)
-            : OutputNode(args){
+            : BroadcastNode(args){
         }
 
-        void init(){
-            // fast node:
-            m_speed = fast;
-            
-            // no inputs:
-            
-            // no outputs
-            
-            // parameters:
-            registerParamID< std::vector<Circle> >(
-                "Circles", std::vector<Circle>(), "Circles to broadcast", Must_Be_New
-            ); 
-            registerParamID<std::string>("name",
-                                         "unnamed circles",
-                                         "name for circles");
+        void init() {
+            broadcastInit< std::vector<Circle> > ("circles");
         }
 
     protected:
         void doWork(in_image_map_t&, out_map_t&){
-            const std::string name = param<std::string>("name");
-            const std::vector<Circle> circles = param< std::vector<Circle> >("Circles");
-            
-            if(circles.size()) {
-                sendMessage(boost::make_shared<CirclesMessage>(name, circles));
-            }
+            broadcastInput< std::vector<Circle>, CirclesMessage>();
         }
 
     // Register this node type

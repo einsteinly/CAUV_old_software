@@ -28,7 +28,6 @@
 #include "aimessaging.h"
 #include "ainode.h"
 
-#include <nodepicker.h>
 #include <stdexcept>
 
 using namespace cauv;

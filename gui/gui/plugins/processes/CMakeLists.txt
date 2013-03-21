@@ -3,35 +3,37 @@
 # See license.txt for details.
 #
 
-project (guicpp)
+project (processesplugin)
 
-find_package (Qt4 REQUIRED)
-
-
-
-set ( PROCESSES_PLUGIN_SRCS
-    processstateview.cpp
+set ( PROCESS_PLUGIN_SRCS
+    plugin.cpp
+    processmessaging.cpp
+    hostnode.cpp
+    processnode.cpp
 )
 
-set ( PROCESSES_PLUGIN_UIS
-    processstateview.ui
+set ( PROCESS_PLUGIN_UIS
 )
 
-set ( PROCESSES_PLUGIN_H
-    processstateview.h
+set ( PROCESS_PLUGIN_H
+    plugin.h
+    processnode.h
+    hostnode.h
+    processmessaging.h
 )
 
      
-qt4_wrap_ui (PROCESSES_PLUGIN_UIS_H ${PROCESSES_PLUGIN_UIS})
-qt4_wrap_cpp (PROCESSES_PLUGIN_MOC_H ${PROCESSES_PLUGIN_H} ${MOC_BOOST_HACK})
+qt4_wrap_ui (PROCESS_PLUGIN_UIS_H ${PROCESS_PLUGIN_UIS})
+qt4_wrap_cpp (PROCESS_PLUGIN_MOC_H ${PROCESS_PLUGIN_H})
 
-add_library( processesplugin MODULE
-    ${PROCESSES_PLUGIN_SRCS}
-    ${PROCESSES_PLUGIN_UIS_H}
-    ${PROCESSES_PLUGIN_MOC_H}
+add_library( processplugin MODULE
+    ${PROCESS_PLUGIN_SRCS}
+    ${PROCESS_PLUGIN_UIS_H}
+    ${PROCESS_PLUGIN_MOC_H}
 )
-cauv_install_plugin( processesplugin )
+cauv_install_plugin(processplugin)
                                       
-target_link_libraries( processesplugin
-    guicpp-core
+target_link_libraries( processplugin
+    gui-core
+    ${QT_LIBRARIES}
 )

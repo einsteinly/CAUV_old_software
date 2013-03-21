@@ -10,21 +10,23 @@ from collections import deque
 from cauv.debug import debug, info, warning, error
 from cauv import messaging
 
-from AI.base.detector import aiDetector, aiDetectorOptions
+import AI
 
-class detectorOptions(aiDetectorOptions):
-    points_name = 'avoid_collision'
-    monitor_fraction = 0.25
-    min_distance = 0.5 #any values below this constitute and emergency
-    distance_factor = 25.0
-    average_count_size = 5
-    class Meta:
-        dynamic = ['monitor_fraction', 'min_distance', 'speed_factor',
-                    'distance_factor']
-        pipelines = ['sonar_collisions_2']
-
-class detector(aiDetector):
-    debug_values = ['last_min','last_mean','speed_limit', 'detected']
+class SonarCollisionDetector(AI.Detector):
+    class DefaultOptions(AI.Detector.DefaultOptions):
+        def __init__(self):
+            self.points_name = 'avoid_collision'
+            self.monitor_fraction = 0.25
+            self.min_distance = 0.5 #any values below this constitute and emergency
+            self.distance_factor = 25.0
+            self.average_count_size = 5
+            self.pipelines = 'sonar_collisions_2'
+    class Debug(AI.Detector.Debug):
+        def __init__(self):
+            self.last_min = 0
+            self.last_mean = 0
+            self.speed_limit = 0
+            self.detected = 0
     def __init__(self, *arg, **kwargs):
         aiDetector.__init__(self, *arg, **kwargs)
         self.node.subMessage(messaging.PointsMessage())
@@ -67,3 +69,8 @@ class detector(aiDetector):
         #self.ai.auv_control.limit_prop(self.speed_limit)
         debug("minimum distance %f, mean %f, setting speed limit to %d" %(cols[0],self.last_mean,self.speed_limit,))
         self.messages.clear()
+        
+Detector = SonarCollisionDetector
+
+if __name__ == "__main__":
+    SonarCollisionDetector.entry()
