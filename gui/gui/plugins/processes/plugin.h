@@ -33,7 +33,8 @@ public:
 
 public Q_SLOTS:
     void setupProcess(boost::shared_ptr<Node> node);
-    void setupVehicle(boost::shared_ptr<Node> node);
+    void setupHost(boost::shared_ptr<Node> node);
+    void setupVehicle(boost::shared_ptr<Node> vnode);
     void reloadProcesses();
     void onSubscribed(MessageType::e messageType);
 

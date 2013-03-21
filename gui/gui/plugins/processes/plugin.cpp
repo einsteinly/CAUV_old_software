@@ -72,10 +72,38 @@ void ProcessPlugin::initialise(){
     m_actions->nodes->registerListFilter(m_filter);
 }
 
+void ProcessPlugin::setupProcess(boost::shared_ptr<Node> node){
+    try {
+        debug() << "Adding message generator to process";
+        boost::shared_ptr<ProcessNode> pnode = node->to<ProcessNode>();
+        pnode->getClosestParentOfType<Vehicle>()->attachGenerator(
+                    boost::make_shared<MessageGenerator<ProcessNode,
+                    ProcessControlMessage> >(pnode->to<ProcessNode>())
+                    );
+        debug() << "Setting mutable";
+        pnode->setMutable(true);
+    } catch(std::runtime_error& e) {
+        error() << "ProcessPlugin::setupProcess: Expecting ProcessNode" << e.what();
+    }
+}
+
+void ProcessPlugin::setupHost(boost::shared_ptr<Node> node){
+    try {
+        boost::shared_ptr<HostNode> host = node->to<HostNode>();
+        connect(host.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
+                this, SLOT(setupProcess(boost::shared_ptr<Node>)));
+    } catch(std::runtime_error& e) {
+        error() << "ProcessPlugin::setupProcess: Expecting ProcessNode" << e.what();
+    }
+}
+
 void ProcessPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
     try {
         boost::shared_ptr<Vehicle> vehicle = vnode->to<Vehicle>();
         boost::shared_ptr<GroupingNode> processes = vehicle->findOrCreate<GroupingNode>("processes");
+        
+        connect(processes.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
+                this, SLOT(setupHost(boost::shared_ptr<Node>)));
 
         boost::shared_ptr<CauvNode> node = m_actions->node.lock();
         if(node) {

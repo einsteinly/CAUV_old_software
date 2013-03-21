@@ -44,6 +44,8 @@ namespace cauv {
         };
         
         MESSAGE_OBSERVER(GroupingNode, ProcessStatusMessage)
+        
+        MESSAGE_GENERATOR(ProcessNode, ProcessControlMessage)
 
 
     } // namespace gui
