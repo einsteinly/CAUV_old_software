@@ -45,11 +45,8 @@ ProcessMessageObserver::~ProcessMessageObserver() {
 
 void ProcessMessageObserver::onProcessStatusMessage(ProcessStatusMessage_ptr m){
     boost::shared_ptr<GroupingNode> processes = m_parent->findOrCreate<GroupingNode>("processes");
-    debug() << "findOrCreate host";
     boost::shared_ptr<HostNode> host = processes->findOrCreate<HostNode>(m->host());
-    debug() << "findOrCreate process";
     boost::shared_ptr<ProcessNode> process = host->findOrCreate<ProcessNode>(m->process());
-    debug() << "findOrCreate update";
     
     process->setStats(m->cpu(),m->mem(),m->threads(),m->status());
     process->update(m->running());

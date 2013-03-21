@@ -74,13 +74,11 @@ void ProcessPlugin::initialise(){
 
 void ProcessPlugin::setupProcess(boost::shared_ptr<Node> node){
     try {
-        debug() << "Adding message generator to process";
         boost::shared_ptr<ProcessNode> pnode = node->to<ProcessNode>();
         pnode->getClosestParentOfType<Vehicle>()->attachGenerator(
                     boost::make_shared<MessageGenerator<ProcessNode,
                     ProcessControlMessage> >(pnode->to<ProcessNode>())
                     );
-        debug() << "Setting mutable";
         pnode->setMutable(true);
     } catch(std::runtime_error& e) {
         error() << "ProcessPlugin::setupProcess: Expecting ProcessNode" << e.what();
