@@ -27,14 +27,13 @@ namespace cauv {
             public:
                 ProcessNode(const nid_t id);
                 virtual ~ProcessNode();
+                void setReady();
+                bool isReady();
                 
                 void setStats(float cpu, float mem, unsigned int threads, const std::string& status);
                 
             protected:
-                boost::shared_ptr<NumericNode<float> > m_cpu;
-                boost::shared_ptr<NumericNode<float> > m_mem;
-                boost::shared_ptr<NumericNode<unsigned int> > m_threads;
-                boost::shared_ptr<StringNode> m_status;
+                bool m_ready;
         };
     } // namespace gui
 } // namespace cauv

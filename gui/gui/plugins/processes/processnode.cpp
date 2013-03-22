@@ -13,7 +13,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-ProcessNode::ProcessNode(const nid_t id) : BooleanNode(id){
+ProcessNode::ProcessNode(const nid_t id) : BooleanNode(id), m_ready(false){
 }
 
 void ProcessNode::setStats(float cpu, float mem, unsigned int threads, const std::string& status)
@@ -22,6 +22,14 @@ void ProcessNode::setStats(float cpu, float mem, unsigned int threads, const std
     findOrCreate<NumericNode<float> >("mem")->typedUpdate(mem);
     findOrCreate<NumericNode<unsigned int> >("threads")->typedUpdate(threads);
     findOrCreate<StringNode>("status")->update(status);
+}
+
+void ProcessNode::setReady(){
+    m_ready = true;
+}
+
+bool ProcessNode::isReady(){
+    return m_ready;
 }
 
 ProcessNode::~ProcessNode(){

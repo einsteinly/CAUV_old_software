@@ -12,6 +12,8 @@ import traceback
 
 from utils.control import expWindow, PIDController
 
+#todo slow down as buoy goes out of image
+
 class CircleBuoy(AI.Script):
     class DefaultOptions(AI.Script.DefaultOptions):
         def __init__(self):

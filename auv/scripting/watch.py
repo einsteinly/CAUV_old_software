@@ -138,8 +138,13 @@ class WatchObserver(messaging.MessageObserver):
                 process.__last_times = (curr_time, cputime)
                 statmsg = messaging.ProcessStatusMessage(socket.gethostname(), process.p.name, True, 'Running', cpu_percent, stats.rss, stats.nthreads)
                 self.node.send(statmsg)
+            elif process.cause_of_death:
+                statmsg = messaging.ProcessStatusMessage(socket.gethostname(), process.p.name, False, process.cause_of_death, 0, 0, 0)
+                #reset cause of death once reported
+                process.cause_of_death = ""
+                self.node.send(statmsg)
             elif self.report_all:
-                statmsg = messaging.ProcessStatusMessage(socket.gethostname(), process.p.name, False, 'Not Running', 0, 0, 0)
+                statmsg = messaging.ProcessStatusMessage(socket.gethostname(), process.p.name, False, 'Not started', 0, 0, 0)
                 self.node.send(statmsg)
         self.report_all = False #dont report all until requested to again
 

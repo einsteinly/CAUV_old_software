@@ -54,6 +54,7 @@ class WatchProcess:
         self.proc = None
         self.watcher = watcher
         self.sigs = []
+        self.cause_of_death = ""
 
     def stopped(self):
         return
@@ -86,6 +87,7 @@ class WatchProcess:
             return
         self.pid = None
         self.state = Stopped
+        self.cause_of_death = "Died (Unknown CoD)"
         warning("Process {} died!".format(self.p.name))
         try:
             self.p.death_callback(self)
@@ -113,12 +115,14 @@ class WatchProcess:
                 self.p.restart_callback(self)
                 self.state = Starting
             else:
+                self.cause_of_death = "Stopped (Terminated)"
                 self.state = Stopped
             return
         try:
             sig = self.sigs.pop(0)
         except IndexError:
             error("No more signals to try for killing {}. Giving up!".format(self.p.name))
+            self.cause_of_death = "Unresponsive (Zombie)"
             self.state = Zombie
             return
         try:
@@ -154,6 +158,7 @@ class WatchProcess:
         info("Stopping {}".format(self.p.name))
         self.sigs = sigs
         if self.state == Starting:
+            self.cause_of_death = "Stopped (Terminated)"
             self.state = Stopped
             return
         self.state = Stopping

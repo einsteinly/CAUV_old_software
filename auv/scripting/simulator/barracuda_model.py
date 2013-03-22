@@ -89,7 +89,7 @@ Max_Roll_Moment  = Max_Yaw_Moment / 5
 # (this is a simple exponential model)
 
 Drag_F = np.array((Seabotix_Max_Thrust*2 / 1.0, # x (sideways)
-                   Seabotix_Max_Thrust   / 2.0, # y (forwards)
+                   Seabotix_Max_Thrust*2 / 2.0, # y (forwards)
                    Seabotix_Max_Thrust*2 / 0.6)) # z (up/down)
 # Drag Torque: Newton metres per radian per second, measured from complete
 # guesses at maximum rotation rates:

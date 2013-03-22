@@ -73,13 +73,19 @@ void ProcessPlugin::initialise(){
 }
 
 void ProcessPlugin::setupProcess(boost::shared_ptr<Node> node){
+    lock_t l(m_processLock);
     try {
         boost::shared_ptr<ProcessNode> pnode = node->to<ProcessNode>();
+        if(pnode->isReady()){
+            return;
+        }
         pnode->getClosestParentOfType<Vehicle>()->attachGenerator(
                     boost::make_shared<MessageGenerator<ProcessNode,
                     ProcessControlMessage> >(pnode->to<ProcessNode>())
                     );
         pnode->setMutable(true);
+        pnode->setReady();
+        debug(5) << "Setup process " << pnode->nodeName();
     } catch(std::runtime_error& e) {
         error() << "ProcessPlugin::setupProcess: Expecting ProcessNode" << e.what();
     }
@@ -90,6 +96,10 @@ void ProcessPlugin::setupHost(boost::shared_ptr<Node> node){
         boost::shared_ptr<HostNode> host = node->to<HostNode>();
         connect(host.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
                 this, SLOT(setupProcess(boost::shared_ptr<Node>)));
+        //some children may have been created before this got called, so
+        foreach(boost::shared_ptr<Node> child_node, host->getChildren()){
+            setupProcess(child_node);
+        }
     } catch(std::runtime_error& e) {
         error() << "ProcessPlugin::setupProcess: Expecting ProcessNode" << e.what();
     }

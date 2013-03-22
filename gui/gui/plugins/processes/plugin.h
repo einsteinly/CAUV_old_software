@@ -12,6 +12,8 @@
 #include <cauvbasicplugin.h>
 #include <model/node.h>
 
+#include <boost/thread.hpp>
+
 #include <QObject>
 
 #include <liquid/node.h>
@@ -40,7 +42,9 @@ public Q_SLOTS:
 
 protected:
     boost::shared_ptr<NodeChildrenExclusionFilter> m_filter;
-
+    typedef boost::mutex mutex_t;
+    typedef boost::unique_lock<mutex_t> lock_t;
+    mutex_t m_processLock;
 };
 
 
