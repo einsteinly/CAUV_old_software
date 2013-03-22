@@ -33,7 +33,7 @@ class ConcreteGamepadMapping(GamepadMapping):
     def buttonPressed(self, button):
         if button == self.xbox_buttons.X:
             info("Stop!")
-            self.auv.stop()
+            self.auv.kill()
             self.bearing_state = False
             self.pitch_state = False
             self.depth_state = False

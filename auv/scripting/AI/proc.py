@@ -32,9 +32,10 @@ class Proc(msg.MessageObserver):
             self._reporting_thread = threading.Thread(target=self._report_loop)
             self._die_flag = threading.Event()
             self._reporting_thread.start()
+            self._report_frequency = 0.5
             
     def _report_loop(self):
-        while not self._die_flag.wait(self.get_report_frequency()):
+        while not self._die_flag.wait(self._report_frequency):
             try:
                 self.report()
             except Exception as e:

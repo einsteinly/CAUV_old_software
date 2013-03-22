@@ -517,6 +517,7 @@ struct ParamWithMeta
     value : ParamValue;
     dynamic : bool;
     docstring : string;
+    units : string;
 }
 
 //these are zmq messaging specific

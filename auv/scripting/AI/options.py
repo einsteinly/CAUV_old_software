@@ -58,18 +58,20 @@ class OptionWithMeta(object):
     docstring - add docstring to option
     opt_type - a function/class that processes a value when it is set.
     """
-    def __init__(self, value, dynamic=False, docstring="", opt_type=""):
+    def __init__(self, value, dynamic=False, docstring="", opt_type="", units=""):
         self.value = value
         self.dynamic = dynamic
         self.docstring = docstring
         self.opt_type = opt_type
+        self.units = units
     
     def to_dict(self, representable_types = option_representable_types):
         if isinstance(self.value, representable_types):
-            return OptionWithMeta(self.value, self.dynamic, self.docstring)
+            return self
         else:
             try:
-                return OptionWithMeta(self.value.to_dict(), self.dynamic, self.docstring)
+                #TODO deal with opt_type argument
+                return OptionWithMeta(self.value.to_dict(), self.dynamic, self.docstring, units=self.units)
             except AttributeError:
                 raise TypeError("Could not represent value as dict.")
             
@@ -78,7 +80,7 @@ class OptionWithMeta(object):
             value_as_param = self.value.asParamValue()
         else:
             value_as_param = cauv.messaging.ParamValue.create(self.value)
-        return cauv.messaging.ParamWithMeta(value_as_param,self.dynamic,self.docstring)
+        return cauv.messaging.ParamWithMeta(value_as_param,self.dynamic,self.docstring,self.units)
         
 class Options(object):
     def __getattribute__(self, attr):

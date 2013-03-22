@@ -52,7 +52,7 @@ class AUV(AUV_readonly):
     def get_token(self):
         return messaging.ControlLockToken(self.token, self.priority, self.timeout * 1000)
 
-    def stop(self):
+    def kill(self):
         '''Stop all motors, deactivate the control loops.'''
         self.prop(0)
         self.hbow(0)
@@ -62,6 +62,14 @@ class AUV(AUV_readonly):
         self.bearing(None)
         self.pitch(None)
         self.depth(None)
+        
+    def stop(self):
+        '''Stop all motors, but leave the control loops.'''
+        self.prop(0)
+        self.hbow(0)
+        self.vbow(0)
+        self.hstern(0)
+        self.vstern(0)
 
     def bearing(self, bearing):
         '''Set a bearing (degrees CW from north) and activate the bearing control loop, or deactivate bearing control if 'None' is passed.'''
