@@ -18,6 +18,8 @@ if (CAUV_BUILD_GUI)
         add_definitions(-DQT_PROFILE_GRAPHICSSCENE)
     endif()
 
+    include_directories(${QT_QTCORE_INCLUDE_DIR})
+
     find_package (Qt4)
 
     if (NOT QT4_FOUND)
