@@ -2,10 +2,11 @@
 
 # CAUV
 import messaging
-from debug import warning, debug
+from debug import warning, debug, info
 
 # Standard Library
 from math import pi
+import time
 
 class SeaSprite:
     def __init__(self, node):
@@ -108,7 +109,7 @@ class Gemini:
         self.priority = 0
         self.token = int(time.time() * 1000) & 0xffffffff
         info("Gemini Control Token: {}".format(self.token))
-        self.timeout = timeout #seconds
+        self.timeout = 100000 #seconds
 
     def get_token(self):
         return messaging.ControlLockToken(self.token, self.priority, self.timeout * 1000)
