@@ -80,7 +80,7 @@ struct BufferingThread: public BufferingThreadBase, boost::noncopyable
             }
 
             if(m_buffer){
-                T temp = boost::dynamic_pointer_cast<typename T::value_type>(m_buffer);
+                T temp = boost::dynamic_pointer_cast<typename T::element_type>(m_buffer);
                 if(temp){
                     m_buffer.reset();
                     l.unlock();
