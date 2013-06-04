@@ -61,7 +61,7 @@ struct ${v.name}Wrapper: public ${v.name}, bp::wrapper<${v.name}>{
     static boost::shared_ptr<${v.name}Wrapper> from(const bp::object& val){
         #for i,t in enumerate($v.types)
         #if i == 0#if#else#else if#end if#(isinstance< $toCPPType($t) >(val))
-            return boost::make_shared<${v.name}Wrapper>(static_cast< $toCPPType($t) >(bp::extract< $toCPPType($t) >(val)));
+            return boost::make_shared<${v.name}Wrapper>(static_cast< $toCPPType($t) >(bp::extract< $toCPPType($t) >(val)()));
         #end for
         return boost::make_shared<${v.name}Wrapper>(val);
     }
@@ -70,15 +70,15 @@ struct ${v.name}Wrapper: public ${v.name}, bp::wrapper<${v.name}>{
         #if i == 0#if#else#else if#end if#(isinstance< $toCPPType($t) >(val))
             ##if $isSTLVector($t)
             ##set $vecn = $CPPContainerTypeName(t.valType) + "Vec"
-            ##return static_cast< $toCPPType($t) >(bp::extract< $vecn >(val));
+            ##return static_cast< $toCPPType($t) >(bp::extract< $vecn >(val)());
             ##else if $isSTLMap($t)
             ##set $mapn = $CPPContainerTypeName(t.keyType) + $CPPContainerTypeName(t.valType) + "Map"
-            ##return static_cast< $toCPPType($t) >(bp::extract< $mapn >(val));
+            ##return static_cast< $toCPPType($t) >(bp::extract< $mapn >(val)());
             ##else
-            return static_cast< $toCPPType($t) >(bp::extract< $toCPPType($t) >(val));
+            return static_cast< $toCPPType($t) >(bp::extract< $toCPPType($t) >(val)());
             ##end if
         #end for
-        return bp::extract<$v.name>(val);
+        return bp::extract<$v.name>(val)();
     }
 
   #for $t in $v.types 
@@ -99,9 +99,9 @@ struct ${v.name}Helper{
     static ${v.name} create(const bp::object& val){
         #for i,t in enumerate($v.types)
         #if i == 0#if#else#else if#end if#(isinstance< $toCPPType($t) >(val))
-            return static_cast< $toCPPType($t) >(bp::extract< $toCPPType($t) >(val));
+            return static_cast< $toCPPType($t) >(bp::extract< $toCPPType($t) >(val)());
         #end for
-        return bp::extract<$v.name>(val);
+        return bp::extract<$v.name>(val)();
     }
 };
 

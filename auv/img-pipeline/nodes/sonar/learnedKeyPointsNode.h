@@ -214,13 +214,13 @@ class TreeNode{
         inline bool test(cv::Point const& pt, cv::Mat const& image) const{
             if(m_question->apply(pt, image)){
                 if(m_terminal & TerminalTrue){
-                    return m_true_side; // pointer non-zero (but invalid) if good, zero if bad
+                    return !!m_true_side; // pointer non-zero (but invalid) if good, zero if bad
                 }else{
                     return m_true_side->test(pt, image);                
                 }
             }else{
                 if(m_terminal & TerminalFalse){
-                    return m_false_side; // pointer non-zero (but invalid) if good, zero if bad
+                    return !!m_false_side; // pointer non-zero (but invalid) if good, zero if bad
                 }else{
                     return m_false_side->test(pt, image);
                 }

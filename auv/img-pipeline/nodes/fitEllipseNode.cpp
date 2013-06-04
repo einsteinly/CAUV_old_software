@@ -5,6 +5,7 @@
 
 #include "fitEllipseNode.h"
 
+#define TBB_IMPLEMENT_CPP0X 1 //since clang doesn't implement is_trivially_copyable yet...
 #include <tbb/tbb.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
