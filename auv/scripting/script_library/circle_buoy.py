@@ -20,11 +20,11 @@ class CircleBuoy(AI.Script):
         def __init__(self):
             self.Do_Prop_Limit = AI.OptionWithMeta(10, docstring="max prop for forward/backward adjustment", opt_type=MotorValue)
             self.Do_Prop_Time = AI.OptionWithMeta(1, docstring="max prop on time per sighting of the buoy (use to avoid driving into the buoy if we have a gap in sightings)",
-                                                    units="seconds")
-            self.Camera_FOV = AI.OptionWithMeta(90, units="degrees")
-            self.Warn_Seconds_Between_Sights = 5
-            self.Give_Up_Seconds_Between_Sights = 30
-            self.Depth_Ceiling = AI.OptionWithMeta(0.8, docstring="Maximum depth algorithm may descend to.", units="meters")
+                                                    units="s")
+            self.Camera_FOV = AI.OptionWithMeta(90, units=u"\N{DEGREE SIGN}")
+            self.Warn_Seconds_Between_Sights = AI.OptionWithMeta(5, units="s")
+            self.Give_Up_Seconds_Between_Sights = AI.OptionWithMeta(30, units = "s")
+            self.Depth_Ceiling = AI.OptionWithMeta(0.8, docstring="Maximum depth algorithm may descend to.", units="m")
             self.Strafe_Speed_Limit = AI.OptionWithMeta(10, opt_type=MotorValue)   # (int [-127,127]) controls strafe speed
             self.Strafe_Speed_Proportion = 10
             self.Strafe_Speed_Zero = AI.OptionWithMeta(0, docstring="Point at which the buoy is too far left, so we should stop strafing altogether.")

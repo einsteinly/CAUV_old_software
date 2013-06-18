@@ -64,5 +64,12 @@ boost::shared_ptr<Node> cauv::gui::paramWithMetaToNode(nid_t id, ParamWithMeta &
 {
     boost::shared_ptr<Node> node = paramValueToNode(id, param_with_meta.value);
     node->setDocstring(param_with_meta.docstring);
+    try {
+        boost::shared_ptr<NumericNodeBase> num_node = node->to<NumericNodeBase>();
+        num_node->setUnits(param_with_meta.units);
+    }
+    catch(std::runtime_error& e){
+        //can't set units, as isnt numeric node
+    }
     return node;
 }
