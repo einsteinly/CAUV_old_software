@@ -466,6 +466,35 @@ struct DynamicEnum
     eq possible : list<string>;
 }
 
+struct CartesianPosition2D
+{
+    eq north : float;
+    eq east : float;
+    eq up : float;
+}
+
+struct CartesianPosition3D
+{
+    eq reference : string;
+    eq north : float;
+    eq east : float;
+    eq up : float;
+}
+
+struct PolarPosition2D
+{
+    eq bearing : float;
+    eq range : float;
+}
+
+variant Position
+{
+    int32,
+    CartesianPosition2D,
+    CartesianPosition3D,
+    PolarPosition2D,
+}
+
 //fmt_ver should be bumped if image serialisation format changes
 class BaseImage : <common/msg_classes/base_image.h> fmt_ver 1
 BoundedFloatBase subclass BoundedFloat : <common/msg_classes/bounded_float.h>
@@ -661,6 +690,26 @@ group control
     message CalibrateNoRotation : 90
     {
         duration : uint16;
+    }
+
+    message RelativePosition : 73
+    {
+        object : string;
+        origin : string;
+        position : Position;
+    }
+
+    message RelativePositionHack : 666
+    {
+        //OK, seriously, WTF?
+        //Apparently having a variant which isn't in a list causes a massive
+        //compiler failure when compiling emit_containers.cpp
+        //Due to trying to initialise the variant type without complete
+        //definitions.
+        //Somehow the template gets initialised when anything is cast to an int
+        //in a serialisation function in utility/serialisation.h?
+        //It shouldn't be being initialised at all when compiling that file...
+        why_does_this_need_to_exist : list<Position>;
     }
 }
 group state
