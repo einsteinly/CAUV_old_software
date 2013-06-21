@@ -28,7 +28,7 @@ SimSonar::SimSonar (osg::Node *track_node,
                     unsigned int max_rate) :
            sim_node(sim_node_),
            width(width_), height(width_), resolution(300),
-           range(20), fovx(120), fovy(10),
+           range(200), fovx(120), fovy(10),
            output_limit(1, max_rate),
            viewer(new osgViewer::Viewer()),
            image(new osg::Image()),
