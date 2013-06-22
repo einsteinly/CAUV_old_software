@@ -87,15 +87,18 @@ def populateContainerTypes(tree):
         if isArray(t):
             requiredArrayTypes.add((t.valType, t.size))
     return requiredVectorTypes, requiredMapTypes, requiredArrayTypes
+def populateVariantTypes(tree):
+    return set([msggenyacc.VariantType(x) for x in tree['variants']])
     
 def get_output_files(tree):
     OutputFile = collections.namedtuple("OutputFile", ["template_file", "output_file", "search_list"])
 
     compilation_units = ["enums", "structs", "variants", "messages", "observers", "containers"]
 
+    variantTypes = populateVariantTypes(tree)
     requiredVectorTypes, requiredMapTypes, requiredArrayTypes = populateContainerTypes(tree)
     requiredVectorTypes, requiredMapTypes, requiredArrayTypes = addNestedTypes(requiredVectorTypes, requiredMapTypes, requiredArrayTypes)
-    includes,fwddecls = gencpp.getIncludes(requiredMapTypes | requiredVectorTypes | requiredArrayTypes, "<generated/types/%s.h>")
+    includes,fwddecls = gencpp.getIncludes(variantTypes | requiredMapTypes | requiredVectorTypes | requiredArrayTypes, "<generated/types/%s.h>")
 
     output_files = []
 

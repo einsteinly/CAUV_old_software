@@ -489,7 +489,6 @@ struct PolarPosition2D
 
 variant Position
 {
-    int32,
     CartesianPosition2D,
     CartesianPosition3D,
     PolarPosition2D,
@@ -697,19 +696,6 @@ group control
         object : string;
         origin : string;
         position : Position;
-    }
-
-    message RelativePositionHack : 666
-    {
-        //OK, seriously, WTF?
-        //Apparently having a variant which isn't in a list causes a massive
-        //compiler failure when compiling emit_containers.cpp
-        //Due to trying to initialise the variant type without complete
-        //definitions.
-        //Somehow the template gets initialised when anything is cast to an int
-        //in a serialisation function in utility/serialisation.h?
-        //It shouldn't be being initialised at all when compiling that file...
-        why_does_this_need_to_exist : list<Position>;
     }
 }
 group state
