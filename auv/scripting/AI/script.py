@@ -55,5 +55,5 @@ class Script(proc.Proc):
         if instance.options._broadcast_status:
             while True:
                 debug("Broadcasting status message")
-                instance.node.send(msg.ScriptExitMessage(status))
+                instance.node.send(msg.ScriptExitMessage(instance.task_name, status))
                 time.sleep(1)

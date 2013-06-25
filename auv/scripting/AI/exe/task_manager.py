@@ -91,6 +91,7 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
         self.node.subMessage(messaging.AIControlMessage())
         self.node.subMessage(messaging.ProcessEndedMessage())
         self.node.subMessage(messaging.DetectorFiredMessage())
+        self.node.subMessage(messaging.ScriptExitMessage())
         self.all_paused = not opts.unpaused
         self.ai_state = AIState(self)
         #Tasks - list of tasks that (in right conditions) should be called
@@ -327,7 +328,7 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
         info("Starting script {} for task {}".format(task.script.name, task.name))
         script_path = inspect.getfile(task.script.script_class)
         script_opts = task.script.options.to_cmd_opts()
-        script_cmd = ["python2.7", script_path, '-t', task.name] + script_opts
+        script_cmd = ["python2.7", script_path, '-t', task.name, '-b'] + script_opts
         self.start_proc("ai_script/{}".format(task.name), script_cmd)
         task.started()
         self.gui_update_task(task)
