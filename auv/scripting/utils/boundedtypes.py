@@ -44,3 +44,4 @@ def BoundInt(lower, upper, wraps):
     return type('BoundedInt', (BoundedIntBase, ), {'lower':lower,'upper':upper,'wraps':wraps})
             
 MotorValue = BoundInt(-128,128,False)
+Bearing = BoundFloat(0,360,True)

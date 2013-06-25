@@ -12,5 +12,6 @@ import surface
 import track_asv
 import track_wall
 import waypoint_demo
+import dfu
 
 index = [k for k,v in locals().items() if hasattr(v, "Script")]

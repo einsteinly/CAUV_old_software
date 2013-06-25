@@ -63,7 +63,7 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
         self.node.subMessage(messaging.LinesMessage())
         self.node.subMessage(messaging.FloatMessage())
         self.node.subMessage(messaging.TelemetryMessage())
-        #setup appropriate image pipeline
+        #TODO setup appropriate image pipeline
         #setup initial values
         self.bearing = None # (corrected) bearing
         self.real_bearing = None # (actual) bearing

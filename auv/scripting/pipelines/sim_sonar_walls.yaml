@@ -1,18 +1,15 @@
 - !node/GuiOutput
   jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
-  image_in<-polar image: &SonarInput_1 !node/SonarInput {Resolution: 400, Sonar ID: 2,
-    derivative: 0, low-pass width: 0, min range: 0, non-maximum epsilon: 1, non-maximum suppression: 0}
-- !node/GuiOutput
-  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
   image_in<-image out: !node/DrawLines
     image in<-image: &PolarImageToXY_1 !node/PolarImageToXY
       Resolution: 400
-      polar image<-polar image: !node/SonarShadowFilter
-        object importance: 1.0
-        object size: 0.20000004768371582
-        shadow importance: 1.0
-        shadow size: 5.0
-        polar image<-polar image: *SonarInput_1
+      polar image<-polar image: !node/SonarImageEdge
+        line width: 2
+        min amplitude: 30
+        min width: 1
+        polar image<-polar image: &SonarInput_1 !node/SonarInput {Resolution: 400,
+          Sonar ID: 2, derivative: 0, low-pass width: 0, min range: 0, non-maximum epsilon: 1,
+          non-maximum suppression: 0}
     lines<-lines: &MergeSimilarLines_1 !node/MergeSimilarLines
       angle epsilon: 0.30000001192092896
       distance epsilon: 0.10000000149011612
@@ -24,7 +21,7 @@
         srn: 0
         stn: 0
         theta: 0.01745329238474369
-        threshold: 30
+        threshold: 10
         image in<-image: *PolarImageToXY_1
 - !node/BroadcastLines
   name: wall_lines
@@ -32,3 +29,9 @@
 - !node/FastMedian
   radius: 3.0
   image<-image: *PolarImageToXY_1
+- !node/BroadcastFloat
+  name: wall_lines_scale
+  float<-range: *SonarInput_1
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-polar image: *SonarInput_1

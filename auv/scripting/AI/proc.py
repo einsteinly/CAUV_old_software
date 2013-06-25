@@ -29,10 +29,10 @@ class Proc(msg.MessageObserver):
         self.node = node.Node(node_name)
         self.auv = control.AUV_readonly(self.node)
         if hasattr(self, "report"):
-            self._reporting_thread = threading.Thread(target=self._report_loop)
             self._die_flag = threading.Event()
-            self._reporting_thread.start()
             self._report_frequency = 0.5
+            self._reporting_thread = threading.Thread(target=self._report_loop)
+            self._reporting_thread.start()
             
     def _report_loop(self):
         while not self._die_flag.wait(self._report_frequency):

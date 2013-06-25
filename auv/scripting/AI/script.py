@@ -25,7 +25,8 @@ class Script(proc.Proc):
         self.node.subMessage(msg.SetTaskStateMessage())
         
     def report(self):
-        self.node.send(msg.ScriptStateMessage(self.Debug.to_boost_dict()))
+        warning("Debug value reporting is currently broken")
+        #self.node.send(msg.ScriptStateMessage(self.debug.to_boost_dict()))
 
     def onSetTaskStateMessage(self, m):
         if m.taskId != self.task_name:
