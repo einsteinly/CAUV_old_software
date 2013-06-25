@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 from cauv.node import Node
 import cauv.messaging as msg
 

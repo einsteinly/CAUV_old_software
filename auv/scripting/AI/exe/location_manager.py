@@ -138,19 +138,19 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
             north_wall = mean_lines(north_wall)
             rel_n = (north_wall.centre.x-0.5)*self.image_scale
             rel_e = (north_wall.centre.y-0.5)*self.image_scale
-            position = rotate((rel_n,rel_e), self.bearing)
+            position = rotate((rel_n,rel_e), self.real_bearing)
             self.node.send(messaging.RelativePositionMessage('NorthWall', 'AUV', messaging.CartesianPosition2D(*position)))
         if south_wall:
             south_wall = mean_lines(south_wall)
             rel_n = (south_wall.centre.x-0.5)*self.image_scale
             rel_e = (south_wall.centre.y-0.5)*self.image_scale
-            position = rotate((rel_n,rel_e), self.bearing)
+            position = rotate((rel_n,rel_e), self.real_bearing)
             self.node.send(messaging.RelativePositionMessage('SouthWall', 'AUV', messaging.CartesianPosition2D(*position)))
         if back_wall:
             back_wall = mean_lines(back_wall)
             rel_n = (back_wall.centre.x-0.5)*self.image_scale
             rel_e = (back_wall.centre.y-0.5)*self.image_scale
-            position = rotate((rel_n,rel_e), self.bearing)
+            position = rotate((rel_n,rel_e), self.real_bearing)
             self.node.send(messaging.RelativePositionMessage('BackWall', 'AUV', messaging.CartesianPosition2D(*position)))
         #if sufficient information, send position of north east corner of harbour
         if back_wall:
@@ -159,7 +159,7 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
                 rel_p = intersection(north_wall, back_wall)
                 rel_p = ((rel_p[0]-0.5)*self.image_scale, (rel_p[1]-0.5)*self.image_scale)
                 #rotate
-                pos = rotate(rel_p, self.bearing)
+                pos = rotate(rel_p, self.real_bearing)
                 self.node.send(messaging.RelativePositionMessage('NECorner', 'AUV', messaging.CartesianPosition2D(*pos)))
             elif south_wall:
                 #calculate intersection + scale
@@ -169,6 +169,8 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
                 pos = rotate(rel_p, self.bearing)
                 #move north by length of wall
                 pos = (pos[0]+BACK_WALL_LENGTH, pos[1])
+                #rotate to real position
+                pos = rotate(pos, self.real_bearing-self.bearing)
                 self.node.send(messaging.RelativePositionMessage('NECorner', 'AUV', messaging.CartesianPosition2D(*pos)))
 
 if __name__ == '__main__':
