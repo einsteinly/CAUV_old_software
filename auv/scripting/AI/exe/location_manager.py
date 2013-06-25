@@ -16,7 +16,7 @@ import itertools
 import collections
 
 from collections import deque
-from math import degrees, atan, cos, sin, radians
+from math import degrees, atan, cos, sin, radians, tan
 
 import utils.event as event
 
@@ -24,6 +24,35 @@ LINES_NAME = "wall_lines"
 LINES_NAME_SCALE = "wall_lines_scale"
 ARENA_BEARING_CORRECTION = -90 #degrees, bearing of north on map below, competition: 17, simulator: -90
 TOLERANCE = 5 #degrees
+BACK_WALL_LENGTH = 50 #m
+
+#TODO this should probably be part of some vector library....
+def rotate(vec, angle):
+    """
+    Rotates the vector by angle degrees counterclockwise
+    """
+    return (vec[0]*cos(radians(angle))-vec[1]*sin(radians(angle)),
+            vec[1]*cos(radians(angle))+vec[0]*sin(radians(angle)))
+    
+def intersection(line1, line2):
+    if line1.angle == line2.angle:
+        raise ArithmeticError("Lines are parallel.")
+    x1 = line1.centre.x
+    y1 = line1.centre.y
+    x2 = line2.centre.x
+    y2 = line2.centre.y
+    tan1 = tan(line1.angle)
+    tan2 = tan(line2.angle)
+    x = (y2-y1+x1*tan1-x2*tan2)/(tan1-tan2)
+    y = (x-x1)*tan1+y1
+    return (x,y)
+
+def mean_lines(lines):
+    centre = (sum([line.centre.x for line in lines])/len(lines),
+              sum([line.centre.y for line in lines])/len(lines))
+    angle = sum([(line.angle-lines[0].angle+90)%180])/len(lines)-90+lines[0].angle
+    length = max([line.length for line in lines])
+    return messaging.Line(messaging.floatXY(*centre), angle, length, lines[0].width)
 
 class LocationManager(event.EventLoop, messaging.MessageObserver):
     #SETUP FUNCTIONS
@@ -37,11 +66,11 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
         #setup appropriate image pipeline
         #setup initial values
         self.bearing = None # (corrected) bearing
-        self.image_scale = None # width of image
+        self.real_bearing = None # (actual) bearing
+        self.image_scale = None # width of sonar image
         self.node.addObserver(self)
 
-    #wall position stuff
-
+    #WALL POSITIONING
     @event.event_func
     def onTelemetryMessage(self, m):
         self.real_bearing = m.orientation.yaw
@@ -102,25 +131,45 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
             else:
                 other_lines.append(line)
         #warn or ignore if other_lines to high?
+        #TODO bearing correction based on walls
         info("%d north wall, %d back wall, %d south wall, %d other lines" %(len(north_wall), len(back_wall), len(south_wall), len(other_lines)))
+        #send positions of known walls, origin the auv
         if north_wall:
-            rel_x = sum([line.centre.x-0.5 for line in north_wall])*self.image_scale/len(north_wall)
-            rel_y = sum([line.centre.y-0.5 for line in north_wall])*self.image_scale/len(north_wall)
-            north = rel_x*cos(radians(self.real_bearing))+rel_y*sin(radians(self.real_bearing))
-            east = rel_x*sin(radians(self.real_bearing))-rel_y*cos(radians(self.real_bearing))
-            self.node.send(messaging.RelativePositionMessage('north_wall', 'auv', messaging.CartesianPosition2D(north, east, 0)))
+            north_wall = mean_lines(north_wall)
+            rel_n = (north_wall.centre.x-0.5)*self.image_scale
+            rel_e = (north_wall.centre.y-0.5)*self.image_scale
+            position = rotate((rel_n,rel_e), self.bearing)
+            self.node.send(messaging.RelativePositionMessage('NorthWall', 'AUV', messaging.CartesianPosition2D(*position)))
         if south_wall:
-            rel_x = sum([line.centre.x-0.5 for line in south_wall])*self.image_scale/len(south_wall)
-            rel_y = sum([line.centre.y-0.5 for line in south_wall])*self.image_scale/len(south_wall)
-            north = rel_x*cos(radians(self.real_bearing))+rel_y*sin(radians(self.real_bearing))
-            east = rel_x*sin(radians(self.real_bearing))-rel_y*cos(radians(self.real_bearing))
-            self.node.send(messaging.RelativePositionMessage('south_wall', 'auv', messaging.CartesianPosition2D(north, east, 0)))
+            south_wall = mean_lines(south_wall)
+            rel_n = (south_wall.centre.x-0.5)*self.image_scale
+            rel_e = (south_wall.centre.y-0.5)*self.image_scale
+            position = rotate((rel_n,rel_e), self.bearing)
+            self.node.send(messaging.RelativePositionMessage('SouthWall', 'AUV', messaging.CartesianPosition2D(*position)))
         if back_wall:
-            rel_x = sum([line.centre.x-0.5 for line in back_wall])*self.image_scale/len(back_wall)
-            rel_y = sum([line.centre.y-0.5 for line in back_wall])*self.image_scale/len(back_wall)
-            north = rel_x*cos(radians(self.real_bearing))+rel_y*sin(radians(self.real_bearing))
-            east = rel_x*sin(radians(self.real_bearing))-rel_y*cos(radians(self.real_bearing))
-            self.node.send(messaging.RelativePositionMessage('back_wall', 'auv', messaging.CartesianPosition2D(north, east, 0)))
+            back_wall = mean_lines(back_wall)
+            rel_n = (back_wall.centre.x-0.5)*self.image_scale
+            rel_e = (back_wall.centre.y-0.5)*self.image_scale
+            position = rotate((rel_n,rel_e), self.bearing)
+            self.node.send(messaging.RelativePositionMessage('BackWall', 'AUV', messaging.CartesianPosition2D(*position)))
+        #if sufficient information, send position of north east corner of harbour
+        if back_wall:
+            if north_wall:
+                #calculate intersection+scale
+                rel_p = intersection(north_wall, back_wall)
+                rel_p = ((rel_p[0]-0.5)*self.image_scale, (rel_p[1]-0.5)*self.image_scale)
+                #rotate
+                pos = rotate(rel_p, self.bearing)
+                self.node.send(messaging.RelativePositionMessage('NECorner', 'AUV', messaging.CartesianPosition2D(*pos)))
+            elif south_wall:
+                #calculate intersection + scale
+                rel_p = intersection(south_wall, back_wall)
+                rel_p = ((rel_p[0]-0.5)*self.image_scale, (rel_p[1]-0.5)*self.image_scale)
+                #rotate
+                pos = rotate(rel_p, self.bearing)
+                #move north by length of wall
+                pos = (pos[0]+BACK_WALL_LENGTH, pos[1])
+                self.node.send(messaging.RelativePositionMessage('NECorner', 'AUV', messaging.CartesianPosition2D(*pos)))
 
 if __name__ == '__main__':
     lm = LocationManager()
