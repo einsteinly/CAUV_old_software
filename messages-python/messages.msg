@@ -470,12 +470,10 @@ struct CartesianPosition2D
 {
     eq north : float;
     eq east : float;
-    eq up : float;
 }
 
 struct CartesianPosition3D
 {
-    eq reference : string;
     eq north : float;
     eq east : float;
     eq up : float;
