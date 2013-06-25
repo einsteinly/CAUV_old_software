@@ -29,7 +29,7 @@ class dfu(AI.Script):
             
     class Debug(AI.Script.Debug):
         def __init__(self):
-            pass
+            self.distance = None
         
     def onRelativePositionMessage(self, m):
         if m.origin != "AUV" or m.object != "NorthWall":
@@ -43,6 +43,7 @@ class dfu(AI.Script):
         heading_e = sin(radians(self.auv.current_bearing))
         perp_dist = n*heading_n+e*heading_e
         self.distance = perp_dist
+        self.debug.distance = self.distance
         
     def run(self):
         self.distance = None

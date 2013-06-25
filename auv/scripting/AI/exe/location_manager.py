@@ -2,6 +2,7 @@
 import cauv
 import cauv.messaging as messaging
 import cauv.node
+import cauv.yamlpipe
 from cauv.debug import debug, warning, error, info
 
 import os
@@ -19,12 +20,7 @@ from collections import deque
 from math import degrees, atan, cos, sin, radians, tan
 
 import utils.event as event
-
-LINES_NAME = "wall_lines"
-LINES_NAME_SCALE = "wall_lines_scale"
-ARENA_BEARING_CORRECTION = -90 #degrees, bearing of north on map below, competition: 17, simulator: -90
-TOLERANCE = 5 #degrees
-BACK_WALL_LENGTH = 50 #m
+import utils.dirs
 
 #TODO this should probably be part of some vector library....
 def rotate(vec, angle):
@@ -56,35 +52,46 @@ def mean_lines(lines):
 
 class LocationManager(event.EventLoop, messaging.MessageObserver):
     #SETUP FUNCTIONS
-    def __init__(self):
+    def __init__(self, opts):
         super(LocationManager, self).__init__()
         self.node = cauv.node.Node("location_manager")
         #subscribe to appropriate messages
         self.node.subMessage(messaging.LinesMessage())
         self.node.subMessage(messaging.FloatMessage())
         self.node.subMessage(messaging.TelemetryMessage())
-        #TODO setup appropriate image pipeline
+        #setup appropriate image pipeline
+        pipe_file = os.path.join(utils.dirs.config_dir('pipelines'), opts.pipeline_name) + ".yaml"
+        with open(pipe_file) as pf:
+            pipeline = cauv.yamlpipe.load(pf)
+        model = cauv.pipeline.Model(self.node, 'ai/_wall_lines')
+        pipeline.fixup_inputs()
+        model.set(pipeline)
         #setup initial values
         self.bearing = None # (corrected) bearing
         self.real_bearing = None # (actual) bearing
         self.image_scale = None # width of sonar image
+        self.wall_length = opts.wall_length
+        self.tolerance = opts.tolerance
+        self.bearing_correction = opts.arena_bearing_correction
+        self.scale_name = opts.scale_name
+        self.lines_name = opts.lines_name
         self.node.addObserver(self)
 
     #WALL POSITIONING
     @event.event_func
     def onTelemetryMessage(self, m):
         self.real_bearing = m.orientation.yaw
-        self.bearing = (self.real_bearing + ARENA_BEARING_CORRECTION)%360
+        self.bearing = (self.real_bearing + self.bearing_correction)%360
         
     @event.event_func
     def onFloatMessage(self, m):
-        if m.name != LINES_NAME_SCALE:
+        if m.name != self.scale_name:
             return
         self.image_scale = m.value
 
     @event.event_func
     def onLinesMessage(self, m):
-        if m.name != LINES_NAME:
+        if m.name != self.lines_name:
             return
         if self.bearing == None:
             warning("No orientation information, not processing lines")
@@ -106,7 +113,7 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
         for line in m.lines:
             line_bearing = (degrees(line.angle)+self.bearing)%180
             #if the wall is east-west it is a side wall
-            if line_bearing<=90+TOLERANCE and line_bearing>=90-TOLERANCE:
+            if line_bearing<=90+self.tolerance and line_bearing>=90-self.tolerance:
                 #4 situations, assume North wall is exactly to North then, since degree of sonar is 120:
                 #-30<bearing<30 => North wall
                 #30<bearing<150 => North left, South right
@@ -126,7 +133,7 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
                     else:
                         south_wall.append(line)
             #if it is north-south it is the back wall (hopefully, maybe add a check?)
-            elif line_bearing<=TOLERANCE or line_bearing>=180-TOLERANCE:
+            elif line_bearing<=self.tolerance or line_bearing>=180-self.tolerance:
                 back_wall.append(line)
             else:
                 other_lines.append(line)
@@ -168,11 +175,21 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
                 #rotate
                 pos = rotate(rel_p, self.bearing)
                 #move north by length of wall
-                pos = (pos[0]+BACK_WALL_LENGTH, pos[1])
+                pos = (pos[0]+self.wall_length, pos[1])
                 #rotate to real position
                 pos = rotate(pos, self.real_bearing-self.bearing)
                 self.node.send(messaging.RelativePositionMessage('NECorner', 'AUV', messaging.CartesianPosition2D(*pos)))
 
 if __name__ == '__main__':
-    lm = LocationManager()
+    p = argparse.ArgumentParser()
+    p.add_argument('-f', '--pipeline_name', default = 'sim_sonar_walls', help="Name of pipeline file.")
+    p.add_argument('-l', '--lines_name', default = 'wall_lines', help="Name of broadcast lines node.")
+    p.add_argument('-s', '--scale_name', default = 'wall_lines_scale', help="Name of broadcast range node.")
+    p.add_argument('-b', '--arena_bearing_correction', default=-90, help="Bearing of real north in fake coords.") # competition 17
+    p.add_argument('-t', '--tolerance', default=5,
+                   help="maximum difference between expected and actual angle of lines before rejecting lines")
+    p.add_argument('-d', '--wall_length', default=50, help="Length of the back wall (m)")
+    opts, args = p.parse_known_args()
+    
+    lm = LocationManager(opts)
     lm.run()

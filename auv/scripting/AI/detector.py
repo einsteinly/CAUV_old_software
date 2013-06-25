@@ -7,10 +7,11 @@ class Detector(proc.Proc):
     def __init__(self):
         proc.Proc.__init__(self, self.__class__.__name__ + "Detector")
         self.options = self.get_options()
+        self.debug = self.Debug()
         self.node.subMessage(msg.SetConditionStateMessage())
         
     def report(self):
-        self.node.send(msg.DetectorStateMessage(self.Debug.to_flat_dict()))
+        self.node.send(msg.DetectorStateMessage(self.task_name, self.debug.to_boost_dict()))
 
     def fire(self, timeout):
         if timeout == 0:

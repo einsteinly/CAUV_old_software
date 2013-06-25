@@ -20,13 +20,13 @@ class Script(proc.Proc):
     def __init__(self):
         proc.Proc.__init__(self, self.__class__.__name__ + "Script")
         self.options = self.get_options()
+        self.debug = self.Debug()
         self.task_name = self.options._task_name
         self.auv = control.AUV(self.node)
         self.node.subMessage(msg.SetTaskStateMessage())
         
     def report(self):
-        warning("Debug value reporting is currently broken")
-        #self.node.send(msg.ScriptStateMessage(self.debug.to_boost_dict()))
+        self.node.send(msg.ScriptStateMessage(self.task_name, self.debug.to_boost_dict()))
 
     def onSetTaskStateMessage(self, m):
         if m.taskId != self.task_name:

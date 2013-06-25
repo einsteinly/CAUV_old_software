@@ -4,3 +4,4 @@
 #
 
 python_exe(task_manager.py)
+python_exe(location_manager.py)

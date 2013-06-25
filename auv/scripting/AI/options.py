@@ -179,7 +179,9 @@ class Options(object):
 
 def add_options_to_argparse(parser, options):
     for option, value_with_meta in sorted(options.to_flat_dict_with_meta().iteritems()):
-        arg_type = type(value_with_meta.value)
+        arg_type = value_with_meta.opt_type
+        if arg_type == '':
+            arg_type = type(value_with_meta.value)
         if arg_type == bool:
             arg_type = bool_constructor
         parser.add_argument("--" + option, default = value_with_meta.value, type = arg_type, help=value_with_meta.docstring)

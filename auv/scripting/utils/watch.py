@@ -79,7 +79,7 @@ class WatchProcess:
                 return
 
             self.pid = self.proc.pid
-            info("Started {} with pid {}".format(self.p.name, self.pid))
+            info("Started {} with pid {} (command {})".format(self.p.name, self.pid, self.p.cmd))
             self.state = Running
 
     def running(self):
