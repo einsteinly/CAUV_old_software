@@ -16,6 +16,7 @@
 #include <boost/math/special_functions/hypot.hpp>
 
 #include <opencv2/core/core.hpp>
+//#include <opencv2/core/utility.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <generated/types/floatXY.h>
@@ -108,7 +109,7 @@ namespace {
             std::vector<Line> lines;
 
             if (probabilistic) {
-                cv::vector<cv::Vec4i> segments;
+                std::vector<cv::Vec4i> segments;
                 // (const cast for backwards compatibility with older OpenCV versions)
                 cv::HoughLinesP(const_cast<cv::Mat&>(m), segments, rho, theta, threshold, min_ll, max_lg);
 

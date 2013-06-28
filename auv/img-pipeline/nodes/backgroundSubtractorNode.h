@@ -30,7 +30,7 @@ namespace imgproc{
 class BackgroundSubtractorNode: public Node{
     public:
         BackgroundSubtractorNode(ConstructArgs const& args)
-            : Node(args){
+            : Node(args) {
         }
 
         void init(){
@@ -56,15 +56,9 @@ class BackgroundSubtractorNode: public Node{
 
             cv::Mat fg, bg;
             subtractor(m, fg, param<float>("learningRate"));
-#if CV_MAJOR_VERSION >=2 && CV_MINOR_VERSION >= 3
             subtractor.getBackgroundImage(bg);
             r["background"] = boost::make_shared<Image>(bg);
-            #else
-            #warning background of background subtraction is only available in opencv >= 2.3
-            #endif
-
             r["foreground"] = boost::make_shared<Image>(fg);
-            
         }
     
     // Register this node type

@@ -61,7 +61,7 @@ class CombineYUVNode: public Node{
 
             try{
                 cv::merge(in, 3, YUV);
-                cv::cvtColor(YUV, out, CV_Luv2RGB, 0);
+                cv::cvtColor(YUV, out, cv::COLOR_Luv2RGB, 0);
             }catch(cv::Exception& e){
                 error() << "CombineYUVNode:\n\t"
                         << e.err << "\n\t"

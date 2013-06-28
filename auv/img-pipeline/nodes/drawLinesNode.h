@@ -16,6 +16,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/highgui/highgui_c.h>
 
 #include <generated/types/Line.h>
 
@@ -59,7 +60,7 @@ class DrawLinesNode: public Node{
                 if (img.channels() == 1)
                 {
                     // make a colour copy to draw pretty lines on
-                    cvtColor(img, out_mat, CV_GRAY2BGR);
+                    cvtColor(img, out_mat, cv::COLOR_GRAY2BGR);
                 }
                 else if (img.channels() == 3)
                 {

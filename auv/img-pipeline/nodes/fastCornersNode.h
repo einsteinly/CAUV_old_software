@@ -54,7 +54,7 @@ class FASTCornersNode: public Node{
                 : m_nonmaxsupp(nonmaxsupp), m_threshold(threshold){
             }
             std::vector<cauv::KeyPoint> operator()(cv::Mat a) const{
-                cv::vector<cv::KeyPoint> cv_corners;
+                std::vector<cv::KeyPoint> cv_corners;
                 cv::FAST(a, cv_corners, m_threshold, m_nonmaxsupp);
 
                 debug(2) << "FASTCorners: detected" << cv_corners.size() << "corners:";

@@ -4,6 +4,8 @@
 #include "camera_observer.h"
 #include "webcam.h"
 
+#include <opencv2/highgui/highgui_c.h>
+
 #include <utility/bash_cout.h>
 #include <utility/foreach.h>
 #include <utility/time.h>

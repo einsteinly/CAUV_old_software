@@ -63,7 +63,7 @@ class SURFCornersNode: public Node{
             const int octaves = param<int>("octaves");
             const int octaveLayers = param<int>("octave layers");
 
-            cv::vector<cv::KeyPoint> cv_corners;
+            std::vector<cv::KeyPoint> cv_corners;
             try{
                 cv::SURF(threshold,octaves,octaveLayers)(img, cv::Mat(), cv_corners);
             }catch(cv::Exception& e){

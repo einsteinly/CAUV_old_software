@@ -380,10 +380,10 @@ void CameraManager::DC1394Capture::captureToMem(
     
     if(type == CV_8UC3){
         if(height==h && width==w){
-            cv::cvtColor(internal_mat, shared_mat, CV_BayerBG2BGR, 3);
+            cv::cvtColor(internal_mat, shared_mat, cv::COLOR_BayerBG2BGR, 3);
         }else{
             cv::Mat tmp;
-            cv::cvtColor(internal_mat, tmp, CV_BayerRG2RGB, 3);
+            cv::cvtColor(internal_mat, tmp, cv::COLOR_BayerRG2RGB, 3);
             cv::resize(tmp, shared_mat, cv::Size(w, h)); 
         }
     }else{

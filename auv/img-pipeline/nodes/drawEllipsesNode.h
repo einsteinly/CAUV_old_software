@@ -15,6 +15,7 @@
 #include <boost/bind.hpp>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/core_c.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
@@ -50,7 +51,7 @@ class DrawEllipsesNode: public Node{
             if(m.channels() >= 3){
                 out = m.clone();
             }else if(m.channels() == 1){
-                cv::cvtColor(m, out, CV_GRAY2BGR);
+                cv::cvtColor(m, out, cv::COLOR_GRAY2BGR);
             }else{
                 throw parameter_error("image must be 1, 3 or 4 channel");
             }
