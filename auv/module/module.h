@@ -16,14 +16,6 @@
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
 
-#ifdef CAUV_USE_FTDIPP
-    #include <ftdi.hpp>
-    #define PICK_FTDI(A,B) A
-#else
-    #include <ftdi.h>
-    #define PICK_FTDI(A,B) B
-#endif
-
 #include <generated/message_observers.h>
 #include <generated/types/message.h>
 #include <debug/cauv_debug.h>
@@ -34,64 +26,6 @@
 namespace cauv{
 
 uint16_t sumOnesComplement(std::vector<uint16_t> bytes);
-
-class FTDIException : public std::exception
-{
-    protected:
-        int m_errCode;
-        std::string m_message;
-    public:
-        FTDIException(const std::string& msg);
-        FTDIException(const std::string& msg, int errCode, PICK_FTDI(Ftdi::Context, ftdi_context)* ftdic);
-        
-        ~FTDIException() throw();
-        virtual const char* what() const throw();
-        int errCode() const;
-};
-
-class FTDIContext : boost::noncopyable
-{
-    public:
-#ifdef CAUV_MCB_IS_FTDI
-        FTDIContext();
-        ~FTDIContext();
-#endif
-
-        void open(int vendor, int product);
-        void open(int vendor, int product, int index);
-        void open(int vendor, int product, const std::string& description, const std::string& serial = std::string(), int index = 0);
-        void setBaudRate(int baudrate);
-        void setLineProperty(ftdi_bits_type bits, ftdi_stopbits_type stopBits, ftdi_parity_type parity);
-        void setFlowControl(int flowControl);
-        
-        std::streamsize read(unsigned char* s, std::streamsize n);
-        std::streamsize write(const unsigned char* s, std::streamsize n);
-
-    protected:
-        PICK_FTDI(Ftdi::Context, ftdi_context) ftdic;
-#ifdef CAUV_MCB_IS_FTDI
-        bool m_usb_open;
-#endif
-};
-
-
-class FTDIDevice : public boost::iostreams::device<boost::iostreams::bidirectional>
-{
-    public:
-        FTDIDevice(int vendor, int product, int index,
-                   int baudrate,
-                   ftdi_bits_type const& bits,
-                   ftdi_stopbits_type const& stopBits,
-                   ftdi_parity_type const& parity,
-                   int flowControl);
-        
-        std::streamsize read(char* s, std::streamsize n);
-        std::streamsize write(const char* s, std::streamsize n);
-        
-    protected:
-        boost::shared_ptr<FTDIContext> m_ftdic;
-        boost::shared_ptr<struct usb_device> m_device;
-};
 
 class SerialDevice : public boost::iostreams::device<boost::iostreams::bidirectional>
 {
@@ -298,17 +232,6 @@ class Module : public MessageSource
         }
 };
 
-class FTDIModule : public Module<FTDIDevice>
-{
-    public:
-        FTDIModule(int vendor, int product, int index,
-                   int baudrate,
-                   ftdi_bits_type const& bits,
-                   ftdi_stopbits_type const& stopBits,
-                   ftdi_parity_type const& parity,
-                   int flowControl);
-};
-
 class SerialModule : public Module<SerialDevice>
 {
     public:
@@ -327,16 +250,6 @@ class FileModule : public Module<boost::iostreams::file>
 };
 
 
-#ifdef CAUV_MCB_IS_FTDI
-class MCBModule : public FTDIModule
-{
-    public:
-        MCBModule(int index)
-            : FTDIModule(0x0403, 0x6001, index, 38400, BITS_8, STOP_BIT_1, NONE, SIO_DISABLE_FLOW_CTRL)
-        {
-        }
-};
-#else
 class MCBModule : public SerialModule
 {
     public:
@@ -350,7 +263,6 @@ class MCBModule : public SerialModule
         {
         }
 };
-#endif
 
 } // namespace cauv
 

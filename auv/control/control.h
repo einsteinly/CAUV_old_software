@@ -35,12 +35,7 @@ class ControlNode : public CauvNode
         ControlNode();
         virtual ~ControlNode();
     
-#ifdef CAUV_MCB_IS_FTDI
-        void setRedHerringMCB(int id);
-#else 
-        void setRedHerringMCB(std::string const& filename);
-#endif
-        void setBarracudaMCB(std::string const& port);
+        void setMCB(std::string const& port);
 
         void setXsens(int id);
 		void setSBG(std::string const&, int baud_rate, int pause_time);

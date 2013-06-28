@@ -195,25 +195,6 @@ class MCBForwardingObserver : public BufferedMessageObserver
 };
 
 
-#ifdef CAUV_MCB_IS_FTDI
-void ControlNode::setMCB(int id)
-{
-    m_mcb.reset();
-    // start up the MCB module
-    try {
-        m_mcb = boost::make_shared<MCBModule>(id);
-        info() << "MCB Connected";
-    }
-    catch (FTDIException& e)
-    {
-        error() << "Cannot connect to MCB: " << e.what();
-        m_mcb.reset();
-        if (e.errCode() == -8) {
-            throw NotRootException();
-        }
-    }
-}
-#else
 void ControlNode::setMCB(const std::string& filename)
 {
     m_mcb.reset();
@@ -228,7 +209,6 @@ void ControlNode::setMCB(const std::string& filename)
         m_mcb.reset();
     }
 }
-#endif
 
         m_mcb->addObserver(boost::make_shared<DebugMessageObserver>(2));
         m_mcb->addObserver(boost::make_shared<MCBForwardingObserver>(mailbox()));

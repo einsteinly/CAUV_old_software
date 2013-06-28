@@ -32,7 +32,6 @@
 #include "sim_imu.h"
 #include "mcb.h"
 #include "barracuda_mcb.h"
-//#include "redherring_mcb.h"
 #include "pid.h"
 
 #include <boost/shared_ptr.hpp>
@@ -601,18 +600,6 @@ void ControlNode::setSBG(std::string const& port, int baud_rate, int pause_time)
     }
 }
 
-#ifdef CAUV_MCB_IS_FTDI
-void ControlNode::setRedHerringMCB(int conn)
-{
-    #warning !!! unimplemented
-}
-#else
-void ControlNode::setRedHerringMCB(std::string const& port)
-{
-    #warning !!! unimplemented
-}
-#endif
-
 void ControlNode::setSimIMU()
 {
     boost::shared_ptr<SimIMU> sim = boost::make_shared<SimIMU>();
@@ -621,7 +608,7 @@ void ControlNode::setSimIMU()
     subMessage(StateMessage());
 }
 
-void ControlNode::setBarracudaMCB(std::string const& port)
+void ControlNode::setMCB(std::string const& port)
 {
     boost::shared_ptr<BarracudaMCB> mcb = boost::make_shared<BarracudaMCB>(port, m_controlLoops);
     addMessageObserver(mcb);
@@ -638,12 +625,8 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
         ("sbg,b", po::value<std::string>()->default_value("/dev/ttyUSB1"), "TTY device for SBG IG500A")
         ("imu,i", po::value<std::string>()->default_value("xsens"), "default Xsens USB device or TTY device for SBG IG500A, or both")
         ("mcb,m", po::value<std::string>()->default_value("barracuda"), "default mcb to use: barracuda or redherring")
-
-#ifdef CAUV_MCB_IS_FTDI
-        ("port,p", po::value<int>()->default_value(0), "FTDI device id of the MCB")
-#else 
         ("port,p", po::value<std::string>()->default_value("/dev/ttyUSB0"), "TTY file for MCB serial comms")
-#endif
+
         ("depth-offset,o", po::value<float>()->default_value(0), "Depth calibration offset")
         ("depth-scale,s", po::value<float>()->default_value(0), "Depth calibration scale")
 
@@ -677,18 +660,7 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     if(vm.count("sbg") && use_sbg){
         setSBG(vm["sbg"].as<std::string>(), 115200, 10);
     }
-#ifdef CAUV_MCB_IS_FTDI
-    if (vm["mcb"].as<std::string>() == ("redherring")) {
-        setRedHerringMCB(vm["port"].as<int>());
-    }
-#else
-    if (vm["mcb"].as<std::string>() == ("redherring")) {
-        setRedHerringMCB(vm["port"].as<std::string>());
-    } 
-#endif
-    if (vm["mcb"].as<std::string>() == ("barracuda")) {
-        setBarracudaMCB(vm["port"].as<std::string>());
-    }
+    setMCB(vm["port"].as<std::string>());
 
 #if 0
     if (vm.count("depth-offset") && vm.count("depth-scale")) {
