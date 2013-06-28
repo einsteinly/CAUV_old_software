@@ -19,6 +19,25 @@
 
 #include "asynchronousNode.h"
 
+#if CV_MAJOR_VERSION < 2 || CV_MINOR_VERSION == 2 && CV_MAJOR_VERSION < 4 || CV_MAJOR_VERSION == 2 && CV_MAJOR_VERSION == 4 && CV_SUBMINOR_VERSION < 6
+#ifndef WORKAROUND_CV_CAPPROP
+#define WORKAROUND_CV_CAPPROP
+#warning Workaround for missing CAP_PROP_FRAME_WIDTH/HEIGHT in OpenCV <= 2.4.5
+namespace cv {
+    enum
+    {
+        CV_FFMPEG_CAP_PROP_POS_MSEC=0,
+        CV_FFMPEG_CAP_PROP_POS_FRAMES=1,
+        CV_FFMPEG_CAP_PROP_POS_AVI_RATIO=2,
+        CV_FFMPEG_CAP_PROP_FRAME_WIDTH=3,
+        CV_FFMPEG_CAP_PROP_FRAME_HEIGHT=4,
+        CV_FFMPEG_CAP_PROP_FPS=5,
+        CV_FFMPEG_CAP_PROP_FOURCC=6,
+        CV_FFMPEG_CAP_PROP_FRAME_COUNT=7
+    };
+}
+#endif
+#endif
 
 namespace cauv{
 namespace imgproc{

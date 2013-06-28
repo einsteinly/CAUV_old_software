@@ -23,6 +23,19 @@
 #include "../node.h"
 #include "outputNode.h"
 
+#if CV_MAJOR_VERSION < 2 || CV_MINOR_VERSION == 2 && CV_MAJOR_VERSION < 4 || CV_MAJOR_VERSION == 2 && CV_MAJOR_VERSION == 4 && CV_SUBMINOR_VERSION < 6
+#ifndef WORKAROUND_CV_LINEAA
+#define WORKAROUND_CV_LINEAA
+#warning Workaround for missing LINE_AA in OpenCV <= 2.4.5
+namespace cv {
+    enum { FILLED  = -1,
+           LINE_4  = 4,
+           LINE_8  = 8,
+           LINE_AA = 16
+         };
+}
+#endif
+#endif
 
 namespace cauv{
 namespace imgproc{
