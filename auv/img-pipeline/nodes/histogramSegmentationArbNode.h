@@ -48,7 +48,7 @@ class HistogramSegmentationArbNode: public OutputNode{
 
             if(!img.isContinuous())
                 throw(parameter_error("Image must be continuous."));
-            if((img.type() & CV_MAT_DEPTH_MASK) != CV_8U)
+            if(img.depth() != CV_8U)
                 throw(parameter_error("Image must have unsigned bytes."));
             if(img.channels() > 1)
                 throw(parameter_error("Image must have only one channel."));

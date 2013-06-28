@@ -104,7 +104,7 @@ class FastMedianNode: public Node{
                  
                 if(!a.isContinuous())
                     throw(parameter_error("image must be continuous"));
-                if((a.type() & CV_MAT_DEPTH_MASK) != CV_8U)
+                if(a.depth() != CV_8U)
                     throw(parameter_error("image must be unsigned bytes"));
                 if(a.channels() > 3)
                     throw(parameter_error("image must be <= 3-channel"));
