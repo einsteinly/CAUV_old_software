@@ -5,7 +5,7 @@
 
 find_package (OpenCV REQUIRED)
 
-option(CAUV_USE_DC1394 "Use libdc1394" ON)
+option(CAUV_USE_DC1394 "Use libdc1394" OFF)
 if (CAUV_USE_DC1394)
     find_library(libdc1394_LIBRARIES dc1394 REQUIRED)
     add_definitions(-DCAUV_USE_DC1394)
