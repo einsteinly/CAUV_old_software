@@ -81,9 +81,9 @@ class FileOutputNode: public OutputNode{
             debug(4) << "FileOutputNode::doWork()" << *img << "->" << fname;
 
             std::vector<int> imwrite_params;
-            imwrite_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+            imwrite_params.push_back(cv::IMWRITE_JPEG_QUALITY);
             imwrite_params.push_back(jpg_qual);
-            imwrite_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+            imwrite_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
             imwrite_params.push_back(png_comp);
             
             try{

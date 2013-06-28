@@ -49,7 +49,7 @@ class DrawCirclesNode: public Node{
                 if(a.channels() >= 3){
                     out = a.clone();
                 }else if(a.channels() == 1){
-                    cv::cvtColor(a, out, CV_GRAY2BGR);
+                    cv::cvtColor(a, out, cv::COLOR_GRAY2BGR);
                 }else{
                     throw parameter_error("image must be 1, 3 or 4 channel");
                 }
@@ -62,9 +62,9 @@ class DrawCirclesNode: public Node{
                         cv::Point(p.centre.x * width,
                                   p.centre.y * height),
                         p.radius * (width + height) / 2,
-                        CV_RGB(40,255,40),
+                        cv::Scalar(40,255,40),
                         3,
-                        CV_AA
+                        cv::LINE_AA
                     );
                 }
                 return out;

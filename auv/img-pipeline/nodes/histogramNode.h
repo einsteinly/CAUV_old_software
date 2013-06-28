@@ -42,7 +42,7 @@ class HistogramNode: public Node{
             std::vector<float> operator()(cv::Mat a) const{
                 if(!a.isContinuous())
                     throw(parameter_error("image must be continuous"));
-                if((a.type() & CV_MAT_DEPTH_MASK) != CV_8U)
+                if(a.depth() != CV_8U)
                     throw(parameter_error("image must have unsigned bytes"));
                 if(a.channels() > 1)
                     throw(parameter_error("image must have only one channel"));

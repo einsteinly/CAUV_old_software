@@ -151,26 +151,26 @@ class TexImg{
             }
 
             GLenum tex_type = GL_UNSIGNED_BYTE;
-            switch(m.type() & CV_MAT_DEPTH_MASK){
-                case CV_8S:
+            switch(m.type() & cv::MAT_DEPTH_MASK){
+                case cv::8S:
                     warning() << "_genTexture(): signed byte image type not supported: using unsigned";
                     // case fall through
                 case CV_8U:
                     tex_type = GL_UNSIGNED_BYTE;
                     break;
-                case CV_16S:
+                case cv::16S:
                     tex_type = GL_SHORT;
                     break;
-                case CV_16U:
+                case cv::16U:
                     tex_type = GL_UNSIGNED_SHORT;
                     break;
-                case CV_32S:
+                case cv::32S:
                     tex_type = GL_INT;
                     break;
                 case CV_32F:
                     tex_type = GL_FLOAT;
                     break;
-                case CV_64F:
+                case cv::64F:
                     warning() << "_genTexture(): double image type not supported: trying anyway...";
                     tex_type = GL_DOUBLE;
                     break;

@@ -50,7 +50,7 @@ class DrawEllipsesNode: public Node{
             if(m.channels() >= 3){
                 out = m.clone();
             }else if(m.channels() == 1){
-                cv::cvtColor(m, out, CV_GRAY2BGR);
+                cv::cvtColor(m, out, cv::COLOR_GRAY2BGR);
             }else{
                 throw parameter_error("image must be 1, 3 or 4 channel");
             }
@@ -63,9 +63,9 @@ class DrawEllipsesNode: public Node{
                         cv::Size(p.majorRadius * m.cols, p.minorRadius * m.cols),
                         p.angle * 180/M_PI,
                         0, 360,
-                        CV_RGB(40,255,40),
+                        cv::Scalar(40,255,40),
                         2,
-                        CV_AA
+                        cv::LINE_AA
                     );
                 }
             }
@@ -75,9 +75,9 @@ class DrawEllipsesNode: public Node{
                     cv::Point2f maj_dir(std::cos(p.angle), std::sin(p.angle));
                     cv::Point2f min_dir(maj_dir.y, -maj_dir.x);
                         cv::line(out, c - p.majorRadius*maj_dir*m.cols, c + p.majorRadius*maj_dir*m.cols,
-                                 cv::Scalar(0, 255, 0), 3, CV_AA);
+                                 cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
                         cv::line(out, c - p.minorRadius*min_dir*m.cols, c + p.minorRadius*min_dir*m.cols,
-                                 cv::Scalar(255, 0, 0), 3, CV_AA);
+                                 cv::Scalar(255, 0, 0), 3, cv::LINE_AA);
                 }
             }
             else{

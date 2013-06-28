@@ -16,6 +16,7 @@
 #include <boost/math/special_functions/hypot.hpp>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/utility.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <generated/types/floatXY.h>
@@ -108,14 +109,14 @@ namespace {
             std::vector<Line> lines;
 
             if (probabilistic) {
-                cv::vector<cv::Vec4i> segments;
+                std::vector<cv::Vec4i> segments;
                 // (const cast for backwards compatibility with older OpenCV versions)
                 cv::HoughLinesP(const_cast<cv::Mat&>(m), segments, rho, theta, threshold, min_ll, max_lg);
 
                 // Convert [x1,y1,x2,y2] segments to our lines
                 std::transform(segments.begin(), segments.end(), std::back_inserter(lines), boost::bind(segmentToLine, _1, m.cols, m.rows));
             } else {
-                // cv::vector<cv::Vec2f> hough_lines;
+                // std::vector<cv::Vec2f> hough_lines;
                 // cv::HoughLines(m, hough_lines, rho, theta, threshold, srn, stn);
                 // 
                 // std::transform(hough_lines.begin(), hough_lines.end(), std::back_inserter(lines), boost::bind(opencvHoughToLine, _1, m.cols, m.rows));

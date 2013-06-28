@@ -42,7 +42,7 @@ int main(int, char**){
 
         uint32_t N = 100;
         boost::shared_ptr<ImageWrapper> t;
-        cv::namedWindow("client test", CV_WINDOW_KEEPRATIO);
+        cv::namedWindow("client test", cv::WINDOW_KEEPRATIO);
         TimeStamp tstart = now();
         for(uint32_t i = 0; i < N; i++){
             t = C.getImage(0, 320, 240);

@@ -15,10 +15,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/features2d/features2d.hpp>
-// TODO Remove this and require opencv >=2.4
-#if CV_MAJOR_VERSION > 2 || CV_MAJOR_VERSION == 2 && CV_MINOR_VERSION >= 4
-    #include <opencv2/nonfree/nonfree.hpp>
-#endif
+#include <opencv2/nonfree/nonfree.hpp>
 
 #include <generated/types/KeyPoint.h>
 
@@ -63,7 +60,7 @@ class SURFCornersNode: public Node{
             const int octaves = param<int>("octaves");
             const int octaveLayers = param<int>("octave layers");
 
-            cv::vector<cv::KeyPoint> cv_corners;
+            std::vector<cv::KeyPoint> cv_corners;
             try{
                 cv::SURF(threshold,octaves,octaveLayers)(img, cv::Mat(), cv_corners);
             }catch(cv::Exception& e){

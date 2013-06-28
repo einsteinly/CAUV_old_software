@@ -142,12 +142,12 @@ class Attenuator : public osg::Referenced {
             camera->setDataVariance(osg::Object::DYNAMIC);
             camera->setInheritanceMask(osg::Camera::ALL_VARIABLES);
             camera->setRenderOrder(osg::Camera::PRE_RENDER);
-            camera->setClearMask(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+            camera->setClearMask(GL_DEPTH_BUFFER_BIT | GL_cv::COLOR_BUFFER_BIT);
             camera->setClearColor(osg::Vec4f(0, 0, 0, 0));
 
             camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
         
-            camera->attach(osg::Camera::COLOR_BUFFER, _colourTexture);
+            camera->attach(osg::Camera::cv::COLOR_BUFFER, _colourTexture);
             camera->attach(osg::Camera::DEPTH_BUFFER, _depthTexture);
 				
             osg::TexGenNode* texGenNode = new osg::TexGenNode;

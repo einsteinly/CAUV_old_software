@@ -76,13 +76,13 @@ void CaptureThread::operator()()
 Webcam::Webcam(const CameraID::e cameraID, const int deviceID)
     : Camera(cameraID), m_thread_callable(boost::ref(*this))
 {
-    //m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
-    //m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 280);
+    //m_capture.set(cv::CAP_PROP_FRAME_WIDTH, 320);
+    //m_capture.set(cv::CAP_PROP_FRAME_HEIGHT, 280);
    
-    //cv::namedWindow( "Webcam", CV_WINDOW_AUTOSIZE ); 
+    //cv::namedWindow( "Webcam", cv::WINDOW_AUTOSIZE ); 
 
-    m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-    m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+    m_capture.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+    m_capture.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
     
     m_capture = cv::VideoCapture(deviceID);
     if( !m_capture.isOpened() )

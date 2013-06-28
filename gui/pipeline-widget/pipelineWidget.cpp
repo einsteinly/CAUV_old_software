@@ -499,7 +499,7 @@ void PipelineWidget::initializeGL(){
 
     glClearColor(0, 0, 0, 1.0);
     glClearDepth(100.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_cv::COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void PipelineWidget::paintGL(){
@@ -508,7 +508,7 @@ void PipelineWidget::paintGL(){
     debug(3) << "PipelineWidget::paintGL";
     updateProjection();
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_cv::COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     // scale for world size 'out of screen' is positive z
     glScalef(m_pixels_per_unit / m_world_size,

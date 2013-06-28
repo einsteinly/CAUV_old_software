@@ -39,7 +39,7 @@ class HoughCirclesNode: public Node{
             registerOutputID("circles", std::vector<Circle>());
             
             // parameters:
-            registerParamID<int>("method", CV_HOUGH_GRADIENT);
+            registerParamID<int>("method", cv::HOUGH_GRADIENT);
             registerParamID<float>("scale", 1);
             registerParamID<float>("minDist", 5);
             registerParamID<float>("param1", 100);
@@ -61,7 +61,7 @@ class HoughCirclesNode: public Node{
             const int min_rad = param<int>("minRadius");
             const int max_rad = param<int>("maxRadius");
 
-            cv::vector<cv::Vec3f> circles;
+            std::vector<cv::Vec3f> circles;
             cv::Mat in = img->mat();            
             try{
                 cv::HoughCircles(in, circles, method, dp, min_dist, p1, p2, min_rad, max_rad);

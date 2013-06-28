@@ -103,10 +103,10 @@ class DirectCameraInputNode: public AsynchronousNode{
                         error() << "could not open camera" << dev_id;
                         return;
                     } 
-                    //m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-                    //m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
-                    m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
-                    m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 280);
+                    //m_capture.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+                    //m_capture.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+                    m_capture.set(cv::CAP_PROP_FRAME_WIDTH, 320);
+                    m_capture.set(cv::CAP_PROP_FRAME_HEIGHT, 280);
                     setAllowQueue();
                 }
             }

@@ -43,7 +43,7 @@ static void setGain(int value, void* data)
 DisplaySonarObserver::DisplaySonarObserver(boost::shared_ptr<SeanetSonar> sonar)
     : SonarAccumulator(), SonarObserver(), m_sonar(sonar)
 {
-    cv::namedWindow("Sonar display", CV_WINDOW_AUTOSIZE);
+    cv::namedWindow("Sonar display", cv::WINDOW_AUTOSIZE);
     cv::createTrackbar("Range", "Sonar display", NULL, 4999, setRange, &m_sonar);
     cv::createTrackbar("RangeRes", "Sonar display", NULL, 29, setRangeRes, &m_sonar);
     cv::createTrackbar("Gain", "Sonar display", NULL, 255, setGain, &m_sonar);

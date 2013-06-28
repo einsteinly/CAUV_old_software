@@ -4,7 +4,7 @@
 
 int main() {
 
-    CvCapture* capture = cvCaptureFromCAM( CV_CAP_ANY );
+    CvCapture* capture = cvCaptureFromCAM( cv::CAP_ANY );
     if ( !capture ) {
         fprintf( stderr, "ERROR: capture is NULL \n" );
         getchar();
@@ -12,7 +12,7 @@ int main() {
     }
 
     // Create a window in which the captured images will be presented
-    cvNamedWindow( "CAUV OpenCV test", CV_WINDOW_AUTOSIZE );
+    cvNamedWindow( "CAUV OpenCV test", cv::WINDOW_AUTOSIZE );
 
     // Show the image captured from the camera in the window and repeat
     while ( 1 ) {

@@ -60,7 +60,7 @@ class Environment{
             m_image = cv::imread(env_file.c_str()); 
             if(m_image.channels() == 3){
                 cv::Mat tmp;
-                cv::cvtColor(m_image, tmp, CV_RGB2GRAY);
+                cv::cvtColor(m_image, tmp, cv::RGB2GRAY);
                 m_image = tmp;
             }
             if(m_image.channels() != 1 || m_image.depth() != CV_8U)

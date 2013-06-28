@@ -35,7 +35,7 @@ Text::Text(container_ptr_t c, std::string const& text, std::string const& font, 
 void Text::draw(drawtype_e::e){
     if(!font()) return;
 
-    glPushAttrib(GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT |
+    glPushAttrib(GL_cv::COLOR_BUFFER_BIT | GL_CURRENT_BIT |
                  GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT);
     glPushMatrix();
     

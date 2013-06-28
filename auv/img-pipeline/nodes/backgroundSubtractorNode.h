@@ -30,7 +30,8 @@ namespace imgproc{
 class BackgroundSubtractorNode: public Node{
     public:
         BackgroundSubtractorNode(ConstructArgs const& args)
-            : Node(args){
+            : Node(args), 
+              subtractor(cv::createBackgroundSubtractorMOG2()) {
         }
 
         void init(){
@@ -49,22 +50,17 @@ class BackgroundSubtractorNode: public Node{
 
     protected:
 
-        cv::BackgroundSubtractorMOG2 subtractor;
+        cv::Ptr<cv::BackgroundSubtractor> subtractor;
         void doWork(in_image_map_t& inputs, out_map_t& r){
             image_ptr_t img = inputs["image"];
             cv::Mat m = img->mat();
+            float learningRate = param<float>("learningRate");
 
             cv::Mat fg, bg;
-            subtractor(m, fg, param<float>("learningRate"));
-#if CV_MAJOR_VERSION >=2 && CV_MINOR_VERSION >= 3
-            subtractor.getBackgroundImage(bg);
+            subtractor->apply(m, fg, learningRate);
+            subtractor->getBackgroundImage(bg);
             r["background"] = boost::make_shared<Image>(bg);
-            #else
-            #warning background of background subtraction is only available in opencv >= 2.3
-            #endif
-
             r["foreground"] = boost::make_shared<Image>(fg);
-            
         }
     
     // Register this node type

@@ -42,7 +42,7 @@ SimCamera::SimCamera (osg::Node *track_node,
     image->allocateImage(width, height, 1, GL_BGR, GL_UNSIGNED_BYTE);
     image->setOrigin(osg::Image::BOTTOM_LEFT);
     
-    attenuator->camera()->attach(osg::Camera::COLOR_BUFFER0, image, 0);
+    attenuator->camera()->attach(osg::Camera::cv::COLOR_BUFFER0, image, 0);
     camera->setRenderOrder(osg::Camera::POST_RENDER);
     camera->setInheritanceMask(
           osg::CullSettings::ALL_VARIABLES &

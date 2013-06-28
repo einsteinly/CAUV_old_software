@@ -59,7 +59,7 @@ class DrawLinesNode: public Node{
                 if (img.channels() == 1)
                 {
                     // make a colour copy to draw pretty lines on
-                    cvtColor(img, out_mat, CV_GRAY2BGR);
+                    cvtColor(img, out_mat, cv::COLOR_GRAY2BGR);
                 }
                 else if (img.channels() == 3)
                 {
@@ -100,13 +100,13 @@ class DrawLinesNode: public Node{
                         using std::min;
                         using std::max;
                         cv::line(out_mat, c - max(tl,tt)*dir, c + min(tr,tb)*dir,
-                                 cv::Scalar(0, 0, 255), line_width, CV_AA);
+                                 cv::Scalar(0, 0, 255), line_width, cv::LINE_AA);
                     } else {
                         float l = line.length * img_width;
 
                         cv::line(out_mat,
                                  c - l/2 * dir, c + l/2 * dir,
-                                 cv::Scalar(0, 0, 255), line_width, CV_AA);
+                                 cv::Scalar(0, 0, 255), line_width, cv::LINE_AA);
                     }
                 }
                 

@@ -144,7 +144,7 @@ class FileInputNode: public AsynchronousNode{
             lock_t l(m_capture_lock);
             if(m_capture.open(fname)) {
                 m_frame_num = 0;
-                m_fps = m_capture.get(CV_CAP_PROP_FPS);
+                m_fps = m_capture.get(cv::CAP_PROP_FPS);
                 return true;
             } else
                 m_capture.release();

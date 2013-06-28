@@ -178,7 +178,7 @@ cauv::svec_t cauv::Image::encodeBytes() const {
     cv::Mat source = boost::apply_visitor(getPrincipalMat(), m_img);
     cv::Mat converted;
     std::vector<int> compress_params;
-    compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+    compress_params.push_back(cv::IMWRITE_JPEG_QUALITY);
     compress_params.push_back(serializeQuality());
 
     if (source.depth() != CV_8U) {

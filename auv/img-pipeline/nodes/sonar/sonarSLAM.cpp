@@ -79,7 +79,7 @@ static void drawLine(cv::Mat& image,
     const int shift = 0;
     cv::Point a(pt1[0]*(1<<shift), pt1[1]*(1<<shift));
     cv::Point b(pt2[0]*(1<<shift), pt2[1]*(1<<shift));
-    line(image, a, b, col, thickness, CV_AA, shift);
+    line(image, a, b, col, thickness, cv::AA, shift);
 }
 /*
 static void drawPoly(cv::Mat& image,
@@ -93,7 +93,7 @@ static void drawPoly(cv::Mat& image,
         cv_pts.push_back(cv::Point(p[0]*(1<<shift), p[1]*(1<<shift)));
     const int npts = cv_pts.size();
     cv::Point const* pts = &(cv_pts[0]);
-    cv::polylines(image, &pts, &npts, 1, false, col, thickness, CV_AA, shift);
+    cv::polylines(image, &pts, &npts, 1, false, col, thickness, cv::AA, shift);
 }
 */
 
