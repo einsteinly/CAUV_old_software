@@ -5,7 +5,7 @@
 #
 from cauv import messaging
 from cauv.debug import debug, error, warning, info, setDebugName
-from utils import fileCached
+from fileCached import fileCached
 import threading
 import traceback
 import sys
