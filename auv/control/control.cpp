@@ -214,7 +214,6 @@ void update_controller_params(PIDControl &p, T &m) {
     p.thr = m.thr();
     p.scale = m.scale();
     p.errorMAX = m.maxError();
-    p.reset();
 }
 
 void ControlLoops::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr m)
