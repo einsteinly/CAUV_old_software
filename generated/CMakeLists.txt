@@ -54,10 +54,14 @@ add_custom_target (
     COMMENT "Depending on CAUV Banner"
 )
 
+if ("${HG_REPO_LOCATION}" STREQUAL "")
+    set(HG_REPO_LOCATION ${CMAKE_SOURCE_DIR})
+endif()
+
 add_custom_command (
     OUTPUT ${GEND}/version.h
-    COMMAND hg -R ${CMAKE_SOURCE_DIR} summary | sed "s/^/    /" | xxd -i - ${GEND}/version.h
-    DEPENDS ${CMAKE_SOURCE_DIR}/.hg
+    COMMAND hg -R ${HG_REPO_LOCATION} summary | sed "s/^/    /" | xxd -i - ${GEND}/version.h
+    DEPENDS ${HG_REPO_LOCATION}/.hg
     COMMENT "Generating version header"
 )
 
