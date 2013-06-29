@@ -174,7 +174,7 @@ void XsensIMU::readThread()
                         
                         foreach(observer_ptr_t o, m_observers)
                         {
-                            o->onTelemetry(att);
+                            o->onAttitude(att);
                         }
                     }
                 }

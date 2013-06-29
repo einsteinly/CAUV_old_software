@@ -19,7 +19,7 @@ void SimIMU::onStateMessage(StateMessage_ptr m)
 {
     foreach(IMU::observer_ptr_t o, IMU::m_observers)
     {
-        o->onTelemetry(m->orientation());
+        o->onAttitude(m->orientation());
     }
 }
 

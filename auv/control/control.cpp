@@ -30,8 +30,8 @@
 #include "xsens_imu.h"
 #include "sbg_imu.h"
 #include "sim_imu.h"
-#include "mcb.h"
-#include "barracuda_mcb.h"
+#include "pressure_imu.h"
+#include "can_gate.h"
 #include "pid.h"
 
 #include <boost/shared_ptr.hpp>
@@ -47,7 +47,7 @@ class DebugIMUObserver : public IMUObserver
         DebugIMUObserver(unsigned int level = 1) : m_level(level)
         {
         }
-        virtual void onTelemetry(const floatYPR& attitude)
+        virtual void onAttitude(const floatYPR& attitude)
         {
             debug(m_level) << (std::string)(MakeString() << std::fixed << std::setprecision(1) << attitude ); 
         }
@@ -84,9 +84,9 @@ ControlLoops::~ControlLoops()
     stop();
 }
 
-void ControlLoops::set_mcb(boost::shared_ptr<MCB> mcb)
+void ControlLoops::set_can_gate(boost::shared_ptr<CANGate> can_gate)
 {
-    m_mcb = mcb;
+    m_can_gate = can_gate;
 }
 
 void ControlLoops::start()
@@ -103,7 +103,7 @@ void ControlLoops::stop()
     }
 }
 
-void ControlLoops::onTelemetry(const floatYPR& attitude)
+void ControlLoops::onAttitude(const floatYPR& attitude)
 {
     if (m_control_enabled[Controller::Bearing]) {
         float mv = m_controllers[Controller::Bearing].getMV(attitude.yaw);
@@ -270,7 +270,7 @@ void ControlLoops::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_p
 
 void ControlLoops::onMotorRampRateMessage(MotorRampRateMessage_ptr m)
 {
-    // MCB currently handles ramping: don't limit it
+    // MSB currently handles ramping: don't limit it
     //if(m->maxDelta() >= 127)
     //    warning() << "maximum motor delta set exceptionally high:" << m->maxDelta();
     m_max_motor_delta = m->maxDelta();
@@ -422,7 +422,7 @@ void ControlLoops::updateMotorControl()
     mapped_demand.hstern = applyDelta(m_motor_values.hstern, mapped_demand.hstern, m_max_motor_delta);
     mapped_demand.vstern = applyDelta(m_motor_values.vstern, mapped_demand.vstern, m_max_motor_delta);
 
-    m_mcb->setMotorState(mapped_demand);
+    m_can_gate->setMotorState(mapped_demand);
     
     sendIfChangedOrOld(m_motor_values, mapped_demand);
 
@@ -449,7 +449,7 @@ void ControlLoops::sendIfChangedOrOld(MotorID::e mid, int old_value, int new_val
 
 
 namespace cauv{
-class TelemetryBroadcaster : public IMUObserver, public MCBObserver
+class TelemetryBroadcaster : public IMUObserver
 {
     public:
         TelemetryBroadcaster(boost::shared_ptr<Mailbox> mb)
@@ -475,14 +475,14 @@ class TelemetryBroadcaster : public IMUObserver, public MCBObserver
             }
         }
 
-        //from MCB
-        virtual void onDepth(float fore, float aft)
+        //from control
+        void onDepth(float fore, float aft)
         {
             m_depth = (fore + aft) / 2;
         }
 
         //from IMU
-        virtual void onTelemetry(const floatYPR& attitude)
+        virtual void onAttitude(const floatYPR& attitude)
         {
             m_orientation = attitude;
         }
@@ -552,10 +552,9 @@ ControlNode::~ControlNode()
 {
 }
 
-void ControlNode::setXsens(int id)
+void ControlNode::addXsens(int id)
 {
     // start up the Xsens IMU
-    
     boost::shared_ptr<XsensIMU> xsens;
 
     try {
@@ -573,46 +572,48 @@ void ControlNode::setXsens(int id)
         xsens->setObjectAlignmentMatrix(m);
         xsens->configure(om, os);
         
-        m_imu = xsens;
+        m_imus.push_back(xsens);
                 
         info() << "XSens Configured";
     } catch (XsensException& e) {
         error() << "Cannot connect to Xsens: " << e.what();
-        xsens.reset();
     }
 }
 
-void ControlNode::setSBG(std::string const& port, int baud_rate, int pause_time)
+void ControlNode::addSBG(std::string const& port, int baud_rate, int pause_time)
 {
     // start up the SBG IMU
-
     boost::shared_ptr<sbgIMU> sbg;
     try {
         sbg = boost::make_shared<sbgIMU>(port.c_str(), baud_rate, pause_time);
         sbg->initialise();
         info() << "sbg Connected";
-        m_imu = sbg;
+        m_imus.push_back(sbg);
         //info() << "sbg configured";
 
     } catch (sbgException& e) {
         error() << "Cannot connect to sbg: " << e.what ();
-        sbg.reset();
     }
 }
 
-void ControlNode::setSimIMU()
+void ControlNode::addSimIMU()
 {
     boost::shared_ptr<SimIMU> sim = boost::make_shared<SimIMU>();
     addMessageObserver(sim);
-    m_imu = sim;
+    m_imus.push_back(sim);
     subMessage(StateMessage());
 }
 
-void ControlNode::setMCB(std::string const& port)
+void ControlNode::addPressureIMU()
 {
-    boost::shared_ptr<BarracudaMCB> mcb = boost::make_shared<BarracudaMCB>(port, m_controlLoops);
-    addMessageObserver(mcb);
-    m_mcb = mcb;
+    boost::shared_ptr<PressureIMU> psb = boost::make_shared<PressureIMU>();
+    addMessageObserver(psb);
+    m_imus.push_back(psb);
+}
+
+void ControlNode::setCAN(std::string const& ifname)
+{
+    m_can_gate = boost::make_shared<CANGate>(ifname);
 }
 
 void ControlNode::addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos)
@@ -621,14 +622,9 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
     CauvNode::addOptions(desc, pos);
     
     desc.add_options()
-        ("xsens,x", po::value<int>()->default_value(0), "USB device id of the Xsens")
-        ("sbg,b", po::value<std::string>()->default_value("/dev/ttyUSB1"), "TTY device for SBG IG500A")
-        ("imu,i", po::value<std::string>()->default_value("xsens"), "default Xsens USB device or TTY device for SBG IG500A, or both")
-        ("mcb,m", po::value<std::string>()->default_value("barracuda"), "default mcb to use: barracuda or redherring")
-        ("port,p", po::value<std::string>()->default_value("/dev/ttyUSB0"), "TTY file for MCB serial comms")
-
-        ("depth-offset,o", po::value<float>()->default_value(0), "Depth calibration offset")
-        ("depth-scale,s", po::value<float>()->default_value(0), "Depth calibration scale")
+        ("xsens,x", po::value<int>()->implicit_value(0), "USB device id of the Xsens")
+        ("sbg,b", po::value<std::string>()->implicit_value("/dev/ttyUSB1"), "TTY device for SBG IG500A")
+        ("can,c", po::value<std::string>()->default_value("can0"), "CAN interface name")
 
         ("simulation,N", "Run in simulation mode");
 }
@@ -639,39 +635,20 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     int ret = CauvNode::useOptionsMap(vm, desc);
     if (ret != 0) return ret;
 
-    bool use_xsens = false, use_sbg = false, use_sim = false;
-    if (vm["imu"].as<std::string>() == ("xsens")) use_xsens = true;
-    if (vm["imu"].as<std::string>() == ("sbg")) use_sbg = true;
-    if (vm["imu"].as<std::string>() == ("both")){
-        use_xsens = true;    
-        use_sbg = true;
-    }
     if (vm.count("simulation")) {
-        use_sim = true;
-        use_xsens = false;
-        use_sbg = false;
+        if (vm.count("xsens") || vm.count("sbg")) {
+            warning() << "Running in simulation mode, ignoring hardware IMU(s)" << std::endl;
+        }
+        addSimIMU();
+    } else {
+        if (vm.count("xsens")) {
+            addXsens(vm["xsens"].as<int>());
+        }
+        if (vm.count("sbg")){
+            addSBG(vm["sbg"].as<std::string>(), 115200, 10);
+        }
     }
-    if (use_sim) {
-        setSimIMU();
-    }
-    if (vm.count("xsens") && use_xsens) {
-        setXsens(vm["xsens"].as<int>());
-    }
-    if(vm.count("sbg") && use_sbg){
-        setSBG(vm["sbg"].as<std::string>(), 115200, 10);
-    }
-    setMCB(vm["port"].as<std::string>());
-
-#if 0
-    if (vm.count("depth-offset") && vm.count("depth-scale")) {
-        float offset = vm["depth-offset"].as<float>();
-        float scale  = vm["depth-scale"].as<float>();
-        m_mcb->onDepthCalibrationMessage(boost::make_shared<DepthCalibrationMessage>(offset,scale,offset,scale));
-    }
-    else if (vm.count("depth-offset") || vm.count("depth-scale")) {
-        warning() << "Need both offset and depth for calibration; ignoring calibration input";   
-    }
-#endif
+    setCAN(vm["can"].as<std::string>());
 
     return 0;
 }
@@ -680,26 +657,23 @@ void ControlNode::onRun()
 {
     CauvNode::onRun();
    
-    if (m_mcb) {
-        m_controlLoops->set_mcb(m_mcb);
-        
-        addMessageObserver(boost::make_shared<DebugMessageObserver>(2));
+    addMessageObserver(boost::make_shared<DebugMessageObserver>(2));
 
-        m_mcb->addObserver(m_telemetryBroadcaster);
-        m_mcb->addObserver(m_controlLoops);
-        
-        m_mcb->start();
+    if (m_can_gate) {
+        m_controlLoops->set_can_gate(m_can_gate);
+        m_can_gate->start();
     }
     else {
-        warning() << "MCB not connected. No MCB comms available, so no motor control.";
+        warning() << "CAN not connected. No CAN comms available, so no motor control.";
     }
 
-    if (m_imu) {
-        m_imu->addObserver(boost::make_shared<DebugIMUObserver>(5));
-        m_imu->addObserver(m_telemetryBroadcaster);
-        m_imu->addObserver(m_controlLoops);
-
-        m_imu->start();
+    if (m_imus.size() > 0) {
+        for (auto& imu : m_imus) {
+            imu->addObserver(boost::make_shared<DebugIMUObserver>(5));
+            imu->addObserver(m_telemetryBroadcaster);
+            imu->addObserver(m_controlLoops);
+            imu->start();
+        }
     }
     else {
         warning() << "IMU not connected. Telemetry not available.";
