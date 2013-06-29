@@ -33,8 +33,8 @@ barracuda_processes = [
 ]
 
 laptop_processes = [
-    Process('gamepad', ['gamepad_server.py']),
-    Process('gui', ['gui'])
+    Process('gamepad', ['gamepad_server.py'], autostart=True),
+    Process('gui', ['gui'], autostart=True)
 ]
 
 def get_arguments(group):
