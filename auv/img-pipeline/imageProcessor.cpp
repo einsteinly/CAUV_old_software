@@ -326,17 +326,16 @@ void ImageProcessor::onSetPipelineMessage(SetPipelineMessage_ptr m){
             if(!to) throw id_error(MakeString() << "invalid node:" << node_connection.first);
             std::list<input_id> node_params_set;
             
-            for(Node::msg_node_input_map_t::const_iterator arc_map = node_connection.second.begin();
-                arc_map != node_connection.second.end(); arc_map++){
+            for(auto const & connection : node_connection.second){
                 try{
-                    if(arc_map->second.node == 0){
+                    if(connection.second.node == 0){
                         continue;
                     }
-                    node_ptr_t from = lookup(old_id2new_id[arc_map->second.node]);
-                    if(!from) throw id_error(MakeString() << "invalid node:" << arc_map->second.node);
+                    node_ptr_t from = lookup(old_id2new_id[connection.second.node]);
+                    if(!from) throw id_error(MakeString() << "invalid node:" << connection.second.node);
                     
-                    output_id output = arc_map->second.output;
-                    input_id input = arc_map->first.input;
+                    output_id output = connection.second.output;
+                    input_id input = connection.first.input;
                     
                     from->setOutput(output, to, input);
                     to->setInput(input, from, output);
@@ -361,11 +360,10 @@ void ImageProcessor::onSetPipelineMessage(SetPipelineMessage_ptr m){
             }
             std::list<input_id> exclude_params = exclude_params_it->second;
             node_ptr_t n = lookup(old_id2new_id[node_param.first]);
-            for(Node::msg_node_param_map_t::const_iterator param_map = node_param.second.begin();
-                param_map != node_param.second.end(); param_map++){
+            for(auto const & param : node_param.second){
                 std::list<input_id>::iterator ep_it;
                 for(ep_it = exclude_params.begin(); ep_it != exclude_params.end(); ep_it++){
-                    if(*ep_it == param_map->first.input){
+                    if(*ep_it == param.first.input){
                         break;
                     }
                 }
@@ -374,7 +372,7 @@ void ImageProcessor::onSetPipelineMessage(SetPipelineMessage_ptr m){
                     continue;
                 }
                 try{
-                    n->setParam(param_map->first.input, param_map->second);
+                    n->setParam(param.first.input, param.second);
                 }catch(std::exception& e){
                     error() << __func__ << ":" << e.what();
                 }
