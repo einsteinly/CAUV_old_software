@@ -16,9 +16,10 @@ include_directories (${PYTHON_INCLUDE_DIRS})
 # Python package path (code from opencv)
 if ("${PYTHON_VERSION_MAJOR_MINOR}" STREQUAL "")
     execute_process(COMMAND ${PYTHON_EXECUTABLE} --version ERROR_VARIABLE PYTHON_VERSION_FULL OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+    string(REGEX MATCH "[0-9].[0-9]" PYTHON_VERSION_MAJOR_MINOR "${PYTHON_VERSION_FULL}")
 endif()
 
-string(REGEX MATCH "[0-9].[0-9]" PYTHON_VERSION_MAJOR_MINOR "${PYTHON_VERSION_FULL}")
 if(UNIX)
     if(NOT EXISTS lib/python${PYTHON_VERSION_MAJOR_MINOR}/site-packages AND EXISTS lib/python${PYTHON_VERSION_MAJOR_MINOR}/dist-packages)
         # Fuck you Debian.
