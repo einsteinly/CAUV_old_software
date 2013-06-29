@@ -127,7 +127,7 @@ class CameraManager{
                 virtual void captureToMem(
                     uint8_t *p, uint32_t& pitch, uint32_t w, uint32_t h, int32_t type
                 ) = 0;
-                virtual ~Capture(){}
+                virtual ~Capture(){std::cerr << "~Capture" << std::endl;}
                 virtual bool ok() const = 0;
         };
         class CVCapture: public Capture, public cv::VideoCapture{
