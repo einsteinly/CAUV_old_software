@@ -185,8 +185,8 @@ void Arc::promotePending(AbstractArcSink *to){
 QPainterPath Arc::shape() const{
     if(m_cached_shape_invalid){
         m_cached_shape = m_back->shape() | m_pending_back->shape();
-        for(sink_end_map_t::const_iterator i = m_ends.begin(); i != m_ends.end(); i++)
-            m_cached_shape |= i->second->shape().translated(i->second->pos());
+        for(auto const & end : m_ends)
+            m_cached_shape |= end.second->shape().translated(end.second->pos());
         m_cached_shape_invalid = false;
     }
     return m_cached_shape;

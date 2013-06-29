@@ -309,8 +309,8 @@ void ControlLoops::onSetMotorMapMessage(SetMotorMapMessage_ptr m)
     debug() << "Set motor mapping:" << m->motor() << ":" << m->mapping();
 
     double test_values[] = {-200, -150, -100, -50, -4, 0, 3, 50, 100, 150, 200};
-    for(int i = 0; i < 11; i++)
-        debug(5) << "new map example: " << test_values[i] << "->" << motorMap(test_values[i], m->motor());
+    for(auto & test_value : test_values)
+        debug(5) << "new map example: " << test_value << "->" << motorMap(test_value, m->motor());
 }
 
 void ControlLoops::motorControlLoop()

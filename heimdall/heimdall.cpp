@@ -55,9 +55,8 @@ std::ostream &operator<<(std::ostream &os, const conn_list_t &conn_list) {
 
 std::ostream &operator<<(std::ostream &os, const subscriptions_t &subs) {
     os << "[";
-    for(subscriptions_t::const_iterator it = subs.begin();
-        it != subs.end(); it++) {
-        os << *it << ", ";
+    for(auto const & sub : subs) {
+        os << sub << ", ";
     }
     os << "null";
     os << "]";
@@ -66,12 +65,11 @@ std::ostream &operator<<(std::ostream &os, const subscriptions_t &subs) {
 
 std::ostream &operator<<(std::ostream &os, const stats_t &stats) {
     os << "[";
-    for(stats_t::const_iterator it = stats.begin();
-        it != stats.end(); it++) {
+    for(auto const & stat : stats) {
 
-        os << "{ \"id\": " << it->first
-           << ", \"messages\": " << it->second.first
-           << ", \"bytes\": " << it->second.second
+        os << "{ \"id\": " << stat.first
+           << ", \"messages\": " << stat.second.first
+           << ", \"bytes\": " << stat.second.second
            << "}";
         os << ", ";
     }

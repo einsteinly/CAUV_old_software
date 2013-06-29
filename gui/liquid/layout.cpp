@@ -41,28 +41,28 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
     cauv::bimap<std::string, QGraphicsItem*> node_names;
     int next_name = 0;
 
-    for(std::set<AbstractArcSink*>::const_iterator i = g_sinks.begin(); i != g_sinks.end(); i++)
-        if((*i)->scene() == scene){
-            QGraphicsItem* node = (*i)->ultimateParent();
+    for(auto const & g_sink : g_sinks)
+        if((g_sink)->scene() == scene){
+            QGraphicsItem* node = (g_sink)->ultimateParent();
             // arcs are also top-level items, but the override ultimateParent
             // to return NULL
             if(!node)
                 continue;
-            sink_parent_lut[*i] = node;
-            if(!nodes.count(*i)){
+            sink_parent_lut[g_sink] = node;
+            if(!nodes.count(g_sink)){
                 node_names.insert(node, mkStr() << next_name++);
                 nodes.insert(node);
             }
         }
-    for(std::set<AbstractArcSource*>::const_iterator i = g_srcs.begin(); i != g_srcs.end(); i++)
-        if((*i)->scene() == scene){
-            QGraphicsItem* node = (*i)->ultimateParent();
+    for(auto const & g_src : g_srcs)
+        if((g_src)->scene() == scene){
+            QGraphicsItem* node = (g_src)->ultimateParent();
             // arcs are also top-level items, but the override ultimateParent
             // to return NULL
             if(!node)
                 continue;
-            src_parent_lut[*i] = node;
-            if(!nodes.count(*i)){
+            src_parent_lut[g_src] = node;
+            if(!nodes.count(g_src)){
                 node_names.insert(node, mkStr() << next_name++);
                 nodes.insert(node);
             }

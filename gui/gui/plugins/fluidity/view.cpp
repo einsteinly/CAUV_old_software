@@ -325,8 +325,8 @@ void FView::initMenu(MenuNode& parent, QAction_ptr_set actions){
         "Background", "Fit", "Segment", "KMean", "Colour", "Mean", "Cluster"
     };
     std::vector<std::string> split_words;
-    for(std::size_t i = 0; i < sizeof(split_words_init) / sizeof(char*); i++){
-        split_words.push_back(split_words_init[i]);
+    for(auto & word : split_words_init){
+        split_words.push_back(word);
     }
     
     const int submenu_split_min = 2;
@@ -392,8 +392,8 @@ void FView::setSceneRectToContents(){
     
     if(nodes.size()){
         QRectF nodes_bounding_rect = nodes.at(0)->mapToScene(nodes.at(0)->boundingRect()).boundingRect();
-        for(int i = 0; i < nodes.size(); i++){
-            nodes_bounding_rect |= nodes.at(i)->mapToScene(nodes.at(i)->boundingRect()).boundingRect();
+        for(auto & node : nodes){
+            nodes_bounding_rect |= node->mapToScene(node->boundingRect()).boundingRect();
         }
         fitInView(nodes_bounding_rect.adjusted(-20, -20, 20, 20), Qt::KeepAspectRatio);
 
