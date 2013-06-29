@@ -57,7 +57,7 @@ class DrawCornersNode: public Node{
             const float width = img.cols;
             const float height = img.rows;
             
-            foreach (const Corner& c, corners)
+            for (const Corner& c : corners)
             {
                 cv::KeyPoint kp;
                 kp.pt = cv::Point2f(c.centre.x * width, c.centre.y * height);

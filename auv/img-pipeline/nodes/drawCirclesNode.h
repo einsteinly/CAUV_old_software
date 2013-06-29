@@ -56,7 +56,7 @@ class DrawCirclesNode: public Node{
                 }
                 const float width = out.cols;
                 const float height = out.rows;
-                foreach(Circle const& p, m_circles){
+                for (Circle const& p : m_circles){
                     debug(3) << "draw circle:" << p;
                     cv::circle(
                         out,

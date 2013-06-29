@@ -7,7 +7,6 @@
 #include <opencv2/highgui/highgui_c.h>
 
 #include <utility/bash_cout.h>
-#include <utility/foreach.h>
 #include <utility/time.h>
 #include <debug/cauv_debug.h>
 
@@ -35,7 +34,7 @@ CameraID::e Camera::id() const
 
 void Camera::broadcastImage(const cv::Mat& img)
 {
-    foreach(observer_ptr_t o, m_observers)
+    for (observer_ptr_t o : m_observers)
     {
         o->onReceiveImage(m_id, img);
     }

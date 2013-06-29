@@ -94,11 +94,11 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
     try{
         node_ptr_t node = NodeFactoryRegister::create(*m_scheduler, *this, m_name, m->nodeType());
 
-        foreach(NodeInputArc const& a, m->parents()){
+        for (NodeInputArc const& a : m->parents()){
             node->setInput(a.input, lookup(a.src.node), a.src.output);
             lookup(a.src.node)->setOutput(a.src.output, node, a.input);
         }
-        foreach(NodeOutputArc const& a, m->children()){
+        for (NodeOutputArc const& a : m->children()){
             node->setOutput(a.output, lookup(a.dst.node), a.dst.input);
             lookup(a.dst.node)->setInput(a.dst.input, node , a.output);
         }
@@ -158,9 +158,9 @@ void ImageProcessor::removeNode(node_id const& id){
     /* since the graph is linked both ways we have to unlink the node from
      * it's neighbours _and_ unlink the neighbours from the node
      */
-    BOOST_FOREACH(node_ptr_t p, n->parents())
+    for (node_ptr_t p : n->parents())
         if(p) p->clearOutputs(n);
-    BOOST_FOREACH(node_ptr_t p, n->children())
+    for (node_ptr_t p : n->children())
         if(p) p->clearInputs(n);
     n->clearOutputs();
     n->clearInputs();

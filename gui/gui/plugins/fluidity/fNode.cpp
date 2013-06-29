@@ -16,7 +16,6 @@
 #include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
 #include <utility/qstring.h>
-#include <utility/foreach.h>
 #include <utility/time.h>
 #include <utility/streamops/pair.h>
 
@@ -108,7 +107,7 @@ static QString nodeTypeDesc(cauv::NodeType::e const& type){
 }
 
 static int countLocalInputsWithName(std::string const& name, FNode::msg_node_param_map_t const& map){
-    foreach(FNode::msg_node_param_map_t::value_type const& v, map)
+    for (FNode::msg_node_param_map_t::value_type const& v : map)
         if(v.first.input == name)
             return 1;
     return 0;
@@ -242,14 +241,14 @@ void FNode::setOutputLinks(msg_node_output_map_t const& outputs){
 
 void FNode::setParams(msg_node_param_map_t const& params){
     str_inparam_map_t new_m_params;
-    foreach(str_inparam_map_t::value_type const &i, m_params)
+    for (str_inparam_map_t::value_type const &i : m_params)
         if(!countLocalInputsWithName(i.first, params)){
             removeItem(i.second);
         }else{
             new_m_params.insert(i);
         }
     m_params = new_m_params;
-    foreach(msg_node_param_map_t::value_type const& j, params){
+    for (msg_node_param_map_t::value_type const& j : params){
         str_inparam_map_t::iterator k = m_params.find(j.first.input);    
         if(k == m_params.end()){
             debug() << BashColour::Blue << "FNode:: new param:"
@@ -274,7 +273,7 @@ void FNode::setParams(msg_node_param_map_t const& params){
 
 void FNode::setParamLinks(msg_node_input_map_t const& inputs){
     typedef msg_node_input_map_t im_t;
-    foreach(im_t::value_type const& j, inputs){
+    for (im_t::value_type const& j : inputs){
         str_inparam_map_t::const_iterator k = m_params.find(j.first.input);
         // if connected, add the arc to this parameter's input:
         if(k == m_params.end()) // input not param

@@ -129,7 +129,7 @@ class BlobNode: public Node{
             }
             std::vector<Circle> circles;
             circles.reserve(blobs.size());
-            foreach(const cv::KeyPoint& b, blobs) {
+            for (const cv::KeyPoint& b : blobs) {
                 circles.push_back(Circle(floatXY(b.pt.x / width,
                                                  b.pt.y / height),
                                                  b.size / ((width + height) / 2)));

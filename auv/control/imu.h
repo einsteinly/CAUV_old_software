@@ -16,8 +16,8 @@ namespace cauv{
 class IMUObserver
 {
     public:
-        virtual void onAttitude(const floatYPR& attitude) {};
-        virtual void onDepth(float fore, float aft) {};
+        virtual void onAttitude(const floatYPR& /*attitude*/) {};
+        virtual void onDepth(float /*fore*/, float /*aft*/) {};
 };
 
 class IMU : public Observable<IMUObserver>, boost::noncopyable

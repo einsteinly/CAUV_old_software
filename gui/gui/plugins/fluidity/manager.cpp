@@ -15,7 +15,6 @@
 #include <common/cauv_node.h>
 #include <debug/cauv_debug.h>
 #include <utility/bash_cout.h>
-#include <utility/foreach.h>
 
 #include <generated/types/PipelineGroup.h>
 #include <generated/types/Pl_GuiGroup.h>
@@ -246,7 +245,7 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
 
     typedef QMap<QGraphicsView*,QGraphicsView::ViewportUpdateMode> view_updatestate_qmap;
     view_updatestate_qmap saved_view_update_states;
-    foreach(QGraphicsView* view, m_scene->views()){
+    for (QGraphicsView* view : m_scene->views()){
         saved_view_update_states.insert(view, view->viewportUpdateMode());
         view->setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
     }
@@ -265,7 +264,7 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
             inconsistency_detected = true;
     }
     if(!inconsistency_detected){
-        foreach(node_id_t id, nodes_for_removal)
+        for (node_id_t id : nodes_for_removal)
             removeNode(id);
     
         // !!! TODO: remove arcs that shouldn't exist

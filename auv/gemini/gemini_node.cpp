@@ -20,7 +20,6 @@
 #include <common/msg_classes/image.h>
 #include <utility/threadsafe-observable.h>
 #include <utility/rounding.h>
-#include <utility/foreach.h>
 #include <utility/string.h>
 #include <utility/async.h>
 #include <generated/types/TimeStamp.h>
@@ -687,7 +686,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     the_sonar->prepareNextPing("ping tail", the_sonar->m_cancel_timeout);
 
                 boost::lock_guard<boost::recursive_mutex> l(the_sonar->m_observers_lock);
-                foreach(observer_ptr_t& p, the_sonar->m_observers){
+                for (observer_ptr_t& p : the_sonar->m_observers){
                     if(ping_head)
                         p->onCGemPingHead(ping_head, the_sonar->range());
                     else if(ping_data)

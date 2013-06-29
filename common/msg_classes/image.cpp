@@ -17,7 +17,6 @@
 
 #include <debug/cauv_debug.h>
 #include <utility/serialisation.h>
-#include <utility/foreach.h>
 #include <utility/rounding.h>
 #include <generated/types/TimeStamp.h>
 #include <generated/types/UID.h>
@@ -58,7 +57,7 @@ cv::Point2f cauv::NonUniformPolarMat::xyAt(int r, int phi, float& range, float& 
 cauv::PyramidMat cauv::PyramidMat::clone() const{
     PyramidMat r;
     r.levels.reserve(levels.size());
-    foreach(cv::Mat m, levels)
+    for(cv::Mat m : levels)
         r.levels.push_back(m.clone());
     return r;
 }
@@ -95,7 +94,7 @@ struct getImageSizeInBits: boost::static_visitor<float>{
     }
     float operator()(PyramidMat a) const{
         float r = 0;
-        foreach(cv::Mat const& m, a.levels)
+        for(cv::Mat const& m : a.levels)
             r += operator()(m);
         return r;
     }

@@ -14,7 +14,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <utility/bash_cout.h>
-#include <utility/foreach.h>
 #include <debug/cauv_debug.h>
 
 using namespace cauv;
@@ -186,7 +185,7 @@ void CameraManager::didClose(CameraClientConnection *c){
         if(!i->second.size())
             cameras_for_closing.push_back(i->first);
     }
-    foreach(uint32_t c, cameras_for_closing){
+    for(uint32_t c : cameras_for_closing){
         debug() << "camera" << c << "is now unused";
         m_open_cameras.erase(c);
         m_camera_users.erase(c);
@@ -194,7 +193,7 @@ void CameraManager::didClose(CameraClientConnection *c){
 }
 
 void CameraManager::release(std::list<uint64_t> const& images){
-    foreach(uint64_t const& i, images){
+    for(uint64_t const& i : images){
         std::cout << BashColour::Red << "-" << BashColour::None << std::flush;
         m_segment.deallocate(m_segment.get_address_from_handle(handle_t(i)));
     }

@@ -73,7 +73,7 @@ class RotateNode: public Node{
                 // rotate simply by adding onto the bearing of each image column:
                 r.bearings = boost::make_shared< std::vector<float> >();
                 r.bearings->reserve(a.bearings->size());
-                foreach(float const& b, *a.bearings)
+                for (float const& b : *a.bearings)
                     r.bearings->push_back(b + m_theta);
                 return r;
             }
