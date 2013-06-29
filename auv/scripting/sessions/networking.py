@@ -9,10 +9,11 @@ from utils.watchfuncs import *
 def get_arguments(group):
     group.add_argument('--hw', choices = ['sim', 'barracuda'], help="Hardware to run on",
                         default = 'laptop' if socket.gethostname().find('barracuda') == -1 else 'barracuda')
+    group.add_argument('--sub_ip', default = '10.0.0.2')
 
 def get_processes(args):
     if args.hw == 'laptop':
-        peer = '10.0.0.2'
+        peer = args.sub_ip
     elif args.hw == 'barracuda':
         peer = '10.0.0.3'
     processes = [

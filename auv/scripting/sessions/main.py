@@ -20,14 +20,14 @@ barracuda_processes = [
                 death = restart(), restart = restart_also('control')),
     Process('sonar', ['gemini_node', '--sonar_id', '17'], # 17 == serial number of gemini sonar
                 death = restart()),
-    Process('camera_setup', ['setup_cameras.sh']),
     Process('camera_server', ['camera_server']),
     Process('pipeline', ['img-pipeline', '-n', 'ai'], node_pid('img-pipe'),
-                death = restart(), prereq = depends_on('camera_server', 'camera_setup')),
+                death = restart(), prereq = depends_on('camera_server')),
     Process('p-resort', ['penultimate-resort.py']),
     Process('setup', ['true'],
                 death = ignore, prereq = depends_on('pipeline', 'sonar', 'control', 'daemon-man', 'p-resort')),
     Process('task_manager', ['task_manager.py'], node_pid('task_manager'), death = restart(), prereq = depends_on('pipeline')),
+    Process('temp_monitor', ['temperaturemonitor.py'], node_pid('temperaturemonitor.py'), death = restart(4))
     #TODO add different pipeline, configure options properly for real environment (see location manager options)
     #Process('location_manager', ['location_manager.py'], node_pid('location_manager'), death = restart())
 ]
@@ -38,8 +38,7 @@ laptop_processes = [
 ]
 
 def get_arguments(group):
-    group.add_argument('--hw', choices = ['laptop', 'barracuda'], help="Hardware to run on",
-                        default = 'laptop' if socket.gethostname().find('barracuda') == -1 else 'barracuda')
+    networking.get_arguments(group)
 
 def get_processes(args):
     p = networking.get_processes(args)

@@ -28,7 +28,7 @@ processes = [
 ]
 
 def get_arguments(group):
-    group.add_argument('--map', choices = ['rivermap', 'saucemap'], help="Hardware to run on",
+    group.add_argument('--map', choices = ['rivermap', 'saucemap'], help="Simulation map to use",
                         default = 'saucemap')
 def get_processes(args):
     if args.map == 'rivermap':
