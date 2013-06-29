@@ -111,7 +111,7 @@ std::set<AbstractArcSink *> Arc::sinks(){
 }
 
 QGraphicsItem* Arc::ultimateParent(){
-    return NULL;
+    return nullptr;
 }
 
 void Arc::setFrom(AbstractArcSource *from){
@@ -230,7 +230,7 @@ void Arc::paint(QPainter *painter,
 
 QVariant Arc::itemChange(GraphicsItemChange change, QVariant const& value){
     if(change == ItemSceneHasChanged && scene())
-        setParentItem(NULL);
+        setParentItem(nullptr);
     return AbstractArcSourceInternal::itemChange(change, value);
 }
 

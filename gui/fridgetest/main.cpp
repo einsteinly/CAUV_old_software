@@ -18,7 +18,7 @@
 
 class TestGraphicsItem2: public QGraphicsItem{
     public:
-        TestGraphicsItem2(QGraphicsItem* parent=0)
+        TestGraphicsItem2(QGraphicsItem* parent=nullptr)
             : QGraphicsItem(parent),
               m_outline(0,0,40,40),
               m_ellipse(new QGraphicsEllipseItem(0, 0, 20, 16, this)),
@@ -42,7 +42,7 @@ class TestGraphicsItem2: public QGraphicsItem{
             return m_outline;
         }
 
-        virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* o, QWidget* w=0){
+        virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* o, QWidget* w=nullptr){
             //std::cout << "TestGraphicsItem2::paint!" << std::endl;
             Q_UNUSED(o);
             Q_UNUSED(w);
@@ -59,7 +59,7 @@ class TestGraphicsItem2: public QGraphicsItem{
 
 class TestGraphicsItem: public QGraphicsItem{
     public:
-        TestGraphicsItem(QGraphicsItem* parent=0)
+        TestGraphicsItem(QGraphicsItem* parent=nullptr)
             : QGraphicsItem(parent),
               m_outline(0,0,40,40),
               m_ellipse(new QGraphicsEllipseItem(0, 0, 30, 40, this)),
@@ -88,7 +88,7 @@ class TestGraphicsItem: public QGraphicsItem{
             return m_outline;
         }
 
-        virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* o, QWidget* w=0){
+        virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* o, QWidget* w=nullptr){
             //std::cout << "TestGraphicsItem::paint!" << std::endl;
             Q_UNUSED(o);
             Q_UNUSED(w);

@@ -47,7 +47,7 @@ void liquid::Shadow::setBrush(QBrush brush){
         }
         m_blur_effect_applied = true;
     }else if(m_blur_effect_applied){
-        m_shape->setGraphicsEffect(NULL);
+        m_shape->setGraphicsEffect(nullptr);
         m_blur_effect_applied = false;
     }
 }

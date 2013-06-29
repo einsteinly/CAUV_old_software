@@ -52,7 +52,7 @@ QSizeF GraphLayoutItem::sizeHint(Qt::SizeHint which, const QSizeF &constraint) c
 class LiquidGraphNode : public ConnectedNode,
                         public liquid::RejectingConnectionSink {
 public:
-    LiquidGraphNode(boost::shared_ptr<NumericNodeBase> node, QGraphicsItem *parent = 0) :
+    LiquidGraphNode(boost::shared_ptr<NumericNodeBase> node, QGraphicsItem *parent = nullptr) :
         ConnectedNode(node, Graph_Node_Style(), parent),
         m_arc_sink(new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(), this)){
 
@@ -60,7 +60,7 @@ public:
     }
 
     liquid::ArcSource * getSourceFor(boost::shared_ptr<Node> const&) const{
-        return NULL; //no sources in this node
+        return nullptr; //no sources in this node
     }
 
     liquid::ArcSink * m_arc_sink;

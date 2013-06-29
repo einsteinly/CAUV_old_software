@@ -56,7 +56,7 @@ void FNodeInput::setCollapsed(bool state){
 }
 
 void FNodeInput::addWidget(QGraphicsWidget* w){
-    w->setParent(0);
+    w->setParent(nullptr);
     hLayout()->addItem(w);
 }
 
@@ -179,12 +179,12 @@ FNodeParamInput::FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode*
       m_subtype(input.subType),
       m_compatible_subtypes(input.compatibleSubTypes.begin(), input.compatibleSubTypes.end()),
       m_model_node(),
-      m_view(NULL),
-      m_view_proxy(NULL){
+      m_view(nullptr),
+      m_view_proxy(nullptr){
     // don't want a label:
     removeWidget(m_text);
     m_text->deleteLater();
-    m_text = NULL;
+    m_text = nullptr;
 }
 FNodeParamInput::~FNodeParamInput(){
     // if it isn't in the layout, then need to delete the view proxy

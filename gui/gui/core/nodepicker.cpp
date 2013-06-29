@@ -40,7 +40,7 @@ public:
 class NodePathCompleter : public QCompleter {
 public:
 
-    NodePathCompleter(QAbstractItemModel * model, QWidget * parent = NULL) :
+    NodePathCompleter(QAbstractItemModel * model, QWidget * parent = nullptr) :
             QCompleter(model, parent){
     }
 

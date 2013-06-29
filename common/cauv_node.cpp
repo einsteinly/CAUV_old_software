@@ -158,7 +158,7 @@ struct DBGLevelObserver: MessageObserver
 
 int CauvNode::defaultOptions()
 {
-    return parseOptions(0, NULL);
+    return parseOptions(0, nullptr);
 }
 
 int CauvNode::parseOptions(int argc, char** argv)

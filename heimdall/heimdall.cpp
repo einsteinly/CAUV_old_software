@@ -157,7 +157,7 @@ class XPubSubPair {
 XPubSubPair::XPubSubPair(void *ctx) :
     xsub(xs_socket(ctx, XS_XSUB)),
     xpub(xs_socket(ctx, XS_XPUB)),
-    opposite(NULL) {
+    opposite(nullptr) {
     int linger = 300;
     assert(xsub.skt);
     assert(xpub.skt);
@@ -168,7 +168,7 @@ XPubSubPair::XPubSubPair(void *ctx) :
 
 XPubSubPair::~XPubSubPair(void) {
     if (opposite) {
-        opposite->opposite = NULL;
+        opposite->opposite = nullptr;
     }
     xs_close(xsub.skt);
     xs_close(xpub.skt);
@@ -260,7 +260,7 @@ DaemonContext::DaemonContext(const std::string vehicle_name, const std::string w
 
     //seed random number generator
     struct timeval tv;
-    assert(gettimeofday(&tv,NULL) == 0);
+    assert(gettimeofday(&tv,nullptr) == 0);
     srand(getpid() + tv.tv_sec * 1000000 + tv.tv_usec);
     daemon_id = rand();
 
@@ -367,7 +367,7 @@ void DaemonContext::handle_control_message(void) {
     reply << "{";
     std::string error;
     if (command == "CONNECT" || command == "BIND") {
-        SocketInfo *socket = NULL;
+        SocketInfo *socket = nullptr;
         std::string socket_name;
         ctrl_iss >> socket_name;
         if (socket_name == "NET_XPUB") {

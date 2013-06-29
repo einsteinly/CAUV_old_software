@@ -52,10 +52,10 @@ FView::FView(boost::shared_ptr<CauvNode> node,
       m_cauv_node(node),
       m_manager(),
       m_contextmenu_root(),
-      m_scenerect_update_timer(NULL),
+      m_scenerect_update_timer(nullptr),
       m_mode(TopLevel){
 
-    init(pipeline_name, model_parent, NULL, boost::shared_ptr<Manager>(), parent);
+    init(pipeline_name, model_parent, nullptr, boost::shared_ptr<Manager>(), parent);
 }
 
 FView::FView(boost::shared_ptr<CauvNode> node,
@@ -68,7 +68,7 @@ FView::FView(boost::shared_ptr<CauvNode> node,
       m_cauv_node(node),
       m_manager(),
       m_contextmenu_root(),
-      m_scenerect_update_timer(NULL),
+      m_scenerect_update_timer(nullptr),
       m_mode(TopLevel){
     
     init(pipeline_name, model_parent, s, m, parent);
@@ -212,7 +212,7 @@ void FView::_initInMode(Mode const& mode){
 
         initMenu();
     }else{
-        setViewport(0);
+        setViewport(nullptr);
         setRenderHints(
             QPainter::Antialiasing |
             QPainter::TextAntialiasing |

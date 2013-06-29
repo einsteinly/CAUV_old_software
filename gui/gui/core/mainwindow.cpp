@@ -47,10 +47,10 @@ using namespace cauv::gui;
 
 StackWidget::StackWidget(QWidget* parent)
     : QWidget(parent),
-      m_title(NULL),
-      m_stack_widget(NULL),
+      m_title(nullptr),
+      m_stack_widget(nullptr),
       m_stack(),
-      m_titleAnimation(NULL){
+      m_titleAnimation(nullptr){
     
     m_title = new QLabel(this);
     m_stack_widget = new QStackedWidget(this);
@@ -113,7 +113,7 @@ CauvMainWindow::CauvMainWindow(QApplication * app) :
     m_application(app),
     m_actions(boost::make_shared<GuiActions>()),
     ui(new Ui::MainWindow),
-    m_view_stack(NULL){
+    m_view_stack(nullptr){
 
     ui->setupUi(this);
 

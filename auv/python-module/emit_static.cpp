@@ -42,7 +42,7 @@ class pyListWrapper : boost::noncopyable{
         }
     }
     char ** get() {
-        return length? char_list : NULL;
+        return length? char_list : nullptr;
     }
     bp::ssize_t len() {
         return length;

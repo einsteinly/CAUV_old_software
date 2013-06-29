@@ -69,7 +69,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     m_status_highlight->setZValue(-100);
 
     Button *close_button = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/x_button"), NULL, this
+       QRectF(0,0,24,24), QString(":/resources/icons/x_button"), nullptr, this
     );
     addButton("close", close_button);
 

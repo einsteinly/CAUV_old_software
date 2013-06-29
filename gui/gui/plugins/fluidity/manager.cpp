@@ -135,7 +135,7 @@ fnode_ptr Manager::lookup(node_id_t const& id){
     node_id_map_t::right_const_iterator i = m_nodes.find(id);
     if(i != m_nodes.right().end())
         return i->left;
-    return NULL;
+    return nullptr;
 }
 
 void Manager::sendMessage(boost::shared_ptr<const Message> m) const{
@@ -443,7 +443,7 @@ void Manager::removeNode(node_id_t const& id){
 
 fnode_ptr Manager::addNode(NodeType::e const& type, node_id_t const& id){
     debug() << BashColour::Green << "addNode:" << type << id;
-    fnode_ptr r = NULL;
+    fnode_ptr r = nullptr;
     if(isInvalid(type)){
         warning() << "ignoring invalid node type" << type;
     }else if(isInvalid(id)){
@@ -465,7 +465,7 @@ fnode_ptr Manager::addNode(NodeType::e const& type, node_id_t const& id){
 fnode_ptr Manager::addNode(NodeAddedMessage_ptr m){
     const NodeType::e type = m->nodeType();
     const node_id_t id = m->nodeId();
-    fnode_ptr r = NULL;
+    fnode_ptr r = nullptr;
     debug() << BashColour::Green << "addNode:" << type << id;
     if(isInvalid(type)){
         warning() << "ignoring invalid node type" << type;

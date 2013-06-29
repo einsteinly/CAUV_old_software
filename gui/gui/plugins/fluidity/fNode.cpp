@@ -116,7 +116,7 @@ static int countLocalInputsWithName(std::string const& name, FNode::msg_node_par
 // - FNode
 
 FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
-    : liquid::LiquidNode(F_Node_Style(), NULL), 
+    : liquid::LiquidNode(F_Node_Style(), nullptr), 
       ManagedElement(m),
       m_node_id(id),
       m_type(type),
@@ -137,7 +137,7 @@ FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
 
 
 FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
-    : liquid::LiquidNode(F_Node_Style(), NULL),
+    : liquid::LiquidNode(F_Node_Style(), nullptr),
       ManagedElement(m),
       m_node_id(p->nodeId()),
       m_type(p->nodeType()),
@@ -198,7 +198,7 @@ void FNode::setInputLinks(msg_node_input_map_t const& inputs){
         m_input_links.push_back(NodeInputArc(j->first.input, j->second));
 
         fnode_ptr from = manager().lookup(j->second.node);
-        FNodeOutput* output = NULL;
+        FNodeOutput* output = nullptr;
         // !!! TODO:
         //k->second->disconnect();
         if(from && (output = from->output(j->second.output)))
@@ -281,7 +281,7 @@ void FNode::setParamLinks(msg_node_input_map_t const& inputs){
         if(j.second.node){
             m_input_links.push_back(NodeInputArc(j.first.input, j.second));
             fnode_ptr from = manager().lookup(j.second.node);
-            FNodeOutput* output = NULL;
+            FNodeOutput* output = nullptr;
             if(from && (output = from->output(j.second.output)))
                 output->arc()->addTo(k->second->sink());
             k->second->setEditable(false);
@@ -404,7 +404,7 @@ FNodeOutput* FNode::output(std::string const& id){
     if(i != m_outputs.end())
         return i->second;
     error() << "no such output: " << id;
-    return NULL;
+    return nullptr;
 }
 
 FNodeInput* FNode::input(std::string const& id){
@@ -415,22 +415,22 @@ FNodeInput* FNode::input(std::string const& id){
     if(j != m_params.end())
         return j->second;
     error() << "no such input: " << id;
-    return NULL;
+    return nullptr;
 }
 
 void FNode::initButtons(){
     Button *collapsebutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"), NULL, this
+       QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"), nullptr, this
     );
     addButton("collapse", collapsebutton);
 
     Button *execbutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
+       QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), nullptr, this
     );
     addButton("exec", execbutton);
     
     Button *dupbutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), NULL, this
+       QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), nullptr, this
     );
     addButton("duplicate", dupbutton);
     

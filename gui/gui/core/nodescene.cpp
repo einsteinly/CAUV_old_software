@@ -67,7 +67,7 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
     // accepted by items futher up the tree
     auto dropArea = new NodeSceneDropArea(this);
     connect(this, SIGNAL(sceneRectChanged(QRectF)), dropArea, SLOT(updateGeometry(QRectF)));
-    dropArea->setAcceptedMouseButtons(0);
+    dropArea->setAcceptedMouseButtons(nullptr);
     addItem(dropArea);
     
     // !!!! FIXME: background lines should be drawn in

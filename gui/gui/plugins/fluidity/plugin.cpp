@@ -62,7 +62,7 @@ class FluidityDropHandler: public DropHandlerInterface<QGraphicsItem*> {
                         MakeString() << "pipeline" << (nPipelines + 1)
                         );
         }
-        return NULL;
+        return nullptr;
     }
 
     protected:

@@ -27,8 +27,8 @@ ArcSinkLabel::ArcSinkLabel(ArcSink * arc_sink,
     : QGraphicsWidget(node),
       RequiresCutout(),
       m_arc_sink(arc_sink),
-      m_text(NULL),
-      m_hlayout(NULL){
+      m_text(nullptr),
+      m_hlayout(nullptr){
 
     /*
      *    This widget

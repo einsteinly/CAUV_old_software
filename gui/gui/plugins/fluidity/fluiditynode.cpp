@@ -52,8 +52,8 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
                                        QGraphicsItem *parent)
     : ConnectedNode(node, AI_Node_Style(), parent),
       m_node(node),
-      m_contents(NULL),
-      m_view(NULL),
+      m_contents(nullptr),
+      m_view(nullptr),
       m_source(new liquid::ArcSource(new FluidtySourceDelegate(node),
                                      new liquid::Arc(Image_Arc_Style()))),
       m_in_window(in_window),
@@ -97,7 +97,7 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
 
     
     liquid::Button *maxbutton = new liquid::Button(
-                QRectF(0,0,24,24), QString(":/resources/icons/maximise_button"), NULL, this
+                QRectF(0,0,24,24), QString(":/resources/icons/maximise_button"), nullptr, this
                 );
     addButton("maximise", maxbutton);
     
@@ -145,7 +145,7 @@ void LiquidFluidityNode::zoomIn(int percent){
 void LiquidFluidityNode::maximise(){
     boost::shared_ptr<CauvMainWindow> in_window = m_in_window.lock();
     if(in_window){
-        m_contents->setWidget(NULL);
+        m_contents->setWidget(nullptr);
         in_window->viewStack()->push(QString::fromStdString(m_node->nodeName()), m_view);
         m_view->setMode(f::FView::TopLevel);
         const float scale = std::sqrt(scene()->views()[0]->transform().determinant());

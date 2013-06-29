@@ -26,8 +26,8 @@ ArcSourceLabel::ArcSourceLabel(ArcSource * arc_source,
                            QString const& id)
     : QGraphicsWidget(node),
       m_arc_source(arc_source),
-      m_text(NULL),
-      m_hlayout(NULL){
+      m_text(nullptr),
+      m_hlayout(nullptr){
 
     /*
      *    This widget
