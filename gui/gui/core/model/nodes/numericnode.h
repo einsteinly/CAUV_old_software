@@ -21,7 +21,7 @@ namespace cauv {
 
         protected:
             NumericNodeBase(nid_t const& id) : Node(id, nodeType<NumericNodeBase>()),
-                m_max(100), m_min(0), m_maxSet(false), m_minSet(false), m_wraps(false), m_inverted(false), m_precision(3)
+                m_max(100), m_min(0), m_maxSet(false), m_minSet(false), m_wraps(false), m_inverted(false), m_precision(6)
             {
             }
 
