@@ -96,7 +96,7 @@ node_ptr_t Scheduler::waitNextJob(SchedulerPriority p)
     node_ptr_t n;
 
     while(!n && !m_stop){
-        priority_queue_map_t::iterator q = m_queues.find(p);
+        auto q = m_queues.find(p);
         if(q == m_queues.end())
             // default: lowest priority
             n = m_queues.begin()->second->popWait().lock();
@@ -157,7 +157,7 @@ void Scheduler::start()
 boost::thread* Scheduler::_spawnThread(SchedulerPriority const& p)
 {
     // new thread takes a copy of the ImgPipelineThread object
-    boost::thread* t = new boost::thread(ImgPipelineThread(this, p));
+    auto t = new boost::thread(ImgPipelineThread(this, p));
     
     struct sched_param param;
     memset(&param, 0, sizeof(struct sched_param));

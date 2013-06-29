@@ -51,7 +51,7 @@ ArcSinkLabel::ArcSinkLabel(ArcSink * arc_sink,
      * +---------------------------+
      */
     
-    QGraphicsLinearLayout *vlayout = new QGraphicsLinearLayout(
+    auto vlayout = new QGraphicsLinearLayout(
         Qt::Vertical, this
     );
     vlayout->setSpacing(0);

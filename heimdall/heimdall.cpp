@@ -38,16 +38,17 @@ typedef std::vector< connection_t > conn_list_t;
 
 std::ostream &operator<<(std::ostream &os, const conn_list_t &conn_list) {
     os << "[";
-    for(conn_list_t::const_iterator it = conn_list.begin();
-        it != conn_list.end(); it++) {
+    bool first = true;
+    for(auto const & conn : conn_list) {
+        if (first) {
+            os << ", ";
+            first = false;
+        }
 
         os << "{" << 
-            "\"id\": " << it->first << ", " <<
-            "\"string\": " << "\"" << it->second << "\""
+            "\"id\": " << conn.first << ", " <<
+            "\"string\": " << "\"" << conn.second << "\""
             << "}";
-        if (it != conn_list.end() - 1) {
-            os << ", ";
-        }
     }
     os << "]";
     return os;

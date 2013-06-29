@@ -249,11 +249,11 @@ void FNode::setParams(msg_node_param_map_t const& params){
         }
     m_params = new_m_params;
     for (msg_node_param_map_t::value_type const& j : params){
-        str_inparam_map_t::iterator k = m_params.find(j.first.input);    
+        auto k = m_params.find(j.first.input);    
         if(k == m_params.end()){
             debug() << BashColour::Blue << "FNode:: new param:"
                     << std::string(mkStr().lengthLimit(180) << j);
-            FNodeParamInput* t = new FNodeParamInput(manager(), j.first, this);
+            auto t = new FNodeParamInput(manager(), j.first, this);
             m_params[j.first.input] = t;
             addItem(t);
             t->setValue(j.second);
@@ -313,7 +313,7 @@ void FNode::addImageDisplayOnInput(std::string const& input, boost::shared_ptr<I
         return;
     }
     
-    VideoWidget* w = new VideoWidget(i->second);
+    auto w = new VideoWidget(i->second);
     connect(src.get(), SIGNAL(newImageAvailable(boost::shared_ptr<const GuiImageMessage>)),
             w, SLOT(displayImage(boost::shared_ptr<const GuiImageMessage>)));
     i->second->addWidget(w);

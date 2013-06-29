@@ -429,7 +429,7 @@ void CameraServer::doAccept(CameraClientConnection *c, bs::error_code const& e){
 }
 
 void CameraServer::_setupPendingConnection(){
-    CameraClientConnection *next_connection = new CameraClientConnection(*this, m_manager, m_service);
+    auto next_connection = new CameraClientConnection(*this, m_manager, m_service);
     m_acceptor.async_accept(
         next_connection->socket(),
         boost::bind(&CameraServer::doAccept, this, next_connection, boost::asio::placeholders::error)

@@ -121,7 +121,7 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
         layout_rect |= n->boundingRect().translated(pos);
     }
 
-    QParallelAnimationGroup *anim_group = new QParallelAnimationGroup;
+    auto anim_group = new QParallelAnimationGroup;
     const int duration = 2500;
 
     foreach(const gv::Node& gn, g.nodes)

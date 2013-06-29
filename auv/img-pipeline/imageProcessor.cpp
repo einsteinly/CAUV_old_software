@@ -481,7 +481,7 @@ ImageProcessor::~ImageProcessor(){
 
 node_ptr_t ImageProcessor::lookup(node_id const& id) const throw(id_error){
     lock_t l(m_nodes_lock);
-    std::map<node_id, node_ptr_t>::const_iterator i = m_nodes.find(id);
+    auto i = m_nodes.find(id);
     if(i != m_nodes.end())
         return i->second;
     else
@@ -490,7 +490,7 @@ node_ptr_t ImageProcessor::lookup(node_id const& id) const throw(id_error){
 
 node_id ImageProcessor::lookup(node_ptr_t const& p) const throw(){
     lock_t l(m_nodes_lock);
-    std::map<node_ptr_t, node_id>::const_iterator i = m_nodes_rev.find(p);
+    auto i = m_nodes_rev.find(p);
     if(i != m_nodes_rev.end())
         return i->second;
     else
@@ -512,7 +512,7 @@ void ImageProcessor::_addNode(node_ptr_t const& p) throw(){
 }
 
 void ImageProcessor::_removeNode(node_id const& id) throw(id_error){
-    std::map<node_id, node_ptr_t>::iterator i = m_nodes.find(id);
+    auto i = m_nodes.find(id);
     if(i != m_nodes.end()){
         m_nodes_rev.erase(i->second);
         m_nodes.erase(i);

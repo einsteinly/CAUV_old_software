@@ -50,7 +50,7 @@ ArcSourceLabel::ArcSourceLabel(ArcSource * arc_source,
      * +---------------------------+
      */
     
-    QGraphicsLinearLayout *vlayout = new QGraphicsLinearLayout(
+    auto vlayout = new QGraphicsLinearLayout(
         Qt::Vertical, this
     );
     vlayout->setSpacing(0);

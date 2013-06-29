@@ -289,9 +289,9 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
             continue;
         fnode_ptr node = i->left;
         
-        node_input_map_t::const_iterator inputs_it = m->nodeInputs().find(id);
-        node_output_map_t::const_iterator outputs_it = m->nodeOutputs().find(id);
-        node_param_map_t::const_iterator params_it = m->nodeParams().find(id);
+        auto inputs_it = m->nodeInputs().find(id);
+        auto outputs_it = m->nodeOutputs().find(id);
+        auto params_it = m->nodeParams().find(id);
 
         if(inputs_it == m->nodeInputs().end() ||
            outputs_it == m->nodeOutputs().end() ||
@@ -312,8 +312,8 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
         i = m_nodes.right().find(id);
         fnode_ptr node = i->left;
         
-        node_input_map_t::const_iterator inputs_it = m->nodeInputs().find(id);
-        node_output_map_t::const_iterator outputs_it = m->nodeOutputs().find(id);
+        auto inputs_it = m->nodeInputs().find(id);
+        auto outputs_it = m->nodeOutputs().find(id);
 
         node->setInputLinks(inputs_it->second);
         node->setParamLinks(inputs_it->second);

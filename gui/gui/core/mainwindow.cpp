@@ -57,7 +57,7 @@ StackWidget::StackWidget(QWidget* parent)
     m_titleAnimation = new QPropertyAnimation(m_title, "geometry");
     m_titleAnimation->setDuration(500);
 
-    QVBoxLayout* layout = new QVBoxLayout;
+    auto layout = new QVBoxLayout;
     layout->setSpacing(0);
 
     layout->addWidget(m_stack_widget);
@@ -299,7 +299,7 @@ int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
 void CauvMainWindow::createRadialMenu(QPoint point){
     QPoint sc = m_actions->view->mapToGlobal(point);
     debug() << "radial menu creation!";
-    liquid::magma::RadialMenu * menu = new liquid::magma::RadialMenu(liquid::magma::Default_RadialMenuStyle());
+    auto menu = new liquid::magma::RadialMenu(liquid::magma::Default_RadialMenuStyle());
     menu->setModel(m_actions->root.get());
 
     // this needs some thought. redherring should REALLY not be hardcoded in here

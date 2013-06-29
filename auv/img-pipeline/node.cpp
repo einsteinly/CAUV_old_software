@@ -65,7 +65,7 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
     : m_uid(){
     bool uid_inherited = false;
     bool uid_set = false;
-    in_image_map_t::const_iterator i = inputs.begin();
+    auto i = inputs.begin();
     while(i != inputs.end() && !i->second)
        i++;
     if(i != inputs.end() && i->second){
@@ -539,7 +539,7 @@ void Node::clearOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id
     }else{
         const output_ptr op = i->second;
         // DONT release outputs lock
-        output_link_list_t::iterator j = std::find(
+        auto j = std::find(
             op->targets.begin(),
             op->targets.end(),
             output_link_t(n, i_id)
@@ -594,7 +594,7 @@ Node::output_id_set_t Node::paramOutputs() const{
 
 int32_t Node::paramOutputType(output_id const& o_id) const{
     lock_t l(m_outputs_lock);
-    private_out_map_t::const_iterator i = m_outputs.find(o_id);
+    auto i = m_outputs.find(o_id);
     if(i == m_outputs.end() || !i->second->isParam())
         throw parameter_error("unknown parameter output");
     return boost::get<InternalParamValue>(i->second->value()).param.which();
@@ -619,7 +619,7 @@ Node::msg_node_output_map_t Node::outputLinks() const{
 const Node::output_link_list_t& Node::linksOnOutput(output_id const& o) const{
     lock_t l(m_outputs_lock);
     msg_node_in_list_t input_list;
-    private_out_map_t::const_iterator i = m_outputs.find(o);
+    auto i = m_outputs.find(o);
     if(i != m_outputs.end()) {
         return i->second->targets;
     }
@@ -629,7 +629,7 @@ const Node::output_link_list_t& Node::linksOnOutput(output_id const& o) const{
 
 bool Node::hasChildOnOutput(output_id const& o) const{
     lock_t l(m_outputs_lock);
-    private_out_map_t::const_iterator i = m_outputs.find(o);
+    auto i = m_outputs.find(o);
     if(i != m_outputs.end())
         return i->second->targets.size() > 0;
     return false;
@@ -800,7 +800,7 @@ void Node::exec(){
 
     lock_t ol(m_outputs_lock);
     for (out_map_t::value_type& v : outputs){
-        private_out_map_t::iterator i = m_outputs.find(v.first);
+        auto i = m_outputs.find(v.first);
         if(i == m_outputs.end()){
             error() << *this << "exec() produced output at an unknown id:"
                     << v.first << "(ignored)";
@@ -983,8 +983,8 @@ void Node::registerInputID(input_id const& i, ConstQualifier isconst, InputSched
 
 void Node::requireSyncInputs(input_id const& a, input_id const& b){
     lock_t l(m_inputs_lock);
-    private_in_map_t::iterator ai = m_inputs.find(a);
-    private_in_map_t::iterator bi = m_inputs.find(b);
+    auto ai = m_inputs.find(a);
+    auto bi = m_inputs.find(b);
     if(ai == m_inputs.end()){
         error() << "No such input:" << a;
         return;
@@ -1311,7 +1311,7 @@ bool Node::execQueued() const{
 
 Node::InternalParamValue Node::_getAndNotifyIfChangedInternalParam(input_id const& p, UID const* uid) const{
     lock_t l(m_inputs_lock);
-    private_in_map_t::const_iterator i = m_inputs.find(p);
+    auto i = m_inputs.find(p);
     if(i != m_inputs.end() && *(i->second) && i->second->input_type == InType_Parameter){
         input_ptr ip = i->second;
         // now we can release the inputs lock
@@ -1366,7 +1366,7 @@ void Node::demandNewParentInput(input_id const& iid) throw(){
 
 void Node::_pushQueueOutputForSync(output_id const& o_id){
     lock_t l(m_outputs_lock);
-    private_out_map_t::iterator i = m_outputs.find(o_id);
+    auto i = m_outputs.find(o_id);
     if(i != m_outputs.end())
         i->second->pushShouldQueue();
     else
@@ -1375,7 +1375,7 @@ void Node::_pushQueueOutputForSync(output_id const& o_id){
 
 void Node::_popQueueOutputForSync(output_id const& o_id){
     lock_t l(m_outputs_lock);
-    private_out_map_t::iterator i = m_outputs.find(o_id);
+    auto i = m_outputs.find(o_id);
     if(i != m_outputs.end())
         i->second->popShouldQueue();
     else

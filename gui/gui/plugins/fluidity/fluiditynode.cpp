@@ -82,7 +82,7 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
         m_contents->setWidget(m_view);
         m_contents->setMinimumSize(120, 120);
 
-        QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(Qt::Horizontal);
+        auto hlayout = new QGraphicsLinearLayout(Qt::Horizontal);
         hlayout->setSpacing(0);
         hlayout->setContentsMargins(0,0,0,0);
         hlayout->addStretch(1);
@@ -123,7 +123,7 @@ void LiquidFluidityNode::beginMaximise(){
 
     m_orginal_view_rect = views[0]->mapToScene(views[0]->rect()).boundingRect();
 
-    QTimeLine *timeline = new QTimeLine(800, this);
+    auto timeline = new QTimeLine(800, this);
     timeline->setFrameRange(0, 100);
     connect(timeline, SIGNAL(frameChanged(int)), this, SLOT(zoomIn(int)));
     connect(timeline, SIGNAL(finished()), this, SLOT(maximise()));
@@ -191,7 +191,7 @@ void LiquidFluidityNode::unMaximise(){
         m_contents->setWidget(m_view);
     }
 
-    QTimeLine *timeline = new QTimeLine(800, this);
+    auto timeline = new QTimeLine(800, this);
     timeline->setFrameRange(0, 100);
     connect(timeline, SIGNAL(frameChanged(int)), this, SLOT(zoomOut(int)));
     timeline->start();
