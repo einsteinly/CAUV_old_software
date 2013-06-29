@@ -54,7 +54,7 @@ class FluidityDropHandler: public DropHandlerInterface<QGraphicsItem*> {
         if (node->type == nodeType<NewPipelineNode>()) {
             boost::shared_ptr<Vehicle> vehicle = node->getClosestParentOfType<Vehicle>();
             boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
-            boost::shared_ptr<GroupingNode> defaultGroup = pipelines->findOrCreate<GroupingNode>("default");
+            boost::shared_ptr<GroupingNode> defaultGroup = pipelines->findOrCreate<GroupingNode>("ai");
 
             size_t nPipelines = defaultGroup->countChildrenOfType<FluidityNode>();
             boost::shared_ptr<FluidityNode> fnode =
