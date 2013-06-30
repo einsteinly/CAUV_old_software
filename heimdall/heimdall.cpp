@@ -41,8 +41,9 @@ std::ostream &operator<<(std::ostream &os, const conn_list_t &conn_list) {
     bool first = true;
     for(auto const & conn : conn_list) {
         if (first) {
-            os << ", ";
             first = false;
+        } else {
+            os << ", ";
         }
 
         os << "{" << 
