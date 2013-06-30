@@ -6,7 +6,6 @@
 #ifndef __CAUV_SIM_IMU_H__
 #define __CAUV_SIM_IMU_H__
 #include "imu.h"
-#include "mcb.h"
 #include <generated/message_observers.h>
 
 namespace cauv {
