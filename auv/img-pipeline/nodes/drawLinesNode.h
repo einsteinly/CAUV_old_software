@@ -73,7 +73,7 @@ class DrawLinesNode: public Node{
 
                 const float img_width = img.cols;
                 const float img_height = img.rows;
-                foreach(const Line& line, lines)
+                for (const Line& line : lines)
                 {
                     float ca = std::cos(line.angle);
                     float sa = std::sin(line.angle);

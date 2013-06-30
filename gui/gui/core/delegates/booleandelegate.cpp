@@ -19,7 +19,7 @@ using namespace cauv::gui;
 
 BooleanDelegate::BooleanDelegate(QObject * parent) :
     AbstractNodeDelegate(parent) {
-    QItemEditorFactory * factory = new QItemEditorFactory();
+    auto factory = new QItemEditorFactory();
     setItemEditorFactory(factory);
     factory->registerEditor(QVariant::Bool, new QItemEditorCreator<OnOffSlider>("checked"));
     m_updatesWhileEditing = true;

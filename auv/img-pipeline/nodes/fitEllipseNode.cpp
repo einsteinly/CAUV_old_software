@@ -107,7 +107,7 @@ namespace { // Anonymous namespace
 
                 // Check if sample's gradients are correctly oriented
                 bool gradientCorrect = true;
-                BOOST_FOREACH(const cv::Point2f& p, sample)
+                for (const cv::Point2f& p : sample)
                 {
                     cv::Point2f grad = conicSampleFit.algebraicGradientDir(p);
                     float dx = mDX(p);
@@ -140,7 +140,7 @@ namespace { // Anonymous namespace
                     // Find inliers
                     inliers.reserve(edgePoints.size());
                     const float MAX_ERR = 2;
-                    BOOST_FOREACH(const cv::Point& p, edgePoints)
+                    for (const cv::Point& p : edgePoints)
                     {
                         float err = errorScale*conicInlierFit.distance(p);
 
@@ -170,7 +170,7 @@ namespace { // Anonymous namespace
 
                 // Calculate ellipse goodness
                 double ellipseGoodness = 0;
-                BOOST_FOREACH(cv::Point& p, inliers)
+                for (cv::Point& p : inliers)
                 {
                     cv::Point2f grad = conicInlierFit.algebraicGradientDir(p);
                     float dx = mDX(p);

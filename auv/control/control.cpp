@@ -7,7 +7,6 @@
 
 #include <utility/string.h>
 #include <utility/rounding.h>
-#include <utility/foreach.h>
 #include <utility/files.h>
 #include <common/mailbox.h>
 #include <common/zeromq/zeromq_addresses.h>
@@ -115,7 +114,7 @@ void ControlLoops::onAttitude(const floatYPR& attitude)
         msg->demand(m_demand[Controller::Bearing]);
         m_mb->sendMessage(msg, RELIABLE_MSG);
 
-        foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Controller::Bearing].extraStateMessages()){
+        for (boost::shared_ptr<GraphableMessage> m : m_controllers[Controller::Bearing].extraStateMessages()){
             m->name("Bearing-" + m->name());
             m_mb->sendMessage(m, RELIABLE_MSG);
         }
@@ -131,7 +130,7 @@ void ControlLoops::onAttitude(const floatYPR& attitude)
         msg->demand(m_demand[Controller::Pitch]);
         m_mb->sendMessage(msg, RELIABLE_MSG);
 
-        foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Controller::Bearing].extraStateMessages()){
+        for (boost::shared_ptr<GraphableMessage> m : m_controllers[Controller::Bearing].extraStateMessages()){
             m->name("Pitch-" + m->name());
             m_mb->sendMessage(m, RELIABLE_MSG);
         }
@@ -155,7 +154,7 @@ void ControlLoops::onDepth(float fore, float aft)
         msg->demand(m_demand[Controller::Depth]);
         m_mb->sendMessage(msg, RELIABLE_MSG);
 
-        foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Controller::Bearing].extraStateMessages()){
+        for (const boost::shared_ptr<GraphableMessage>& m : m_controllers[Controller::Bearing].extraStateMessages()){
             m->name("Depth-" + m->name());
             m_mb->sendMessage(m, RELIABLE_MSG);
         }
@@ -309,8 +308,8 @@ void ControlLoops::onSetMotorMapMessage(SetMotorMapMessage_ptr m)
     debug() << "Set motor mapping:" << m->motor() << ":" << m->mapping();
 
     double test_values[] = {-200, -150, -100, -50, -4, 0, 3, 50, 100, 150, 200};
-    for(int i = 0; i < 11; i++)
-        debug(5) << "new map example: " << test_values[i] << "->" << motorMap(test_values[i], m->motor());
+    for(auto & test_value : test_values)
+        debug(5) << "new map example: " << test_value << "->" << motorMap(test_value, m->motor());
 }
 
 void ControlLoops::motorControlLoop()

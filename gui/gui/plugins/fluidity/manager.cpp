@@ -15,7 +15,6 @@
 #include <common/cauv_node.h>
 #include <debug/cauv_debug.h>
 #include <utility/bash_cout.h>
-#include <utility/foreach.h>
 
 #include <generated/types/PipelineGroup.h>
 #include <generated/types/Pl_GuiGroup.h>
@@ -136,7 +135,7 @@ fnode_ptr Manager::lookup(node_id_t const& id){
     node_id_map_t::right_const_iterator i = m_nodes.find(id);
     if(i != m_nodes.right().end())
         return i->left;
-    return NULL;
+    return nullptr;
 }
 
 void Manager::sendMessage(boost::shared_ptr<const Message> m) const{
@@ -246,7 +245,7 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
 
     typedef QMap<QGraphicsView*,QGraphicsView::ViewportUpdateMode> view_updatestate_qmap;
     view_updatestate_qmap saved_view_update_states;
-    foreach(QGraphicsView* view, m_scene->views()){
+    for (QGraphicsView* view : m_scene->views()){
         saved_view_update_states.insert(view, view->viewportUpdateMode());
         view->setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
     }
@@ -265,7 +264,7 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
             inconsistency_detected = true;
     }
     if(!inconsistency_detected){
-        foreach(node_id_t id, nodes_for_removal)
+        for (node_id_t id : nodes_for_removal)
             removeNode(id);
     
         // !!! TODO: remove arcs that shouldn't exist
@@ -290,9 +289,9 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
             continue;
         fnode_ptr node = i->left;
         
-        node_input_map_t::const_iterator inputs_it = m->nodeInputs().find(id);
-        node_output_map_t::const_iterator outputs_it = m->nodeOutputs().find(id);
-        node_param_map_t::const_iterator params_it = m->nodeParams().find(id);
+        auto inputs_it = m->nodeInputs().find(id);
+        auto outputs_it = m->nodeOutputs().find(id);
+        auto params_it = m->nodeParams().find(id);
 
         if(inputs_it == m->nodeInputs().end() ||
            outputs_it == m->nodeOutputs().end() ||
@@ -313,8 +312,8 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
         i = m_nodes.right().find(id);
         fnode_ptr node = i->left;
         
-        node_input_map_t::const_iterator inputs_it = m->nodeInputs().find(id);
-        node_output_map_t::const_iterator outputs_it = m->nodeOutputs().find(id);
+        auto inputs_it = m->nodeInputs().find(id);
+        auto outputs_it = m->nodeOutputs().find(id);
 
         node->setInputLinks(inputs_it->second);
         node->setParamLinks(inputs_it->second);
@@ -444,7 +443,7 @@ void Manager::removeNode(node_id_t const& id){
 
 fnode_ptr Manager::addNode(NodeType::e const& type, node_id_t const& id){
     debug() << BashColour::Green << "addNode:" << type << id;
-    fnode_ptr r = NULL;
+    fnode_ptr r = nullptr;
     if(isInvalid(type)){
         warning() << "ignoring invalid node type" << type;
     }else if(isInvalid(id)){
@@ -466,7 +465,7 @@ fnode_ptr Manager::addNode(NodeType::e const& type, node_id_t const& id){
 fnode_ptr Manager::addNode(NodeAddedMessage_ptr m){
     const NodeType::e type = m->nodeType();
     const node_id_t id = m->nodeId();
-    fnode_ptr r = NULL;
+    fnode_ptr r = nullptr;
     debug() << BashColour::Green << "addNode:" << type << id;
     if(isInvalid(type)){
         warning() << "ignoring invalid node type" << type;

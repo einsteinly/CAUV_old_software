@@ -133,9 +133,9 @@ void AiTaskNode::forceSet(){
 LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem * parent) :
     AiNode(node, parent),
     m_node(node),
-    m_playButton(NULL),
-    m_stopButton(NULL),
-    m_resetButton(NULL),
+    m_playButton(nullptr),
+    m_stopButton(nullptr),
+    m_resetButton(nullptr),
     m_conditionSink(new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(), this)),
     m_conditionSinkLabel(new liquid::ArcSinkLabel(m_conditionSink, this, "conditions")),
     m_pipelineSink(new liquid::ArcSink(Param_Arc_Style(), Required_Param_Input(), this)),
@@ -173,17 +173,17 @@ void LiquidTaskNode::highlightRunningStatus(QVariant status){
 
 void LiquidTaskNode::initButtons(){
     m_resetButton = new liquid::Button(
-                QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
+                QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), nullptr, this
                 );
     addButton("reset", m_resetButton);
 
     m_stopButton = new liquid::Button(
-                QRectF(0,0,24,24), QString(":/resources/icons/stop_button"), NULL, this
+                QRectF(0,0,24,24), QString(":/resources/icons/stop_button"), nullptr, this
                 );
     addButton("stop", m_stopButton);
 
     m_playButton = new liquid::Button(
-                QRectF(0,0,24,24), QString(":/resources/icons/play_button"), NULL, this
+                QRectF(0,0,24,24), QString(":/resources/icons/play_button"), nullptr, this
                 );
     addButton("play", m_playButton);
 
@@ -247,11 +247,11 @@ void LiquidTaskNode::buildContents(){
     // the item view
     setTitle(QString::fromStdString(m_node->nodeName()));
     setInfo(QString::fromStdString(m_node->nodePath()));
-    NodeTreeView * view = new NodeTreeView(true);
+    auto view = new NodeTreeView(true);
     m_model = boost::make_shared<NodeItemModel>(m_node);
     view->setModel(m_model.get());
     view->setRootIndex(m_model->indexFromNode(m_node));
-    liquid::ProxyWidget * proxy = new liquid::ProxyWidget();
+    auto proxy = new liquid::ProxyWidget();
     proxy->setWidget(view);
     addItem(proxy);
 }
@@ -278,5 +278,5 @@ LiquidTaskNode::ConnectionStatus LiquidTaskNode::doAcceptConnection(liquid::ArcS
 
 
 liquid::ArcSource * LiquidTaskNode::getSourceFor(boost::shared_ptr<Node> const&) const{
-    return NULL; //no sources in this node
+    return nullptr; //no sources in this node
 }

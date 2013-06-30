@@ -11,7 +11,6 @@
 
 #include <generated/types/floatYPR.h>
 #include <generated/types/CalibrateNoRotationMessage.h>
-#include <utility/foreach.h>
 #include <debug/cauv_debug.h>
 
 #include "xsens_imu.h"
@@ -172,7 +171,7 @@ void XsensIMU::readThread()
                             att.yaw += 360;
                         att.pitch = -att.pitch;
                         
-                        foreach(observer_ptr_t o, m_observers)
+                        for (observer_ptr_t o : m_observers)
                         {
                             o->onAttitude(att);
                         }

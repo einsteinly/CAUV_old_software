@@ -34,7 +34,7 @@ ConnectedNode * ConnectedNode::nodeFor(boost::shared_ptr<Node> const& node) {
     lock_t(m_mapping->lock);
     if(m_mapping->find(node) != m_mapping->end())
         return (*m_mapping)[node];
-    else return NULL;
+    else return nullptr;
 }
 
 void ConnectedNode::unregister(boost::shared_ptr<Node> const& node){

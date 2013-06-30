@@ -425,7 +425,7 @@ static FakeGeminiNode* node;
 void cleanup(){
     info() << "Cleaning up...";
     CauvNode* oldnode = node;
-    node = 0;
+    node = nullptr;
     delete oldnode;
     info() << "Clean up done.";
 }

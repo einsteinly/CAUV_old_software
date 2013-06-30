@@ -9,6 +9,8 @@
 #include <set>
 #include <algorithm>
 
+#include <boost/range/adaptor/reversed.hpp>
+
 #include <QGraphicsPathItem>
 #include <QGraphicsLayoutItem>
 #include <QGraphicsLinearLayout>
@@ -16,7 +18,6 @@
 
 #include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
-#include <utility/foreach.h>
 
 #include "requiresCutout.h"
 #include "style.h"
@@ -68,7 +69,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     m_status_highlight->setZValue(-100);
 
     Button *close_button = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/x_button"), NULL, this
+       QRectF(0,0,24,24), QString(":/resources/icons/x_button"), nullptr, this
     );
     addButton("close", close_button);
 
@@ -232,8 +233,8 @@ void LiquidNode::layoutChanged(){
     const qreal height = size().height();
     
     std::map<qreal,CutoutStyle> cutouts_at;
-    foreach(RequiresCutout* r, m_items_requiring_cutout)
-        foreach(CutoutStyle const& g, r->cutoutGeometry())
+    for(RequiresCutout* r : m_items_requiring_cutout)
+        for(CutoutStyle const& g : r->cutoutGeometry())
             cutouts_at[m_contentWidget->pos().y() +
                        r->asQGI()->pos().y() +
                        g.main_cutout.y_offset] = g;
@@ -250,7 +251,7 @@ void LiquidNode::layoutChanged(){
     
     // relying on iteration order of map being the order of the keys
     typedef std::pair<qreal, CutoutStyle> y_style_pair_t;
-    reverse_foreach(y_style_pair_t yg, cutouts_at){
+    for(const y_style_pair_t& yg : boost::adaptors::reverse(cutouts_at)){
         CutoutStyle::CutoutGeometry const& co = yg.second.main_cutout;
         debug(8) << "Cutout y position:" << yg.first;
         p.lineTo(0, yg.first + co.cutout_base/2);

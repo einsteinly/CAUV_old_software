@@ -321,10 +321,10 @@ QSize RadialSegment::sizeHint() const
 
 const RadialMenuItem* RadialSegment::itemAt(QPoint const& p) const{
     QWidget * pick = childAt(p);
-    if(!pick) return NULL;
+    if(!pick) return nullptr;
 
     if (RadialMenuItem * segment = qobject_cast<RadialMenuItem*>(pick)){
         return segment;
     }
-    return NULL;
+    return nullptr;
 }

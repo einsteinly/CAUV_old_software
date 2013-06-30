@@ -56,7 +56,7 @@ class GlobalMaximumNode: public Node{
             }
             std::vector<KeyPoint> operator()(NonUniformPolarMat a) const{
                 std::vector<KeyPoint> r = operator()(a.mat);
-                foreach(KeyPoint& k, r){
+                for (KeyPoint& k : r){
                     k.pt.x = a.bearings->at(int(k.pt.x));
                     k.pt.y = a.ranges->at(int(k.pt.y));
                 }

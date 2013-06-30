@@ -26,7 +26,7 @@ class PressureIMU : public IMU, public MessageObserver, public CANObserver
     protected:
         void notifyDepthObservers(float fore_depth, float aft_depth)
         {
-            foreach(observer_ptr_t o, m_observers)
+            for (observer_ptr_t o : m_observers)
                 o->onDepth(fore_depth, aft_depth);
         }
 

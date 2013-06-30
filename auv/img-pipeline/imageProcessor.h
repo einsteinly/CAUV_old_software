@@ -13,7 +13,6 @@
 #include <common/msg_classes/image.h>
 #include <common/mailbox.h>
 #include <utility/ratelimit.h>
-#include <utility/foreach.h>
 #include <generated/message_observers.h>
 #include <generated/types/TelemetryMessage.h>
 #include <generated/types/GPSLocationMessage.h>

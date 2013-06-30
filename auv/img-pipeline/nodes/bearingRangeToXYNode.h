@@ -73,7 +73,7 @@ class BearingRangeToXYNode: public Node{
                 if(a.bearings->size() == 0 || a.ranges->size() == 0)
                     throw parameter_error("invalid polar image: no metadata");
                 debug(4) << "bearingRangeToXY: range" << a.ranges->front() << "--" << a.ranges->back();
-                foreach(KeyPoint const& k, m_polar_keypoints){
+                for (KeyPoint const& k : m_polar_keypoints){
                     float range, bearing;
                     cv::Point2f xy = a.xyAt(k.pt.y, k.pt.x, range, bearing);
                     float range_scale = range / a.ranges->back();

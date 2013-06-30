@@ -6,7 +6,6 @@
 
 #include "dataWindow.h"
 
-#include <utility/foreach.h>
 #include <utility/math.h>
 #include <utility/rounding.h>
 
@@ -137,11 +136,11 @@ void wi::DataWindow::_recalcMinMax(){
         m_min = std::numeric_limits<float>::max();
         m_max = -std::numeric_limits<float>::max();
     }
-    foreach(float const& f, m_min_values){
+    for(auto& f : m_min_values){
         if(f < m_min)
             m_min = f;
     }
-    foreach(float const& f, m_max_values){
+    for(auto& f : m_max_values){
         if(f > m_max)
             m_max = f;
     }

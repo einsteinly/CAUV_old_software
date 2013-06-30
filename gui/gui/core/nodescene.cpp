@@ -65,9 +65,9 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
 
     // a special background element that recieves drops and other events that aren't
     // accepted by items futher up the tree
-    NodeSceneDropArea * dropArea = new NodeSceneDropArea(this);
+    auto dropArea = new NodeSceneDropArea(this);
     connect(this, SIGNAL(sceneRectChanged(QRectF)), dropArea, SLOT(updateGeometry(QRectF)));
-    dropArea->setAcceptedMouseButtons(0);
+    dropArea->setAcceptedMouseButtons(nullptr);
     addItem(dropArea);
     
     // !!!! FIXME: background lines should be drawn in
@@ -77,7 +77,7 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
     for(int x = -sceneSize; x < sceneSize; x = x + 50) {
         int colour = 242;
         //if(x % 100 == 0) colour = 238;
-        VanishingLineItem * line = new VanishingLineItem(0.25, -sceneSize, x, sceneSize, x);
+        auto line = new VanishingLineItem(0.25, -sceneSize, x, sceneSize, x);
         line->setPen(QPen(QColor(colour, colour, colour)));
         line->setZValue(-1000);
         this->addItem(line);
@@ -89,7 +89,7 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
     for(int y = -sceneSize; y < sceneSize; y = y + 50) {
         int colour = 242;
         //if(y % 100 == 0) colour = 238;
-        VanishingLineItem * line = new VanishingLineItem(0.25, y, -sceneSize, y, sceneSize);
+        auto line = new VanishingLineItem(0.25, y, -sceneSize, y, sceneSize);
         line->setPen(QPen(QColor(colour, colour, colour)));
         line->setZValue(-1000);
         this->addItem(line);

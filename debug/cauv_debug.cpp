@@ -322,7 +322,7 @@ boost::mutex& _getMutex(std::ostream& s){
     mutex_ptr pm;
     CAUV_LOCK(map_mutex)
     {
-        map_t::iterator i = mutex_map.find(&s);
+        auto i = mutex_map.find(&s);
         if (i != mutex_map.end()) {
             pm = i->second;
         }

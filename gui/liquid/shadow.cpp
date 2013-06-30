@@ -41,13 +41,13 @@ void liquid::Shadow::setBrush(QBrush brush){
     m_shape->setBrush(brush);
     if(brush != QBrush(Qt::NoBrush)){
         if(!m_blur_effect_applied) {
-            QGraphicsBlurEffect *blur = new QGraphicsBlurEffect();
+            auto blur = new QGraphicsBlurEffect();
             blur->setBlurRadius(25);
             m_shape->setGraphicsEffect(blur);
         }
         m_blur_effect_applied = true;
     }else if(m_blur_effect_applied){
-        m_shape->setGraphicsEffect(NULL);
+        m_shape->setGraphicsEffect(nullptr);
         m_blur_effect_applied = false;
     }
 }

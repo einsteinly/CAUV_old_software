@@ -62,7 +62,7 @@ class FASTCornersNode: public Node{
                 // thin wrapper... don't want to include cv types in serialisation
                 std::vector<cauv::KeyPoint> kps;
                 kps.reserve(cv_corners.size());
-                foreach(const cv::KeyPoint &kp, cv_corners)
+                for (const cv::KeyPoint &kp : cv_corners)
                     kps.push_back(_cauvKeyPoint(kp));
                 return kps;
             }

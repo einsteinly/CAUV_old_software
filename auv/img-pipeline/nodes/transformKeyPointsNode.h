@@ -8,7 +8,6 @@
 #define __TRANSFORM_KEY_POINTS_NODE_H__
 
 #include "../node.h"
-#include <utility/foreach.h>
 
 
 namespace cauv{
@@ -43,7 +42,7 @@ class TransformKeyPointsNode: public Node{
             float my = param<float>("*y");
             
             std::vector<KeyPoint> transformed = kps;
-            foreach(KeyPoint& t, transformed){
+            for (KeyPoint& t : transformed){
                 t.pt.x = t.pt.x*mx + px;
                 t.pt.y = t.pt.y*my + py;
             }
