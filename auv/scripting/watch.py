@@ -8,6 +8,8 @@ import time
 import socket
 import os.path
 import argparse
+import threading
+import cmd
 
 import utils.daemon
 import utils.watch as watch
@@ -169,7 +171,48 @@ elif args.daemonize:
     utils.daemon.spawnDaemon(monitor)
 else:
     try:
-        monitor()
+        thread = threading.Thread(target = monitor)
+        thread.daemon = True
+        thread.start() 
+        try:
+            
+            class MyCmd(cmd.Cmd):
+                prompt = "> "
+
+                def do_start(self, line):
+                    watcher.start(line)
+                def do_stop(self, line):
+                    watcher.stop(line)
+                def do_restart(self, line):
+                    watcher.restart(line)
+                def do_exit(self, line):
+                    return True
+                def do_EOF(self, line):
+                    return self.do_exit(line)
+
+                def completedefault(self, text, line, start_index, end_index):
+                    if text:
+                        return [ p for p in watcher.processes.keys() if p.startswith(text) ]
+                    else:
+                        return watcher.processes.keys()
+
+                def cmdloop(self):
+                    while True:
+                        try:
+                            cmd.Cmd.cmdloop(self)
+                            break
+                        except KeyboardInterrupt as e:
+                            print "^C"
+
+                def emptyline(self):
+                    pass
+
+            cmdline = MyCmd()
+            cmdline.cmdloop()
+
+        except KeyboardInterrupt:
+            debug("Exiting")
+
     finally:
         if args.kill_after is not None:
             watcher.killall(args.kill_after)
