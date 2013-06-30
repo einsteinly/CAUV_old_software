@@ -38,50 +38,51 @@ ImageProcessor::ImageProcessor(mb_ptr_t mb, boost::shared_ptr<Scheduler> schedul
 void ImageProcessor::start(std::string const& name){
     lock_t l(m_name_lock);
     m_name = name;
+
+    // Advertise self
+    sendMessage(boost::make_shared<PipelineDiscoveryResponseMessage>(m_name));
 }
 
 void ImageProcessor::onLinesMessage(LinesMessage_ptr m){
     lock_t l(m_nodes_lock);
-    std::set<input_node_ptr_t>::iterator i;    
-    for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
-        (*i)->onLinesMessage(m);
+    for (const auto& node : m_input_nodes) {
+        node->onLinesMessage(m);
+    }
 }
 
 void ImageProcessor::onImageMessage(ImageMessage_ptr m){
     lock_t l(m_nodes_lock);
-    std::set<input_node_ptr_t>::iterator i;    
-    for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
-        (*i)->onImageMessage(m);
+    for (const auto& node : m_input_nodes) {
+        node->onImageMessage(m);
+    }
 }
 
 void ImageProcessor::onSonarDataMessage(SonarDataMessage_ptr m){
     lock_t l(m_nodes_lock);
-    std::set<input_node_ptr_t>::iterator i;        
-    for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
-        (*i)->onSonarDataMessage(m);
+    for (const auto& node : m_input_nodes) {
+        node->onSonarDataMessage(m);
+    }
 }
 
 void ImageProcessor::onSonarImageMessage(SonarImageMessage_ptr m){
     lock_t l(m_nodes_lock);
-    std::set<input_node_ptr_t>::iterator i;        
-    for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
-        (*i)->onSonarImageMessage(m);
+    for (const auto& node : m_input_nodes) {
+        node->onSonarImageMessage(m);
+    }
 }
-
 
 void ImageProcessor::onTelemetryMessage(TelemetryMessage_ptr m){
     lock_t l(m_nodes_lock);
-    std::set<node_ptr_t>::iterator i;        
-    for(i = m_telem_req_nodes.begin(); i != m_telem_req_nodes.end(); i++)
-        (*i)->onTelemetry(m);
-    
+    for (const auto& node : m_input_nodes) {
+        node->onTelemetry(m);
+    }
 }
 
 void ImageProcessor::onGPSLocationMessage(GPSLocationMessage_ptr m){
     lock_t l(m_nodes_lock);
-    std::set<node_ptr_t>::iterator i;        
-    for(i = m_gps_req_nodes.begin(); i != m_gps_req_nodes.end(); i++)
-        (*i)->onGPSLoc(m);
+    for (const auto& node : m_input_nodes) {
+        node->onGPSLoc(m);
+    }
 }
 
 void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){

@@ -309,13 +309,13 @@ static void fillMenu(const QAbstractItemModel& model, const QModelIndex& index, 
 	}
 }
 void CauvMainWindow::createContextMenu(QPoint point){
-    auto model = m_actions->root;
+    const auto& model = *m_actions->root;
     // this needs some thought. redherring should REALLY not be hardcoded in here
-    auto rootIndex = model->indexFromNode(VehicleRegistry::instance()->
-                                          find<Vehicle>("redherring")->
-                                          findOrCreate<GroupingNode>("creation"));
+    auto rootIndex = model.indexFromNode(VehicleRegistry::instance()->
+                                         find<Vehicle>("redherring")->
+                                         findOrCreate<GroupingNode>("creation"));
     QMenu menu{this};
-    fillMenu(*model, rootIndex, &menu);
+    fillMenu(model, rootIndex, &menu);
     auto selectedAction = menu.exec(m_actions->view->mapToGlobal(point));
     if (selectedAction) {
         if (selectedAction->data().canConvert<QModelIndex>()) {

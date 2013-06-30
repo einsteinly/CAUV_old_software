@@ -52,15 +52,10 @@ class FluidityDropHandler: public DropHandlerInterface<QGraphicsItem*> {
             }
         }
         if (node->type == nodeType<NewPipelineNode>()) {
-            boost::shared_ptr<Vehicle> vehicle = node->getClosestParentOfType<Vehicle>();
-            boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
-            boost::shared_ptr<GroupingNode> defaultGroup = pipelines->findOrCreate<GroupingNode>("ai");
+            auto pipeline = node->getClosestParentOfType<GroupingNode>();
 
-            size_t nPipelines = defaultGroup->countChildrenOfType<FluidityNode>();
-            boost::shared_ptr<FluidityNode> fnode =
-                    defaultGroup->findOrCreate<FluidityNode>(
-                        MakeString() << "pipeline" << (nPipelines + 1)
-                        );
+            size_t nPipelines = pipeline->countChildrenOfType<FluidityNode>();
+            pipeline->findOrCreate<FluidityNode>(MakeString() << "pipeline" << (nPipelines + 1));
         }
         return nullptr;
     }
@@ -113,9 +108,6 @@ void FluidityPlugin::initialise(){
 void FluidityPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
     try {
         boost::shared_ptr<Vehicle> vehicle = vnode->to<Vehicle>();
-        boost::shared_ptr<GroupingNode> creation = vehicle->findOrCreate<GroupingNode>("creation");
-        boost::shared_ptr<NewPipelineNode> newpipeline = creation->findOrCreate<NewPipelineNode>("pipeline");
-        Q_UNUSED(newpipeline)
 
         boost::shared_ptr<CauvNode> node = m_actions->node.lock();
         if(node) {
@@ -134,6 +126,8 @@ void FluidityPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
 
 void FluidityPlugin::setupPipeline(boost::shared_ptr<Node> node){
     if(boost::dynamic_pointer_cast<GroupingNode>(node)){
+        node->findOrCreate<NewPipelineNode>("new");
+        
         connect(node.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
                 this, SLOT(setupPipeline(boost::shared_ptr<Node>)));
         foreach(boost::shared_ptr<Node> child, node->getChildren()){
