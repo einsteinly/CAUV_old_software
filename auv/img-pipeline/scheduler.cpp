@@ -157,7 +157,7 @@ void Scheduler::start()
 boost::thread* Scheduler::_spawnThread(SchedulerPriority const& p)
 {
     // new thread takes a copy of the ImgPipelineThread object
-    auto t = new boost::thread(ImgPipelineThread(this, p));
+    auto  t = new boost::thread(ImgPipelineThread(this, p));
     
     struct sched_param param;
     memset(&param, 0, sizeof(struct sched_param));

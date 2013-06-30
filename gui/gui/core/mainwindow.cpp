@@ -37,9 +37,6 @@
 
 #include "elements/style.h"
 
-#include <liquid/magma/radialMenu.h>
-#include <liquid/magma/style.h>
-
 using namespace cauv;
 using namespace cauv::gui;
 
@@ -57,7 +54,7 @@ StackWidget::StackWidget(QWidget* parent)
     m_titleAnimation = new QPropertyAnimation(m_title, "geometry");
     m_titleAnimation->setDuration(500);
 
-    auto layout = new QVBoxLayout;
+    auto  layout = new QVBoxLayout;
     layout->setSpacing(0);
 
     layout->addWidget(m_stack_widget);
@@ -188,7 +185,6 @@ void CauvMainWindow::onRun()
     m_actions->scene = boost::make_shared<NodeScene>();
     m_actions->view->setScene(m_actions->scene.get());
     m_actions->view->centerOn(0,0);
-    m_actions->view->setContextMenuPolicy(Qt::CustomContextMenu);
     // Set the viewport to use OpenGl here. Nested Gl viewports don't work
     m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
     m_actions->view->setFocus();
@@ -239,7 +235,8 @@ void CauvMainWindow::onRun()
     show();
     
     // There was a mutiny against the radial menu...
-    connect(m_actions->view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(createRadialMenu(QPoint)));
+    m_actions->view->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_actions->view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(createContextMenu(QPoint)));
 
     m_application->exec();
 
@@ -296,24 +293,36 @@ int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
     return numFound;
 }
 
-void CauvMainWindow::createRadialMenu(QPoint point){
-    QPoint sc = m_actions->view->mapToGlobal(point);
-    debug() << "radial menu creation!";
-    auto menu = new liquid::magma::RadialMenu(liquid::magma::Default_RadialMenuStyle());
-    menu->setModel(m_actions->root.get());
-
-    // this needs some thought. redherring should REALLY not be hardcoded in here
-    menu->setRootIndex(m_actions->root->indexFromNode(
-                           VehicleRegistry::instance()->find<Vehicle>("redherring")->
-                           findOrCreate<GroupingNode>("creation")));
-    menu->show();
-    QRect geo = menu->geometry();
-    menu->setGeometry(QRect(sc.x()-geo.width()/2, sc.y()-geo.height()/2, geo.height(), geo.width()));
-    menu->connect(menu, SIGNAL(indexSelected(QModelIndex)), this, SLOT(radialItemSelected(QModelIndex)));
+Q_DECLARE_METATYPE(QModelIndex)
+static void fillMenu(const QAbstractItemModel& model, const QModelIndex& index, QMenu* menu) {
+	for (int i = 0; i < model.rowCount(index); ++i) {
+		const QModelIndex& child_index = index.child(i, 0);
+        QString title = child_index.data(Qt::UserRole).toString();
+		if (model.hasChildren(child_index)) {
+			auto submenu = menu->addMenu(title);
+            fillMenu(model, child_index, submenu);
+		}
+		else {
+            auto action = menu->addAction(title);
+	        action->setData(QVariant::fromValue(child_index));
+		}
+	}
 }
-
-void CauvMainWindow::radialItemSelected(QModelIndex index){
-    m_actions->scene->onNodeDroppedAt(m_actions->root->nodeFromIndex(index), QPointF(10,10));
+void CauvMainWindow::createContextMenu(QPoint point){
+    auto model = m_actions->root;
+    // this needs some thought. redherring should REALLY not be hardcoded in here
+    auto rootIndex = model->indexFromNode(VehicleRegistry::instance()->
+                                          find<Vehicle>("redherring")->
+                                          findOrCreate<GroupingNode>("creation"));
+    QMenu menu{this};
+    fillMenu(*model, rootIndex, &menu);
+    auto selectedAction = menu.exec(m_actions->view->mapToGlobal(point));
+    if (selectedAction) {
+        if (selectedAction->data().canConvert<QModelIndex>()) {
+            auto selectedIndex = selectedAction->data().value<QModelIndex>();
+            m_actions->scene->onNodeDroppedAt(m_actions->root->nodeFromIndex(selectedIndex), QPointF(10,10));
+        }
+    }
 }
 
 CauvInterfacePlugin * CauvMainWindow::loadPlugin(QObject *plugin){

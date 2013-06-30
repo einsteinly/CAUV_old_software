@@ -142,7 +142,7 @@ void LiquidConditionNode::buildContents(){
     // the item view
     m_view->setModel(m_model.get());
     m_view->setRootIndex(m_model->indexFromNode(m_node));
-    auto proxy = new liquid::ProxyWidget();
+    auto  proxy = new liquid::ProxyWidget();
     proxy->setWidget(m_view);
     addItem(proxy);
 

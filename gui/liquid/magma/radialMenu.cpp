@@ -127,7 +127,7 @@ int RadialMenu::depthOfIndex(const QModelIndex& index) const{
 RadialSegment * RadialMenu::newRadialSegmentFor(QModelIndex index,
                                                 RadialMenuItem * parent) const{
 
-    auto segment = new RadialSegment(
+    auto  segment = new RadialSegment(
                 Default_RadialSegmentStyle(),
                 parent?0:1,
                 viewport());

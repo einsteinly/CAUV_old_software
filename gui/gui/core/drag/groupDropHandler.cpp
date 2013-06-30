@@ -29,13 +29,13 @@ bool GroupDropHandler::accepts(boost::shared_ptr<Node> const& node){
 
 QGraphicsItem * GroupDropHandler::handle(boost::shared_ptr<Node> const& node) {
 
-    auto ln = new liquid::LiquidNode(AI_Node_Style());
+    auto  ln = new liquid::LiquidNode(AI_Node_Style());
     ln->setTitle(QString::fromStdString(node->nodeName()));
     ln->setInfo(QString::fromStdString(node->nodePath()));
-    auto view = new NodeTreeView(true);
+    auto  view = new NodeTreeView(true);
     view->setModel((QAbstractItemModel*)m_model.get());
     view->setRootIndex(m_model->indexFromNode(node));
-    auto proxy = new QGraphicsProxyWidget();
+    auto  proxy = new QGraphicsProxyWidget();
     proxy->setWidget(view);
 
     ln->addItem(proxy);

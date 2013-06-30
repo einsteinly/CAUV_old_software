@@ -112,7 +112,7 @@ int main(int argc, char *argv[]){
     QGraphicsScene scene;
     scene.setSceneRect(-100.0, -100.0, 200.0, 200.0);
  
-    auto item = new ItemFridge<TestGraphicsItem>();
+    auto  item = new ItemFridge<TestGraphicsItem>();
     //TestGraphicsItem *item = new TestGraphicsItem(0);
     scene.addItem(item);
     item->setFlag(QGraphicsItem::ItemIsMovable);

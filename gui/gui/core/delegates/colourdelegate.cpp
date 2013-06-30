@@ -27,7 +27,7 @@ QWidget * ColourDelegate::createEditor(QWidget *parent,
     Q_UNUSED(option);
 
     Colour colour = index.model()->data(index, Qt::EditRole).value<Colour>();
-    auto colourDialog =  new ColourDialog();
+    auto  colourDialog =  new ColourDialog();
     colourDialog->setColour(colour);
     return colourDialog;
 }

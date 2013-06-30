@@ -22,7 +22,7 @@ using namespace cauv::gui;
 NumericDelegate::NumericDelegate(bool showTitle, QObject *parent) :
     AbstractNodeDelegate(parent),
     m_titles(showTitle) {
-    auto factory = new QItemEditorFactory();
+    auto  factory = new QItemEditorFactory();
     setItemEditorFactory(factory);
 
     //https://bugreports.qt-project.org/browse/QTBUG-2151

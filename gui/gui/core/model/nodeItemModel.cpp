@@ -96,7 +96,7 @@ bool NodeItemModel::setData(const QModelIndex & index, const QVariant & value, i
 
 QMimeData * NodeItemModel::mimeData(const QModelIndexList &indexes) const {
 
-    auto mimeData = new QMimeData;
+    auto  mimeData = new QMimeData;
     QList<QUrl> urls;
 
     foreach (QModelIndex const & index, indexes){
