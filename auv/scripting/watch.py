@@ -10,6 +10,7 @@ import os.path
 import argparse
 import threading
 import cmd
+import readline
 
 import utils.daemon
 import utils.watch as watch
