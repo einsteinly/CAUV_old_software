@@ -105,7 +105,7 @@ void ProcessStateView::onProcessStateUpdate(const ProcessState &state){
     onProcessStateUpdate(state.process(), state.cpu(), state.mem(), state.threads(), state.status());
 }
 
-void ProcessStateView::onProcessStateUpdate(const std::string process, const float cpu, const float mem, const float threads, std::string status){
+void ProcessStateView::onProcessStateUpdate(const std::string& process, const float cpu, const float mem, const float threads, const std::string& status){
 
     try {
         int row = m_processes.at(process);

@@ -113,7 +113,7 @@ void PipelineWidget::initKeyBindings(){
         boost::make_shared<Text>(this, "pick pipeline", dec_font, dec_font_size)
     );
     
-    typedef boost::shared_ptr<GraphRequestMessage> mk_gr_msg_f_t(std::string const&);
+    typedef boost::shared_ptr<GraphRequestMessage> mk_gr_msg_f_t(const std::string&);
     ok::action_ptr_t gm_msg_act = boost::make_shared<ok::Action>(
         boost::bind(&PipelineWidget::reload, this),        
         ok::Action::null_f,
@@ -163,7 +163,7 @@ QSize PipelineWidget::sizeHint() const{
     return QSize(800, 800);
 }
 
-void PipelineWidget::setPipelineName(std::string const& name){
+void PipelineWidget::setPipelineName(const std::string& name){
     if(name == m_pipeline_name)
         return;
 
@@ -316,8 +316,8 @@ imgnode_ptr_t PipelineWidget::imgNode(node_id const& n){
     return imgnode_ptr_t();
 }
 
-void PipelineWidget::addArc(node_id const& src, std::string const& output,
-                            node_id const& dst, std::string const& input){
+void PipelineWidget::addArc(node_id const& src, const std::string& output,
+                            node_id const& dst, const std::string& input){
     node_ptr_t s = node(src);
     node_ptr_t d = node(dst);
     if(!s || !d)
@@ -330,7 +330,7 @@ void PipelineWidget::addArc(node_id const& src, std::string const& output,
 }
 
 void PipelineWidget::addArc(renderable_ptr_t src,
-                            node_id const& dst, std::string const& input){
+                            node_id const& dst, const std::string& input){
     node_ptr_t d = node(dst);
     if(!d) return;
     renderable_ptr_t d_ni = d->inSocket(input);
@@ -338,7 +338,7 @@ void PipelineWidget::addArc(renderable_ptr_t src,
     addArc(src, d_ni);
 }
 
-void PipelineWidget::addArc(node_id const& src, std::string const& output,
+void PipelineWidget::addArc(node_id const& src, const std::string& output,
                             renderable_ptr_t dst){
     node_ptr_t s = node(src);
     if(!s) return;
@@ -360,8 +360,8 @@ arc_ptr_t PipelineWidget::addArc(renderable_wkptr_t src, renderable_wkptr_t dst)
     return a;
 }
 
-void PipelineWidget::removeArc(node_id const& src, std::string const& output,
-                               node_id const& dst, std::string const& input){
+void PipelineWidget::removeArc(node_id const& src, const std::string& output,
+                               node_id const& dst, const std::string& input){
     node_ptr_t s = node(src);
     node_ptr_t d = node(dst);
     if(!s || !d)
@@ -374,7 +374,7 @@ void PipelineWidget::removeArc(node_id const& src, std::string const& output,
 }
 
 void PipelineWidget::removeArc(renderable_ptr_t src,
-                               node_id const& dst, std::string const& input){
+                               node_id const& dst, const std::string& input){
     node_ptr_t d = node(dst);
     if(!d) return;
     renderable_ptr_t d_ni = d->inSocket(input);
@@ -382,7 +382,7 @@ void PipelineWidget::removeArc(renderable_ptr_t src,
     removeArc(src, d_ni);
 }
 
-void PipelineWidget::removeArc(node_id const& src, std::string const& output,
+void PipelineWidget::removeArc(node_id const& src, const std::string& output,
                                renderable_ptr_t dst){
     node_ptr_t s = node(src);
     if(!s) return;
@@ -466,7 +466,7 @@ void PipelineWidget::postMenu(menu_ptr_t m, Point const& p, bool r) {
     addMenu(m, p, r);
 }
 
-void PipelineWidget::postText(const std::string &text, const std::string &font)
+void PipelineWidget::postText(const std::string& text, const std::string& font)
 {
     // need to create QString copies of text and font
 	// need to call renderText(double x, double y ...
@@ -864,7 +864,7 @@ PipelineWidget::node_set_t PipelineWidget::children(node_id n) const{
 }
 
 // TODO: move this somewhere appropriate... probably a member function
-void tdf(int, std::string const& s){
+void tdf(int, const std::string& s){
     debug() << "Edit done:" << s;
 }
 

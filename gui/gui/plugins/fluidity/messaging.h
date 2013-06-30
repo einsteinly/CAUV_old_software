@@ -37,7 +37,7 @@ class FluidityMessageObserver: public MessageObserver{
         void onPipelineDiscoveryResponseMessage(PipelineDiscoveryResponseMessage_ptr m);
         void onNodeAddedMessage(NodeAddedMessage_ptr m);
         void onGraphDescriptionMessage(GraphDescriptionMessage_ptr m);
-        void addPipeline(std::string const&);
+        void addPipeline(const std::string&);
     protected:
         boost::shared_ptr<Node> m_parent;
 };

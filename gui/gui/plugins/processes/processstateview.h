@@ -78,10 +78,10 @@ namespace cauv {
         virtual void onNewProcess(boost::shared_ptr<DataStream<ProcessState> > stream);
 
     Q_SIGNALS:
-        void processStateUpdated(const std::string process, const float cpu, const float mem, const float threads, std::string status);
+        void processStateUpdated(const std::string& process, const float cpu, const float mem, const float threads, const std::string& status);
 
     protected Q_SLOTS:
-        void onProcessStateUpdate(const std::string process, const float cpu, const float mem, const float threads, std::string status);
+        void onProcessStateUpdate(const std::string& process, const float cpu, const float mem, const float threads, const std::string& status);
 
     protected:        
         void onProcessStateUpdate(const ProcessState &state);

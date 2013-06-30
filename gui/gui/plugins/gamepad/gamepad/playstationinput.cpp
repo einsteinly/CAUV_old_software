@@ -12,7 +12,7 @@ using namespace OIS;
 using namespace cauv;
 using namespace cauv::gui;
 
-PlaystationInput::PlaystationInput(const std::string vendor) : GamepadInput(vendor)
+PlaystationInput::PlaystationInput(const std::string& vendor) : GamepadInput(vendor)
 {
 }
 

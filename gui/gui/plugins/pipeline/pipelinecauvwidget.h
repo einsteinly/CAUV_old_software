@@ -50,7 +50,7 @@ namespace cauv {
             RateLimiter m_rate_limiter;
             
         Q_SIGNALS:
-            void pipelineDiscovered(std::string name);
+            void pipelineDiscovered(const std::string& name);
             void searchStarted();
         };
         
@@ -73,7 +73,7 @@ namespace cauv {
             
         protected Q_SLOTS:
             void send(boost::shared_ptr<const Message> message);
-            void addPipeline(std::string name);
+            void addPipeline(const std::string& name);
             void clearPipelines();
             
         protected:
@@ -99,7 +99,7 @@ namespace cauv {
         RateLimiter m_rate_limiter;
 
     Q_SIGNALS:
-        void pipelineDiscovered(std::string name);
+        void pipelineDiscovered(const std::string& name);
         void searchStarted();
     };
 
@@ -120,7 +120,7 @@ namespace cauv {
 
     protected Q_SLOTS:
         void send(boost::shared_ptr<Message> message);
-        void addPipeline(std::string name);
+        void addPipeline(const std::string& name);
         void clearPipelines();
 
     protected:

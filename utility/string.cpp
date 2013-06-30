@@ -6,7 +6,7 @@
 
 #include <utility/string.h>
 
-std::string cauv::implode( const std::string &glue, const std::set<std::string> &pieces )
+std::string cauv::implode( const std::string& glue, const std::set<std::string>& pieces )
 {
     std::string a;
     int leng=pieces.size();

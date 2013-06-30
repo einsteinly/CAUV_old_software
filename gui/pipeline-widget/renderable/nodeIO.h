@@ -15,7 +15,7 @@ class NodeIOBlob: public Renderable,
                   public boost::enable_shared_from_this<NodeIOBlob>{
     public:
         //typedef Node* node_ptr_t;
-        NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name,
+        NodeIOBlob(node_ptr_t node, pw_ptr_t pw, const std::string& name,
                    bool suppress_text = false);
         virtual ~NodeIOBlob(){ }
 
@@ -51,7 +51,7 @@ class NodeIOBlob: public Renderable,
 
 class NodeInputBlob: public NodeIOBlob{
     public:
-        NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n,
+        NodeInputBlob(node_ptr_t d, pw_ptr_t p, const std::string& n,
                       bool suppress_text = false);
         virtual ~NodeInputBlob(){ }
         virtual bool mousePressEvent(MouseEvent const& e);
@@ -60,14 +60,14 @@ class NodeInputBlob: public NodeIOBlob{
 
 class NodeInputParamBlob: public NodeInputBlob{
     public:
-        NodeInputParamBlob(node_ptr_t d, pw_ptr_t p, std::string const& n, int32_t type_idx=-1);
+        NodeInputParamBlob(node_ptr_t d, pw_ptr_t p, const std::string& n, int32_t type_idx=-1);
         virtual ~NodeInputParamBlob(){ }
         std::string param() const;
 };
 
 class NodeOutputBlob: public NodeIOBlob{
     public:
-        NodeOutputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n, int32_t type_idx=-1);
+        NodeOutputBlob(node_ptr_t d, pw_ptr_t p, const std::string& n, int32_t type_idx=-1);
         virtual ~NodeOutputBlob(){ }        
         std::string output() const;
 };

@@ -35,7 +35,7 @@ ImageProcessor::ImageProcessor(mb_ptr_t mb, boost::shared_ptr<Scheduler> schedul
     m_mailbox->subMessage(TelemetryMessage());
 }
 
-void ImageProcessor::start(std::string const& name){
+void ImageProcessor::start(const std::string& name){
     lock_t l(m_name_lock);
     m_name = name;
 

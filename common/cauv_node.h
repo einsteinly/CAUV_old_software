@@ -50,7 +50,7 @@ class CauvNode
         int defaultOptions();
         int parseOptions(int argc, char** arg);
 
-        void joinGroup(std::string const& group);
+        void joinGroup(const std::string& group);
         void subMessage(const Message &message);
         void unSubMessage(const Message &message);
 

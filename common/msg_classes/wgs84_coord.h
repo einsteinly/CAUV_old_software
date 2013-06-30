@@ -30,7 +30,7 @@ class WGS84Coord: public LatLongAlt{
             : LatLongAlt(deg_north, deg_east, altitude){
         }
 
-        static WGS84Coord fromDatum(std::string const& datum_name){
+        static WGS84Coord fromDatum(const std::string& datum_name){
             // !!! TODO: these should be defined in a file and loaded at
             // runtime, or something, but this will do for now.
             // These are intended to match those defined in python

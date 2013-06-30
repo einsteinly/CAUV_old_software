@@ -7,11 +7,11 @@
 /***  This is a generated file, do not edit ***/
 \#include "message.h"
 
-cauv::Message::Message(uint32_t id, std::string const& group) : m_id(id), m_group(group) { }
+cauv::Message::Message(uint32_t id, const std::string& group) : m_id(id), m_group(group) { }
 
 cauv::Message::~Message() { }
 
-std::string const& cauv::Message::group() const{
+const std::string& cauv::Message::group() const{
     return m_group;
 }
 

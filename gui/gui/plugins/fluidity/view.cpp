@@ -45,7 +45,7 @@ uint qHash(boost::shared_ptr<T> p){
 
 
 FView::FView(boost::shared_ptr<CauvNode> node,
-             std::string const& pipeline_name,
+             const std::string& pipeline_name,
              boost::shared_ptr<gui::Node> model_parent,
              QWidget* parent)
     : liquid::LiquidView(parent),
@@ -59,7 +59,7 @@ FView::FView(boost::shared_ptr<CauvNode> node,
 }
 
 FView::FView(boost::shared_ptr<CauvNode> node,
-             std::string const& pipeline_name,
+             const std::string& pipeline_name,
              boost::shared_ptr<gui::Node> model_parent,
              NodeScene* s,
              boost::shared_ptr<Manager> m,
@@ -74,7 +74,7 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     init(pipeline_name, model_parent, s, m, parent);
 }
 
-void FView::init(std::string const& pipeline_name,
+void FView::init(const std::string& pipeline_name,
                  boost::shared_ptr<gui::Node> model_parent,
                  NodeScene* s,
                  boost::shared_ptr<Manager> m,
@@ -287,7 +287,7 @@ void FView::initMenu(){
 }
 
 struct ContainsWord{
-    ContainsWord(std::string const& word) : m_word(QString::fromStdString(word)){ }
+    ContainsWord(const std::string& word) : m_word(QString::fromStdString(word)){ }
 
     bool operator()(boost::shared_ptr<QAction>  a) const{
         return a->text().contains(m_word, Qt::CaseInsensitive);
@@ -296,7 +296,7 @@ struct ContainsWord{
     QString m_word;
 };
 
-float FView::split(std::string const& word, QAction_ptr_set actions){
+float FView::split(const std::string& word, QAction_ptr_set actions){
     std::size_t do_contain_word = std::count_if(actions.begin(), actions.end(), ContainsWord(word));
     return float(do_contain_word) / actions.size();
 }
@@ -334,7 +334,7 @@ void FView::initMenu(MenuNode& parent, QAction_ptr_set actions){
         float best_split = 0;
         int best_split_count = 0;
         std::string best_split_word;
-        foreach(std::string const& w, split_words){
+        foreach(const std::string& w, split_words){
             const float s = split(w, actions);
             debug(5) << "split" << s << s*actions.size() << w;
             if(std::fabs(s-0.5) < std::fabs(best_split-0.5)){

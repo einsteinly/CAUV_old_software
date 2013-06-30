@@ -24,7 +24,7 @@ namespace bp = boost::python;
 using namespace cauv;
 
 template<typename T>
-boost::shared_ptr<T> makeContainer(std::string const& s){
+boost::shared_ptr<T> makeContainer(const std::string& s){
     const_svec_ptr v  = boost::make_shared<svec_t>(
         s.data(), s.data() + s.size()
     );

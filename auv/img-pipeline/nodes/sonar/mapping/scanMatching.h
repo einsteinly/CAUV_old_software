@@ -19,7 +19,7 @@ namespace imgproc{
 // - Pairwise Matching
 class PairwiseMatchException: public std::runtime_error{
     public:
-        PairwiseMatchException(std::string const& msg)
+        PairwiseMatchException(const std::string& msg)
             : std::runtime_error(msg){
         }
 };

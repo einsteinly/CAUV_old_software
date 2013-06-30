@@ -176,7 +176,7 @@ inline std::string chil(bool const& v){
     return mkStr() << std::noboolalpha << v;
 }
 
-inline void serialise(svec_ptr_cref p, std::string const& v){
+inline void serialise(svec_ptr_cref p, const std::string& v){
     serialise(p, uint32_t(v.size()));
     p->insert(p->end(), (byte const*)v.data(), (byte const*)v.data()+v.size());
 }
@@ -186,7 +186,7 @@ inline int32_t deserialise(const_svec_ptr_cref p, uint32_t i, std::string& v){
     v.assign((char*)&(p->operator[](i)), n);
     return n + 4;
 }
-inline std::string chil(std::string const& v){
+inline std::string chil(const std::string& v){
     std::string r;
     r.reserve(v.size()*2);
     std::string::const_iterator i;

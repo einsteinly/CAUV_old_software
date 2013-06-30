@@ -40,7 +40,7 @@ FNodeInput::FNodeInput(Manager& m,
                        liquid::ArcStyle const& of_style,
                        liquid::CutoutStyle const& with_cutout,
                        FNode* node,
-                       std::string const& id)
+                       const std::string& id)
     : ArcSinkLabel(new liquid::ArcSink(of_style, with_cutout, this),
                    node,
                    QString::fromStdString(id)),
@@ -118,7 +118,7 @@ liquid::CutoutStyle const& FNodeImageInput::cutoutStyleForSchedType(InputSchedTy
 
 // - static helper stuff:
 struct MakeModelNode: boost::static_visitor<boost::shared_ptr<cauv::gui::Node> >{
-    MakeModelNode(std::string const& id) : id(id) { }
+    MakeModelNode(const std::string& id) : id(id) { }
     
     // catch-all for uneditable types...
     template<typename T>
@@ -158,17 +158,17 @@ struct MakeModelNode: boost::static_visitor<boost::shared_ptr<cauv::gui::Node> >
         return r;
     }
 
-    boost::shared_ptr<cauv::gui::Node> operator()(std::string const&) const{
+    boost::shared_ptr<cauv::gui::Node> operator()(const std::string&) const{
         debug(7) << "MakeModelNode: string";    
         // !!! need a non-editable node
         return boost::make_shared<cauv::gui::StringNode>(cauv::gui::nid_t(id));
     }
 
     private:
-        std::string const& id;
+        const std::string& id;
 };
 
-static boost::shared_ptr<cauv::gui::Node> makeModelNodeForInput(std::string const& id, ParamValue const& v){
+static boost::shared_ptr<cauv::gui::Node> makeModelNodeForInput(const std::string& id, ParamValue const& v){
     return boost::apply_visitor(MakeModelNode(id), v);
 }
 

@@ -35,10 +35,10 @@ class ControlNode : public CauvNode
         ControlNode();
         virtual ~ControlNode();
     
-        void setCAN(std::string const& port);
+        void setCAN(const std::string& port);
 
         void addXsens(int id);
-		void addSBG(std::string const&, int baud_rate, int pause_time);
+		void addSBG(const std::string&, int baud_rate, int pause_time);
         void addSimIMU();
         void addPressureIMU();
     

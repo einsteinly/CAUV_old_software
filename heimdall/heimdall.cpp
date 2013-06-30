@@ -87,8 +87,8 @@ class SocketInfo {
     void *skt;
     conn_list_t binds;
     conn_list_t connections;
-    int connect(std::string connect_str);
-    int bind(std::string bind_str);
+    int connect(const std::string& connect_str);
+    int bind(const std::string& bind_str);
 };
 
 std::ostream &operator<<(std::ostream &os, const SocketInfo &info) {
@@ -107,11 +107,11 @@ class ConnCmp {
         return other.second == conn_str;
     }
     private:
-    std::string conn_str;
+    const std::string& conn_str;
 };
 
 
-int SocketInfo::connect(std::string connect_str) {
+int SocketInfo::connect(const std::string& connect_str) {
     if (std::count_if(connections.begin(), connections.end(), ConnCmp(connect_str))) {
         return 0;
     }
@@ -124,7 +124,7 @@ int SocketInfo::connect(std::string connect_str) {
     }
 }
 
-int SocketInfo::bind(std::string bind_str) {
+int SocketInfo::bind(const std::string& bind_str) {
     if (std::count_if(binds.begin(), binds.end(), ConnCmp(bind_str))) {
         return 0;
     }
@@ -227,7 +227,7 @@ void XPubSubPair::pump_subscription(void) {
 
 class DaemonContext {
     public:
-    DaemonContext(const std::string vehicle_name, const std::string working_directory);
+    DaemonContext(const std::string& vehicle_name, const std::string& working_directory);
     void run(void);
     ~DaemonContext(void);
     private:
@@ -250,7 +250,7 @@ class DaemonContext {
     DaemonContext (const DaemonContext &other);
 };
 
-DaemonContext::DaemonContext(const std::string vehicle_name, const std::string working_directory) :
+DaemonContext::DaemonContext(const std::string& vehicle_name, const std::string& working_directory) :
     running(true),
     working_directory(working_directory),
     vehicle_name(vehicle_name),

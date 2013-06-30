@@ -39,7 +39,7 @@ Q_EXPORT_PLUGIN2(cauv_redherringplugin, RedHerringPlugin)
 
 
 
-RedHerring::RedHerring(std::string name) : Vehicle(name) {
+RedHerring::RedHerring(const std::string& name) : Vehicle(name) {
     // don't populate anything in here as there isn't a shared pointer to
     // this object yet. We need to wait until after it's been fully constructed
 }

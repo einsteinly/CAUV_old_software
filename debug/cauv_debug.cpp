@@ -57,7 +57,7 @@ void SmartStreamBase::setLevel(int debug_level)
     settings().changed = true;
 }
 
-void SmartStreamBase::setProgramName(std::string const& n)
+void SmartStreamBase::setProgramName(const std::string& n)
 {
     //this can get set from multiple places. just go with the first one
     static bool set = false;
@@ -68,13 +68,13 @@ void SmartStreamBase::setProgramName(std::string const& n)
     }
 }
 
-void SmartStreamBase::setLogfileName(std::string const& n)
+void SmartStreamBase::setLogfileName(const std::string& n)
 {
     settings().logfile_name = n;
     settings().changed = true;
 }
 
-void SmartStreamBase::setLogDirName(std::string const& n)
+void SmartStreamBase::setLogDirName(const std::string& n)
 {
     std::string new_logdir = n;
     if(new_logdir.size()){
@@ -175,7 +175,7 @@ void SmartStreamBase::printToStream(std::ostream& os)
 
 // space is added between srings s1 s2 if:
 //   mayAddSpaceNext(s1) == true && mayAddSpaceNow(s2) == true
-bool SmartStreamBase::mayAddSpaceNext(std::string const& s){
+bool SmartStreamBase::mayAddSpaceNext(const std::string& s){
     if(isspace(*s.rbegin()))
         return false;
     if(s.rfind("\033[") != std::string::npos &&
@@ -192,7 +192,7 @@ bool SmartStreamBase::mayAddSpaceNext(std::string const& s){
     }
 }
 
-bool SmartStreamBase::mayAddSpaceNow(std::string const& s){
+bool SmartStreamBase::mayAddSpaceNow(const std::string& s){
     if(isspace(s[0]))
         return false;
     if(s.find("\033[") == 0)
@@ -215,7 +215,7 @@ bool& SmartStreamBase::recursive(){
     return *r.get();
 }
 
-std::string const& logFilePrefix(){
+const std::string& logFilePrefix(){
     using boost::posix_time::microsec_clock;
     // abuse thread-safety of static initialisation (compile with it enabled!)
     static std::string the_prefix = MakeString(

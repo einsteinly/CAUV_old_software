@@ -55,7 +55,7 @@ std::set<boost::shared_ptr<AiConditionNode> > AiTaskNode::getConditions(){
     return m_conditions;
 }
 
-void AiTaskNode::addPipelineId(std::string const& id){
+void AiTaskNode::addPipelineId(const std::string& id){
     info() << "pipeline added to task";
     //if(m_pipelineIds.find(id) == m_pipelineIds.end()) {
         m_pipelineIds.insert(id);
@@ -63,7 +63,7 @@ void AiTaskNode::addPipelineId(std::string const& id){
     //}
 }
 
-void AiTaskNode::removePipelineId(std::string const& pipe){
+void AiTaskNode::removePipelineId(const std::string& pipe){
     m_pipelineIds.erase(std::find(m_pipelineIds.begin(), m_pipelineIds.end(), pipe));
 }
 
@@ -71,7 +71,7 @@ std::set<std::string> AiTaskNode::getPipelineIds(){
     return m_pipelineIds;
 }
 
-boost::shared_ptr<Node> AiTaskNode::setDebug(std::string const& name, ParamWithMeta value_with_meta){
+boost::shared_ptr<Node> AiTaskNode::setDebug(const std::string& name, ParamWithMeta value_with_meta){
     if (!m_debug[name]) {
         m_debug[name] = paramWithMetaToNode(nid_t(name), value_with_meta);
         findOrCreate<GroupingNode>("debug")->addChild(m_debug[name]);
@@ -80,7 +80,7 @@ boost::shared_ptr<Node> AiTaskNode::setDebug(std::string const& name, ParamWithM
     return m_debug[name];
 }
 
-void AiTaskNode::removeDebug(std::string const& name){
+void AiTaskNode::removeDebug(const std::string& name){
     findOrCreate<GroupingNode>("debug")->removeChild(nid_t(name));
     m_debug.erase(name);
 }
@@ -89,7 +89,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getDebugValues(){
     return m_debug;
 }
 
-boost::shared_ptr<Node> AiTaskNode::setScriptOption(std::string const& name, ParamWithMeta value_with_meta){
+boost::shared_ptr<Node> AiTaskNode::setScriptOption(const std::string& name, ParamWithMeta value_with_meta){
     if (!m_scriptOptions[name]) {
         m_scriptOptions[name] = paramWithMetaToNode(nid_t(name), value_with_meta);
         findOrCreate<GroupingNode>("options")->addChild(m_scriptOptions[name]);
@@ -98,7 +98,7 @@ boost::shared_ptr<Node> AiTaskNode::setScriptOption(std::string const& name, Par
     return m_scriptOptions[name];
 }
 
-void AiTaskNode::removeScriptOption(std::string const& name){
+void AiTaskNode::removeScriptOption(const std::string& name){
     findOrCreate<GroupingNode>("options")->removeChild(nid_t(name));
     m_scriptOptions.erase(name);
 }
@@ -107,7 +107,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiTaskNode::getScriptOptions(){
     return m_scriptOptions;
 }
 
-boost::shared_ptr<Node> AiTaskNode::setTaskOption(std::string const& name, ParamWithMeta value_with_meta){
+boost::shared_ptr<Node> AiTaskNode::setTaskOption(const std::string& name, ParamWithMeta value_with_meta){
     if (!m_taskOptions[name]) {
         m_taskOptions[name] = paramWithMetaToNode(nid_t(name), value_with_meta);
         findOrCreate<GroupingNode>("options")->addChild(m_taskOptions[name]);
@@ -116,7 +116,7 @@ boost::shared_ptr<Node> AiTaskNode::setTaskOption(std::string const& name, Param
     return m_taskOptions[name];
 }
 
-void AiTaskNode::removeTaskOption(std::string const& name){
+void AiTaskNode::removeTaskOption(const std::string& name){
     findOrCreate<GroupingNode>("options")->removeChild(nid_t(name));
     m_taskOptions.erase(name);
 }
@@ -215,7 +215,7 @@ void LiquidTaskNode::ensureConnected(){
     try {
         boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
         boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
-        foreach(std::string const& id, m_node->getPipelineIds()) {
+        foreach(const std::string& id, m_node->getPipelineIds()) {
             try {
                 boost::shared_ptr<Node> node = pipelines->findFromPath<Node>(QString::fromStdString(id));
                 ConnectedNode * cn = ConnectedNode::nodeFor(node);

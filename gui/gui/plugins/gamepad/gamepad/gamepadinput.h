@@ -29,7 +29,7 @@ namespace cauv{
             void processEvents();
 
         public:
-            explicit GamepadInput(const std::string vendor = "");
+            explicit GamepadInput(const std::string& vendor = "");
 
             static OIS::DeviceList listDevices();
             static int getNumDevices();

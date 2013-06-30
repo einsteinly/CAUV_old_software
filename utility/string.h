@@ -78,7 +78,7 @@ T fromStr(const char* v){
 }
 
 namespace cauv {
-std::string implode( const std::string &glue, const std::set<std::string> &pieces );
+std::string implode( const std::string& glue, const std::set<std::string>& pieces );
 }
 
 #endif // ndef __CAUV_UTILITY_STRING_H__

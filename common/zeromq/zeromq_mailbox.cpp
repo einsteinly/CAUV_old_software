@@ -34,7 +34,7 @@
 
 namespace cauv {
 
-ZeroMQMailbox::ZeroMQMailbox(std::string name) :
+ZeroMQMailbox::ZeroMQMailbox(const std::string& name) :
     name(name),
     zm_context(),
     pub(zm_context, XS_XPUB),
@@ -233,7 +233,7 @@ void ZeroMQMailbox::clearSubscribeObservers(void) {
     Observable<SubscribeObserver>::clearObservers();
 }
 
-ZeroMQMailbox::pids_t ZeroMQMailbox::scan_ipc_dir(std::string dir) {
+ZeroMQMailbox::pids_t ZeroMQMailbox::scan_ipc_dir(const std::string& dir) {
     DIR *ipc_dir = opendir(dir.c_str());
     struct dirent *entry;
     pids_t wait_pids;

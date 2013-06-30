@@ -56,7 +56,7 @@ bool MotorState::operator!=(MotorState& rhs) const
 
 
 
-SeanetSonar::SeanetSonar(std::string str) : m_cur_data_reqs(0)
+SeanetSonar::SeanetSonar(const std::string& str) : m_cur_data_reqs(0)
 {
     m_serial_port = boost::make_shared<SeanetSerialPort>(str);
     m_state = SENDREBOOT;

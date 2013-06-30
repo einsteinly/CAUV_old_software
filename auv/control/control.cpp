@@ -578,7 +578,7 @@ void ControlNode::addXsens(int id)
     }
 }
 
-void ControlNode::addSBG(std::string const& port, int baud_rate, int pause_time)
+void ControlNode::addSBG(const std::string& port, int baud_rate, int pause_time)
 {
     // start up the SBG IMU
     boost::shared_ptr<sbgIMU> sbg;
@@ -609,7 +609,7 @@ void ControlNode::addPressureIMU()
     m_imus.push_back(psb);
 }
 
-void ControlNode::setCAN(std::string const& ifname)
+void ControlNode::setCAN(const std::string& ifname)
 {
     m_can_gate = boost::make_shared<CANGate>(ifname);
 }

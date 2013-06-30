@@ -31,7 +31,7 @@ namespace cauv {
                     return m_instance;
                 }
 
-                template <class T> boost::shared_ptr<T> registerVehicle(std::string name){
+                template <class T> boost::shared_ptr<T> registerVehicle(const std::string& name){
                     boost::shared_ptr<Vehicle> vehicle(new T(name));
                     connect(vehicle.get(), SIGNAL(observerAttached(boost::shared_ptr<MessageObserver>)),
                             this, SIGNAL(observerAttached(boost::shared_ptr<MessageObserver>)));

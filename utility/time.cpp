@@ -30,7 +30,7 @@ double cauv::nowDouble(){
     return double(t.secs) + double(t.musecs)/1e6;
 }
 
-std::string cauv::now(std::string const& format){
+std::string cauv::now(const std::string& format){
     using namespace boost::posix_time;
     std::ostringstream oss;
     time_facet* facet = new time_facet(format.c_str());

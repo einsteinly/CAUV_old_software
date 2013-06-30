@@ -32,7 +32,7 @@ static cauv::gui::Colour colourForParamType(int32_t param_type_id){
 }
 
 
-NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name,
+NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, const std::string& name,
                        bool suppress_text)
     : Renderable(node.get()), m_node(node), m_pw(pw),
       m_suppress_text(suppress_text),
@@ -137,7 +137,7 @@ int32_t NodeIOBlob::subType() const{
 }
 
 
-NodeInputBlob::NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n,
+NodeInputBlob::NodeInputBlob(node_ptr_t d, pw_ptr_t p, const std::string& n,
                              bool suppress_text)
     : NodeIOBlob(d, p, n, suppress_text){
     m_text->m_pos.x = -m_text->bbox().min.x + m_radius + 3;
@@ -189,7 +189,7 @@ std::string NodeInputBlob::input() const{
 }
 
 
-NodeInputParamBlob::NodeInputParamBlob(node_ptr_t d, pw_ptr_t p, std::string const& n, int32_t type_idx)
+NodeInputParamBlob::NodeInputParamBlob(node_ptr_t d, pw_ptr_t p, const std::string& n, int32_t type_idx)
     : NodeInputBlob(d, p, n, true){
     m_sub_type = type_idx;
     m_normal_colour = colourForParamType(type_idx);
@@ -202,7 +202,7 @@ std::string NodeInputParamBlob::param() const{
     return input();
 }
 
-NodeOutputBlob::NodeOutputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n, int32_t type_idx)
+NodeOutputBlob::NodeOutputBlob(node_ptr_t d, pw_ptr_t p, const std::string& n, int32_t type_idx)
     : NodeIOBlob(d, p, n){
     m_sub_type = type_idx;
     if(type_idx != -1){

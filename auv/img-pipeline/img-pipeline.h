@@ -29,7 +29,7 @@ class ImagePipelineNode : public CauvNode,
     public:
         ImagePipelineNode();
 
-        void spawnNewPipeline(std::string const& with_name);
+        void spawnNewPipeline(const std::string& with_name);
         
         // message observer: new pipelines are created based on these messages
         // only:

@@ -21,7 +21,7 @@ using namespace cauv::gui;
 
 InputManager * GamepadInput::m_input_manager = 0;
 
-GamepadInput::GamepadInput(const std::string vendor)
+GamepadInput::GamepadInput(const std::string& vendor)
 {
     m_input_manager = GamepadInput::getInputSystem();
 

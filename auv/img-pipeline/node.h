@@ -300,13 +300,13 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                   ConstQualifier isconst);
             Input(InputSchedType::e s,
                   ParamValue const& default_value,
-                  std::string const& tip,
+                  const std::string& tip,
                   std::vector<int32_t> const& compatible_subtypes);
 
             static input_ptr makeImageInputShared(ConstQualifier isconst,
                                                   InputSchedType::e const& st = Must_Be_New);
             static input_ptr makeParamInputShared(ParamValue const& default_value,
-                                                  std::string const& tip,
+                                                  const std::string& tip,
                                                   InputSchedType::e const& st = May_Be_Old);
             void clear();
             image_ptr_t getImage() const;
@@ -382,8 +382,8 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
 
     public:
         struct ConstructArgs{
-            Scheduler& sched; ImageProcessor& pl; std::string const& pl_name; NodeType::e type;
-            ConstructArgs(Scheduler& sched, ImageProcessor& pl, std::string const& pl_name, NodeType::e type);
+            Scheduler& sched; ImageProcessor& pl; const std::string& pl_name; NodeType::e type;
+            ConstructArgs(Scheduler& sched, ImageProcessor& pl, const std::string& pl_name, NodeType::e type);
         };
         Node(ConstructArgs const& args);
 
@@ -403,7 +403,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
 
         NodeType::e const& type() const;
         node_id const& id() const;
-        std::string const& plName() const;
+        const std::string& plName() const;
 
         // TODO: rename this to connectInput
         void setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id);
@@ -609,7 +609,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          */
         template<typename T>
         void registerParamID(input_id const& p, T const& default_value,
-                             std::string const& tip="",
+                             const std::string& tip="",
                              InputSchedType::e const& st = May_Be_Old){
             lock_t l(m_inputs_lock);
             if(m_inputs.count(p)){

@@ -42,7 +42,7 @@ class RenderStringNode: public Node{
 
     protected:
         struct applyRenderString: boost::static_visitor<augmented_mat_t>{
-            applyRenderString(int x, int y, float sz, std::string const& s)
+            applyRenderString(int x, int y, float sz, const std::string& s)
                 : m_x(x), m_y(y), m_sz(sz), m_str(s){
             }
             augmented_mat_t operator()(cv::Mat a) const{
@@ -61,7 +61,7 @@ class RenderStringNode: public Node{
             int m_x;
             int m_y;
             float m_sz;
-            std::string const& m_str;
+            const std::string& m_str;
         };
         void doWork(in_image_map_t& inputs, out_map_t& r){
 

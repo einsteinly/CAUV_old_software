@@ -162,7 +162,7 @@ class CauvNodeWrapper:
     public bp::wrapper<CauvNode>
 {
     public:
-        CauvNodeWrapper(std::string const& name)
+        CauvNodeWrapper(const std::string& name)
             : CauvNode(name){
         }
 
@@ -226,7 +226,7 @@ class AIMessageObserver:
 };
 */
 
-std::vector<uint8_t> mkByteVec(std::string const& b16encoded){
+std::vector<uint8_t> mkByteVec(const std::string& b16encoded){
     std::vector<uint8_t> r;
     r.reserve(b16encoded.size()/2);
     const static uint8_t nibble_lookup[256] = {
@@ -279,7 +279,7 @@ void emitDebug(){
 void emitMailbox(){
     /* need to explicitly resolve pointer to overloaded function: */
     typedef int (Mailbox::*sm_ptr3_t)(
-        boost::shared_ptr<const Message>, MessageReliability, std::string const&
+        boost::shared_ptr<const Message>, MessageReliability, const std::string&
     );
     bp::class_<Mailbox,
                boost::noncopyable,

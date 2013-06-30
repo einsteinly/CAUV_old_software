@@ -90,25 +90,25 @@ class Node: public Draggable,
         void exec();
         int id() const;
         NodeType::e type() const;
-        renderable_ptr_t outSocket(std::string const& output_id);
-        renderable_ptr_t inSocket(std::string const& input_id);
+        renderable_ptr_t outSocket(const std::string& output_id);
+        renderable_ptr_t inSocket(const std::string& input_id);
         arc_ptr_t newArc(renderable_wkptr_t src, renderable_wkptr_t dst);
         void status(int s);
-        void inputStatus(std::string const& input_id, int s);
-        void outputStatus(std::string const& output_id, int s);
+        void inputStatus(const std::string& input_id, int s);
+        void outputStatus(const std::string& output_id, int s);
 
         // implement Container:
         virtual Point referUp(Point const& p) const;
         virtual void postRedraw(float delay);
         virtual void postMenu(menu_ptr_t m, Point const& top_level_position,
                               bool pressed=false);
-		virtual void postText(const std::string &text, const std::string &font);
+		virtual void postText(const std::string& text, const std::string& font);
         virtual void removeMenu(menu_ptr_t);
         virtual void remove(renderable_ptr_t);
         virtual void refreshLayout();
 
         template<typename value_T>
-        void paramValueChanged(std::string const& param, value_T const& v){
+        void paramValueChanged(const std::string& param, value_T const& v){
             debug() << "Node::paramValueChanged" << param << v;
             boost::shared_ptr<SetNodeParameterMessage> sp =
                 boost::make_shared<SetNodeParameterMessage>();

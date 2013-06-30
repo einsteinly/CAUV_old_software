@@ -58,7 +58,7 @@ static bool isInvalid(node_id_t const& id){
 Manager::Manager(NodeScene *scene,
                  boost::shared_ptr<Node> model_parent,
                  CauvNode *node,
-                 std::string const& pipeline_name)
+                 const std::string& pipeline_name)
     : QObject(),
       BufferedMessageObserver(),
       //DropHandlerInterface<QGraphicsItem*>(),
@@ -142,7 +142,7 @@ void Manager::sendMessage(boost::shared_ptr<const Message> m) const{
     m_cauv_node->send(m);
 }
 
-std::string const& Manager::pipelineName() const{
+const std::string& Manager::pipelineName() const{
     return m_pipeline_name;
 }
 

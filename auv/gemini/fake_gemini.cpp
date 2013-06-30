@@ -47,7 +47,7 @@ namespace po = boost::program_options;
 class Environment{
     public:
         Environment(
-            std::string const& env_file,
+            const std::string& env_file,
             float origin_x_px,
             float origin_y_px,
             float metres_per_px,

@@ -713,7 +713,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         // it unconditionally
         //
         // Another ping will only be prepared if m_ping_continuous is true
-        void prepareNextPing(std::string const& descr, boost::shared_ptr<bool> cancel_timeout){
+        void prepareNextPing(const std::string& descr, boost::shared_ptr<bool> cancel_timeout){
             debug(3) << "prepareNextPing" << descr;
 
             lock_t l(m_cancel_timeout_mux);

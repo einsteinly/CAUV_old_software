@@ -37,7 +37,7 @@ class FNodeOutput: public QGraphicsWidget,
                    public liquid::ArcSourceDelegate{
     Q_OBJECT
     public:
-        FNodeOutput(FNode* node, liquid::ArcStyle const& arc_style, std::string const& id)
+        FNodeOutput(FNode* node, liquid::ArcStyle const& arc_style, const std::string& id)
             : QGraphicsWidget(node),
               FNodeIO(node, id),
               m_source(NULL),

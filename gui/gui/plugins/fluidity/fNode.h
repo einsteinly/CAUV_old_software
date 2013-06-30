@@ -66,11 +66,11 @@ class FNode: public liquid::LiquidNode,
         void setOutputLinks(msg_node_output_map_t const&);
         void setParams(msg_node_param_map_t const&);
         void setParamLinks(msg_node_input_map_t const& inputs);
-        void connectOutputTo(std::string const& output, fnode_ptr, std::string const& input);
-        void disconnectOutputFrom(std::string const& output, fnode_ptr, std::string const& input);
-        void addImageDisplayOnInput(std::string const& input, boost::shared_ptr<ImageSource>);
+        void connectOutputTo(const std::string& output, fnode_ptr, const std::string& input);
+        void disconnectOutputFrom(const std::string& output, fnode_ptr, const std::string& input);
+        void addImageDisplayOnInput(const std::string& input, boost::shared_ptr<ImageSource>);
 
-        virtual void status(Status const& s, std::string const& status_information="");
+        virtual void status(Status const& s, const std::string& status_information="");
         virtual void status(Status const& s, float const& throughput, float const& frequency, float const& time_taken, float const& time_ratio);
     
     Q_SIGNALS:
@@ -89,8 +89,8 @@ class FNode: public liquid::LiquidNode,
         virtual void toggleCollapsed();
 
     protected:
-        FNodeOutput* output(std::string const& id);
-        FNodeInput* input(std::string const& id);
+        FNodeOutput* output(const std::string& id);
+        FNodeInput* input(const std::string& id);
 
         void initFromMessage(boost::shared_ptr<NodeAddedMessage const> m);
         void initButtons();

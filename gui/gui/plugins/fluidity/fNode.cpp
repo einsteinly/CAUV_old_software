@@ -106,7 +106,7 @@ static QString nodeTypeDesc(cauv::NodeType::e const& type){
     return mkQStr() << enum_name.substr(enum_name.rfind(':')+1).c_str();
 }
 
-static int countLocalInputsWithName(std::string const& name, FNode::msg_node_param_map_t const& map){
+static int countLocalInputsWithName(const std::string& name, FNode::msg_node_param_map_t const& map){
     for (FNode::msg_node_param_map_t::value_type const& v : map)
         if(v.first.input == name)
             return 1;
@@ -291,7 +291,7 @@ void FNode::setParamLinks(msg_node_input_map_t const& inputs){
     }
 }
 
-void FNode::connectOutputTo(std::string const& output_id, fnode_ptr to, std::string const& input_id){
+void FNode::connectOutputTo(const std::string& output_id, fnode_ptr to, const std::string& input_id){
     FNodeOutput* output = this->output(output_id);
     FNodeInput* input = to->input(input_id);
     if(output && input)
@@ -299,14 +299,14 @@ void FNode::connectOutputTo(std::string const& output_id, fnode_ptr to, std::str
         output->arc()->addTo(input->sink());
 }
 
-void FNode::disconnectOutputFrom(std::string const& output_id, fnode_ptr to, std::string const& input_id){
+void FNode::disconnectOutputFrom(const std::string& output_id, fnode_ptr to, const std::string& input_id){
     FNodeOutput* output = this->output(output_id);
     FNodeInput* input = to->input(input_id);
     if(output && input)
         output->arc()->removeTo(input->sink());
 }
 
-void FNode::addImageDisplayOnInput(std::string const& input, boost::shared_ptr<ImageSource> src){
+void FNode::addImageDisplayOnInput(const std::string& input, boost::shared_ptr<ImageSource> src){
     str_in_map_t::const_iterator i = m_inputs.find(input);
     if(i == m_inputs.end()){
         error() << "no such input (yet)" << input;
@@ -320,7 +320,7 @@ void FNode::addImageDisplayOnInput(std::string const& input, boost::shared_ptr<I
     setResizable(true);
 }
 
-void FNode::status(Status const& s, std::string const& status_information){
+void FNode::status(Status const& s, const std::string& status_information){
     if(!status_information.size())
         LiquidNode::status(s, mkStr() << m_node_id << ": unknown status");
     else
@@ -399,7 +399,7 @@ void FNode::toggleCollapsed(){
     manager().considerUpdatingLayout();
 }
 
-FNodeOutput* FNode::output(std::string const& id){
+FNodeOutput* FNode::output(const std::string& id){
     str_out_map_t::const_iterator i = m_outputs.find(id);
     if(i != m_outputs.end())
         return i->second;
@@ -407,7 +407,7 @@ FNodeOutput* FNode::output(std::string const& id){
     return nullptr;
 }
 
-FNodeInput* FNode::input(std::string const& id){
+FNodeInput* FNode::input(const std::string& id){
     str_in_map_t::const_iterator i = m_inputs.find(id);
     if(i != m_inputs.end())
         return i->second;

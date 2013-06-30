@@ -39,7 +39,7 @@ ImagePipelineNode::ImagePipelineNode()
     mailbox()->subMessage(GraphRequestMessage());
 }
 
-void ImagePipelineNode::spawnNewPipeline(std::string const& with_name)
+void ImagePipelineNode::spawnNewPipeline(const std::string& with_name)
 {
     if(with_name.find(m_pipeline_name_root) != 0)
         return;

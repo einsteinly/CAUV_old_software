@@ -86,7 +86,7 @@ class NodeFactoryRegister{
             nodeRegister()[n] = f;
         }
         
-        static node_ptr_t create(Scheduler& s, ImageProcessor& pl, std::string const& n, NodeType::e const& t){        
+        static node_ptr_t create(Scheduler& s, ImageProcessor& pl, const std::string& n, NodeType::e const& t){        
             lock_t l(registerLock());
             nt_creator_map_t::const_iterator i = nodeRegister().find(t);
             if(i != nodeRegister().end()){

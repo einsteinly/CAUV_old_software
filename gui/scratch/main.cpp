@@ -20,7 +20,7 @@
 
 class ScratchNode: public cauv::CauvNode, public boost::enable_shared_from_this<ScratchNode>{
     public:
-        ScratchNode(std::string const& n, int argc, char* argv[])
+        ScratchNode(const std::string& n, int argc, char* argv[])
             : cauv::CauvNode(n), m_argc(argc), m_argv(argv), m_exit_status(0),
               m_pipeline_name(""){
         }

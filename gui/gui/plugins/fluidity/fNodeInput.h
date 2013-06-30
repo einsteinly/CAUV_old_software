@@ -43,7 +43,7 @@ class FNodeInput: public liquid::ArcSinkLabel,
                    liquid::ArcStyle const& of_style,
                    liquid::CutoutStyle const& with_cutout,
                    FNode* node,
-                   std::string const& id);
+                   const std::string& id);
         virtual ~FNodeInput();
 
         // ConnectionSink:

@@ -32,16 +32,16 @@ class AiConditionNode : public BooleanNode {
         AiConditionNode(const nid_t id);
         virtual ~AiConditionNode();
 
-        boost::shared_ptr<Node> setDebug(std::string const& name, ParamWithMeta value);
-        void removeDebug(std::string const& name);
+        boost::shared_ptr<Node> setDebug(const std::string& name, ParamWithMeta value);
+        void removeDebug(const std::string& name);
         std::map<std::string, boost::shared_ptr<Node> > getDebugValues();
 
-        boost::shared_ptr<Node> setOption(std::string const& name, ParamWithMeta value);
-        void removeOption(std::string const& name);
+        boost::shared_ptr<Node> setOption(const std::string& name, ParamWithMeta value);
+        void removeOption(const std::string& name);
         std::map<std::string, boost::shared_ptr<Node> > getOptions();
 
-        void addPipelineId(std::string const&);
-        void removePipelineId(std::string const&);
+        void addPipelineId(const std::string&);
+        void removePipelineId(const std::string&);
         std::set<std::string> getPipelineIds();
 
         void forceSet();
@@ -52,7 +52,7 @@ class AiConditionNode : public BooleanNode {
         std::set<std::string > m_pipelineIds;
 
    Q_SIGNALS:
-        void pipelineIdAdded(std::string const&);
+        void pipelineIdAdded(const std::string&);
 
 };
 

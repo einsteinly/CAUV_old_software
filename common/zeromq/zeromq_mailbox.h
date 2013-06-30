@@ -29,7 +29,7 @@ namespace cauv {
 
 class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public MessageSource, public Observable<SubscribeObserver>,  boost::noncopyable {
     public:
-    ZeroMQMailbox(const std::string name = "unknown");
+    ZeroMQMailbox(const std::string& name = "unknown");
     /**
      * @return The number of bytes sent
      */
@@ -41,8 +41,8 @@ class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public Message
     virtual int sendMessage(boost::shared_ptr<const Message> message, MessageReliability,
                     const std::string &destinationGroup);
 
-    virtual void joinGroup(const std::string &groupName);
-    virtual void leaveGroup(const std::string &groupName);
+    virtual void joinGroup(const std::string& groupName);
+    virtual void leaveGroup(const std::string& groupName);
     virtual void subMessage(const Message &message);
     virtual void unSubMessage(const Message &message);
 
@@ -90,7 +90,7 @@ class ZeroMQMailbox : public Mailbox, public MailboxEventMonitor, public Message
 
     //scan for unix domain sockets in dir and connect to them if the node that
     //manages them is still alive
-    pids_t scan_ipc_dir(std::string dir);
+    pids_t scan_ipc_dir(const std::string& dir);
     //pids which we need to send connection strings to
     pids_t send_connect_pids;
     //xs connections strings that this node has connected to already

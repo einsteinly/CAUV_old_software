@@ -140,7 +140,7 @@ void Node::setMutable(bool mut){
     m_mutable = mut;
 }
 
-void Node::setDocstring(std::string const& docstring){
+void Node::setDocstring(const std::string& docstring){
     m_docstring = docstring;
 }
 

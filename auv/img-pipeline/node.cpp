@@ -129,7 +129,7 @@ Node::Input::Input(InputSchedType::e s,
 
 Node::Input::Input(InputSchedType::e s,
                    ParamValue const& default_value,
-                   std::string const& tip,
+                   const std::string& tip,
                    std::vector<int32_t> const& compatible_subtypes)
     : TestableBase<Input>(*this),
       target(),
@@ -147,7 +147,7 @@ Node::input_ptr Node::Input::makeImageInputShared(ConstQualifier isconst, InputS
 }
 
 Node::input_ptr Node::Input::makeParamInputShared(
-    ParamValue const& default_value, std::string const& tip, InputSchedType::e const& st
+    ParamValue const& default_value, const std::string& tip, InputSchedType::e const& st
 ){
     return boost::make_shared<Input>(
         boost::cref(st), boost::cref(default_value), boost::cref(tip), boost::apply_visitor(CompatibleSubTypes(), default_value)
@@ -292,7 +292,7 @@ const char* Node::Image_Out_Copied_Name = "image out";
 
 Node::ConstructArgs::ConstructArgs(Scheduler& sched,
                                    ImageProcessor& pl,
-                                   std::string const& pl_name,
+                                   const std::string& pl_name,
                                    NodeType::e type
 )   : sched(sched), pl(pl), pl_name(pl_name), type(type){
 }
@@ -367,7 +367,7 @@ node_id const& Node::id() const{
     return m_id;
 }
 
-std::string const& Node::plName() const{
+const std::string& Node::plName() const{
     return m_pl_name;
 }
 

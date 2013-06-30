@@ -35,12 +35,12 @@ class Node
         }
 
         template<typename T>
-        void attr(std::string name, T val)
+        void attr(const std::string& name, T val)
         {
             agset(m_node, const_cast<char*>(name.c_str()), const_cast<char*>(boost::lexical_cast<std::string>(val).c_str()));
         }
 
-        std::string attr(std::string name) const
+        std::string attr(const std::string& name) const
         {
             char* c = agget(const_cast<Agnode_t*>(m_node), const_cast<char*>(name.c_str()));
             return c ? c : "";
@@ -66,13 +66,13 @@ void AgraphDeleter(Agraph_t* v) { agclose(v); }
 class Graph
 {
     public:
-        Graph(std::string name, int type)
+        Graph(const std::string& name, int type)
             : nodes(this),
               m_G( boost::shared_ptr<Agraph_t>( agopen(const_cast<char*>(name.c_str()), type), AgraphDeleter ) )
         {
         }
 
-        Node node(std::string name)
+        Node node(const std::string& name)
         {
             return Node(agnode(m_G.get(), const_cast<char*>(name.c_str())));
         }
@@ -80,7 +80,7 @@ class Graph
         {
             return Edge(agedge(m_G.get(), n1.m_node, n2.m_node));
         }
-        Graph subGraph(std::string name)
+        Graph subGraph(const std::string& name)
         {
             return Graph(agsubg(m_G.get(), const_cast<char*>(name.c_str())), m_root ? m_root : boost::shared_ptr<Graph>(this)); 
         }
@@ -91,12 +91,12 @@ class Graph
         }
 
         template<typename T>
-        void addGraphAttr(std::string name, T defaultval)
+        void addGraphAttr(const std::string& name, T defaultval)
         {
             agraphattr(m_G.get(), const_cast<char*>(name.c_str()), const_cast<char*>(boost::lexical_cast<std::string>(defaultval).c_str()));
         }
         template<typename T>
-        void addNodeAttr(std::string name, T defaultval)
+        void addNodeAttr(const std::string& name, T defaultval)
         {
             agnodeattr(m_G.get(), const_cast<char*>(name.c_str()), const_cast<char*>(boost::lexical_cast<std::string>(defaultval).c_str()));
         }

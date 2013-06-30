@@ -32,7 +32,7 @@ namespace cauv {
                 return m_units;
             }
 
-            virtual void setUnits(std::string const& units) {
+            virtual void setUnits(const std::string& units) {
                 m_units = units;
             }
 

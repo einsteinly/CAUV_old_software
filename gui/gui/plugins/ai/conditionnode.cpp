@@ -44,7 +44,7 @@ AiConditionNode::~AiConditionNode(){
 }
 
 
-boost::shared_ptr<Node> AiConditionNode::setDebug(std::string const& name, ParamWithMeta value_with_meta){
+boost::shared_ptr<Node> AiConditionNode::setDebug(const std::string& name, ParamWithMeta value_with_meta){
     boost::shared_ptr<GroupingNode> debug = findOrCreate<GroupingNode>("debug");
     if (!m_debug[name]) {
         m_debug[name] = paramWithMetaToNode(nid_t(name), value_with_meta);
@@ -54,7 +54,7 @@ boost::shared_ptr<Node> AiConditionNode::setDebug(std::string const& name, Param
     return m_debug[name];
 }
 
-void AiConditionNode::removeDebug(std::string const& name){
+void AiConditionNode::removeDebug(const std::string& name){
     this->removeChild(nid_t(name));
     m_debug.erase(name);
 }
@@ -63,7 +63,7 @@ std::map<std::string, boost::shared_ptr<Node> > AiConditionNode::getDebugValues(
     return m_debug;
 }
 
-boost::shared_ptr<Node> AiConditionNode::setOption(std::string const& name, ParamWithMeta value_with_meta){
+boost::shared_ptr<Node> AiConditionNode::setOption(const std::string& name, ParamWithMeta value_with_meta){
     boost::shared_ptr<GroupingNode> options = findOrCreate<GroupingNode>("options");
     if (!m_options[name]) {
         m_options[name] = paramWithMetaToNode(nid_t(name), value_with_meta);
@@ -73,7 +73,7 @@ boost::shared_ptr<Node> AiConditionNode::setOption(std::string const& name, Para
     return m_options[name];
 }
 
-void AiConditionNode::removeOption(std::string const& name){
+void AiConditionNode::removeOption(const std::string& name){
     this->removeChild(nid_t(name));
     m_options.erase(name);
 }
@@ -82,13 +82,13 @@ std::map<std::string, boost::shared_ptr<Node> > AiConditionNode::getOptions(){
     return m_options;
 }
 
-void AiConditionNode::addPipelineId(std::string const& id){
+void AiConditionNode::addPipelineId(const std::string& id){
     //if(m_pipelineIds.find(id) == m_pipelineIds.end()) {
         m_pipelineIds.insert(id);
         Q_EMIT pipelineIdAdded(id);
     //}
 }
-void AiConditionNode::removePipelineId(std::string const& id){
+void AiConditionNode::removePipelineId(const std::string& id){
     m_pipelineIds.erase(std::find(m_pipelineIds.begin(), m_pipelineIds.end(), id));
 }
 std::set<std::string > AiConditionNode::getPipelineIds(){
@@ -192,7 +192,7 @@ void LiquidConditionNode::ensureConnected(){
         boost::shared_ptr<Vehicle> vehicle = m_node->getClosestParentOfType<Vehicle>();
         boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
 
-        foreach(std::string const& id, m_node->getPipelineIds()) {
+        foreach(const std::string& id, m_node->getPipelineIds()) {
             try {
                 boost::shared_ptr<Node> node = pipelines->findFromPath<Node>(QString::fromStdString(id));
                 ConnectedNode * cn = ConnectedNode::nodeFor(node);

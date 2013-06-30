@@ -58,7 +58,7 @@ public:
 
     enum Status{ NotOK, OK };
     Status status() const;
-    virtual void status(Status const& s, std::string const& status_information="");
+    virtual void status(Status const& s, const std::string& status_information="");
 
 protected:
     void layoutChanged();

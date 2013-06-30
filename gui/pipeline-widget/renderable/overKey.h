@@ -39,7 +39,7 @@ class Action{
 
         Action(f_t const& on_press_f = null_f,
                  f_t const& on_release_f = null_f,
-                 std::string const& descr = "",
+                 const std::string& descr = "",
                  renderable_ptr_t decal = renderable_ptr_t());
 
         void onPress() const;
@@ -59,10 +59,10 @@ class Key: public Renderable{
         typedef std::map<Qt::KeyboardModifiers, renderable_ptr_t> textmap_t;
         Key(container_ptr_t, keycode_t const&, keycode_t const&, BBox const&, textmap_t const& text);
         Key(container_ptr_t, keycode_t const&, keycode_t const&, BBox const&,
-            Qt::KeyboardModifiers m1 = 0, std::string const& t1 = "",
-            Qt::KeyboardModifiers m2 = 0, std::string const& t2 = "",
-            Qt::KeyboardModifiers m3 = 0, std::string const& t3 = "",
-            Qt::KeyboardModifiers m4 = 0, std::string const& t4 = "");
+            Qt::KeyboardModifiers m1 = 0, const std::string& t1 = "",
+            Qt::KeyboardModifiers m2 = 0, const std::string& t2 = "",
+            Qt::KeyboardModifiers m3 = 0, const std::string& t3 = "",
+            Qt::KeyboardModifiers m4 = 0, const std::string& t4 = "");
 
         virtual ~Key();
 
@@ -143,7 +143,7 @@ class OverKey: public Renderable,
         /**** types ****/
         typedef boost::function<void()> callback_t;
         struct _Callback{
-            _Callback(float const& t, std::string const& n, callback_t const& cb)
+            _Callback(float const& t, const std::string& n, callback_t const& cb)
                 : time(t), name(n), callback(cb){
             }
 
@@ -170,11 +170,11 @@ class OverKey: public Renderable,
 
 
         /**** callback mechanism that should be somewhere else.... ****/
-        virtual void postDelayedCallback(std::string const& name,
+        virtual void postDelayedCallback(const std::string& name,
                                          callback_t const& foo,
                                          float delay_secs);
         virtual void processDelayedCallbacks();
-        virtual void cancelDelayedCallbacks(std::string const& name);
+        virtual void cancelDelayedCallbacks(const std::string& name);
         /**** end callback mechanism functions ****/
 
     private:

@@ -322,7 +322,7 @@ LiquidNode::Status LiquidNode::status() const{
     return m_status;
 }
 
-void LiquidNode::status(Status const& s, std::string const& status_information){
+void LiquidNode::status(Status const& s, const std::string& status_information){
     m_status = s;
     setInfo(QString::fromStdString(status_information));
     if(s == OK){

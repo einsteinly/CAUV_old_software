@@ -25,8 +25,8 @@ namespace pw{
 template<typename done_arg_T>
 class EditText: public Menu{
     public:
-        typedef void (*done_fp) (done_arg_T, std::string const&);
-        EditText(container_ptr_t c, std::string const& text, BBox const& size,
+        typedef void (*done_fp) (done_arg_T, const std::string&);
+        EditText(container_ptr_t c, const std::string& text, BBox const& size,
                  done_fp done_f, done_arg_T done_f_arg)
             : Menu(c), m_bbox(size), m_fixed_size(false), m_edited(false),
               m_txt_prev(boost::make_shared<Text>(c, text)),

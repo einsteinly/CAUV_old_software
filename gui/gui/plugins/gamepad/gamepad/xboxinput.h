@@ -59,7 +59,7 @@ namespace cauv{
             void Trigger_R(float value);
 
         public:
-            explicit XBoxInput(const std::string vendor);
+            explicit XBoxInput(const std::string& vendor);
 
             bool buttonPressed( const OIS::JoyStickEvent &arg, int button ) ;
             bool buttonReleased( const OIS::JoyStickEvent &arg, int button ) ;

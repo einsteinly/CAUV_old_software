@@ -278,7 +278,7 @@ boost::shared_ptr<PVPairEditableBase> makePVPair(
 
 }// namespace Unnamed
 
-static int countLocalInputsWithName(std::string const& name, Node::msg_node_param_map_t const& map){
+static int countLocalInputsWithName(const std::string& name, Node::msg_node_param_map_t const& map){
     foreach(Node::msg_node_param_map_t::value_type const& v, map)
         if(v.first.input == name)
             return 1;
@@ -443,7 +443,7 @@ void Node::exec(){
     m_pw->send(boost::make_shared<ForceExecRequestMessage>(m_pw->pipelineName(), m_node_id));
 }
 
-renderable_ptr_t Node::outSocket(std::string const& id){
+renderable_ptr_t Node::outSocket(const std::string& id){
     str_out_map_t::const_iterator i = m_outputs.find(id);
     if(i != m_outputs.end()){
         return i->second;
@@ -453,7 +453,7 @@ renderable_ptr_t Node::outSocket(std::string const& id){
     }
 }
 
-renderable_ptr_t Node::inSocket(std::string const& id){
+renderable_ptr_t Node::inSocket(const std::string& id){
     str_in_map_t::const_iterator i = m_inputs.find(id);
     if(i != m_inputs.end()){
         return i->second;
@@ -484,7 +484,7 @@ void Node::status(int s){
     m_context->postRedraw(0);
 }
 
-void Node::inputStatus(std::string const& input_id, int s){
+void Node::inputStatus(const std::string& input_id, int s){
     str_in_map_t::const_iterator i = m_inputs.find(input_id);
     if(i == m_inputs.end()){
         str_inparam_map_t::const_iterator j = m_params.find(input_id);
@@ -499,7 +499,7 @@ void Node::inputStatus(std::string const& input_id, int s){
     }
 }
 
-void Node::outputStatus(std::string const& output_id, int s){
+void Node::outputStatus(const std::string& output_id, int s){
     str_out_map_t::const_iterator i = m_outputs.find(output_id);
     assert(i != m_outputs.end());
     if(i->second)
@@ -518,7 +518,7 @@ void Node::postMenu(menu_ptr_t m, cauv::gui::Point const& p, bool r){
     m_context->postMenu(m, p, r);
 }
 
-void Node::postText(const std::string &text, const std::string &font)
+void Node::postText(const std::string& text, const std::string& font)
 {
 	m_context->postText(text,font);
 }

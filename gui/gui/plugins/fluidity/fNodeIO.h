@@ -20,7 +20,7 @@ typedef int32_t SubType;
 
 class FNodeIO{
     public:
-        FNodeIO(FNode* node, std::string const& id)
+        FNodeIO(FNode* node, const std::string& id)
             : m_node(node), m_id(id){
         }
 
@@ -28,7 +28,7 @@ class FNodeIO{
             return m_node;
         }
 
-        std::string const& id() const{ return m_id; }
+        const std::string& id() const{ return m_id; }
         
         virtual SubType subType() const = 0;
         virtual OutputType::e ioType() const = 0;

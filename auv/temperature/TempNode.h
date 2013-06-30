@@ -24,9 +24,9 @@ typedef std::map<sensors_chip_name,
 class TempNode : public CauvNode
 {
   public:
-    TempNode(std::string f);
+    TempNode(const std::string& f);
     ~TempNode();
-    int SetConfigFile(std::string f);
+    int SetConfigFile(const std::string& f);
     void GetChipNames();
     void GetFeatureData(sensors_chip_name chip_name);
   private:
