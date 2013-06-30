@@ -294,28 +294,29 @@ int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
 }
 
 Q_DECLARE_METATYPE(QModelIndex)
-static void fillMenu(const QAbstractItemModel& model, const QModelIndex& index, QMenu* menu) {
-	for (int i = 0; i < model.rowCount(index); ++i) {
-		const QModelIndex& child_index = index.child(i, 0);
-        QString title = child_index.data(Qt::UserRole).toString();
-		if (model.hasChildren(child_index)) {
-			auto submenu = menu->addMenu(title);
-            fillMenu(model, child_index, submenu);
-		}
-		else {
-            auto action = menu->addAction(title);
-	        action->setData(QVariant::fromValue(child_index));
-		}
-	}
-}
+
 void CauvMainWindow::createContextMenu(QPoint point){
     const auto& model = *m_actions->root;
     // this needs some thought. redherring should REALLY not be hardcoded in here
-    auto rootIndex = model.indexFromNode(VehicleRegistry::instance()->
-                                         find<Vehicle>("redherring")->
-                                         findOrCreate<GroupingNode>("creation"));
+    auto pipelinesIndex = model.indexFromNode(VehicleRegistry::instance()->
+                                             find<Vehicle>("redherring")->
+                                             findOrCreate<GroupingNode>("pipelines"));
     QMenu menu{this};
-    fillMenu(model, rootIndex, &menu);
+    //fillMenu(model, rootIndex, &menu);
+    auto new_pipeline = menu.addMenu("new pipeline");
+    if (model.rowCount(pipelinesIndex) == 0) {
+        new_pipeline->setEnabled(false);
+    } else {
+        for (int i = 0; i < model.rowCount(pipelinesIndex); ++i) {
+            auto pipelineIndex = pipelinesIndex.child(i, 0);
+            QString pipelineName = pipelineIndex.data(Qt::UserRole).toString();
+            auto action = new_pipeline->addAction(pipelineName);
+            
+            // TODO: This relies on the first child of the pipeline being "new"
+            action->setData(QVariant::fromValue(pipelineIndex.child(0,0)));
+        }
+    }
+
     auto selectedAction = menu.exec(m_actions->view->mapToGlobal(point));
     if (selectedAction) {
         if (selectedAction->data().canConvert<QModelIndex>()) {
