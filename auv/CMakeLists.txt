@@ -1,5 +1,7 @@
 project (AUV)
 
+option(CAUV_USE_SHITTY_OLD_MCB_SHIT "Use shitty old mcb shit code for the shitty old mcb and not the nice shiny new can shit" OFF)
+
 find_package (OpenCV REQUIRED)
 find_package (Eigen REQUIRED)
 include_directories (${Eigen_INCLUDE_DIRS})
@@ -19,3 +21,6 @@ add_subdirectory (scripting)
 add_subdirectory (sonar)
 add_subdirectory (gemini)
 add_subdirectory (temperature)
+if (CAUV_USE_SHITTY_OLD_MCB_SHIT)
+    add_subdirectory(mcb_bridge)
+endif()
