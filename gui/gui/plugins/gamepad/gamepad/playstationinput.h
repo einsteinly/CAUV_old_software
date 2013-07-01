@@ -59,7 +59,7 @@ namespace cauv{
             void Joy_R_Y(float value);
 
         public:
-            explicit PlaystationInput(const std::string vendor);
+            explicit PlaystationInput(const std::string&& vendor);
 
             bool buttonPressed( const OIS::JoyStickEvent &arg, int button ) ;
             bool buttonReleased( const OIS::JoyStickEvent &arg, int button ) ;

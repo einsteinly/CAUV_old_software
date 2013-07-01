@@ -50,7 +50,7 @@ class HistogramSegmentationNodeArb: public OutputNode{
 
             if(!img->cvMat().isContinuous())
                 throw(parameter_error("Image must be continuous."));
-            if((img->cvMat().type() & CV_MAT_DEPTH_MASK) != CV_8U)
+            if(img->cvMat().depth() != CV_8U)
                 throw(parameter_error("Image must have unsigned bytes."));
             if(img->cvMat().channels() > 1)
                 throw(parameter_error("Image must have only one channel."));

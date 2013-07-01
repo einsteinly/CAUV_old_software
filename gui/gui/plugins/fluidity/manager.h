@@ -57,7 +57,7 @@ class Manager: public QObject,
         Manager(NodeScene *scene,
                 boost::shared_ptr<Node> model_parent,
                 CauvNode *node,
-                std::string const& pipeline_name);
+                const std::string& pipeline_name);
         ~Manager();
         
         // a shared pointer to this must be held when this is called!
@@ -71,7 +71,7 @@ class Manager: public QObject,
 
         void sendMessage(boost::shared_ptr<const Message>) const;
 
-        std::string const& pipelineName() const;
+        const std::string& pipelineName() const;
 
         bool animationPermitted() const;
 

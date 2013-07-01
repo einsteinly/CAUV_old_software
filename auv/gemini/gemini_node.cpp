@@ -20,7 +20,6 @@
 #include <common/msg_classes/image.h>
 #include <utility/threadsafe-observable.h>
 #include <utility/rounding.h>
-#include <utility/foreach.h>
 #include <utility/string.h>
 #include <utility/async.h>
 #include <generated/types/TimeStamp.h>
@@ -345,7 +344,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 m_gem_mux.unlock();
             }
             m_async_service.reset();
-            the_sonar = NULL;
+            the_sonar = nullptr;
         }
 
         float range() const{
@@ -604,14 +603,14 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         }
 
         static void CallBackFn(int eType, int /*len*/, char *data){
-            CGemPingHead const* ping_head = NULL;
-            CGemPingLine const* ping_data = NULL;
-            CGemPingTail const* ping_tail = NULL;
-            CGemPingTailExtended const* ping_tail_ex = NULL;
-            CGemStatusPacket const* status_packet = NULL;
-            CGemAcknowledge const* acknowledge = NULL;
-            CGemBearingData const* bearing_data = NULL;
-            uint8_t const* unknown_data = NULL;
+            CGemPingHead const* ping_head = nullptr;
+            CGemPingLine const* ping_data = nullptr;
+            CGemPingTail const* ping_tail = nullptr;
+            CGemPingTailExtended const* ping_tail_ex = nullptr;
+            CGemStatusPacket const* status_packet = nullptr;
+            CGemAcknowledge const* acknowledge = nullptr;
+            CGemBearingData const* bearing_data = nullptr;
+            uint8_t const* unknown_data = nullptr;
 
             debug(8) << "RX:" << eType;
             switch(eType){
@@ -687,7 +686,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     the_sonar->prepareNextPing("ping tail", the_sonar->m_cancel_timeout);
 
                 boost::lock_guard<boost::recursive_mutex> l(the_sonar->m_observers_lock);
-                foreach(observer_ptr_t& p, the_sonar->m_observers){
+                for (observer_ptr_t& p : the_sonar->m_observers){
                     if(ping_head)
                         p->onCGemPingHead(ping_head, the_sonar->range());
                     else if(ping_data)
@@ -714,7 +713,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         // it unconditionally
         //
         // Another ping will only be prepared if m_ping_continuous is true
-        void prepareNextPing(std::string const& descr, boost::shared_ptr<bool> cancel_timeout){
+        void prepareNextPing(const std::string& descr, boost::shared_ptr<bool> cancel_timeout){
             debug(3) << "prepareNextPing" << descr;
 
             lock_t l(m_cancel_timeout_mux);
@@ -758,7 +757,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         // it so that callbacks can be dispatched
         static GeminiSonar* the_sonar;
 };
-GeminiSonar* GeminiSonar::the_sonar = NULL;
+GeminiSonar* GeminiSonar::the_sonar = nullptr;
 
 } // namespace cauv
 
@@ -851,7 +850,7 @@ void cleanup()
 {
     info() << "Cleaning up...";
     CauvNode* oldnode = node;
-    node = 0;
+    node = nullptr;
     delete oldnode;
     info() << "Clean up done.";
 }

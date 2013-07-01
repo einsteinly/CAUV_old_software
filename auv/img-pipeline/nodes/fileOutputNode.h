@@ -15,6 +15,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/highgui/highgui_c.h>
 
 #include "outputNode.h"
 
@@ -43,7 +44,7 @@ class FileOutputNode: public OutputNode{
 
     protected:
         struct writeMat: boost::static_visitor<void>{
-            writeMat(std::string const& fname, std::vector<int> const& imwrite_params)
+            writeMat(const std::string& fname, std::vector<int> const& imwrite_params)
                 : m_fname(fname), m_imwrite_params(imwrite_params){
             }
             void operator()(cv::Mat a) const{
@@ -58,7 +59,7 @@ class FileOutputNode: public OutputNode{
                 // !!! TODO: presuming 0 is the only level worth saving
                 cv::imwrite(m_fname.c_str(), a.levels.at(0), m_imwrite_params);
             }
-            std::string const& m_fname;
+            const std::string& m_fname;
             std::vector<int> const& m_imwrite_params;
         };
         void doWork(in_image_map_t& inputs, out_map_t&){

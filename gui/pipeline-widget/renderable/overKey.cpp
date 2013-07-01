@@ -56,7 +56,7 @@ Action::f_t Action::null_f = Action::f_t();
 
 Action::Action(f_t const& on_press_f,
                f_t const& on_release_f,
-               std::string const& descr,
+               const std::string& descr,
                renderable_ptr_t decal)
     : on_press_f(on_press_f),
       on_release_f(on_release_f),
@@ -105,10 +105,10 @@ Key::Key(container_ptr_t c, keycode_t const& kc1, keycode_t const& kc2, cauv::gu
 }
 
 Key::Key(container_ptr_t c, keycode_t const& kc1, keycode_t const& kc2, cauv::gui::BBox const& size,
-         Qt::KeyboardModifiers m1, std::string const& t1,
-         Qt::KeyboardModifiers m2, std::string const& t2,
-         Qt::KeyboardModifiers m3, std::string const& t3,
-         Qt::KeyboardModifiers m4, std::string const& t4)
+         Qt::KeyboardModifiers m1, const std::string& t1,
+         Qt::KeyboardModifiers m2, const std::string& t2,
+         Qt::KeyboardModifiers m3, const std::string& t3,
+         Qt::KeyboardModifiers m4, const std::string& t4)
     : Renderable(c), m_state(keystate_e::released), m_keycodes(), m_text(), m_box(size){
 
     if(kc1) m_keycodes.push_back(kc1);
@@ -478,7 +478,7 @@ void OverKey::postMenu(menu_ptr_t m, cauv::gui::Point const& tlp, bool p){
     m_context->postMenu(m, tlp, p);
 }
 
-void OverKey::postText(const std::string &text, const std::string &font)
+void OverKey::postText(const std::string& text, const std::string& font)
 {
 	m_context->postText(text,font);
 }
@@ -663,13 +663,13 @@ void OverKey::draw(drawtype_e::e flags){
     }
 }
 
-void OverKey::postDelayedCallback(std::string const& name,
+void OverKey::postDelayedCallback(const std::string& name,
                                   callback_t const& foo,
                                   float delay_secs){
     m_delayed_callbacks.insert(_Callback(_fnow() + delay_secs, name, foo));
 }
 
-void OverKey::cancelDelayedCallbacks(std::string const& name){
+void OverKey::cancelDelayedCallbacks(const std::string& name){
     cb_map_by_name_t& callbacks_by_name = m_delayed_callbacks.get<name_index>();
     cb_map_by_name_t::iterator b = callbacks_by_name.lower_bound(name);
     cb_map_by_name_t::iterator e = callbacks_by_name.upper_bound(name);

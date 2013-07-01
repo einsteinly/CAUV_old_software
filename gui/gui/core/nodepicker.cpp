@@ -40,7 +40,7 @@ public:
 class NodePathCompleter : public QCompleter {
 public:
 
-    NodePathCompleter(QAbstractItemModel * model, QWidget * parent = NULL) :
+    NodePathCompleter(QAbstractItemModel * model, QWidget * parent = nullptr) :
             QCompleter(model, parent){
     }
 
@@ -70,7 +70,7 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     ui->view->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     ui->view->setIndentation(10);
 
-    QHBoxLayout * layout = new QHBoxLayout(ui->filter);
+    auto  layout = new QHBoxLayout(ui->filter);
     m_clearButton = new QPushButton("X");
     QFont font("Verdana", 12);
     font.setPixelSize(12);

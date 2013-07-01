@@ -8,7 +8,7 @@
 
 namespace cauv {
 
-std::vector<uint32_t> get_ids_for_group(const std::string group) {
+std::vector<uint32_t> get_ids_for_group(const std::string& group) {
     std::vector<uint32_t> output_vect;
     if(group == "") {
     }#for $g in $groups

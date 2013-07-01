@@ -13,7 +13,6 @@
 #include <common/msg_classes/image.h>
 #include <common/mailbox.h>
 #include <utility/ratelimit.h>
-#include <utility/foreach.h>
 #include <generated/message_observers.h>
 #include <generated/types/TelemetryMessage.h>
 #include <generated/types/GPSLocationMessage.h>
@@ -38,9 +37,9 @@ class ImageProcessor: public MessageObserver
     public:    
         ImageProcessor(mb_ptr_t mailbox, boost::shared_ptr<Scheduler> scheduler);
        
-        void start(std::string const& name);
+        void start(const std::string& name);
 
-        std::string const& name() const { return m_name; }
+        const std::string& name() const { return m_name; }
 
         /**
          * override MessageObserver functions to take actions on messages

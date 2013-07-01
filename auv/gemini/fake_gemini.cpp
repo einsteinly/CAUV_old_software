@@ -47,7 +47,7 @@ namespace po = boost::program_options;
 class Environment{
     public:
         Environment(
-            std::string const& env_file,
+            const std::string& env_file,
             float origin_x_px,
             float origin_y_px,
             float metres_per_px,
@@ -60,7 +60,7 @@ class Environment{
             m_image = cv::imread(env_file.c_str()); 
             if(m_image.channels() == 3){
                 cv::Mat tmp;
-                cv::cvtColor(m_image, tmp, CV_RGB2GRAY);
+                cv::cvtColor(m_image, tmp, cv::COLOR_RGB2GRAY);
                 m_image = tmp;
             }
             if(m_image.channels() != 1 || m_image.depth() != CV_8U)
@@ -425,7 +425,7 @@ static FakeGeminiNode* node;
 void cleanup(){
     info() << "Cleaning up...";
     CauvNode* oldnode = node;
-    node = 0;
+    node = nullptr;
     delete oldnode;
     info() << "Clean up done.";
 }

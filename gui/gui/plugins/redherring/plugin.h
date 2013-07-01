@@ -33,7 +33,7 @@ namespace cauv {
                 friend class VehicleRegistry;
 
             protected:
-                RedHerring(std::string name);
+                RedHerring(const std::string& name);
                 virtual void initialise();
 
             protected Q_SLOTS:

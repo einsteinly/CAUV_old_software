@@ -8,7 +8,6 @@
 
 #include <boost/make_shared.hpp>
 
-#include <utility/foreach.h>
 #include <utility/math.h>
 #include <utility/rounding.h>
 #include <utility/time.h>
@@ -54,12 +53,12 @@ void  wi::DataSeries::postData(double value, double const& time){
         //debug() << "insert batch:" << m_insert_batch.size();
         m_data.insertMultiple(m_insert_batch.begin(), m_insert_batch.end());
         m_insert_batch.clear();
-        foreach(wi::Graph* g, m_in_graphs)
+        for(wi::Graph* g : m_in_graphs)
             g->requiresUpdate();
         m_last_time = now;
         // hit the database only if there's something new
-        for(std::map<wi::Graph*, bool>::iterator i = m_dirty_in_graph.begin(); i != m_dirty_in_graph.end(); i++)
-            i->second = true;
+        for(auto& i : m_dirty_in_graph)
+            i.second = true;
     }
 
     m_last_value = value;

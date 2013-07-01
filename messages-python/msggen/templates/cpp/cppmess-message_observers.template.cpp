@@ -16,7 +16,6 @@
 
 \#include <utility/string.h>
 \#include <utility/serialisation.h>
-\#include <utility/foreach.h>
 \#include <debug/cauv_debug.h>
 \#include <cstdlib>
 
@@ -108,7 +107,7 @@ cauv::BufferedMessageObserver::BufferedMessageObserver()
 cauv::BufferedMessageObserver::~BufferedMessageObserver()
 {
     boost::unique_lock<boost::shared_mutex> l(*m_maps_mtx);
-    foreach(msgtype_btthread_map_t::value_type& v, m_threads)
+    for (msgtype_btthread_map_t::value_type& v : m_threads)
         if(v.second){
             v.second->m_die = true;
             v.second->m_condition->notify_one();
@@ -298,7 +297,7 @@ void cauv::MessageSource::notifyObservers(const_svec_ptr bytes)
             \#ifdef CAUV_DEBUG_MESSAGES
             debug(12) << "MessageSource::notifyObservers: " << m;
             \#endif
-            foreach(observer_ptr_t o, m_observers)
+            for (observer_ptr_t o : m_observers)
                 o->on${className}(m);
             break;
         }

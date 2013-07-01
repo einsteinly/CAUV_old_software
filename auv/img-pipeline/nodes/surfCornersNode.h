@@ -63,7 +63,7 @@ class SURFCornersNode: public Node{
             const int octaves = param<int>("octaves");
             const int octaveLayers = param<int>("octave layers");
 
-            cv::vector<cv::KeyPoint> cv_corners;
+            std::vector<cv::KeyPoint> cv_corners;
             try{
                 cv::SURF(threshold,octaves,octaveLayers)(img, cv::Mat(), cv_corners);
             }catch(cv::Exception& e){
@@ -75,7 +75,7 @@ class SURFCornersNode: public Node{
             // thin wrapper... don't want to include cv types in serialisation
             std::vector<cauv::KeyPoint> kps;
             kps.reserve(cv_corners.size());
-            foreach(const cv::KeyPoint &kp, cv_corners)
+            for (const cv::KeyPoint &kp : cv_corners)
                 kps.push_back(_cauvKeyPoint(kp));
             r["corners (KeyPoint)"] = kps;
 

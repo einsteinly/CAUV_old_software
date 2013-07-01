@@ -35,18 +35,18 @@ class FView: public liquid::LiquidView{
     Q_OBJECT
     public:
         FView(boost::shared_ptr<CauvNode> node,
-              std::string const& pipeline_name,
+              const std::string& pipeline_name,
               boost::shared_ptr<Node> model_parent,
               NodeScene* s,
               boost::shared_ptr<Manager> m,
               QWidget *parent = NULL);
         
         FView(boost::shared_ptr<CauvNode> node,
-              std::string const& pipeline_name,
+              const std::string& pipeline_name,
               boost::shared_ptr<Node> model_parent,
               QWidget *parent = NULL);
 
-        void init(std::string const& pipeline_name,
+        void init(const std::string& pipeline_name,
                   boost::shared_ptr<Node> model_parent,
                   NodeScene* s,
                   boost::shared_ptr<Manager> m,
@@ -90,7 +90,7 @@ class FView: public liquid::LiquidView{
 
     private:
         // methods
-        static float split(std::string const& word, QAction_ptr_set actions);
+        static float split(const std::string& word, QAction_ptr_set actions);
         void initMenu();
         void initMenu(MenuNode& parent, QAction_ptr_set actions);
         void _updateOverlays();

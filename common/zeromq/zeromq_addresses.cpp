@@ -41,7 +41,7 @@ std::string gen_subscription_message(subscription_vec_t sub) {
     return sub_buf;
 }
 
-subscription_vec_t parse_subscription_message(std::string msg) {
+subscription_vec_t parse_subscription_message(const std::string& msg) {
     subscription_vec_t vec;
     vec.first = false;
     uint16_t command;
@@ -74,7 +74,7 @@ std::string get_vehicle_name(void) {
     return vehicle_name;
 }
 
-std::string get_ipc_directory(std::string vehicle_name) {
+std::string get_ipc_directory(const std::string& vehicle_name) {
     std::string directory(CAUV_DEFAULT_IPC_DIR);
     char *env_ipc_directory;
     env_ipc_directory = std::getenv("CAUV_IPC_DIR");

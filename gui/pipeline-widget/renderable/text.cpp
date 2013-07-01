@@ -27,7 +27,7 @@ const static unsigned char Sans_Font_Data[] = {
 using namespace cauv::gui;
 using namespace cauv::gui::pw;
 
-Text::Text(container_ptr_t c, std::string const& text, std::string const& font, int pt)
+Text::Text(container_ptr_t c, const std::string& text, const std::string& font, int pt)
     : Renderable(c), std::string(text), m_bbox(),
       m_font(std::make_pair(font, pt)), m_colour(Colour(0)){
 }
@@ -75,7 +75,7 @@ typedef std::pair<std::string, int> face_pt_pair_t;
 
 // TODO: find a home for this
 #include <set>
-bool onceCheck(std::string const& name){
+bool onceCheck(const std::string& name){
     static std::set<std::string> once;
     if(once.count(name))
         return false;

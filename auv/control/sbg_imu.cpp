@@ -10,7 +10,6 @@
 
 #include <generated/types/floatYPR.h>
 #include <debug/cauv_debug.h>
-#include <utility/foreach.h>
 #include <generated/types/DebugMessage.h>
 
 #include "sbg_imu.h"
@@ -102,9 +101,9 @@ void sbgIMU::readThread()
 
                 floatYPR att(Euler[2], Euler[1], Euler[0]);
 
-                foreach(observer_ptr_t o, m_observers)
+                for (observer_ptr_t o : m_observers)
                 {
-                    o->onTelemetry(att);
+                    o->onAttitude(att);
                 }
 
             }

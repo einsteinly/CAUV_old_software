@@ -12,7 +12,6 @@
 
 #include <boost/make_shared.hpp>
 
-#include <utility/foreach.h>
 #include <debug/cauv_debug.h>
 #include <generated/types/SonarControlMessage.h>
 
@@ -57,7 +56,7 @@ bool MotorState::operator!=(MotorState& rhs) const
 
 
 
-SeanetSonar::SeanetSonar(std::string str) : m_cur_data_reqs(0)
+SeanetSonar::SeanetSonar(const std::string& str) : m_cur_data_reqs(0)
 {
     m_serial_port = boost::make_shared<SeanetSerialPort>(str);
     m_state = SENDREBOOT;
@@ -255,13 +254,13 @@ void SeanetSonar::process_data(boost::shared_ptr<SeanetPacket> pkt)
     //debug() << "Sending data line with range" << dataline->range << "mm, bearing" << dataline->bearing << ", and bearing range " << dataline->bearingRange;
     //{
     //    std::stringstream data;
-    //    foreach(uint8_t c, dataline->data) {
+    //    for (uint8_t c : dataline->data) {
     //        data << hex << setw(2) << setfill('0') << (int)c << " ";
     //    }
     //    debug() << data.str();
     //}
 
-    foreach (observer_ptr_t o, m_observers)
+    for (observer_ptr_t o : m_observers)
     {
         o->onReceiveDataLine(*dataline);
     }

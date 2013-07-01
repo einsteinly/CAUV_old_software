@@ -9,6 +9,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <common/cauv_node.h>
 
@@ -16,10 +17,9 @@
 #include <generated/types/MotorID.h>
 #include <generated/types/MotorMap.h>
 #include <generated/types/ControlLockToken.h>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include "imu.h"
-#include "mcb.h"
+#include "can_gate.h"
 #include "pid.h"
 
 namespace cauv{
@@ -35,15 +35,16 @@ class ControlNode : public CauvNode
         ControlNode();
         virtual ~ControlNode();
     
-        void setMCB(std::string const& port);
+        void setCAN(const std::string& port);
 
-        void setXsens(int id);
-		void setSBG(std::string const&, int baud_rate, int pause_time);
-        void setSimIMU();
+        void addXsens(int id);
+		void addSBG(const std::string&, int baud_rate, int pause_time);
+        void addSimIMU();
+        void addPressureIMU();
     
     protected:
-        boost::shared_ptr<MCB> m_mcb;
-		boost::shared_ptr<IMU> m_imu;
+        boost::shared_ptr<CANGate> m_can_gate;
+        std::vector<boost::shared_ptr<IMU>> m_imus;
         boost::shared_ptr<ControlLoops> m_controlLoops;
         #warning !!! see device control from old version: needs merging into redherringMcb and xsensImu
         //boost::shared_ptr<DeviceControlObserver> m_deviceControl;
@@ -56,21 +57,19 @@ class ControlNode : public CauvNode
         virtual void onRun();
 };
 
-class ControlLoops : public MessageObserver, public IMUObserver, public MCBObserver
+class ControlLoops : public MessageObserver, public IMUObserver
 {
     public:
         ControlLoops(boost::shared_ptr<Mailbox> mb);
         ~ControlLoops();
 
-        void set_mcb(boost::shared_ptr<MCB> mcb);
+        void set_can_gate(boost::shared_ptr<CANGate> can_gate);
 
         void start();
         void stop();
 
-        //from IMU
-        virtual void onTelemetry(const floatYPR& attitude);
-
-        //from MCB
+        //from IMUs
+        virtual void onAttitude(const floatYPR& attitude);
         virtual void onDepth(float fore, float aft);
 
         struct TokenLock {
@@ -79,7 +78,7 @@ class ControlLoops : public MessageObserver, public IMUObserver, public MCBObser
         };
 
     protected:
-        boost::shared_ptr<MCB> m_mcb;
+        boost::shared_ptr<CANGate> m_can_gate;
         bool m_control_enabled[Controller::NumValues];
         PIDControl m_controllers[Controller::NumValues];
         MotorDemand m_demand[Controller::NumValues];

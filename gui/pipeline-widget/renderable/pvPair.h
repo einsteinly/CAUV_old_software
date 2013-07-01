@@ -60,7 +60,7 @@ template<typename value_T>
 class PVPair: public PVPairEditableBase{
     public:
         typedef Node* node_ptr_t;
-        PVPair(node_ptr_t n, std::string const& param, value_T const& value,
+        PVPair(node_ptr_t n, const std::string& param, value_T const& value,
                bool editable=true)
             : PVPairEditableBase(n, editable), m_node(n), m_bbox(),
               m_min_value_bbox(0, -3, 13, 10),
@@ -129,7 +129,7 @@ class PVPair: public PVPairEditableBase{
 
 
     private:
-        static void onValueChanged(PVPair const& pvp, std::string const& s){
+        static void onValueChanged(PVPair const& pvp, const std::string& s){
             value_T v = pvp.m_old_value;
             std::istringstream is(s);
             is >> v;

@@ -60,14 +60,14 @@ class ConvertColourNode: public Node{
             
             int conversion_code = 0;
             if(out_fmt == "rgb" && in.channels() == 1){
-                conversion_code = CV_GRAY2RGB;
+                conversion_code = cv::COLOR_GRAY2RGB;
             }else if(out_fmt == "bgr" && in.channels() == 1){
-                conversion_code = CV_GRAY2BGR;
+                conversion_code = cv::COLOR_GRAY2BGR;
             }else if(out_fmt == "grey" || out_fmt == "gray"){
                 if(in.channels() == 3)
-                    conversion_code = CV_BGR2GRAY;
+                    conversion_code = cv::COLOR_BGR2GRAY;
                 else if(in.channels() == 4)
-                    conversion_code = CV_BGRA2GRAY;
+                    conversion_code = cv::COLOR_BGRA2GRAY;
             }else{
                 throw parameter_error("Invalid output format: " + out_fmt);
             }

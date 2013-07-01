@@ -97,7 +97,7 @@ class Correlation1DNode: public Node{
                 } 
                 // Correlation: 
                 cv::Mat correl;
-                cv::matchTemplate(collapsed_a, collapsed_b, correl, CV_TM_CCORR);
+                cv::matchTemplate(collapsed_a, collapsed_b, correl, cv::TM_CCORR);
                 // Find Max:
                 float max = 0;
                 int max_i = 0;

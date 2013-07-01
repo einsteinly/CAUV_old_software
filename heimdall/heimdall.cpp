@@ -38,16 +38,18 @@ typedef std::vector< connection_t > conn_list_t;
 
 std::ostream &operator<<(std::ostream &os, const conn_list_t &conn_list) {
     os << "[";
-    for(conn_list_t::const_iterator it = conn_list.begin();
-        it != conn_list.end(); it++) {
-
-        os << "{" << 
-            "\"id\": " << it->first << ", " <<
-            "\"string\": " << "\"" << it->second << "\""
-            << "}";
-        if (it != conn_list.end() - 1) {
+    bool first = true;
+    for(auto const & conn : conn_list) {
+        if (first) {
+            first = false;
+        } else {
             os << ", ";
         }
+
+        os << "{" << 
+            "\"id\": " << conn.first << ", " <<
+            "\"string\": " << "\"" << conn.second << "\""
+            << "}";
     }
     os << "]";
     return os;
@@ -55,9 +57,8 @@ std::ostream &operator<<(std::ostream &os, const conn_list_t &conn_list) {
 
 std::ostream &operator<<(std::ostream &os, const subscriptions_t &subs) {
     os << "[";
-    for(subscriptions_t::const_iterator it = subs.begin();
-        it != subs.end(); it++) {
-        os << *it << ", ";
+    for(auto const & sub : subs) {
+        os << sub << ", ";
     }
     os << "null";
     os << "]";
@@ -66,12 +67,11 @@ std::ostream &operator<<(std::ostream &os, const subscriptions_t &subs) {
 
 std::ostream &operator<<(std::ostream &os, const stats_t &stats) {
     os << "[";
-    for(stats_t::const_iterator it = stats.begin();
-        it != stats.end(); it++) {
+    for(auto const & stat : stats) {
 
-        os << "{ \"id\": " << it->first
-           << ", \"messages\": " << it->second.first
-           << ", \"bytes\": " << it->second.second
+        os << "{ \"id\": " << stat.first
+           << ", \"messages\": " << stat.second.first
+           << ", \"bytes\": " << stat.second.second
            << "}";
         os << ", ";
     }
@@ -87,8 +87,8 @@ class SocketInfo {
     void *skt;
     conn_list_t binds;
     conn_list_t connections;
-    int connect(std::string connect_str);
-    int bind(std::string bind_str);
+    int connect(const std::string& connect_str);
+    int bind(const std::string& bind_str);
 };
 
 std::ostream &operator<<(std::ostream &os, const SocketInfo &info) {
@@ -107,11 +107,11 @@ class ConnCmp {
         return other.second == conn_str;
     }
     private:
-    std::string conn_str;
+    const std::string& conn_str;
 };
 
 
-int SocketInfo::connect(std::string connect_str) {
+int SocketInfo::connect(const std::string& connect_str) {
     if (std::count_if(connections.begin(), connections.end(), ConnCmp(connect_str))) {
         return 0;
     }
@@ -124,7 +124,7 @@ int SocketInfo::connect(std::string connect_str) {
     }
 }
 
-int SocketInfo::bind(std::string bind_str) {
+int SocketInfo::bind(const std::string& bind_str) {
     if (std::count_if(binds.begin(), binds.end(), ConnCmp(bind_str))) {
         return 0;
     }
@@ -158,7 +158,7 @@ class XPubSubPair {
 XPubSubPair::XPubSubPair(void *ctx) :
     xsub(xs_socket(ctx, XS_XSUB)),
     xpub(xs_socket(ctx, XS_XPUB)),
-    opposite(NULL) {
+    opposite(nullptr) {
     int linger = 300;
     assert(xsub.skt);
     assert(xpub.skt);
@@ -169,7 +169,7 @@ XPubSubPair::XPubSubPair(void *ctx) :
 
 XPubSubPair::~XPubSubPair(void) {
     if (opposite) {
-        opposite->opposite = NULL;
+        opposite->opposite = nullptr;
     }
     xs_close(xsub.skt);
     xs_close(xpub.skt);
@@ -227,7 +227,7 @@ void XPubSubPair::pump_subscription(void) {
 
 class DaemonContext {
     public:
-    DaemonContext(const std::string vehicle_name, const std::string working_directory);
+    DaemonContext(const std::string& vehicle_name, const std::string& working_directory);
     void run(void);
     ~DaemonContext(void);
     private:
@@ -250,7 +250,7 @@ class DaemonContext {
     DaemonContext (const DaemonContext &other);
 };
 
-DaemonContext::DaemonContext(const std::string vehicle_name, const std::string working_directory) :
+DaemonContext::DaemonContext(const std::string& vehicle_name, const std::string& working_directory) :
     running(true),
     working_directory(working_directory),
     vehicle_name(vehicle_name),
@@ -261,7 +261,7 @@ DaemonContext::DaemonContext(const std::string vehicle_name, const std::string w
 
     //seed random number generator
     struct timeval tv;
-    assert(gettimeofday(&tv,NULL) == 0);
+    assert(gettimeofday(&tv,nullptr) == 0);
     srand(getpid() + tv.tv_sec * 1000000 + tv.tv_usec);
     daemon_id = rand();
 
@@ -368,7 +368,7 @@ void DaemonContext::handle_control_message(void) {
     reply << "{";
     std::string error;
     if (command == "CONNECT" || command == "BIND") {
-        SocketInfo *socket = NULL;
+        SocketInfo *socket = nullptr;
         std::string socket_name;
         ctrl_iss >> socket_name;
         if (socket_name == "NET_XPUB") {

@@ -43,7 +43,6 @@ template<typename T> struct uniform_int_distribution: boost::uniform_int<T>{
 
 #include <opencv2/core/core.hpp>
 
-#include <utility/foreach.h>
 #include "../node.h"
 
 
@@ -192,11 +191,11 @@ class KMeansPointsNode: public Node{
                 std::vector<NormalDist, Eigen::aligned_allocator<NormalDist> > clusters(k, NormalDist());
                 for(int iter = 0; iter < max_iters; iter++){
                     // estimate cluster distributions
-                    foreach(NormalDist& c, clusters)
+                    for (NormalDist& c : clusters)
                         c = NormalDist(size_penalty);
                     if(iter == 0){
                         // start with means assigned to random points, large variances:
-                        foreach(NormalDist& c, clusters){
+                        for (NormalDist& c : clusters){
                             KeyPoint kp = keypoints[random_point_dist(gen)];
                             c.mean[0] = kp.pt.x;
                             c.mean[1] = kp.pt.y;
@@ -206,7 +205,7 @@ class KMeansPointsNode: public Node{
                     }else{
                         for(size_t i = 0; i < keypoints.size(); i++)
                             clusters[assignments[i]].add(keypoints[i]);
-                        foreach(NormalDist& c, clusters){
+                        for (NormalDist& c : clusters){
                             bool baked_successfully = c.bake();
                             if(!baked_successfully){
                                 // no points: set to random position
@@ -250,7 +249,7 @@ class KMeansPointsNode: public Node{
             }
 
             std::vector<Ellipse> ret;
-            foreach(NormalDist const& c, best_search_clusters)
+            for (NormalDist const& c : best_search_clusters)
                 ret.push_back(c.ellipse());
 
             // !!! TODO: should use InternalParamValue assignment to preserve UID

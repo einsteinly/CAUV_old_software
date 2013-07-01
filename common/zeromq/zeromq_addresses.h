@@ -16,13 +16,13 @@ typedef std::pair<bool, std::vector<uint32_t> > subscription_vec_t;
 
 std::string gen_subscription_message(subscription_vec_t);
 
-subscription_vec_t parse_subscription_message(std::string msg);
+subscription_vec_t parse_subscription_message(const std::string& msg);
 
 std::string get_vehicle_name(void);
 
 std::string get_ipc_directory(void);
 
-std::string get_ipc_directory(const std::string vehicle_name);
+std::string get_ipc_directory(const std::string& vehicle_name);
 
 }
 

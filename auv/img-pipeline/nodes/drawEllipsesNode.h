@@ -15,6 +15,7 @@
 #include <boost/bind.hpp>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/core_c.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
@@ -50,13 +51,13 @@ class DrawEllipsesNode: public Node{
             if(m.channels() >= 3){
                 out = m.clone();
             }else if(m.channels() == 1){
-                cv::cvtColor(m, out, CV_GRAY2BGR);
+                cv::cvtColor(m, out, cv::COLOR_GRAY2BGR);
             }else{
                 throw parameter_error("image must be 1, 3 or 4 channel");
             }
 
             if(mode == 0){
-                foreach(Ellipse const& p, ellipses){
+                for (Ellipse const& p : ellipses){
                     cv::ellipse(
                         out,
                         cv::Point(p.centre.x * m.cols, p.centre.y * m.rows),
@@ -70,7 +71,7 @@ class DrawEllipsesNode: public Node{
                 }
             }
             else if(mode == 1){
-                foreach(Ellipse const& p, ellipses){
+                for (Ellipse const& p : ellipses){
                     cv::Point2f c(p.centre.x * m.cols, p.centre.y * m.rows);
                     cv::Point2f maj_dir(std::cos(p.angle), std::sin(p.angle));
                     cv::Point2f min_dir(maj_dir.y, -maj_dir.x);

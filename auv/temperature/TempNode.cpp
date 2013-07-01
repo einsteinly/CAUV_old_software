@@ -2,7 +2,7 @@
 
 using namespace cauv;
 
-TempNode::TempNode(std::string f): CauvNode("temp")
+TempNode::TempNode(const std::string& f): CauvNode("temp")
 {
   SetConfigFile(f);
 }
@@ -13,7 +13,7 @@ TempNode::~TempNode()
   fclose(file__);
 }
 
-int TempNode::SetConfigFile(std::string f)
+int TempNode::SetConfigFile(const std::string& f)
 {
   f__ = f;
   file__ = fopen(f__.c_str(),"r");

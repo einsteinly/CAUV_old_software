@@ -10,7 +10,6 @@
 #include <string.h>
 
 #include <debug/cauv_debug.h>
-#include <utility/foreach.h>
 
 #include "seanet_packet.h"
 
@@ -107,7 +106,7 @@ std::ostream& operator<<(std::ostream& o, const SeanetPacket& p)
     o << "Seanet packet (type = " << (int)p.type() << ", length = " << p.length() << ")" << std::endl;
     o << "    data = [ ";
     o << std::hex << std::setw(2) << std::setfill('0');
-    foreach (const char& c, p.data())
+    for (const char& c : p.data())
         o << (int)(unsigned char)c << " ";
     o << "]";
     return o;

@@ -45,7 +45,7 @@ void FluidityMessageObserver::onNodeAddedMessage(NodeAddedMessage_ptr m){
     addPipeline(m->pipelineName());
 }
 
-void FluidityMessageObserver::addPipeline(std::string const& name) {
+void FluidityMessageObserver::addPipeline(const std::string& name) {
     boost::shared_ptr<GroupingNode> pipelines = m_parent->findOrCreate<GroupingNode>("pipelines");
 
     QString full_pipeline_name = QString::fromStdString(name);

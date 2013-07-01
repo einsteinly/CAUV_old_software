@@ -66,20 +66,20 @@ class PipelineWidget: public QGLWidget,
         
         // hmm
         typedef node_id const& ni_r;
-        typedef std::string const& str_r;
+        typedef const std::string& str_r;
         void addArc(ni_r src, str_r output,
-                    node_id const& dst, std::string const& input);
+                    node_id const& dst, const std::string& input);
         void addArc(renderable_ptr_t src,
-                    node_id const& dst, std::string const& input);
-        void addArc(node_id const& src, std::string const& output,
+                    node_id const& dst, const std::string& input);
+        void addArc(node_id const& src, const std::string& output,
                     renderable_ptr_t dst);
         arc_ptr_t addArc(renderable_wkptr_t src, renderable_wkptr_t dst);
 
-        void removeArc(node_id const& src, std::string const& output,
-                       node_id const& dst, std::string const& input);
+        void removeArc(node_id const& src, const std::string& output,
+                       node_id const& dst, const std::string& input);
         void removeArc(renderable_ptr_t src,
-                       node_id const& dst, std::string const& input);
-        void removeArc(node_id const& src, std::string const& output,
+                       node_id const& dst, const std::string& input);
+        void removeArc(node_id const& src, const std::string& output,
                        renderable_ptr_t dst);
         void removeArc(renderable_ptr_t src, renderable_ptr_t dst);
         void sanitizeArcs();
@@ -94,7 +94,7 @@ class PipelineWidget: public QGLWidget,
         virtual void postRedraw(float delay_secs);
         virtual void postMenu(menu_ptr_t m, Point const& top_level_position,
                               bool pressed=false);
-		virtual void postText(const std::string &text, const std::string &font);
+		virtual void postText(const std::string& text, const std::string& font);
         virtual void removeMenu(menu_ptr_t);
         virtual void remove(renderable_ptr_t);
         
@@ -103,13 +103,13 @@ class PipelineWidget: public QGLWidget,
 
     public Q_SLOTS:
         // Causes GUI to discard all current state
-        void setPipelineName(std::string const& name);
+        void setPipelineName(const std::string& name);
         void setPipelineName(const QString& name);
 
     Q_SIGNALS:
         void redrawPosted();
         void messageGenerated(boost::shared_ptr<Message>);
-        void nameChanged(std::string const&);
+        void nameChanged(const std::string&);
     
     protected:
         void initializeGL();

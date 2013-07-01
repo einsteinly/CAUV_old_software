@@ -53,11 +53,11 @@ class DrawCornersNode: public Node{
             
             const std::vector<Corner> corners = param< std::vector<Corner> >("corners");
 
-            cv::vector<cv::KeyPoint> cv_corners;
+            std::vector<cv::KeyPoint> cv_corners;
             const float width = img.cols;
             const float height = img.rows;
             
-            foreach (const Corner& c, corners)
+            for (const Corner& c : corners)
             {
                 cv::KeyPoint kp;
                 kp.pt = cv::Point2f(c.centre.x * width, c.centre.y * height);

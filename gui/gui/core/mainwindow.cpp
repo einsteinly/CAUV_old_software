@@ -37,9 +37,6 @@
 
 #include "elements/style.h"
 
-#include <liquid/magma/radialMenu.h>
-#include <liquid/magma/style.h>
-
 using namespace cauv;
 using namespace cauv::gui;
 
@@ -47,17 +44,17 @@ using namespace cauv::gui;
 
 StackWidget::StackWidget(QWidget* parent)
     : QWidget(parent),
-      m_title(NULL),
-      m_stack_widget(NULL),
+      m_title(nullptr),
+      m_stack_widget(nullptr),
       m_stack(),
-      m_titleAnimation(NULL){
+      m_titleAnimation(nullptr){
     
     m_title = new QLabel(this);
     m_stack_widget = new QStackedWidget(this);
     m_titleAnimation = new QPropertyAnimation(m_title, "geometry");
     m_titleAnimation->setDuration(500);
 
-    QVBoxLayout* layout = new QVBoxLayout;
+    auto  layout = new QVBoxLayout;
     layout->setSpacing(0);
 
     layout->addWidget(m_stack_widget);
@@ -113,7 +110,7 @@ CauvMainWindow::CauvMainWindow(QApplication * app) :
     m_application(app),
     m_actions(boost::make_shared<GuiActions>()),
     ui(new Ui::MainWindow),
-    m_view_stack(NULL){
+    m_view_stack(nullptr){
 
     ui->setupUi(this);
 
@@ -188,7 +185,6 @@ void CauvMainWindow::onRun()
     m_actions->scene = boost::make_shared<NodeScene>();
     m_actions->view->setScene(m_actions->scene.get());
     m_actions->view->centerOn(0,0);
-    m_actions->view->setContextMenuPolicy(Qt::CustomContextMenu);
     // Set the viewport to use OpenGl here. Nested Gl viewports don't work
     m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
     m_actions->view->setFocus();
@@ -239,7 +235,8 @@ void CauvMainWindow::onRun()
     show();
     
     // There was a mutiny against the radial menu...
-    connect(m_actions->view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(createRadialMenu(QPoint)));
+    m_actions->view->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_actions->view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(createContextMenu(QPoint)));
 
     m_application->exec();
 
@@ -296,24 +293,37 @@ int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
     return numFound;
 }
 
-void CauvMainWindow::createRadialMenu(QPoint point){
-    QPoint sc = m_actions->view->mapToGlobal(point);
-    debug() << "radial menu creation!";
-    liquid::magma::RadialMenu * menu = new liquid::magma::RadialMenu(liquid::magma::Default_RadialMenuStyle());
-    menu->setModel(m_actions->root.get());
+Q_DECLARE_METATYPE(QModelIndex)
 
+void CauvMainWindow::createContextMenu(QPoint point){
+    const auto& model = *m_actions->root;
     // this needs some thought. redherring should REALLY not be hardcoded in here
-    menu->setRootIndex(m_actions->root->indexFromNode(
-                           VehicleRegistry::instance()->find<Vehicle>("redherring")->
-                           findOrCreate<GroupingNode>("creation")));
-    menu->show();
-    QRect geo = menu->geometry();
-    menu->setGeometry(QRect(sc.x()-geo.width()/2, sc.y()-geo.height()/2, geo.height(), geo.width()));
-    menu->connect(menu, SIGNAL(indexSelected(QModelIndex)), this, SLOT(radialItemSelected(QModelIndex)));
-}
+    auto pipelinesIndex = model.indexFromNode(VehicleRegistry::instance()->
+                                             find<Vehicle>("redherring")->
+                                             findOrCreate<GroupingNode>("pipelines"));
+    QMenu menu{this};
+    //fillMenu(model, rootIndex, &menu);
+    auto new_pipeline = menu.addMenu("new pipeline");
+    if (model.rowCount(pipelinesIndex) == 0) {
+        new_pipeline->setEnabled(false);
+    } else {
+        for (int i = 0; i < model.rowCount(pipelinesIndex); ++i) {
+            auto pipelineIndex = pipelinesIndex.child(i, 0);
+            QString pipelineName = pipelineIndex.data(Qt::UserRole).toString();
+            auto action = new_pipeline->addAction(pipelineName);
+            
+            // TODO: This relies on the first child of the pipeline being "new"
+            action->setData(QVariant::fromValue(pipelineIndex.child(0,0)));
+        }
+    }
 
-void CauvMainWindow::radialItemSelected(QModelIndex index){
-    m_actions->scene->onNodeDroppedAt(m_actions->root->nodeFromIndex(index), QPointF(10,10));
+    auto selectedAction = menu.exec(m_actions->view->mapToGlobal(point));
+    if (selectedAction) {
+        if (selectedAction->data().canConvert<QModelIndex>()) {
+            auto selectedIndex = selectedAction->data().value<QModelIndex>();
+            m_actions->scene->onNodeDroppedAt(m_actions->root->nodeFromIndex(selectedIndex), QPointF(10,10));
+        }
+    }
 }
 
 CauvInterfacePlugin * CauvMainWindow::loadPlugin(QObject *plugin){

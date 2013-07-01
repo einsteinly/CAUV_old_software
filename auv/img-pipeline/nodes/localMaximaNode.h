@@ -40,7 +40,7 @@ class LocalMaximaNode: public Node{
             std::vector<KeyPoint> r;
             if(a.channels() != 1)
                 throw parameter_error("image must have 1 channel");
-            if((a.type() & CV_MAT_DEPTH_MASK) != CV_8U)
+            if(a.type() != CV_8U)
                 throw parameter_error("image must be unsigned bytes");
             
             for(int row = 1; row < a.rows-1; row++)

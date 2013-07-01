@@ -233,14 +233,24 @@ class Watcher:
         self.processes[process.name] = WatchProcess(process, self, self.detach)
 
     def stop(self, process, signals=None):
+        if process not in self.processes:
+            error("Process \"{}\" is not managed by watcher".format(process))
+            return
+
         if signals is None:
             signals = [15,0,0,0,9]
         self.processes[process].stop(signals)
 
     def start(self, process):
+        if process not in self.processes:
+            error("Process \"{}\" is not managed by watcher".format(process))
+            return
         self.processes[process].start()
 
     def restart(self, process, signals=None):
+        if process not in self.processes:
+            error("Process \"{}\" is not managed by watcher".format(process))
+            return
         if signals is None:
             signals = [15,0,0,0,9]
         self.processes[process].restart(signals)

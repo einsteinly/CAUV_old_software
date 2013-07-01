@@ -26,7 +26,7 @@ namespace cauv {
                 update(QVariant(value));
             }
 
-            virtual void update(std::string const& value){
+            virtual void update(const std::string& value){
                 update(QString::fromStdString(value));
             }
 
@@ -38,7 +38,7 @@ namespace cauv {
                 return set(QVariant(value));
             }
 
-            virtual bool set(std::string const& value){
+            virtual bool set(const std::string& value){
                 return set(QString::fromStdString(value));
             }
 

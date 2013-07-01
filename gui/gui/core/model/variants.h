@@ -69,7 +69,7 @@ namespace cauv {
         //
         struct variantToQVariantVisitor : boost::static_visitor<QVariant> {
 
-            QVariant operator()( std::string const& str ) const {
+            QVariant operator()( const std::string& str ) const {
                 return QString::fromStdString( str );
             }
 

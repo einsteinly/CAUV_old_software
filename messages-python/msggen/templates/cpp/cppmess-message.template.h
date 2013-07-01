@@ -25,7 +25,7 @@ class Message
     public:
         virtual ~Message();
 
-        std::string const& group() const;
+        const std::string& group() const;
         uint32_t id() const;
 
         virtual const_svec_ptr toBytes() const = 0;
@@ -34,7 +34,7 @@ class Message
         uint32_t m_id;
         std::string m_group;
 
-        Message(uint32_t id, std::string const& group);
+        Message(uint32_t id, const std::string& group);
 
         virtual std::string _str() const; 
 

@@ -16,7 +16,6 @@
 #include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
 #include <utility/qstring.h>
-#include <utility/foreach.h>
 #include <utility/time.h>
 #include <utility/streamops/pair.h>
 
@@ -107,8 +106,8 @@ static QString nodeTypeDesc(cauv::NodeType::e const& type){
     return mkQStr() << enum_name.substr(enum_name.rfind(':')+1).c_str();
 }
 
-static int countLocalInputsWithName(std::string const& name, FNode::msg_node_param_map_t const& map){
-    foreach(FNode::msg_node_param_map_t::value_type const& v, map)
+static int countLocalInputsWithName(const std::string& name, FNode::msg_node_param_map_t const& map){
+    for (FNode::msg_node_param_map_t::value_type const& v : map)
         if(v.first.input == name)
             return 1;
     return 0;
@@ -117,7 +116,7 @@ static int countLocalInputsWithName(std::string const& name, FNode::msg_node_par
 // - FNode
 
 FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
-    : liquid::LiquidNode(F_Node_Style(), NULL), 
+    : liquid::LiquidNode(F_Node_Style(), nullptr), 
       ManagedElement(m),
       m_node_id(id),
       m_type(type),
@@ -138,7 +137,7 @@ FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
 
 
 FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
-    : liquid::LiquidNode(F_Node_Style(), NULL),
+    : liquid::LiquidNode(F_Node_Style(), nullptr),
       ManagedElement(m),
       m_node_id(p->nodeId()),
       m_type(p->nodeType()),
@@ -199,7 +198,7 @@ void FNode::setInputLinks(msg_node_input_map_t const& inputs){
         m_input_links.push_back(NodeInputArc(j->first.input, j->second));
 
         fnode_ptr from = manager().lookup(j->second.node);
-        FNodeOutput* output = NULL;
+        FNodeOutput* output = nullptr;
         // !!! TODO:
         //k->second->disconnect();
         if(from && (output = from->output(j->second.output)))
@@ -242,19 +241,19 @@ void FNode::setOutputLinks(msg_node_output_map_t const& outputs){
 
 void FNode::setParams(msg_node_param_map_t const& params){
     str_inparam_map_t new_m_params;
-    foreach(str_inparam_map_t::value_type const &i, m_params)
+    for (str_inparam_map_t::value_type const &i : m_params)
         if(!countLocalInputsWithName(i.first, params)){
             removeItem(i.second);
         }else{
             new_m_params.insert(i);
         }
     m_params = new_m_params;
-    foreach(msg_node_param_map_t::value_type const& j, params){
-        str_inparam_map_t::iterator k = m_params.find(j.first.input);    
+    for (msg_node_param_map_t::value_type const& j : params){
+        auto k = m_params.find(j.first.input);    
         if(k == m_params.end()){
             debug() << BashColour::Blue << "FNode:: new param:"
                     << std::string(mkStr().lengthLimit(180) << j);
-            FNodeParamInput* t = new FNodeParamInput(manager(), j.first, this);
+            auto  t = new FNodeParamInput(manager(), j.first, this);
             m_params[j.first.input] = t;
             addItem(t);
             t->setValue(j.second);
@@ -274,7 +273,7 @@ void FNode::setParams(msg_node_param_map_t const& params){
 
 void FNode::setParamLinks(msg_node_input_map_t const& inputs){
     typedef msg_node_input_map_t im_t;
-    foreach(im_t::value_type const& j, inputs){
+    for (im_t::value_type const& j : inputs){
         str_inparam_map_t::const_iterator k = m_params.find(j.first.input);
         // if connected, add the arc to this parameter's input:
         if(k == m_params.end()) // input not param
@@ -282,7 +281,7 @@ void FNode::setParamLinks(msg_node_input_map_t const& inputs){
         if(j.second.node){
             m_input_links.push_back(NodeInputArc(j.first.input, j.second));
             fnode_ptr from = manager().lookup(j.second.node);
-            FNodeOutput* output = NULL;
+            FNodeOutput* output = nullptr;
             if(from && (output = from->output(j.second.output)))
                 output->arc()->addTo(k->second->sink());
             k->second->setEditable(false);
@@ -292,7 +291,7 @@ void FNode::setParamLinks(msg_node_input_map_t const& inputs){
     }
 }
 
-void FNode::connectOutputTo(std::string const& output_id, fnode_ptr to, std::string const& input_id){
+void FNode::connectOutputTo(const std::string& output_id, fnode_ptr to, const std::string& input_id){
     FNodeOutput* output = this->output(output_id);
     FNodeInput* input = to->input(input_id);
     if(output && input)
@@ -300,28 +299,28 @@ void FNode::connectOutputTo(std::string const& output_id, fnode_ptr to, std::str
         output->arc()->addTo(input->sink());
 }
 
-void FNode::disconnectOutputFrom(std::string const& output_id, fnode_ptr to, std::string const& input_id){
+void FNode::disconnectOutputFrom(const std::string& output_id, fnode_ptr to, const std::string& input_id){
     FNodeOutput* output = this->output(output_id);
     FNodeInput* input = to->input(input_id);
     if(output && input)
         output->arc()->removeTo(input->sink());
 }
 
-void FNode::addImageDisplayOnInput(std::string const& input, boost::shared_ptr<ImageSource> src){
+void FNode::addImageDisplayOnInput(const std::string& input, boost::shared_ptr<ImageSource> src){
     str_in_map_t::const_iterator i = m_inputs.find(input);
     if(i == m_inputs.end()){
         error() << "no such input (yet)" << input;
         return;
     }
     
-    VideoWidget* w = new VideoWidget(i->second);
+    auto  w = new VideoWidget(i->second);
     connect(src.get(), SIGNAL(newImageAvailable(boost::shared_ptr<const GuiImageMessage>)),
             w, SLOT(displayImage(boost::shared_ptr<const GuiImageMessage>)));
     i->second->addWidget(w);
     setResizable(true);
 }
 
-void FNode::status(Status const& s, std::string const& status_information){
+void FNode::status(Status const& s, const std::string& status_information){
     if(!status_information.size())
         LiquidNode::status(s, mkStr() << m_node_id << ": unknown status");
     else
@@ -400,15 +399,15 @@ void FNode::toggleCollapsed(){
     manager().considerUpdatingLayout();
 }
 
-FNodeOutput* FNode::output(std::string const& id){
+FNodeOutput* FNode::output(const std::string& id){
     str_out_map_t::const_iterator i = m_outputs.find(id);
     if(i != m_outputs.end())
         return i->second;
     error() << "no such output: " << id;
-    return NULL;
+    return nullptr;
 }
 
-FNodeInput* FNode::input(std::string const& id){
+FNodeInput* FNode::input(const std::string& id){
     str_in_map_t::const_iterator i = m_inputs.find(id);
     if(i != m_inputs.end())
         return i->second;
@@ -416,22 +415,22 @@ FNodeInput* FNode::input(std::string const& id){
     if(j != m_params.end())
         return j->second;
     error() << "no such input: " << id;
-    return NULL;
+    return nullptr;
 }
 
 void FNode::initButtons(){
     Button *collapsebutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"), NULL, this
+       QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"), nullptr, this
     );
     addButton("collapse", collapsebutton);
 
     Button *execbutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
+       QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), nullptr, this
     );
     addButton("exec", execbutton);
     
     Button *dupbutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), NULL, this
+       QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), nullptr, this
     );
     addButton("duplicate", dupbutton);
     

@@ -61,7 +61,7 @@ class SeanetSonar : public Observable<SonarObserver>
 {
 	public:
 	
-		SeanetSonar(std::string file);
+		SeanetSonar(const std::string& file);
 		~SeanetSonar();
 	   
         bool ok() const;

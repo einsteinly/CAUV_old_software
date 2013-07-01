@@ -54,10 +54,10 @@ class DrawKeyPointsNode: public Node{
             drawKeypoints(std::vector<cauv::KeyPoint> const& kps) : m_kps(kps){}
             cv::Mat operator()(cv::Mat a) const{
                 cv::Mat out;
-                cv::vector<cv::KeyPoint> cv_keypoints;
+                std::vector<cv::KeyPoint> cv_keypoints;
                 cv_keypoints.reserve(m_kps.size());
                 
-                foreach(KeyPoint const& k, m_kps)
+                for (KeyPoint const& k : m_kps)
                     cv_keypoints.push_back(_cvKeyPoint(k));
 
                 cv::drawKeypoints(a, cv_keypoints, out, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);

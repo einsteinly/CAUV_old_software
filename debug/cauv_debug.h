@@ -87,9 +87,9 @@ class SmartStreamBase : public boost::noncopyable
         virtual ~SmartStreamBase();
 
         static void setLevel(int debug_level);
-        static void setProgramName(std::string const&);
-        static void setLogfileName(std::string const&);
-        static void setLogDirName(std::string const&);
+        static void setProgramName(const std::string&);
+        static void setLogfileName(const std::string&);
+        static void setLogDirName(const std::string&);
         static void addOptions(boost::program_options::options_description& desc,
                                boost::program_options::positional_options_description& /*pos*/);
 
@@ -143,8 +143,8 @@ class SmartStreamBase : public boost::noncopyable
 
         // space is added between strings s1 s2 if:
         //   mayAddSpaceNext(s1) == true && mayAddSpaceNow(s2) == true
-        static bool mayAddSpaceNext(std::string const& s);
-        static bool mayAddSpaceNow(std::string const& s);
+        static bool mayAddSpaceNext(const std::string& s);
+        static bool mayAddSpaceNow(const std::string& s);
         
         // per-thread:
         static bool& recursive();
@@ -197,8 +197,8 @@ struct debug : boost::noncopyable
     virtual ~debug(){ }
 
     static void setLevel(int){ }
-    static void setProgramName(std::string const&){ }
-    static void setLogfileName(std::string const&){ }
+    static void setProgramName(const std::string&){ }
+    static void setLogfileName(const std::string&){ }
 
     template<typename T>
     debug const& operator<<(T const&) const {

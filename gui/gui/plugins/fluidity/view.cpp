@@ -45,21 +45,21 @@ uint qHash(boost::shared_ptr<T> p){
 
 
 FView::FView(boost::shared_ptr<CauvNode> node,
-             std::string const& pipeline_name,
+             const std::string& pipeline_name,
              boost::shared_ptr<gui::Node> model_parent,
              QWidget* parent)
     : liquid::LiquidView(parent),
       m_cauv_node(node),
       m_manager(),
       m_contextmenu_root(),
-      m_scenerect_update_timer(NULL),
+      m_scenerect_update_timer(nullptr),
       m_mode(TopLevel){
 
-    init(pipeline_name, model_parent, NULL, boost::shared_ptr<Manager>(), parent);
+    init(pipeline_name, model_parent, nullptr, boost::shared_ptr<Manager>(), parent);
 }
 
 FView::FView(boost::shared_ptr<CauvNode> node,
-             std::string const& pipeline_name,
+             const std::string& pipeline_name,
              boost::shared_ptr<gui::Node> model_parent,
              NodeScene* s,
              boost::shared_ptr<Manager> m,
@@ -68,13 +68,13 @@ FView::FView(boost::shared_ptr<CauvNode> node,
       m_cauv_node(node),
       m_manager(),
       m_contextmenu_root(),
-      m_scenerect_update_timer(NULL),
+      m_scenerect_update_timer(nullptr),
       m_mode(TopLevel){
     
     init(pipeline_name, model_parent, s, m, parent);
 }
 
-void FView::init(std::string const& pipeline_name,
+void FView::init(const std::string& pipeline_name,
                  boost::shared_ptr<gui::Node> model_parent,
                  NodeScene* s,
                  boost::shared_ptr<Manager> m,
@@ -212,7 +212,7 @@ void FView::_initInMode(Mode const& mode){
 
         initMenu();
     }else{
-        setViewport(0);
+        setViewport(nullptr);
         setRenderHints(
             QPainter::Antialiasing |
             QPainter::TextAntialiasing |
@@ -287,7 +287,7 @@ void FView::initMenu(){
 }
 
 struct ContainsWord{
-    ContainsWord(std::string const& word) : m_word(QString::fromStdString(word)){ }
+    ContainsWord(const std::string& word) : m_word(QString::fromStdString(word)){ }
 
     bool operator()(boost::shared_ptr<QAction>  a) const{
         return a->text().contains(m_word, Qt::CaseInsensitive);
@@ -296,7 +296,7 @@ struct ContainsWord{
     QString m_word;
 };
 
-float FView::split(std::string const& word, QAction_ptr_set actions){
+float FView::split(const std::string& word, QAction_ptr_set actions){
     std::size_t do_contain_word = std::count_if(actions.begin(), actions.end(), ContainsWord(word));
     return float(do_contain_word) / actions.size();
 }
@@ -325,8 +325,8 @@ void FView::initMenu(MenuNode& parent, QAction_ptr_set actions){
         "Background", "Fit", "Segment", "KMean", "Colour", "Mean", "Cluster"
     };
     std::vector<std::string> split_words;
-    for(std::size_t i = 0; i < sizeof(split_words_init) / sizeof(char*); i++){
-        split_words.push_back(split_words_init[i]);
+    for(auto & word : split_words_init){
+        split_words.push_back(word);
     }
     
     const int submenu_split_min = 2;
@@ -334,7 +334,7 @@ void FView::initMenu(MenuNode& parent, QAction_ptr_set actions){
         float best_split = 0;
         int best_split_count = 0;
         std::string best_split_word;
-        foreach(std::string const& w, split_words){
+        foreach(const std::string& w, split_words){
             const float s = split(w, actions);
             debug(5) << "split" << s << s*actions.size() << w;
             if(std::fabs(s-0.5) < std::fabs(best_split-0.5)){
@@ -392,8 +392,8 @@ void FView::setSceneRectToContents(){
     
     if(nodes.size()){
         QRectF nodes_bounding_rect = nodes.at(0)->mapToScene(nodes.at(0)->boundingRect()).boundingRect();
-        for(int i = 0; i < nodes.size(); i++){
-            nodes_bounding_rect |= nodes.at(i)->mapToScene(nodes.at(i)->boundingRect()).boundingRect();
+        for(auto & node : nodes){
+            nodes_bounding_rect |= node->mapToScene(node->boundingRect()).boundingRect();
         }
         fitInView(nodes_bounding_rect.adjusted(-20, -20, 20, 20), Qt::KeepAspectRatio);
 

@@ -45,7 +45,7 @@ TimeStamp now();
  * %s : seconds with fractional seconds: "59.999999"
  * %X : implementation defined time format for current locale
  */
-std::string now(std::string const& format);
+std::string now(const std::string& format);
 
 /* Equivalent to:
  * t = now();

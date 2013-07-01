@@ -23,7 +23,7 @@ namespace cauv {
     class DataStreamBase {
 
         public:
-        DataStreamBase(const std::string name, const std::string units, DataStreamBase* parent = NULL): m_parent(parent), m_name(name), m_units(units) {
+        DataStreamBase(const std::string& name, const std::string& units, DataStreamBase* parent = NULL): m_parent(parent), m_name(name), m_units(units) {
             }
 
             virtual ~DataStreamBase(){}
@@ -66,8 +66,8 @@ namespace cauv {
 
             T m_latest;
 
-            DataStream(const std::string name, const std::string units, DataStreamBase* parent = NULL):DataStreamBase(name, units, parent), m_latest(T()) {};
-            DataStream(const std::string name, DataStreamBase* parent = NULL):DataStreamBase(name, "", parent), m_latest(T()) {};
+            DataStream(const std::string& name, const std::string& units, DataStreamBase* parent = NULL):DataStreamBase(name, units, parent), m_latest(T()) {};
+            DataStream(const std::string& name, DataStreamBase* parent = NULL):DataStreamBase(name, "", parent), m_latest(T()) {};
 
             virtual void update(const T &data) {
                 // only one thread can perform any kind of updating operation at once
@@ -111,8 +111,8 @@ namespace cauv {
         public:
             boost::signals2::signal<void(const T&)> onSet;
 
-            MutableDataStream(const std::string name, const std::string units, DataStreamBase* parent = NULL):DataStream<T>(name, units, parent) {};
-            MutableDataStream(const std::string name, DataStreamBase* parent = NULL):DataStream<T>(name, "", parent) {};
+            MutableDataStream(const std::string& name, const std::string& units, DataStreamBase* parent = NULL):DataStream<T>(name, units, parent) {};
+            MutableDataStream(const std::string& name, DataStreamBase* parent = NULL):DataStream<T>(name, "", parent) {};
 
             virtual bool isMutable(){return true;}
 

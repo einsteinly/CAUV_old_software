@@ -65,7 +65,7 @@ void CauvNode::onRun()
 {
 }
 
-void CauvNode::joinGroup(std::string const& group)
+void CauvNode::joinGroup(const std::string& group)
 {
     info() << "Group-based subscriptions are deprecated. Switch to subMessage() if possible";
     if(m_mailbox)
@@ -158,7 +158,7 @@ struct DBGLevelObserver: MessageObserver
 
 int CauvNode::defaultOptions()
 {
-    return parseOptions(0, NULL);
+    return parseOptions(0, nullptr);
 }
 
 int CauvNode::parseOptions(int argc, char** argv)

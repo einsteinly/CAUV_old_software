@@ -68,7 +68,7 @@ class ShiTomasiCornersNode: public Node{
             const bool useHarrisDetector = param<bool>("useHarrisDetector");
             const float k = param<float>("k");
 
-            cv::vector<cv::Point2f> cv_corners;
+            std::vector<cv::Point2f> cv_corners;
             try{
                 cv::goodFeaturesToTrack(img,
                                         cv_corners,
@@ -91,7 +91,7 @@ class ShiTomasiCornersNode: public Node{
             const float width = img.cols;
             const float height = img.rows;
             debug(2) << "ShiTomasiCorners: detected" << cv_corners.size() << "corners:";
-            foreach(const cv::Point2f &p, cv_corners) {
+            for (const cv::Point2f &p : cv_corners) {
                 const floatXY centre(p.x / width, p.y / height);
                 const Corner c(centre, blockSize, 0, 1); 
                 debug(6) << c;

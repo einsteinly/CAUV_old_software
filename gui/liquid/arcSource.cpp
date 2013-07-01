@@ -32,7 +32,7 @@ AbstractArcSourceInternal::AbstractArcSourceInternal(ArcStyle const& of_style,
       m_style(of_style),
       m_arc(arc),
       m_sourceDelegate(sourceDelegate),
-      m_ephemeral_sink(NULL){
+      m_ephemeral_sink(nullptr){
     debug(7) << "AbstractArcSourceInternal(delegate="<<sourceDelegate<<"): " << this;
     // !!! TODO: instead of signals we can use ItemScenePositionHasChanged notifications
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
@@ -66,8 +66,8 @@ void AbstractArcSourceInternal::setParentItem(QGraphicsItem* item){
 
 QGraphicsItem* AbstractArcSourceInternal::ultimateParent(){
     QGraphicsItem* last_parent = this;
-    QGraphicsItem* parent = NULL;
-    LayoutItem* as_layoutitem = NULL;
+    QGraphicsItem* parent = nullptr;
+    LayoutItem* as_layoutitem = nullptr;
     while((parent = last_parent->parentItem())){
         as_layoutitem = dynamic_cast<LayoutItem*>(parent);
         if(as_layoutitem)
@@ -128,7 +128,7 @@ void AbstractArcSourceInternal::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
         AbstractArcSink* sink;
         // only drop onto the closest possible sink (by manhattan length)
         float closest_manhattan_length = std::numeric_limits<float>::max();
-        AbstractArcSink *closest = NULL;
+        AbstractArcSink *closest = nullptr;
         foreach(QGraphicsItem* item, items_at_drop){
             if((sink = dynamic_cast<AbstractArcSink*>(item)) && sink->willAcceptConnection(m_sourceDelegate, sink)){
                 const float ml = (sink->scenePos() - e->scenePos()).manhattanLength();
@@ -143,7 +143,7 @@ void AbstractArcSourceInternal::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
         if(m_ephemeral_sink){
             // sink arranges its own deletion
             scene()->sendEvent(m_ephemeral_sink, e);
-            m_ephemeral_sink = NULL;
+            m_ephemeral_sink = nullptr;
         }
         // accepted -> forward to base explicitly
         QGraphicsObject::mouseReleaseEvent(e);
@@ -156,7 +156,7 @@ void AbstractArcSourceInternal::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
 #include "ephemeralArcEnd.h"
 AbstractArcSink* AbstractArcSourceInternal::newArcEnd(){
     debug(5) << "newArcEnd:: this:" << this << "&style:" << &m_style;
-    return new EphemeralArcEnd(0, m_style);
+    return new EphemeralArcEnd(nullptr, m_style);
 }
 
 void AbstractArcSourceInternal::removeHighlights(){
@@ -257,8 +257,8 @@ AbstractArcSource::~AbstractArcSource(){
 ArcSource::ArcSource(ArcSourceDelegate* sourceDelegate,
                      Arc* arc)
     : AbstractArcSource(arc->style(), sourceDelegate, arc),
-      m_front_line(NULL),
-      m_back_line(NULL){
+      m_front_line(nullptr),
+      m_back_line(nullptr){
     
     arc->setFrom(this);
 

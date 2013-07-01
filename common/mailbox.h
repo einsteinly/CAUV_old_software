@@ -31,8 +31,8 @@ class Mailbox {
     virtual int sendMessage(boost::shared_ptr<const Message> message, MessageReliability,
                             const std::string &destinationGroup) = 0;
 
-    virtual void joinGroup(const std::string &groupName) = 0;
-    virtual void leaveGroup(const std::string &groupName) = 0;
+    virtual void joinGroup(const std::string& groupName) = 0;
+    virtual void leaveGroup(const std::string& groupName) = 0;
     virtual void subMessage(const Message &messageType) = 0;
     virtual void unSubMessage(const Message &messageType) = 0;
 };

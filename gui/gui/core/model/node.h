@@ -54,7 +54,7 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
         virtual const children_list_t getChildren() const;
         virtual bool isMutable() const;
         virtual void setMutable(bool mut);
-        virtual void setDocstring(std::string const& docstring);
+        virtual void setDocstring(const std::string& docstring);
 
         // QAbstractItemModel helpers
         virtual int row() const;

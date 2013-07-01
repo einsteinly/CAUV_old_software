@@ -13,6 +13,7 @@
 #include <cmath>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/core_c.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
@@ -49,13 +50,13 @@ class DrawCirclesNode: public Node{
                 if(a.channels() >= 3){
                     out = a.clone();
                 }else if(a.channels() == 1){
-                    cv::cvtColor(a, out, CV_GRAY2BGR);
+                    cv::cvtColor(a, out, cv::COLOR_GRAY2BGR);
                 }else{
                     throw parameter_error("image must be 1, 3 or 4 channel");
                 }
                 const float width = out.cols;
                 const float height = out.rows;
-                foreach(Circle const& p, m_circles){
+                for (Circle const& p : m_circles){
                     debug(3) << "draw circle:" << p;
                     cv::circle(
                         out,

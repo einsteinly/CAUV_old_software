@@ -168,10 +168,10 @@ class MergeSimilarLinesNode: public Node{
 
             try{
                 std::vector<Line> mergedLines;
-                foreach (const Line& line1, lines)
+                for (const Line& line1 : lines)
                 {
                     bool merged = false;
-                    foreach (Line& line2, mergedLines)
+                    for (Line& line2 : mergedLines)
                     {
                         if (angleErr(line1,line2) < angleEpsilon && centreErr(line1,line2) < distanceEpsilon)
                         {

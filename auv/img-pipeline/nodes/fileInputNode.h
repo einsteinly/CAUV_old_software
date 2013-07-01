@@ -140,7 +140,7 @@ class FileInputNode: public AsynchronousNode{
             r["fps"] = (float)m_fps;
         }
 
-        bool openVideo(std::string const& fname){
+        bool openVideo(const std::string& fname){
             lock_t l(m_capture_lock);
             if(m_capture.open(fname)) {
                 m_frame_num = 0;

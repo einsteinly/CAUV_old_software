@@ -20,8 +20,8 @@ namespace pw{
 
 class Text: public Renderable, public std::string{
     public:
-        Text(container_ptr_t c, std::string const& text,
-             std::string const& font="sans", int pt=12);
+        Text(container_ptr_t c, const std::string& text,
+             const std::string& font="sans", int pt=12);
         virtual ~Text(){ }
 
         virtual bool acceptsMouseEvents(){ return false; }

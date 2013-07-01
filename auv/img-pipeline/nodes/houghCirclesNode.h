@@ -13,6 +13,8 @@
 #include <cmath>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc/imgproc_c.h>
 #include <opencv2/highgui/highgui.hpp>
 
 #include <generated/types/CirclesMessage.h>
@@ -61,7 +63,7 @@ class HoughCirclesNode: public Node{
             const int min_rad = param<int>("minRadius");
             const int max_rad = param<int>("maxRadius");
 
-            cv::vector<cv::Vec3f> circles;
+            std::vector<cv::Vec3f> circles;
             cv::Mat in = img->mat();            
             try{
                 cv::HoughCircles(in, circles, method, dp, min_dist, p1, p2, min_rad, max_rad);

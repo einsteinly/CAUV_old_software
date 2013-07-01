@@ -102,9 +102,9 @@ void wi::Graph::paint(QPainter *painter,
     painter->setClipRect(plot_rect);
 
     std::list<SeriesData>::iterator i;
-    QColor poly_col = widget->palette().color(QPalette::WindowText);
+    QColor poly_col = Qt::black;
     poly_col.setAlpha(64);
-    QColor line_col = widget->palette().color(QPalette::WindowText);
+    QColor line_col = Qt::black;
     line_col.setAlpha(128);
     for(i = m_data_series.begin(); i != m_data_series.end(); i++){
         const QPolygonF poly = i->data_window->regionAtScale(

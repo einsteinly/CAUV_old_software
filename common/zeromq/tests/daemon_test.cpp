@@ -25,7 +25,7 @@ void broadcast_debug_messages(std::string message, int interval) {
     }
 }
 
-void send_debug_message(std::string message) {
+void send_debug_message(const std::string& message) {
     cauv::ZeroMQMailbox mb;
     mb.startMonitoringAsync();
     mb.sendMessage(boost::make_shared<cauv::DebugMessage>(cauv::DebugType::Info,message), cauv::RELIABLE_MSG);

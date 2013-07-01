@@ -39,49 +39,49 @@ typedef std::string output_id;
 
 class img_pipeline_error: public std::runtime_error{
     public:
-        img_pipeline_error(std::string const& str)
+        img_pipeline_error(const std::string& str)
             : std::runtime_error(str){
         }
 };
 
 class id_error: public img_pipeline_error{
     public:
-        id_error(std::string const& str)
+        id_error(const std::string& str)
             : img_pipeline_error("id error: " + str){
         }
 };
 
 class link_error: public img_pipeline_error{
     public:
-        link_error(std::string const& str)
+        link_error(const std::string& str)
             : img_pipeline_error("link error: " + str){
         }
 };
 
 class node_type_error: public img_pipeline_error{
     public:
-        node_type_error(std::string const& str)
+        node_type_error(const std::string& str)
             : img_pipeline_error("node type error: " + str){
         }
 };
 
 class scheduler_error: public img_pipeline_error{
     public:
-        scheduler_error(std::string const& str)
+        scheduler_error(const std::string& str)
             : img_pipeline_error("scheduler error: " + str){
         }
 };
 
 class parameter_error: public img_pipeline_error{
     public:
-        parameter_error(std::string const& str)
+        parameter_error(const std::string& str)
             : img_pipeline_error("parameter error: " + str){
         }
 };
 
 class bad_input_error: public img_pipeline_error{
     public:
-        bad_input_error(input_id const& iid, std::string const& str = "")
+        bad_input_error(input_id const& iid, const std::string& str = "")
             : img_pipeline_error("parameter error: " + str), m_iid(iid){
         }
         virtual ~bad_input_error() throw(){
@@ -95,7 +95,7 @@ class bad_input_error: public img_pipeline_error{
 
 class user_attention_error: public img_pipeline_error{
     public:
-        user_attention_error(std::string const& str)
+        user_attention_error(const std::string& str)
             : img_pipeline_error("parameter error: " + str){
         }
 };

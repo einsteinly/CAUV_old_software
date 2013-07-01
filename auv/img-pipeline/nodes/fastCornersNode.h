@@ -54,7 +54,7 @@ class FASTCornersNode: public Node{
                 : m_nonmaxsupp(nonmaxsupp), m_threshold(threshold){
             }
             std::vector<cauv::KeyPoint> operator()(cv::Mat a) const{
-                cv::vector<cv::KeyPoint> cv_corners;
+                std::vector<cv::KeyPoint> cv_corners;
                 cv::FAST(a, cv_corners, m_threshold, m_nonmaxsupp);
 
                 debug(2) << "FASTCorners: detected" << cv_corners.size() << "corners:";
@@ -62,7 +62,7 @@ class FASTCornersNode: public Node{
                 // thin wrapper... don't want to include cv types in serialisation
                 std::vector<cauv::KeyPoint> kps;
                 kps.reserve(cv_corners.size());
-                foreach(const cv::KeyPoint &kp, cv_corners)
+                for (const cv::KeyPoint &kp : cv_corners)
                     kps.push_back(_cauvKeyPoint(kp));
                 return kps;
             }

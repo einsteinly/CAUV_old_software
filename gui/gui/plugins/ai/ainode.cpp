@@ -64,23 +64,23 @@ QGraphicsItem * AiDropHandler::handle(boost::shared_ptr<Node> const& node) {
         if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
             cauvNode->send(boost::make_shared<AddTaskMessage>(boost::get<std::string>(node->nodeId())));
         }
-        return NULL;
+        return nullptr;
     }
 
     if (node->type == nodeType<AiConditionTypeNode>()) {
         if(boost::shared_ptr<CauvNode> cauvNode = m_node.lock()){
             cauvNode->send(boost::make_shared<AddConditionMessage>(boost::get<std::string>(node->nodeId())));
         }
-        return NULL;
+        return nullptr;
     }
 
     if (node->type == nodeType<AiTaskNode>()) {
-        return NULL;//LiquidTaskNode::liquidNode(boost::static_pointer_cast<AiTaskNode>(node));
+        return nullptr;//LiquidTaskNode::liquidNode(boost::static_pointer_cast<AiTaskNode>(node));
     }
 
     if (node->type == nodeType<AiConditionNode>()) {
-        return NULL;//LiquidConditionNode::liquidNode(boost::static_pointer_cast<AiConditionNode>(node));
+        return nullptr;//LiquidConditionNode::liquidNode(boost::static_pointer_cast<AiConditionNode>(node));
     }
 
-    return NULL;
+    return nullptr;
 }

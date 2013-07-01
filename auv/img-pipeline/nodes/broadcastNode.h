@@ -14,7 +14,7 @@ class BroadcastNode : public OutputNode {
     }
     protected:
     template <typename BroadcastType>
-    void broadcastInit(const std::string typeName) {
+    void broadcastInit(const std::string& typeName) {
         m_speed = fast;
         registerParamID<BroadcastType>(typeName, 
                                        BroadcastType(),

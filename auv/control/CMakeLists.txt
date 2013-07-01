@@ -9,8 +9,7 @@ add_executable (
     xsens_imu.cpp
     sbg_imu.cpp
     sim_imu.cpp
-    barracuda_mcb.cpp
-    #redherring_mcb.cpp
+    can_gate.cpp
     pid.cpp
 )
 cauv_install ( control )
@@ -22,7 +21,6 @@ target_link_libraries (
 
     ${Boost_LIBRARIES}
     common
-    module
     cmt
     pthread
 

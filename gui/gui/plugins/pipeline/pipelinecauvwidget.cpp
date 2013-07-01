@@ -94,7 +94,7 @@ void PipelineCauvWidget::initialise(){
 void PipelineCauvWidget::shutdown(){
 }
 
-void PipelineCauvWidget::addPipeline(std::string name){
+void PipelineCauvWidget::addPipeline(const std::string& name){
 
     // check if its an unknown pipeline to us
     if(ui->pipelines->findText(QString::fromStdString(name)) < 0) {

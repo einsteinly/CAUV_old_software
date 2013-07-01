@@ -14,9 +14,6 @@ else()
     # water is the graphing library
     add_subdirectory (water)
 
-    # magma is the radial menu library
-    add_subdirectory (magma)
-
     # for generated files (mainly moc'd stuff)
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
     
@@ -86,7 +83,6 @@ else()
         ${QT_LIBRARIES}
         ${graphviz_LIBRARIES}
         water
-        magma
         cauv_debug
     )
 

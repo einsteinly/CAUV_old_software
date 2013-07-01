@@ -37,7 +37,7 @@ void create_path(std::string dir_path) {
     }
 }
 
-bool get_lock_file(std::string lockfile) {
+bool get_lock_file(const std::string& lockfile) {
     int lockfile_fd;
     lockfile_fd = open(lockfile.c_str(), O_RDWR | O_CREAT, 0600);
 

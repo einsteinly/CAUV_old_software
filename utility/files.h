@@ -11,13 +11,13 @@
 
 class file_error : public std::runtime_error {
     public:
-    explicit file_error(const std::string &what_arg) :
+    explicit file_error(const std::string& what_arg) :
         std::runtime_error(what_arg) {};
 };
 
 //create a series of directories, like mkdir -p
 void create_path(std::string dir_path);
 
-bool get_lock_file(std::string lockfile);
+bool get_lock_file(const std::string& lockfile);
 
 #endif

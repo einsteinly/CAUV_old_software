@@ -143,7 +143,7 @@ class SonarInputNode: public InputNode{
             }
 
             cv::Mat fullImage;
-            foreach( boost::shared_ptr<SonarDataMessage const> m, msgs) {
+            for ( boost::shared_ptr<SonarDataMessage const> m : msgs) {
                 SonarDataLine l = m->line();
                 std::vector<unsigned char>& bins = l.data;
 

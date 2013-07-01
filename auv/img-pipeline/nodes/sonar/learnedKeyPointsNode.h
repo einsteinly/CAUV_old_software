@@ -370,14 +370,14 @@ class Forest{
         //  smaller threshold: more points test positive 
         inline bool test(cv::Point const& pt, cv::Mat const& image, float threshold=0.5) const{
             unsigned good = 0;
-            foreach(TreeNode_ptr t, m_trees)
+            for (TreeNode_ptr t : m_trees)
                 good += t->test(pt, image);
             return good > threshold*m_trees.size();
         }
 
         inline float probabilityGood(cv::Point const& pt, cv::Mat const& image) const{
             unsigned good = 0;
-            foreach(TreeNode_ptr t, m_trees)
+            for (TreeNode_ptr t : m_trees)
                 good += t->test(pt, image);
             return float(good) / m_trees.size();
         }
@@ -390,7 +390,7 @@ class Forest{
             }
             kp_vec r;
             r.reserve(in_kps.size());
-            foreach(KeyPoint const& k, in_kps)
+            for (KeyPoint const& k : in_kps)
                 if(test(cv::Point(int(k.pt.x), int(k.pt.y)), image))
                     r.push_back(k);
             info() << "filter: " << r.size() << "passed";
@@ -401,11 +401,11 @@ class Forest{
             info() << "re-score: " << kps.size() << "keypoints...";
             if(!m_trees.size()){
                 debug() << "re-score: no forest! everything will be scored at 1.0";
-                foreach(KeyPoint& k, kps)
+                for (KeyPoint& k : kps)
                     k.response = 1;
             }else{
                 double total_prob = 0;
-                foreach(KeyPoint& k, kps){
+                for (KeyPoint& k : kps){
                     k.response = probabilityGood(cv::Point(int(k.pt.x), int(k.pt.y)), image);
                     total_prob += k.response;
                 }
@@ -634,7 +634,7 @@ class LearnedKeyPointsNode: public Node{
             
             pt_vec kps_as_points;
             kps_as_points.reserve(keypoints.size());
-            foreach(KeyPoint const& kp, keypoints)
+            for (KeyPoint const& kp : keypoints)
                 kps_as_points.push_back(cv::Point(int(kp.pt.x), int(kp.pt.y)));
             
             augmented_mat_t m = img->augmentedMat();

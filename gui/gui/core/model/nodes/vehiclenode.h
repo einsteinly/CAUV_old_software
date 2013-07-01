@@ -24,7 +24,7 @@ namespace cauv {
             friend class VehicleRegistry;
 
         protected:
-            Vehicle(std::string name) : Node(name, nodeType<Vehicle>()) {
+            Vehicle(const std::string& name) : Node(name, nodeType<Vehicle>()) {
             }
 
             virtual void initialise() = 0;

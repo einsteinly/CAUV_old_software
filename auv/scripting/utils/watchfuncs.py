@@ -48,7 +48,11 @@ def zmq_daemon_pid(ipc_dir = None, vehicle_name = None):
 def search_pid(program_name):
     def get_pid():
         # this could be improved...
-        ps = subprocess.check_output(['ps', '-opid,command', '-A'])
+        try:
+            ps = subprocess.check_output(['ps', '-opid,command', '-A'])
+        except subprocess.CalledProcessError:
+            #busybox ps doesn't understand any options
+            ps = subprocess.check_output(['ps'])
         processes = ps.split('\n')
         for p in processes:
             if p.find(program_name) != -1:

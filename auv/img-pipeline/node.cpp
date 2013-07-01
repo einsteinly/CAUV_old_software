@@ -8,6 +8,8 @@
 
 #include <algorithm>
 
+#include <boost/range/adaptor/reversed.hpp>
+
 #include <utility/time.h>
 #include <utility/streamops/set.h>
 
@@ -63,7 +65,7 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
     : m_uid(){
     bool uid_inherited = false;
     bool uid_set = false;
-    in_image_map_t::const_iterator i = inputs.begin();
+    auto i = inputs.begin();
     while(i != inputs.end() && !i->second)
        i++;
     if(i != inputs.end() && i->second){
@@ -127,7 +129,7 @@ Node::Input::Input(InputSchedType::e s,
 
 Node::Input::Input(InputSchedType::e s,
                    ParamValue const& default_value,
-                   std::string const& tip,
+                   const std::string& tip,
                    std::vector<int32_t> const& compatible_subtypes)
     : TestableBase<Input>(*this),
       target(),
@@ -145,7 +147,7 @@ Node::input_ptr Node::Input::makeImageInputShared(ConstQualifier isconst, InputS
 }
 
 Node::input_ptr Node::Input::makeParamInputShared(
-    ParamValue const& default_value, std::string const& tip, InputSchedType::e const& st
+    ParamValue const& default_value, const std::string& tip, InputSchedType::e const& st
 ){
     return boost::make_shared<Input>(
         boost::cref(st), boost::cref(default_value), boost::cref(tip), boost::apply_visitor(CompatibleSubTypes(), default_value)
@@ -290,7 +292,7 @@ const char* Node::Image_Out_Copied_Name = "image out";
 
 Node::ConstructArgs::ConstructArgs(Scheduler& sched,
                                    ImageProcessor& pl,
-                                   std::string const& pl_name,
+                                   const std::string& pl_name,
                                    NodeType::e type
 )   : sched(sched), pl(pl), pl_name(pl_name), type(type){
 }
@@ -365,7 +367,7 @@ node_id const& Node::id() const{
     return m_id;
 }
 
-std::string const& Node::plName() const{
+const std::string& Node::plName() const{
     return m_pl_name;
 }
 
@@ -425,7 +427,7 @@ void Node::clearInput(input_id const& i_id){
 void Node::clearInputs(node_ptr_t parent){
     lock_t l(m_inputs_lock);
     debug(2) << BashColour::Purple << *this << "removing parent links to" << *parent;
-    foreach(private_in_map_t::value_type& v, m_inputs)
+    for (private_in_map_t::value_type& v : m_inputs)
         if(v.second->target.node == parent)
             v.second->clear();
 }
@@ -433,14 +435,14 @@ void Node::clearInputs(node_ptr_t parent){
 void Node::clearInputs(){
     lock_t l(m_inputs_lock);
     debug(2) << BashColour::Purple << *this << "removing all parent links";
-    foreach(private_in_map_t::value_type& v, m_inputs)
+    for (private_in_map_t::value_type& v : m_inputs)
         v.second->clear();
 }
 
 Node::input_id_set_t Node::inputs() const{
     lock_t l(m_inputs_lock);
     input_id_set_t r;
-    foreach(private_in_map_t::value_type const& v, m_inputs)
+    for (private_in_map_t::value_type const& v : m_inputs)
         if(!v.second->isParam()) // parameters don't count!
             r.insert(v.first);
     return r;
@@ -449,7 +451,7 @@ Node::input_id_set_t Node::inputs() const{
 Node::msg_node_input_map_t Node::inputLinks() const{
     lock_t l(m_inputs_lock);
     msg_node_input_map_t r;
-    foreach(private_in_map_t::value_type const& v, m_inputs){
+    for (private_in_map_t::value_type const& v : m_inputs){
         const input_id& id = v.first;
         const input_link_t& link = v.second->target;
         // parameters _do_ count
@@ -480,7 +482,7 @@ Node::msg_node_input_map_t Node::inputLinks() const{
 std::set<node_ptr_t> Node::parents() const{
     lock_t l(m_inputs_lock);
     std::set<node_ptr_t> r;
-    foreach(private_in_map_t::value_type const& i, m_inputs)
+    for (private_in_map_t::value_type const& i : m_inputs)
         if(i.second->target)
             r.insert(i.second->target.node); // parameters _do_count
     return r;
@@ -537,7 +539,7 @@ void Node::clearOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id
     }else{
         const output_ptr op = i->second;
         // DONT release outputs lock
-        output_link_list_t::iterator j = std::find(
+        auto j = std::find(
             op->targets.begin(),
             op->targets.end(),
             output_link_t(n, i_id)
@@ -561,13 +563,13 @@ struct NodeIs{
 void Node::clearOutputs(node_ptr_t child){
     lock_t l(m_outputs_lock);
     debug(2) << BashColour::Purple << *this << "removing output links to child:" << *child;
-    foreach(private_out_map_t::value_type& i, m_outputs)
+    for (private_out_map_t::value_type& i : m_outputs)
         i.second->targets.remove_if(NodeIs<output_link_t>(child));
 }
 
 void Node::clearOutputs(){
     lock_t l(m_outputs_lock);
-    foreach(private_out_map_t::value_type& i, m_outputs){
+    for (private_out_map_t::value_type& i : m_outputs){
         debug(2) << BashColour::Purple << *this << "removing output links from" << i.first;
         i.second->targets.clear();
     }
@@ -576,7 +578,7 @@ void Node::clearOutputs(){
 Node::output_id_set_t Node::outputs(int type_index) const{
     output_id_set_t r;
     lock_t n(m_outputs_lock);
-    foreach(private_out_map_t::value_type const& i, m_outputs)
+    for (private_out_map_t::value_type const& i : m_outputs)
         if(i.second->which() == type_index)
             r.insert(i.first);
     return r;
@@ -592,7 +594,7 @@ Node::output_id_set_t Node::paramOutputs() const{
 
 int32_t Node::paramOutputType(output_id const& o_id) const{
     lock_t l(m_outputs_lock);
-    private_out_map_t::const_iterator i = m_outputs.find(o_id);
+    auto i = m_outputs.find(o_id);
     if(i == m_outputs.end() || !i->second->isParam())
         throw parameter_error("unknown parameter output");
     return boost::get<InternalParamValue>(i->second->value()).param.which();
@@ -601,13 +603,13 @@ int32_t Node::paramOutputType(output_id const& o_id) const{
 Node::msg_node_output_map_t Node::outputLinks() const{
     lock_t l(m_outputs_lock);
     msg_node_output_map_t r;
-    foreach(private_out_map_t::value_type const& i, m_outputs){
+    for (private_out_map_t::value_type const& i : m_outputs){
         msg_node_in_list_t input_list;
         int32_t sub_type = -1;
         OutputType::e type = OutputType::e(i.second->which());
         if(type == OutputType::Parameter)
             sub_type = boost::get<InternalParamValue>(i.second->value()).param.which();
-        foreach(output_link_list_t::value_type const& j, i.second->targets)
+        for (output_link_list_t::value_type const& j : i.second->targets)
             input_list.push_back(NodeInput(m_pl.lookup(j.node), j.id, sub_type)); 
         r[LocalNodeOutput(i.first,type,sub_type)] = input_list;
     }
@@ -617,7 +619,7 @@ Node::msg_node_output_map_t Node::outputLinks() const{
 const Node::output_link_list_t& Node::linksOnOutput(output_id const& o) const{
     lock_t l(m_outputs_lock);
     msg_node_in_list_t input_list;
-    private_out_map_t::const_iterator i = m_outputs.find(o);
+    auto i = m_outputs.find(o);
     if(i != m_outputs.end()) {
         return i->second->targets;
     }
@@ -627,7 +629,7 @@ const Node::output_link_list_t& Node::linksOnOutput(output_id const& o) const{
 
 bool Node::hasChildOnOutput(output_id const& o) const{
     lock_t l(m_outputs_lock);
-    private_out_map_t::const_iterator i = m_outputs.find(o);
+    auto i = m_outputs.find(o);
     if(i != m_outputs.end())
         return i->second->targets.size() > 0;
     return false;
@@ -636,8 +638,8 @@ bool Node::hasChildOnOutput(output_id const& o) const{
 std::set<node_ptr_t> Node::children() const{
     lock_t l(m_outputs_lock);
     std::set<node_ptr_t> r;
-    foreach(private_out_map_t::value_type const& i, m_outputs)
-        foreach(output_link_list_t::value_type const& j, i.second->targets)
+    for (private_out_map_t::value_type const& i : m_outputs)
+        for (output_link_list_t::value_type const& j : i.second->targets)
             r.insert(j.node);
     return r;
 }
@@ -645,7 +647,7 @@ std::set<node_ptr_t> Node::children() const{
 int Node::numChildren() const{
     lock_t l(m_outputs_lock);
     int r = 0;
-    foreach(private_out_map_t::value_type const& i, m_outputs)
+    for (private_out_map_t::value_type const& i : m_outputs)
         r += i.second->targets.size();
     return r;
 }
@@ -668,7 +670,7 @@ struct isuniquevisitor : boost::static_visitor<bool> {
     bool operator()(const cv::Mat& m) const { return !m.refcount || *m.refcount <= 1; } 
     bool operator()(const NonUniformPolarMat& m) const { return operator()(m.mat); }
     bool operator()(const PyramidMat& m) const {
-        foreach(const cv::Mat& mat, m.levels)
+        for (const cv::Mat& mat : m.levels)
             if (!operator()(mat))
                 return false;
         return true;
@@ -689,7 +691,7 @@ void Node::exec(){
     float bits = 0;
 
     try{
-        foreach(private_in_map_t::value_type const& v, m_inputs){
+        for (private_in_map_t::value_type const& v : m_inputs){
             const input_ptr ip = v.second;
             if(!ip->isParam()){
                 if(!*ip && ip->sched_type != Optional){
@@ -797,8 +799,8 @@ void Node::exec(){
     children_to_notify.reserve(m_outputs.size());
 
     lock_t ol(m_outputs_lock);
-    foreach(out_map_t::value_type& v, outputs){
-        private_out_map_t::iterator i = m_outputs.find(v.first);
+    for (out_map_t::value_type& v : outputs){
+        auto i = m_outputs.find(v.first);
         if(i == m_outputs.end()){
             error() << *this << "exec() produced output at an unknown id:"
                     << v.first << "(ignored)";
@@ -822,7 +824,7 @@ void Node::exec(){
                 //debug(5) << "Prompting" << op->targets.size()
                 //         << "children of new output on:" << v.first;
                 // for each node connected to the output
-                foreach(output_link_t& link, op->targets){
+                for (output_link_t& link : op->targets){
                     // notify the node that it has new input
                     if(link.node){
                         //debug(5) << "will prompt new input to child on:" << v.first;
@@ -842,7 +844,7 @@ void Node::exec(){
     }
     ol.unlock();
     // .... now actually do notification
-    foreach(output_link_t& link, children_to_notify){
+    for (output_link_t& link : children_to_notify){
         link.node->setNewInput(link.id);
     }
 
@@ -897,7 +899,7 @@ std::set<UID> Node::getOutputParamUIDs(output_id const& o_id) const{
     lock_t l(m_outputs_lock);
     const private_out_map_t::const_iterator i = m_outputs.find(o_id);
     if(i != m_outputs.end()){
-        foreach(output_t const& o, i->second->value_queue){
+        for (output_t const& o : i->second->value_queue){
             r.insert(boost::apply_visitor(output_t_GetUID(), o));
         }
     }else{
@@ -911,7 +913,7 @@ UID Node::mostRecentUIDOnOutputInSet(output_id const& o_id,  std::set<UID> const
     lock_t l(m_outputs_lock);
     const private_out_map_t::const_iterator i = m_outputs.find(o_id);
     if(i != m_outputs.end()){
-        reverse_foreach(output_t const& o, i->second->value_queue){
+        for (output_t const& o : boost::adaptors::reverse(i->second->value_queue)) {
             UID t = boost::apply_visitor(output_t_GetUID(), o);
             if(uid_set.count(t)){
                 debug(5) << __func__ << "seq2=" << t.seq2;
@@ -949,7 +951,7 @@ Node::InternalParamValue Node::getOutputParamWithUID(
 std::map<LocalNodeInput, ParamValue> Node::parameters() const{
     lock_t l(m_inputs_lock);
     std::map<LocalNodeInput, ParamValue> r;
-    foreach(private_in_map_t::value_type const& v, m_inputs)
+    for (private_in_map_t::value_type const& v : m_inputs)
         if(v.second->isParam())
             r[LocalNodeInput(
                 v.first,
@@ -981,8 +983,8 @@ void Node::registerInputID(input_id const& i, ConstQualifier isconst, InputSched
 
 void Node::requireSyncInputs(input_id const& a, input_id const& b){
     lock_t l(m_inputs_lock);
-    private_in_map_t::iterator ai = m_inputs.find(a);
-    private_in_map_t::iterator bi = m_inputs.find(b);
+    auto ai = m_inputs.find(a);
+    auto bi = m_inputs.find(b);
     if(ai == m_inputs.end()){
         error() << "No such input:" << a;
         return;
@@ -1135,7 +1137,7 @@ void Node::setNewInput(input_id const& a){
 void Node::setNewInput(){
     lock_t l(m_inputs_lock);
     debug(5) << *this << "setting all inputs new";
-    foreach(private_in_map_t::value_type& i, m_inputs){
+    for (private_in_map_t::value_type& i : m_inputs){
         i.second->status = NodeInputStatus::New;
         _statusMessage(boost::make_shared<InputStatusMessage>(
             m_pl_name, m_id, i.first, NodeIOStatus::New | NodeIOStatus::Valid
@@ -1148,7 +1150,7 @@ void Node::setNewInput(){
 void Node::clearNewInput(){
     lock_t m(m_inputs_lock);
     debug(5) <<  *this << "setting all inputs old";
-    foreach(private_in_map_t::value_type& i, m_inputs){
+    for (private_in_map_t::value_type& i : m_inputs){
         if(i.second->status != NodeInputStatus::Invalid){
             i.second->status = NodeInputStatus::Old;
             _statusMessage(boost::make_shared<InputStatusMessage>(
@@ -1161,7 +1163,7 @@ void Node::clearNewInput(){
 /* all includes none! (if none must be new) */
 bool Node::allRequiredInputsAreNew() const{
     lock_t m(m_inputs_lock);
-    foreach(private_in_map_t::value_type const& i, m_inputs)
+    for (private_in_map_t::value_type const& i : m_inputs)
         if(i.second->sched_type == Must_Be_New && i.second->status != NodeInputStatus::New)
             return false;
     return true;
@@ -1170,7 +1172,7 @@ bool Node::allRequiredInputsAreNew() const{
 bool Node::anyRequiredInputsAreNew() const{
     lock_t m(m_inputs_lock);
     bool default_status = true;
-    foreach(private_in_map_t::value_type const& i, m_inputs)
+    for (private_in_map_t::value_type const& i : m_inputs)
         // any Must_Be_New inputs imply that the node shouldn't execute if
         // nothing is new
         if(i.second->sched_type == Must_Be_New){
@@ -1183,7 +1185,7 @@ bool Node::anyRequiredInputsAreNew() const{
 
 bool Node::anyInputsAreNew() const{
     lock_t m(m_inputs_lock);
-    foreach(private_in_map_t::value_type const& i, m_inputs)
+    for (private_in_map_t::value_type const& i : m_inputs)
         if(i.second->status == NodeInputStatus::New)
             return true;
     return false;
@@ -1211,7 +1213,7 @@ bool Node::ensureValidInput(){
     std::vector<input_link_t> parents;
     bool invalid_input = false;
     parents.reserve(m_inputs.size()); 
-    foreach(private_in_map_t::value_type& i, m_inputs)
+    for (private_in_map_t::value_type& i : m_inputs)
         if(!*i.second && i.second->sched_type != Optional){
             invalid_input = true;
             if(i.second->target){
@@ -1221,7 +1223,7 @@ bool Node::ensureValidInput(){
     if(parents.size())
         debug(5) << __func__ << "Invalid input from parents:" << parents;
     l.unlock();
-    foreach(input_link_t const& v, parents)
+    for (input_link_t const& v : parents)
         v.node->setNewOutputDemanded(v.id);
 
     if(invalid_input)
@@ -1309,7 +1311,7 @@ bool Node::execQueued() const{
 
 Node::InternalParamValue Node::_getAndNotifyIfChangedInternalParam(input_id const& p, UID const* uid) const{
     lock_t l(m_inputs_lock);
-    private_in_map_t::const_iterator i = m_inputs.find(p);
+    auto i = m_inputs.find(p);
     if(i != m_inputs.end() && *(i->second) && i->second->input_type == InType_Parameter){
         input_ptr ip = i->second;
         // now we can release the inputs lock
@@ -1339,11 +1341,11 @@ void Node::demandNewParentInput() throw(){
     // and do it:
     std::vector<input_link_t> parents;
     parents.reserve(m_inputs.size()); 
-    foreach(private_in_map_t::value_type& i, m_inputs)
+    for (private_in_map_t::value_type& i : m_inputs)
         if(i.second->target)
             parents.push_back(i.second->target);
     l.unlock();
-    foreach(input_link_t const& v, parents)
+    for (input_link_t const& v : parents)
         v.node->setNewOutputDemanded(v.id);
 }
 
@@ -1364,7 +1366,7 @@ void Node::demandNewParentInput(input_id const& iid) throw(){
 
 void Node::_pushQueueOutputForSync(output_id const& o_id){
     lock_t l(m_outputs_lock);
-    private_out_map_t::iterator i = m_outputs.find(o_id);
+    auto i = m_outputs.find(o_id);
     if(i != m_outputs.end())
         i->second->pushShouldQueue();
     else
@@ -1373,7 +1375,7 @@ void Node::_pushQueueOutputForSync(output_id const& o_id){
 
 void Node::_popQueueOutputForSync(output_id const& o_id){
     lock_t l(m_outputs_lock);
-    private_out_map_t::iterator i = m_outputs.find(o_id);
+    auto i = m_outputs.find(o_id);
     if(i != m_outputs.end())
         i->second->popShouldQueue();
     else
