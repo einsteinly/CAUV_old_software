@@ -10,7 +10,7 @@
 import argparse
 
 # CAUV Modules 
-import CHIL
+from childecode import CHIL
 
 def reIndex(dirname):
     reindexer = CHIL.ReIndexer(dirname)
