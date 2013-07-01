@@ -4,4 +4,4 @@ from cauv.node import Node
 
 node = Node("test")
 auv = AUV(node)
-auv.moveToRelativeLocationAndWait((10,-40))
+auv.moveToRelativeLocation((10,-40))

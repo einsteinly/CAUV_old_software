@@ -198,6 +198,7 @@ class EventLoop(object):
         self.event_queue = Queue.PriorityQueue(size)
         self.waiting_queue = Heap()
         self.running = True
+        self.stopped = threading.Event()
         self.event_loop = self
         for name, member in inspect.getmembers(self):
             try:
@@ -228,16 +229,22 @@ class EventLoop(object):
                 self.event_queue.task_done()
             except Queue.Empty:
                 pass
+        self.stopped.set()
 
     def start(self):
         self.thread = threading.Thread(target = self.run)
         self.thread.start()
+        self.stopped.clear()
 
     def add_event(self, event):
         self.event_queue.put(event)
 
     def stop(self):
         self.running = False
+        
+    def join(self, timeout=None):
+        self.stop()
+        return self.stopped.wait(timeout)
 
 class TestEvent(EventLoop):
     def __init__(self):
