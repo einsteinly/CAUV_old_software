@@ -40,7 +40,6 @@ class ControlNode : public CauvNode
         void addXsens(int id);
 		void addSBG(const std::string&, int baud_rate, int pause_time);
         void addSimIMU();
-        void addPressureIMU();
     
     protected:
         boost::shared_ptr<CANGate> m_can_gate;
