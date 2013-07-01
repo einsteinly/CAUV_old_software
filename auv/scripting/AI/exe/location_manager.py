@@ -31,6 +31,9 @@ def rotate(vec, angle):
             vec[1]*cos(radians(angle))+vec[0]*sin(radians(angle)))
     
 def intersection(line1, line2):
+    """
+    Calcualtes the intersection point of 2 lines (raises error if parallel)
+    """
     if line1.angle == line2.angle:
         raise ArithmeticError("Lines are parallel.")
     x1 = line1.centre.x
@@ -44,6 +47,9 @@ def intersection(line1, line2):
     return (x,y)
 
 def mean_lines(lines):
+    """
+    Generates a 'mean' line, getting angle as linear avg over range [first line angle+-90]
+    """
     centre = (sum([line.centre.x for line in lines])/len(lines),
               sum([line.centre.y for line in lines])/len(lines))
     angle = sum([(line.angle-lines[0].angle+90)%180])/len(lines)-90+lines[0].angle
@@ -65,8 +71,13 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
             pipeline = cauv.yamlpipe.load(pf)
         model = cauv.pipeline.Model(self.node, 'ai/_wall_lines')
         pipeline.fixup_inputs()
+        #check the pipeline is responding, else raise error
+        if not model.isAlive():
+            raise Exception("Could not find appropriate image pipeline, required so giving up.")
+        #set the pipeline
         model.set(pipeline)
         #setup initial values
+        #note that we modify the bearings so that the 'north' wall is exactly north
         self.bearing = None # (corrected) bearing
         self.real_bearing = None # (actual) bearing
         self.image_scale = None # width of sonar image
@@ -186,7 +197,7 @@ if __name__ == '__main__':
     p.add_argument('-l', '--lines_name', default = 'wall_lines', help="Name of broadcast lines node.")
     p.add_argument('-s', '--scale_name', default = 'wall_lines_scale', help="Name of broadcast range node.")
     p.add_argument('-b', '--arena_bearing_correction', default=-90, help="Bearing of real north in fake coords.") # competition 17
-    p.add_argument('-t', '--tolerance', default=5,
+    p.add_argument('-t', '--tolerance', default=10,
                    help="maximum difference between expected and actual angle of lines before rejecting lines")
     p.add_argument('-d', '--wall_length', default=50, help="Length of the back wall (m)")
     opts, args = p.parse_known_args()

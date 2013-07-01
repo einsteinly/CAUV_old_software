@@ -129,6 +129,11 @@ class event_func(object):
         r.__sync_loop()
         return r
     
+    def __eq__(self, other):
+        if not self.__class__ == other.__class__:
+            return False
+        return self.func == other.func
+    
     def add_event(self, func, args, kargs):
         """Add func to assigned event loop and options with given arguments"""
         if self.loop is None:
