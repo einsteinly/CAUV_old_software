@@ -94,26 +94,27 @@ bool LiquidView::gestureEvent(QGestureEvent *event)
 
 
 
-void LiquidView::scaleAround(QPoint point, qreal scaleFactor){
+void LiquidView::scaleAround(QPoint /*point*/, qreal scaleFactor){
+    // TODO: Figure out what to do with this mess
 
-    if(scaleFactor * viewportTransform().m11() >= maxScale()){
-        scaleFactor = maxScale() / viewportTransform().m11();
-    }
-    if(scaleFactor * viewportTransform().m11() < minScale()){
-        scaleFactor = minScale() / viewportTransform().m11();
-    }
+    //if(scaleFactor * viewportTransform().m11() >= maxScale()){
+    //    scaleFactor = maxScale() / viewportTransform().m11();
+    //}
+    //if(scaleFactor * viewportTransform().m11() < minScale()){
+    //    scaleFactor = minScale() / viewportTransform().m11();
+    //}
 
-    QPointF around = mapToScene(point);
+    //QPointF around = mapToScene(point);
 
-    qDebug() << around;
+    //qDebug() << around;
 
     float scalar = viewportTransform().m11() * scaleFactor;
     scalar = clamp(minScale(), scalar, maxScale());
     QTransform scaleTransform = QTransform::fromScale(scalar, scalar);
 
 
-    QTransform translation = QTransform::fromTranslate(around.x(), around.y());
-    QTransform reverseTranslation = QTransform::fromTranslate(-around.x() * scalar, -around.y() * scalar);
+    //QTransform translation = QTransform::fromTranslate(around.x(), around.y());
+    //QTransform reverseTranslation = QTransform::fromTranslate(-around.x() * scalar, -around.y() * scalar);
 
 
     //qDebug() << translation;
@@ -125,12 +126,12 @@ void LiquidView::scaleAround(QPoint point, qreal scaleFactor){
     //setTransform(QTransform((reverseTranslation * scaleMatrix) * translation));
     //setTransform(QTransform(scale));
     //QTransform final = (translation * scaleTransform) * reverseTranslation;
-    QTransform final = scaleTransform;
+    //QTransform final = scaleTransform;
 
 
-    setMatrix(final.toAffine());
+    //setMatrix(scaleTransform.toAffine());
 
-    //setTransform(scaleTransform);
+    setTransform(scaleTransform);
 
     //scrollContentsBy(translation.dx(), translation.dy());
     //
@@ -159,7 +160,7 @@ void LiquidView::wheelEvent(QWheelEvent *event){
     if(!(QApplication::keyboardModifiers() & Qt::ControlModifier)) {
         return QGraphicsView::wheelEvent(event);
     } else {
-        scaleAround(event->pos(), (((float)event->delta())*0.005)+1);
+        scaleAround(event->pos(), (((float)event->delta())*0.0005)+1);
         event->accept();
         //QGraphicsView::wheelEvent(event);
     }
