@@ -420,8 +420,10 @@ void ControlLoops::updateMotorControl()
     mapped_demand.hstern = applyDelta(m_motor_values.hstern, mapped_demand.hstern, m_max_motor_delta);
     mapped_demand.vstern = applyDelta(m_motor_values.vstern, mapped_demand.vstern, m_max_motor_delta);
 
-    m_can_gate->setMotorState(mapped_demand);
-    
+    if (m_can_gate) {
+        m_can_gate->setMotorState(mapped_demand);
+    }
+
     sendIfChangedOrOld(m_motor_values, mapped_demand);
 
     m_motor_values = mapped_demand;
@@ -622,7 +624,7 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
     desc.add_options()
         ("xsens,x", po::value<int>()->implicit_value(0), "USB device id of the Xsens")
         ("sbg,b", po::value<std::string>()->implicit_value("/dev/ttyUSB1"), "TTY device for SBG IG500A")
-        ("can,c", po::value<std::string>()->default_value("can0"), "CAN interface name")
+        ("can,c", po::value<std::string>()->implicit_value("can0"), "CAN interface name")
 
         ("simulation,N", "Run in simulation mode");
 }
@@ -645,8 +647,10 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
         if (vm.count("sbg")){
             addSBG(vm["sbg"].as<std::string>(), 115200, 10);
         }
+        if (vm.count("can")){
+            setCAN(vm["can"].as<std::string>());
+        }
     }
-    setCAN(vm["can"].as<std::string>());
 
     return 0;
 }
