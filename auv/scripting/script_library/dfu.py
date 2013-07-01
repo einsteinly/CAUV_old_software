@@ -48,12 +48,16 @@ class dfu(AI.Script):
     def run(self):
         self.distance = None
         self.stage = 0
+        info("Setting initial heading.")
         self.auv.bearingAndWait(self.options.Initial_Heading)
+        info("Starting to react to walls.")
         self.node.subMessage(messaging.RelativePositionMessage())
         while self.distance == None:
             sleep(0.1)
+        info("Moving forward.")
         while self.stage == 0:
             if abs(self.distance-self.options.Turn_Distance)<self.options.Turn_Distance_Error:
+                info("Close enough, turning.")
                 self.auv.prop(0)
                 self.auv.bearingAndWait(self.options.Second_Heading)
                 self.stage=1
@@ -64,8 +68,10 @@ class dfu(AI.Script):
                 p_speed=-self.options.TDClamp
             self.auv.prop(int(p_speed))
             sleep(0.1)
+        info("Moving forward again.")
         self.auv.prop(self.options.Second_Speed)
         sleep(self.options.Second_Time)
+        info("Stopping.")
         self.auv.prop(0)
 
 Script = dfu
