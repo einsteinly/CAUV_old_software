@@ -146,6 +146,7 @@ class Model(messaging.MessageObserver):
         self.__node = node
 
         self.pipeline_name = pipeline_name
+        self.pipeline_basename = pipeline_name.split('/',1)[0]
 
         self.description_ready_condition = threading.Condition()
         self.graph_description = None
@@ -165,6 +166,8 @@ class Model(messaging.MessageObserver):
         self.arc_added_condition = threading.Condition()
         self.arc_added_wait_for = None
         self.arc_added = None
+        
+        self.alive_msg_event = threading.Event()
 
         node.addObserver(self)
         node.subMessage(messaging.NodeAddedMessage())
@@ -172,6 +175,16 @@ class Model(messaging.MessageObserver):
         node.subMessage(messaging.NodeParametersMessage())
         node.subMessage(messaging.GraphDescriptionMessage())
         node.subMessage(messaging.ArcAddedMessage())
+        node.subMessage(messaging.PipelineDiscoveryResponseMessage())
+        
+    def isAlive(self, timeout=1):
+        self.alive_msg_event.clear()
+        self.send(messaging.PipelineDiscoveryRequestMessage())
+        return self.alive_msg_event.wait(timeout)
+    
+    def onPipelineDiscoveryResponseMessage(self, m):
+        if m.pipelineName == self.pipeline_basename:
+            self.alive_msg_event.set()
 
     def clear(self):
         '''Remove all nodes from the pipeline.'''

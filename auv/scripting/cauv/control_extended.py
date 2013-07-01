@@ -11,23 +11,26 @@ from math import atan2, sqrt, cos, sin, degrees
 C2D = messaging.CartesianPosition2D
                 
 class RelativeLocationMover(EventLoop):
-    def __init__(self, auv, target, timeout, search_timeout = 0.5, search_angle = 5, search_hold = 2,
+    def __init__(self, auv, target, search_timeout = 0.5, search_angle = 5, search_hold = 2,
                     controller_p = utils.control.PIDController((20,0,0)),
                     controller_s = utils.control.PIDController((20,0,0))):
         EventLoop.__init__(self)
         self.target = target
-        self.timeout = timeout
         self.search_timeout = search_timeout
         self.search_angle = search_angle
         self.search_hold = search_hold
         #inject position handler
         self.auv = auv
         self.auv.RelativePositionMessageHandlers.append(self.onRelativePositionMessage)
-        #start monitoring thread
-        self.start_time = time.time()
-        self.last_message_time = time.time()
+        #control loops
         self.controller_p = controller_p
         self.controller_s = controller_s
+        #decision values for when and where to search
+        self.start_time = time.time()
+        self.last_message_time = time.time()
+        self.searching = False
+        self.search_bearing = None
+        
     
     @event_func
     def onRelativePositionMessage(self, m):
@@ -35,6 +38,8 @@ class RelativeLocationMover(EventLoop):
             return
         if m.object != "NECorner":
             return
+        #turn off searching
+        self.searching = False
         #face towards NE corner
         info("NECorner @ "+ str(m.position.value))
         bearing = atan2(m.position.value.east, m.position.value.north)
@@ -51,28 +56,25 @@ class RelativeLocationMover(EventLoop):
         self.auv.strafe(strafe)
         self.last_message_time = time.time()
     
-    def main(self):
-        self.start()
-        while time.time() - self.start_time < self.timeout:
-            info("Moving.")
-            self.initial_bearing = self.auv.current_bearing
-            add_bearing = self.search_angle
-            while time.time() - self.last_message_time > self.search_timeout:
-                #initialise search
-                info("Searching.")
-                self.auv.prop(0)
-                self.auv.strafe(0)
-                self.auv.bearing(self.initial_bearing+add_bearing)
-                time.sleep(self.search_hold)
-                add_bearing += self.search_angle
-            time.sleep(self.search_timeout)
-            #TODO add manual stop
-        self.end()
+    @repeat_event(autostart = True, time_period = 0.1)
+    def search(self):
+        if not self.searching:
+            #if not within timeout, escape
+            if time.time() - self.last_message_time < self.search_timeout:
+                return
+            #timed out, so intialise search
+            info("Searching.")
+            self.searching = True
+            self.auv.prop(0)
+            self.auv.strafe(0)
+            self.search_bearing = self.auv.current_bearing
+        self.search_bearing += self.search_angle
+        self.auv.bearingAndWait(self.search_bearing)
         
     def end(self):
-        self.AUV.RelativePositionMessageHandlers.remove(self.onRelativePositionMessage)
+        self.auv.RelativePositionMessageHandlers.remove(self.onRelativePositionMessage)
+        self.auv.stop()
         self.stop()
-        self.AUV.stop()
 
 class AUV(cauv.control.AUV):
     def __init__(self, node, **kwargs):
@@ -85,6 +87,9 @@ class AUV(cauv.control.AUV):
             handler(m)
             
     def moveToRelativeLocationAndWait(self, target, timeout = 60):
-        mover = RelativeLocationMover(self, target, timeout)
-        mover.main()
-        return mover
+        mover = RelativeLocationMover(self, target)
+        try:
+            mover.start()
+            time.sleep(timeout)
+        finally:
+            mover.end()

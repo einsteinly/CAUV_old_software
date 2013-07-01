@@ -19,7 +19,11 @@
 #include <generated/types/ControlLockToken.h>
 
 #include "imu.h"
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+#include "mcb.h"
+#else
 #include "can_gate.h"
+#endif
 #include "pid.h"
 
 namespace cauv{
@@ -35,15 +39,22 @@ class ControlNode : public CauvNode
         ControlNode();
         virtual ~ControlNode();
     
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+        void setMCB(std::string const& port);
+#else
         void setCAN(const std::string& port);
+#endif
 
         void addXsens(int id);
 		void addSBG(const std::string&, int baud_rate, int pause_time);
         void addSimIMU();
-        void addPressureIMU();
     
     protected:
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+        boost::shared_ptr<MCB> m_mcb;
+#else
         boost::shared_ptr<CANGate> m_can_gate;
+#endif
         std::vector<boost::shared_ptr<IMU>> m_imus;
         boost::shared_ptr<ControlLoops> m_controlLoops;
         #warning !!! see device control from old version: needs merging into redherringMcb and xsensImu
@@ -63,7 +74,11 @@ class ControlLoops : public MessageObserver, public IMUObserver
         ControlLoops(boost::shared_ptr<Mailbox> mb);
         ~ControlLoops();
 
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+        void set_mcb(boost::shared_ptr<MCB> mcb);
+#else
         void set_can_gate(boost::shared_ptr<CANGate> can_gate);
+#endif
 
         void start();
         void stop();
@@ -78,7 +93,11 @@ class ControlLoops : public MessageObserver, public IMUObserver
         };
 
     protected:
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+        boost::shared_ptr<MCB> m_mcb;
+#else
         boost::shared_ptr<CANGate> m_can_gate;
+#endif
         bool m_control_enabled[Controller::NumValues];
         PIDControl m_controllers[Controller::NumValues];
         MotorDemand m_demand[Controller::NumValues];

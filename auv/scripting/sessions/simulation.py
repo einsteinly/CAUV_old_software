@@ -24,7 +24,7 @@ processes = [
     Process('setup', ['true'],
                 death = ignore, prereq = depends_on('pipeline', 'sonar', 'control', 'daemon-man', 'p-resort')),
     Process('task_manager', ['task_manager.py'], node_pid('task_manager'), death = restart(), prereq = depends_on('pipeline', 'location_manager')),
-    Process('location_manager', ['location_manager.py'], node_pid('location_manager'), death = restart()),
+    Process('location_manager', ['location_manager.py'], node_pid('location_manager'), death = restart(), prereq = depends_on('pipeline'))
 ]
 
 def get_arguments(group):

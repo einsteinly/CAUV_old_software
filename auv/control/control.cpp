@@ -30,8 +30,10 @@
 #include "sbg_imu.h"
 #include "sim_imu.h"
 #include "pressure_imu.h"
-#include "can_gate.h"
 #include "pid.h"
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+#include "barracuda_mcb.h"
+#endif
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
@@ -83,10 +85,17 @@ ControlLoops::~ControlLoops()
     stop();
 }
 
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+void ControlLoops::set_mcb(boost::shared_ptr<MCB> mcb)
+{
+    m_mcb = mcb;
+}
+#else
 void ControlLoops::set_can_gate(boost::shared_ptr<CANGate> can_gate)
 {
     m_can_gate = can_gate;
 }
+#endif
 
 void ControlLoops::start()
 {
@@ -420,8 +429,16 @@ void ControlLoops::updateMotorControl()
     mapped_demand.hstern = applyDelta(m_motor_values.hstern, mapped_demand.hstern, m_max_motor_delta);
     mapped_demand.vstern = applyDelta(m_motor_values.vstern, mapped_demand.vstern, m_max_motor_delta);
 
-    m_can_gate->setMotorState(mapped_demand);
-    
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+    if (m_mcb) {
+        m_mcb->setMotorState(mapped_demand);
+    }
+#else
+    if (m_can_gate) {
+        m_can_gate->setMotorState(mapped_demand);
+    }
+#endif
+
     sendIfChangedOrOld(m_motor_values, mapped_demand);
 
     m_motor_values = mapped_demand;
@@ -602,17 +619,17 @@ void ControlNode::addSimIMU()
     subMessage(StateMessage());
 }
 
-void ControlNode::addPressureIMU()
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+void ControlNode::setMCB(std::string const& port)
 {
-    boost::shared_ptr<PressureIMU> psb = boost::make_shared<PressureIMU>();
-    addMessageObserver(psb);
-    m_imus.push_back(psb);
+    m_mcb = boost::make_shared<BarracudaMCB>(port);
 }
-
+#else
 void ControlNode::setCAN(const std::string& ifname)
 {
     m_can_gate = boost::make_shared<CANGate>(ifname);
 }
+#endif
 
 void ControlNode::addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos)
 {
@@ -622,7 +639,11 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
     desc.add_options()
         ("xsens,x", po::value<int>()->implicit_value(0), "USB device id of the Xsens")
         ("sbg,b", po::value<std::string>()->implicit_value("/dev/ttyUSB1"), "TTY device for SBG IG500A")
-        ("can,c", po::value<std::string>()->default_value("can0"), "CAN interface name")
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+        ("port,p", po::value<std::string>()->implicit_value("/dev/ttyUSB0"), "TTY file for MCB serial comms")
+#else
+        ("can,c", po::value<std::string>()->implicit_value("can0"), "CAN interface name")
+#endif
 
         ("simulation,N", "Run in simulation mode");
 }
@@ -645,8 +666,16 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
         if (vm.count("sbg")){
             addSBG(vm["sbg"].as<std::string>(), 115200, 10);
         }
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+        if (vm.count("mcb")){
+            setMCB(vm["mcb"].as<std::string>());
+        }
+#else
+        if (vm.count("can")){
+            setCAN(vm["can"].as<std::string>());
+        }
+#endif
     }
-    setCAN(vm["can"].as<std::string>());
 
     return 0;
 }
@@ -657,13 +686,29 @@ void ControlNode::onRun()
    
     addMessageObserver(boost::make_shared<DebugMessageObserver>(2));
 
+    boost::shared_ptr<PressureIMU> psb = boost::make_shared<PressureIMU>();
+    addMessageObserver(psb);
+    m_imus.push_back(psb);
+
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+    if (m_mcb) {
+        m_controlLoops->set_mcb(m_mcb);
+        m_mcb->addObserver(psb);
+        m_mcb->start();
+    }
+    else {
+        warning() << "MCB not connected. No MCB comms available, so no motor control.";
+    }
+#else
     if (m_can_gate) {
         m_controlLoops->set_can_gate(m_can_gate);
+        m_can_gate->addObserver(psb);
         m_can_gate->start();
     }
     else {
         warning() << "CAN not connected. No CAN comms available, so no motor control.";
     }
+#endif
 
     if (m_imus.size() > 0) {
         for (auto& imu : m_imus) {

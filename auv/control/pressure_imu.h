@@ -14,7 +14,11 @@
 
 namespace cauv{
 
+#ifdef CAUV_USE_SHITTY_OLD_MCB_SHIT
+class PressureIMU : public IMU, public MessageObserver, public MCBObserver
+#else
 class PressureIMU : public IMU, public MessageObserver, public CANObserver
+#endif
 {
     public:
         // expect only small adjustments for salt/fresh water
