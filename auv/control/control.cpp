@@ -604,13 +604,6 @@ void ControlNode::addSimIMU()
     subMessage(StateMessage());
 }
 
-void ControlNode::addPressureIMU()
-{
-    boost::shared_ptr<PressureIMU> psb = boost::make_shared<PressureIMU>();
-    addMessageObserver(psb);
-    m_imus.push_back(psb);
-}
-
 void ControlNode::setCAN(const std::string& ifname)
 {
     m_can_gate = boost::make_shared<CANGate>(ifname);
@@ -661,8 +654,13 @@ void ControlNode::onRun()
    
     addMessageObserver(boost::make_shared<DebugMessageObserver>(2));
 
+    boost::shared_ptr<PressureIMU> psb = boost::make_shared<PressureIMU>();
+    addMessageObserver(psb);
+    m_imus.push_back(psb);
+
     if (m_can_gate) {
         m_controlLoops->set_can_gate(m_can_gate);
+        m_can_gate->addObserver(psb);
         m_can_gate->start();
     }
     else {
