@@ -27,10 +27,8 @@ barracuda_processes = [
     Process('setup', ['true'],
                 death = ignore, prereq = depends_on('pipeline', 'sonar', 'control', 'daemon-man', 'p-resort')),
     Process('task_manager', ['task_manager.py'], node_pid('task_manager'), death = restart(), prereq = depends_on('pipeline', 'location_manager'))
-    Process('location_manager', ['location_manager.py', '-b', '17'], node_pid('location_manager'), death = restart(), prereq = depends_on('pipeline')),
+    Process('location_manager', ['location_manager.py', '-b', '17', '-f', 'real_sonar_walls', '-d', '50'], node_pid('location_manager'), death = restart(), prereq = depends_on('pipeline')),
     Process('temp_monitor', ['temperaturemonitor.py'], node_pid('temperaturemonitor.py'), death = restart(4))
-    #TODO add different pipeline, configure options properly for real environment (see location manager options)
-    #Process('location_manager', ['location_manager.py'], node_pid('location_manager'), death = restart())
 ]
 
 laptop_processes = [

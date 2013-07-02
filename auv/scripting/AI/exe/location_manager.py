@@ -22,6 +22,8 @@ from math import degrees, atan, cos, sin, radians, tan
 import utils.event as event
 import utils.dirs
 
+SONAR_ANGLE=120
+
 #TODO this should probably be part of some vector library....
 def rotate(vec, angle):
     """
@@ -143,12 +145,15 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
                         north_wall.append(line)
                     else:
                         south_wall.append(line)
-            #if it is north-south it is the back wall (hopefully, maybe add a check?)
-            elif line_bearing<=self.tolerance or line_bearing>=180-self.tolerance:
+            #if it is north-south (and we are facing the right direction) it is the back wall
+            elif (line_bearing<=self.tolerance or line_bearing>=180-self.tolerance) and (self.bearing<240 :
                 back_wall.append(line)
             else:
                 other_lines.append(line)
+        #
         #warn or ignore if other_lines to high?
+        if len(other_lines) >= max(len(north_wall), len(back_wall), len(south_wall)):
+            warning("%d lines ignored, high relative to actual lines")
         #TODO bearing correction based on walls
         info("%d north wall, %d back wall, %d south wall, %d other lines" %(len(north_wall), len(back_wall), len(south_wall), len(other_lines)))
         #send positions of known walls, origin the auv
