@@ -21,6 +21,7 @@ class TrackWall(AI.Script):
         def __init__(self):
             self.strafekP = 1000 #controls strafe speed, int [-127, 127]
             self.strafeLimit = 60
+            self.strafeOffset = 10
             self.wallDistancekP = -1000
             self.depth = 2 #depth in metres
             self.useDepth = True
@@ -30,7 +31,7 @@ class TrackWall(AI.Script):
             self.maximumBearingChange = 5
             self.targetDistance = 0.1
             self.initialLocation = (Simulation_Datum+NorthEastDepthCoord(-18, 5, 0)).toWGS84()
-            self.initalBearing = 80
+            self.initialBearing = 80
             self.linesName = 'track_wall'
             self.pipeline = 'track_wall2'
     
@@ -84,6 +85,7 @@ class TrackWall(AI.Script):
             #    /                                 _                _
             angle, distance = self.calculate_intersection(m.lines, project = self.options.targetDistance)
         except InsufficientDataError:
+            warning("Falling back to old method, risk of oscillation")
             #fall back to original method (occasionally happens when at an angle with only straight wall in front
             #as forward line can miss projection
             try:
@@ -122,7 +124,7 @@ class TrackWall(AI.Script):
             self.auv.bearing(self.auv.current_bearing+angle-90)
             
         #Prop Control
-        speed = (0.5+self.options.targetDistance-distance)*self.options.wallDistancekP
+        speed = (0.5+self.options.targetDistance-distance)*self.options.wallDistancekP+self.options.strafeOffset
         debug('Setting speed %f' %(speed))
         self.auv.prop(int(speed))
         
@@ -289,7 +291,7 @@ class TrackWall(AI.Script):
         if self.options.useDepth:
             self.auv.depth(self.options.depth)
         #self.auv.headToLocation(self.options.initialLocation)
-        self.auv.bearingAndWait(self.options.initalBearing)
+        self.auv.bearingAndWait(self.options.initialBearing)
         #start onMessage handler
         start_time = time.time()
         self.node.subMessage(msg.LinesMessage())
