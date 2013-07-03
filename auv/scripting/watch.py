@@ -51,7 +51,7 @@ parser.add_argument("--log-dir",     "-l",  help="log directory for files")
 parser.add_argument("--kill",        "-k",  help="Kill all processes in session",            nargs='?', type=int, const=15)
 parser.add_argument("--kill-after",  "-K",  help="Kill all processes once finished",         nargs='?', type=int, const=3)
 parser.add_argument("--tick",        "-t",  help="Time between process checks (seconds)",    default=1.0, type=float)
-#parser.add_argument("--start",       "-r",  help="Processes to start",                       nargs="+", action='append')
+parser.add_argument("--start",       "-r",  help="Processes to start",                       nargs="+", default=[])
 parser.add_argument("--no-node",     "-n",  help="Don't run a CAUV node to start and stop processes", action='store_true')
 
 args = parser.parse_args()
@@ -66,7 +66,7 @@ class WatchObserver(messaging.MessageObserver):
     def __init__(self, watcher):
         messaging.MessageObserver.__init__(self)
         self.node = cauv.node.Node('watch')
-        #give watcher acces to node
+        #give watcher access to node
         watcher._node = self.node
         self.node.addObserver(self)
         self.watcher = watcher
@@ -175,6 +175,8 @@ else:
         thread = threading.Thread(target = monitor)
         thread.daemon = True
         thread.start() 
+        for proc in args.start:
+            watcher.start(proc)
         try:
             
             class MyCmd(cmd.Cmd):
