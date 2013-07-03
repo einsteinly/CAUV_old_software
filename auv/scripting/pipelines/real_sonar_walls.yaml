@@ -4,7 +4,7 @@
     image in<-image: &PolarImageToXY_1 !node/PolarImageToXY
       Resolution: 400
       polar image<-polar image: !node/SonarImageEdge
-        line width: 2
+        line width: 10
         min amplitude: 30
         min width: 1
         polar image<-polar image: &SonarInput_1 !node/SonarInput {Resolution: 400,
@@ -14,7 +14,7 @@
       angle epsilon: 0.30000001192092896
       distance epsilon: 0.10000000149011612
       lines<-lines: !node/HoughLines
-        maxLineGap: 5
+        maxLineGap: 2
         minLineLength: 10
         probabilistic: true
         rho: 1.0
@@ -22,16 +22,15 @@
         stn: 0
         theta: 0.01745329238474369
         threshold: 10
-        image in<-image: *PolarImageToXY_1
+        image in<-image_out: !node/Resize
+          fixed height: 0
+          fixed width: 0
+          interpolation mode: 1
+          scale factor: 0.5
+          image_in<-image: *PolarImageToXY_1
 - !node/BroadcastLines
   name: wall_lines
   lines<-lines: *MergeSimilarLines_1
-- !node/FastMedian
-  radius: 3.0
-  image<-image: *PolarImageToXY_1
 - !node/BroadcastFloat
   name: wall_lines_scale
   float<-range: *SonarInput_1
-- !node/GuiOutput
-  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
-  image_in<-polar image: *SonarInput_1

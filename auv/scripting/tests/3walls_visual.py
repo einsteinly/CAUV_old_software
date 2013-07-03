@@ -18,7 +18,7 @@ class test(msg.MessageObserver):
         pygame.draw.line(self.window, colour, (320,240), (320+4*m.position.value.east,240-4*m.position.value.north))
         pygame.display.flip()
     def reset(self):
-	self.window.fill((0,0,0))
+        self.window.fill((0,0,0))
 
 sc = test()
 while True:

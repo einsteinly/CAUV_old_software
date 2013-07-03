@@ -55,7 +55,7 @@ class RelativeLocationMover(EventLoop):
         prop_error = (m.position.value.north+self.target[0])*cos(bearing)+sin(bearing)*(m.position.value.east+self.target[1])
         strafe_error = (m.position.value.north+self.target[0])*sin(bearing)-cos(bearing)*(m.position.value.east+self.target[1])
         
-        if prop_error < self.target_error and strafe_error < self.target_error:
+        if abs(prop_error) < self.target_error and abs(strafe_error) < self.target_error:
             self.is_in_range.set()
         
         prop=int(max(min(self.controller_p.update(prop_error), 127), -127))

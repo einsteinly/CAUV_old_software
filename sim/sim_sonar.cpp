@@ -28,7 +28,7 @@ SimSonar::SimSonar (osg::Node *track_node,
                     unsigned int max_rate) :
            sim_node(sim_node_),
            width(width_), height(width_), resolution(300),
-           range(200), fovx(120), fovy(10),
+           range(100), fovx(120), fovy(10),
            output_limit(1, max_rate),
            viewer(new osgViewer::Viewer()),
            image(new osg::Image()),
@@ -54,7 +54,7 @@ SimSonar::SimSonar (osg::Node *track_node,
 void SimSonar::setup(osg::Node *root) {
     viewer->setSceneData(root);
     camera->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
-    camera->setProjectionMatrixAsPerspective(fovy*2,std::tan(fovx/2*M_PI/180)/std::tan(fovy*M_PI/180),0.5,range * 10); 
+    camera->setProjectionMatrixAsPerspective(fovy*2,std::tan(fovx/2*M_PI/180)/std::tan(fovy*M_PI/180),0.5,range * 20); 
     viewer->realize();
 }
 
@@ -68,7 +68,7 @@ void SimSonar::tick(double timestamp) {
         //near plane
         const float near = 0.5;
         //far plane
-        const float far = range * 10;
+        const float far = range * 20;
         std::vector<int32_t> bearings(width);
         //     /|
         //    / |

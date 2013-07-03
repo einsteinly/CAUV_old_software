@@ -22,7 +22,7 @@ from math import degrees, atan, cos, sin, radians, tan
 import utils.event as event
 import utils.dirs
 
-SONAR_ANGLE=120
+SONAR_FOV=120
 
 #TODO this should probably be part of some vector library....
 def rotate(vec, angle):
@@ -47,6 +47,18 @@ def intersection(line1, line2):
     x = (y2-y1+x1*tan1-x2*tan2)/(tan1-tan2)
     y = (x-x1)*tan1+y1
     return (x,y)
+
+def is_left(line):
+    """
+    Calculates whether a line is left of the center of the image, assuming looking right (as in cartesian sonar image)
+    Hint: draw the diagram to understand.
+    """
+    #calculate angle to centre, between +-90
+    centre_angle = degrees(atan((line.centre.y-0.5)/(line.centre.x-0.5)))
+    #if angle to centre < angle of line (in range +- 90), then line is to left
+    if (centre_angle < (degrees(line.angle)+90)%180-90):
+        return True
+    return False
 
 def mean_lines(lines):
     """
@@ -100,7 +112,7 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
     def onFloatMessage(self, m):
         if m.name != self.scale_name:
             return
-        self.image_scale = m.value
+        self.image_scale = 2*m.value
 
     @event.event_func
     def onLinesMessage(self, m):
@@ -132,28 +144,36 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
                 #30<bearing<150 => North left, South right
                 #150<bearing<210 => South wall
                 #210<bearing<330 = > North right, South left, no back wall
-                if self.bearing > 330 or self.bearing < 30:
+                if self.bearing > 270+SONAR_FOV/2 or self.bearing < 90-SONAR_FOV/2:
                     north_wall.append(line)
-                elif self.bearing > 150 and self.bearing < 210:
+                elif self.bearing > 90+SONAR_FOV/2 and self.bearing < 270-SONAR_FOV/2:
                     south_wall.append(line)
                 else:
-                    #calculate whether the line is left or right
-                    #calculate angle to centre, between +-90
-                    centre_angle = degrees(atan((line.centre.y-0.5)/(line.centre.x-0.5)))
-                    #if angle to centre < angle of line (in range +- 90), then line is to left
-                    if (centre_angle < (degrees(line.angle)+90)%180-90)^(self.bearing>210 and self.bearing<330):
+                    if is_left(line)^(self.bearing>270-SONAR_FOV/2 and self.bearing<270+SONAR_FOV/2):
                         north_wall.append(line)
                     else:
                         south_wall.append(line)
             #if it is north-south (and we are facing the right direction) it is the back wall
-            elif (line_bearing<=self.tolerance or line_bearing>=180-self.tolerance) and (self.bearing<240 :
-                back_wall.append(line)
+            elif (line_bearing<=self.tolerance or line_bearing>=180-self.tolerance):
+                #if looking towards back, definately the right wall
+                if self.bearing > SONAR_FOV/2 and self.bearing < 180-SONAR_FOV/2:
+                    back_wall.append(line)
+                #if looking north ish or southish
+                elif self.bearing < 180+SONAR_FOV/2 or self.bearing > 360-SONAR_FOV/2:
+                    #If right and facing north, is back wall, if left and facing south is back wall
+                    if (not is_left(line))^(self.bearing<270 and self.bearing>90):
+                        back_wall.append(line)
+                    else:
+                        other_lines.append(line)
+                else:
+                    other_lines.append(line)
             else:
                 other_lines.append(line)
         #
         #warn or ignore if other_lines to high?
         if len(other_lines) >= max(len(north_wall), len(back_wall), len(south_wall)):
-            warning("%d lines ignored, high relative to actual lines")
+            warning("{} lines ignored, high relative to actual lines".format(len(other_lines)))
+            info("Bearing: {} Line bearings: {}".format(self.bearing, [degrees(line.angle)+self.bearing for line in m.lines]))
         #TODO bearing correction based on walls
         info("%d north wall, %d back wall, %d south wall, %d other lines" %(len(north_wall), len(back_wall), len(south_wall), len(other_lines)))
         #send positions of known walls, origin the auv
@@ -201,10 +221,10 @@ if __name__ == '__main__':
     p.add_argument('-f', '--pipeline_name', default = 'sim_sonar_walls', help="Name of pipeline file.")
     p.add_argument('-l', '--lines_name', default = 'wall_lines', help="Name of broadcast lines node.")
     p.add_argument('-s', '--scale_name', default = 'wall_lines_scale', help="Name of broadcast range node.")
-    p.add_argument('-b', '--arena_bearing_correction', default=-90, help="Bearing of real north in fake coords.") # competition 17
+    p.add_argument('-b', '--arena_bearing_correction', default=-90, help="Bearing of real north in fake coords.", type=int) # competition 17
     p.add_argument('-t', '--tolerance', default=10,
-                   help="maximum difference between expected and actual angle of lines before rejecting lines")
-    p.add_argument('-d', '--wall_length', default=50, help="Length of the back wall (m)")
+                   help="maximum difference between expected and actual angle of lines before rejecting lines", type=int)
+    p.add_argument('-d', '--wall_length', default=50, help="Length of the back wall (m)", type=int)
     opts, args = p.parse_known_args()
     
     lm = LocationManager(opts)
