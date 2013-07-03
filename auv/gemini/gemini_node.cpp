@@ -327,6 +327,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
               m_range_lines(200),
               m_ping_continuous(false),
               m_conn_state(),
+              m_currently_pinging(0),
               m_async_service(boost::make_shared<AsyncService>(1)),
               m_cancel_timeout_mux(),
               m_cancel_timeout(boost::make_shared<bool>(true)),
@@ -406,6 +407,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 return;
             }
             m_gem_mux.lock();
+            m_currently_pinging = true;
             GEM_AutoPingConfig(m_range, m_gain_percent, m_sos);
             if(m_range_lines <= 32){
                 GEM_SetGeminiEvoQuality(0);
@@ -451,6 +453,11 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 debug() << "config received before init: will not ping yet!";
                 return;
             }
+            if(m_currently_pinging){
+                debug() << "already pinging!";
+                return;
+            }
+
             applyConfigAndPing();
         }
 
@@ -718,6 +725,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
 
             lock_t l(m_cancel_timeout_mux);
             if(*cancel_timeout)
+                m_currently_pinging = false;
                 return;
             *cancel_timeout = true;
 
@@ -727,6 +735,9 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     boost::bind(&GeminiSonar::applyConfigAndPing, the_sonar),
                     m_inter_ping_musec
                 );
+            }
+            else {
+                m_currently_pinging = false;
             }
             m_gem_mux.unlock();
         }
@@ -745,6 +756,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             uint16_t sonarId;
             uint32_t sonarAltIp;
         } m_conn_state;
+        
+        bool m_currently_pinging;
         
         boost::shared_ptr<AsyncService> m_async_service;
 
@@ -797,7 +810,7 @@ void GeminiNode::onRun()
 
     while(!m_sonar->initialised()){
         debug() << "waiting for init...";
-	    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+        boost::this_thread::sleep(boost::posix_time::milliseconds(100));
     }
 
     subMessage(GeminiControlMessage());
@@ -807,7 +820,7 @@ void GeminiNode::onRun()
     m_sonar->autoConfig(6.0f, 40);
 
     while (true) {
-	    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+        boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
         GEM_SendGeminiStayAlive();
     }
 }
