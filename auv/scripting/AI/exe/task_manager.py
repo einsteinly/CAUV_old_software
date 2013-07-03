@@ -33,7 +33,6 @@ import collections
 from collections import deque
 
 import AI.conditions
-import AI.mission
 import AI.tasks
 import AI.options
 import AI.mission
@@ -198,6 +197,7 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
 
     @event.event_func
     def onScriptControlMessage(self, msg):
+        debug("ScriptControlMessage not currently implemented")
         pass
 
     @event.event_func

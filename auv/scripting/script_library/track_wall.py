@@ -20,14 +20,15 @@ class TrackWall(AI.Script):
     class DefaultOptions(AI.Script.DefaultOptions):
         def __init__(self):
             self.strafekP = 1000 #controls strafe speed, int [-127, 127]
-            self.strafeLimit = 60
-            self.strafeOffset = 10
+            self.strafeLimit = AI.OptionWithMeta(60, type=MotorValue)
+            self.strafeOffset = AI.OptionWithMeta(10, type=MotorValue)
             self.wallDistancekP = -1000
-            self.depth = 2 #depth in metres
+            self.depth = AI.OptionWithMeta(2, units="m") #depth in metres
             self.useDepth = True
-            self.maximumRunTime = 200 #run time in seconds
-            self.forwardAngle = math.pi/4
-            self.changeDifference = 0.01
+            self.maximumRunTime = AI.OptionWithMeta(200, units="s") #run time in seconds
+            self.targetAngle = AI.OptionWithMeta(radians(70), units=" degrees", docstring="Target angle between wall and AUV")
+            self.forwardAngle = AI.OptionWithMeta(radians(45), units=" degrees")
+            self.changeDifference = AI.OptionWithMeta(0.01)
             self.maximumBearingChange = 5
             self.targetDistance = 0.1
             self.initialLocation = (Simulation_Datum+NorthEastDepthCoord(-18, 5, 0)).toWGS84()
