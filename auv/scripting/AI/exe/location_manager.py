@@ -17,7 +17,7 @@ import itertools
 import collections
 
 from collections import deque
-from math import degrees, atan, cos, sin, radians, tan
+from math import degrees, atan, cos, sin, radians, tan, pi
 
 import utils.event as event
 import utils.dirs
@@ -50,13 +50,21 @@ def intersection(line1, line2):
 
 def is_left(line):
     """
-    Calculates whether a line is left of the center of the image, assuming looking right (as in cartesian sonar image)
-    Hint: draw the diagram to understand.
+    Calculates whether a line is left of the center (i.e. intersects y axis above origin) of the image, assuming looking right (as in cartesian sonar image)
+            \|
+             \
+             |\
+    _________|_\_______
+             |  \
+             |   \.
+             |    \
+             |     \
+             |
     """
-    #calculate angle to centre, between +-90
-    centre_angle = degrees(atan((line.centre.y-0.5)/(line.centre.x-0.5)))
+    #
+    length = (0.5-line.centre.y) + line.centre.x*tan(line.angle)
     #if angle to centre < angle of line (in range +- 90), then line is to left
-    if (centre_angle < (degrees(line.angle)+90)%180-90):
+    if length>0:
         return True
     return False
 
@@ -66,7 +74,7 @@ def mean_lines(lines):
     """
     centre = (sum([line.centre.x for line in lines])/len(lines),
               sum([line.centre.y for line in lines])/len(lines))
-    angle = sum([(line.angle-lines[0].angle+90)%180])/len(lines)-90+lines[0].angle
+    angle = sum([(line.angle-lines[0].angle+pi/2)%pi])/len(lines)-pi/2+lines[0].angle
     length = max([line.length for line in lines])
     return messaging.Line(messaging.floatXY(*centre), angle, length, lines[0].width)
 
@@ -112,7 +120,7 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
     def onFloatMessage(self, m):
         if m.name != self.scale_name:
             return
-        self.image_scale = 2*m.value
+        self.image_scale = 2*m.value #image is twice width of sonar range
 
     @event.event_func
     def onLinesMessage(self, m):
@@ -173,7 +181,7 @@ class LocationManager(event.EventLoop, messaging.MessageObserver):
         #warn or ignore if other_lines to high?
         if len(other_lines) >= max(len(north_wall), len(back_wall), len(south_wall)):
             warning("{} lines ignored, high relative to actual lines".format(len(other_lines)))
-            info("Bearing: {} Line bearings: {}".format(self.bearing, [degrees(line.angle)+self.bearing for line in m.lines]))
+        info("Bearing: {} Line bearings: {}".format(self.bearing, [(degrees(line.angle)+self.bearing)%360 for line in m.lines]))
         #TODO bearing correction based on walls
         info("%d north wall, %d back wall, %d south wall, %d other lines" %(len(north_wall), len(back_wall), len(south_wall), len(other_lines)))
         #send positions of known walls, origin the auv
