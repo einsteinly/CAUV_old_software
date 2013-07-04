@@ -132,34 +132,36 @@ class dfu(AI.Script):
             raise Exception("Timed out")
         
     def run(self):
-        if self.options.UsePushStart:
-            self.wait_for_push()
-        self.auv.depthAndWait(self.options.Depth)
-        #STAGE 0
-        self.distance = None
-        self.stage = 0
-        info("Stage 0: Setting initial heading.")
-        self.auv.bearingAndWait(self.options.FirstHeading)
-        info("Stage 0: Starting to react to walls.")
-        self.node.subMessage(messaging.RelativePositionMessage())
-        info("Stage 0: Moving forward")
-        self.head_to_distance(self.options.TurnDistance, self.options.TDError, self.options.TDProportion, self.options.TDClamp, self.options.TDTimeout)
-        #STAGE 1
-        self.stage=1
-        info("Stage 1: Turning")
-        self.auv.bearingAndWait(self.options.SecondHeading)
-        info("Stage 1: Moving forward.")
-        self.auv.prop(self.options.SecondSpeed)
-        sleep(self.options.SecondTime)
-        info("Stage 1: Stopping.")
-        self.auv.prop(0)
-        #STAGE 2
-        self.stage = 2
-        info("Stage 2: Setting heading.")
-        self.auv.bearingAndWait(self.options.ThirdHeading)
-        info("Stage 2: Moving forward")
-        self.head_to_distance(self.options.StopDistance, self.options.SDError, self.options.SDProportion, self.options.SDClamp, self.options.SDTimeout)
-        self.auv.depth(0)
+        try:
+            if self.options.UsePushStart:
+                self.wait_for_push()
+            self.auv.depthAndWait(self.options.Depth)
+            #STAGE 0
+            self.distance = None
+            self.stage = 0
+            info("Stage 0: Setting initial heading.")
+            self.auv.bearingAndWait(self.options.FirstHeading)
+            info("Stage 0: Starting to react to walls.")
+            self.node.subMessage(messaging.RelativePositionMessage())
+            info("Stage 0: Moving forward")
+            self.head_to_distance(self.options.TurnDistance, self.options.TDError, self.options.TDProportion, self.options.TDClamp, self.options.TDTimeout)
+            #STAGE 1
+            self.stage=1
+            info("Stage 1: Turning")
+            self.auv.bearingAndWait(self.options.SecondHeading)
+            info("Stage 1: Moving forward.")
+            self.auv.prop(self.options.SecondSpeed)
+            sleep(self.options.SecondTime)
+            info("Stage 1: Stopping.")
+            self.auv.prop(0)
+            #STAGE 2
+            self.stage = 2
+            info("Stage 2: Setting heading.")
+            self.auv.bearingAndWait(self.options.ThirdHeading)
+            info("Stage 2: Moving forward")
+            self.head_to_distance(self.options.StopDistance, self.options.SDError, self.options.SDProportion, self.options.SDClamp, self.options.SDTimeout)
+        finally:
+            self.auv.depth(0)
 
 Script = dfu
 
