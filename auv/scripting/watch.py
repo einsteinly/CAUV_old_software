@@ -53,6 +53,7 @@ parser.add_argument("--kill-after",  "-K",  help="Kill all processes once finish
 parser.add_argument("--tick",        "-t",  help="Time between process checks (seconds)",    default=1.0, type=float)
 parser.add_argument("--start",       "-r",  help="Processes to start",                       nargs="+", default=[])
 parser.add_argument("--no-node",     "-n",  help="Don't run a CAUV node to start and stop processes", action='store_true')
+parser.add_argument("--no-prompt",   "-P",  help="Don't start a prompt for watch control commands", action='store_true')
 
 args = parser.parse_args()
 
@@ -170,6 +171,14 @@ if args.kill is not None:
     watcher.killall(args.kill)
 elif args.daemonize:
     utils.daemon.spawnDaemon(monitor)
+elif args.no_prompt:
+    try:
+        monitor()
+    except KeyboardInterrupt:
+        debug("Exiting")
+    finally:
+        if args.kill_after is not None:
+            watcher.killall(args.kill_after)
 else:
     try:
         thread = threading.Thread(target = monitor)
