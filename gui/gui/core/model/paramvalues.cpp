@@ -32,7 +32,7 @@ template <> boost::shared_ptr<Node> ParamValueToNode::operator()(float & operand
     return node;
 }
 
-template <> boost::shared_ptr<Node> ParamValueToNode::operator()(const std::string& operand) const
+template <> boost::shared_ptr<Node> ParamValueToNode::operator()(std::string& operand) const
 {
     boost::shared_ptr<StringNode> node = boost::make_shared<StringNode>(m_id);
     node->update(operand);

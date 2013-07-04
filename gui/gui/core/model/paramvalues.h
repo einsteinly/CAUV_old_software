@@ -32,7 +32,7 @@ namespace cauv {
 
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(int &) const;
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(float & ) const;
-    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(const std::string& ) const;
+    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(std::string& ) const;
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand ) const;
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & ) const;
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & ) const;
