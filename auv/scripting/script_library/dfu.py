@@ -159,6 +159,7 @@ class dfu(AI.Script):
         self.auv.bearingAndWait(self.options.ThirdHeading)
         info("Stage 2: Moving forward")
         self.head_to_distance(self.options.StopDistance, self.options.SDError, self.options.SDProportion, self.options.SDClamp, self.options.SDTimeout)
+        self.auv.depth(0)
 
 Script = dfu
 
