@@ -11,7 +11,8 @@ class Detector(proc.Proc):
         self.node.subMessage(msg.SetConditionStateMessage())
         
     def report(self):
-        self.node.send(msg.DetectorStateMessage(self.task_name, self.debug.to_boost_dict()))
+        #self.node.send(msg.DetectorStateMessage(self.task_name, self.debug.to_boost_dict()))
+        pass
 
     def fire(self, timeout):
         if timeout == 0:

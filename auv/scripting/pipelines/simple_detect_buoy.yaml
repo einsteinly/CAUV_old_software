@@ -1,0 +1,31 @@
+- !node/GuiOutput
+  jpeg quality: !BoundedFloat/Clamps '85.0 (0.0-100.0)'
+  image_in<-image out: !node/DrawCircles
+    Circles<-blobs: &Blob_1 !node/Blob
+      area_max: 8000.0
+      area_min: 100.0
+      circularity_max: .inf
+      circularity_min: 0.5
+      convexity_max: .inf
+      convexity_min: 0.8999999761581421
+      find_dark: true
+      find_light: true
+      inertiaRatio_max: .inf
+      inertiaRatio_min: 0.10000000149011612
+      threshold_max: 240.0
+      threshold_min: 20.0
+      threshold_step: 10
+      image (not copied)<-image: &ColourSimilarity_1 !node/ColourSimilarity
+        colour: !colour/RGB '0.0 1.0 1.0 1.0'
+        sigma: 1.0
+        image<-image (not copied): !node/MixValue
+          image fac: 1.0
+          value fac: -1.0
+          image<-image: &FileInput_1 !node/FileInput {filename: /home/jason/CAUV/testdata/out.avi,
+            loop: true}
+          value<-mean: !node/MeanStd
+            image<-image: *FileInput_1
+    image in<-image: *ColourSimilarity_1
+- !node/BroadcastCircles
+  name: simple_buoy
+  circles<-blobs: *Blob_1
