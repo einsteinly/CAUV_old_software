@@ -79,6 +79,8 @@ class MergeSimilarLinesNode: public Node{
         }
 
         Line mergeLines(Line const& line1, Line const& line2) {
+            using std::abs;
+
             Eigen::Vector2f p1(line1.centre.x, line1.centre.y);
             Eigen::Vector2f p2(line2.centre.x, line2.centre.y);
             Eigen::Vector2f v1(std::cos(line1.angle), std::sin(line1.angle));
@@ -101,6 +103,7 @@ class MergeSimilarLinesNode: public Node{
 
             // Centroid weighted by line length
             Eigen::Vector2f G = (l1*(a+b) + l2*(c+d))/(2*(l1+l2));
+
             float newAngle;
             if (abs(t1- t2) <= M_PI_2)
                 newAngle = (l1*t1 + l2*t2)/(l1+l2);
@@ -115,7 +118,7 @@ class MergeSimilarLinesNode: public Node{
             for (int i = 0; i < 4; ++i)
                 for(int j = i+1; j < 4; ++j)
                 {
-                    float length = is_infinite ? std::numeric_limits<float>::infinity() : (endPoints[i] - endPoints[j]).dot(v);
+                    float length = is_infinite ? std::numeric_limits<float>::infinity() : abs((endPoints[i] - endPoints[j]).dot(v));
                     if (length > newLength) {
                         newLength = length;
                         
@@ -155,7 +158,13 @@ class MergeSimilarLinesNode: public Node{
             return angleErr(line1.angle, line2.angle);
         }
         float angleErr(float a1, float a2) {
-            return std::abs(angle(a1 - a2));
+            using std::sin;
+            using std::cos;
+            using std::acos;
+            float x1 = cos(a1), y1 = sin(a1);
+            float x2 = cos(a2), y2 = sin(a2);
+            return acos(x1*y2 - y1*x2);
+            //return std::abs(angle(a1 - a2));
         }
         float angle(float a) {
             return mod<float>(a, M_PI);
