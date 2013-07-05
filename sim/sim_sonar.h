@@ -12,12 +12,13 @@
 
 #include <common/cauv_node.h>
 #include <utility/ratelimit.h>
+#include <generated/message_observers.h>
 #include <generated/types/CameraID.h>
 #include "FixedNodeTrackerManipulator.h"
 
 namespace cauv {
 
-class SimSonar {
+class SimSonar : public MessageObserver {
     public:
     SimSonar (osg::Node *track_node,
               osg::Vec3d translation,
@@ -29,6 +30,8 @@ class SimSonar {
               unsigned int max_rate);
     void tick(double timestamp);
     void setup(osg::Node *root);
+    void onGeminiControlMessage(GeminiControlMessage_ptr msg) override;
+
     static const unsigned int node_mask = 0x2;
     private:
     cauv::CauvNode *sim_node;

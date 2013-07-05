@@ -12,6 +12,7 @@
 
 #include <utility/ratelimit.h>
 #include <generated/types/ImageMessage.h>
+#include <generated/types/GeminiControlMessage.h>
 #include <generated/types/SonarImageMessage.h>
 #include <common/msg_classes/image.h>
 #include <debug/cauv_debug.h>
@@ -120,6 +121,10 @@ void SimSonar::tick(double timestamp) {
             );
         sim_node->send(msg, UNRELIABLE_MSG);
     }
+}
+
+void SimSonar::onGeminiControlMessage(GeminiControlMessage_ptr msg) {
+    range = msg->range();
 }
 
 }
