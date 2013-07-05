@@ -21,6 +21,7 @@
 #include <common/msg_classes/north_east_depth.h>
 #include <common/msg_classes/wgs84_coord.h>
 #include <generated/types/SimPositionMessage.h>
+#include <generated/types/GeminiControlMessage.h>
 #include <generated/message_observers.h>
 #include <utility/ratelimit.h>
 #include <utility/uid.h>
@@ -160,9 +161,9 @@ void SimNode::onRun(void) {
               this, CameraID::Up,
               max_rate);
 
-    SimSonar *sonar = NULL;
+    boost::shared_ptr<SimSonar> sonar;
     if(sim_sonar) {
-        sonar = new SimSonar (
+        sonar = boost::make_shared<SimSonar>(
                   vehicle.get(),
                   osg::Vec3d(0,0.8,0.2),
                   osg::Vec3d(1,0,0), M_PI/2,
@@ -171,6 +172,9 @@ void SimNode::onRun(void) {
                   300,
                   this,
                   max_rate);
+
+        subMessage(GeminiControlMessage());
+        addMessageObserver(sonar);
     }
 
     viewer->setSceneData(root_group);
@@ -206,9 +210,6 @@ void SimNode::onRun(void) {
             sonar->tick(simTime);
         }
         framerate_limit.click(true);
-    }
-    if (sonar) {
-        delete sonar;
     }
 }
 
