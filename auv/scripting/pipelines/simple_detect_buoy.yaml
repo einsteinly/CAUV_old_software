@@ -21,10 +21,10 @@
         image<-image (not copied): !node/MixValue
           image fac: 1.0
           value fac: -1.0
-          image<-image: &FileInput_1 !node/FileInput {filename: /home/jason/CAUV/testdata/out.avi,
-            loop: true}
+          image<-image_out: &CameraInput_1 !node/CameraInput {device id: 1, height: 480,
+            width: 640}
           value<-mean: !node/MeanStd
-            image<-image: *FileInput_1
+            image<-image_out: *CameraInput_1
     image in<-image: *ColourSimilarity_1
 - !node/BroadcastCircles
   name: simple_buoy
