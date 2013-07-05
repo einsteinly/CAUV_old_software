@@ -22,7 +22,7 @@ class SimpleBuoyDetector(event.EventLoop, AI.Detector):
             
     class Debug(AI.Detector.Debug):
         def __init__(self):
-            pass
+            self.value = False
             
     def __init__(self):
         event.EventLoop.__init__(self)
@@ -59,7 +59,8 @@ class SimpleBuoyDetector(event.EventLoop, AI.Detector):
                 break
         else:
             debug("Not enough circles in time.", 5)
-            debug("False", 5)
+            self.value = False
+            self.fire(0)
             return False
         #Order samples by horizontal position
         sorted_samples = sorted(list(self.circles)[start_i:], key=lambda circ: circ.centre.x)
@@ -75,11 +76,12 @@ class SimpleBuoyDetector(event.EventLoop, AI.Detector):
                 for substart_vert_i in range(len(sorted_samples_vert)-self.options.Required_Sightings):
                     debug("Vertical {}".format(sorted_samples_vert[substart_vert_i+self.options.Required_Sightings].centre.y-sorted_samples_vert[substart_vert_i].centre.y), 5)
                     if sorted_samples_vert[substart_vert_i+self.options.Required_Sightings].centre.y-sorted_samples_vert[substart_vert_i].centre.y<self.options.Max_Vertical_Variation:
-                        debug("True", 5)
-                        self.fire(0.1)
+                        self.value = True
+                        self.fire(1)
                         return True
                 break
-        debug("False", 5)
+        self.value = False
+        self.fire(0)
         return False
         
         

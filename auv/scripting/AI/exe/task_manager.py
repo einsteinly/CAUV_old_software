@@ -124,6 +124,7 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
             return
         task = AI.tasks.Task([], task_script)
         self.tasks.add(task)
+        debug("Tasks: {}".format(self.tasks))
         self.gui_update_task(task)
 
     @event.event_func
@@ -165,6 +166,7 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
         condition = Condition(self.ai_state)
         self.conditions.add(condition)
         self.gui_update_condition(condition)
+        debug("Conditions: {}".format(self.conditions))
         if isinstance(condition, AI.conditions.DetectorCondition):
             self.start_detector(condition)
 
@@ -194,6 +196,7 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
             return
 
         condition.options.from_boost_dict(msg.conditionOptions)
+        self.gui_update_condition(condition)
 
     @event.event_func
     def onScriptControlMessage(self, msg):
@@ -227,7 +230,8 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
 
     @event.event_func
     def onDetectorFiredMessage(self, msg):
-        self.detector_fire_timeouts[msg.conditionId] = time.time() + float(msg.timeout) / 1000
+        self.detector_fire_timeouts[msg.conditionId] = time.time() + float(msg.timeout)
+        self.gui_update_condition(self.conditions[msg.conditionId])
         
     @event.event_func
     def onProcessEndedMessage(self, msg):
@@ -276,6 +280,7 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
             condition.name,
             condition.options.to_boost_dict(),
             condition.get_state()))
+        debug("Condition {} has state {}".format(condition.name, condition.get_state()))
 
     def gui_send_all(self):
         #send type info
@@ -316,7 +321,7 @@ class TaskManager(event.EventLoop, messaging.MessageObserver):
     def start_detector(self, detector):
         detector_path = inspect.getfile(detector.Detector)
         detector_opts = detector.options.to_cmd_opts()
-        detector_cmd = ["python2.7", detector_path] + detector_opts
+        detector_cmd = ["python2.7", detector_path, '-t', detector.name] + detector_opts
         self.start_proc("ai_detect/{}".format(detector.name), detector_cmd)
 
     def stop_detector(self, detector):

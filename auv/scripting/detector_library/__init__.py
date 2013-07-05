@@ -9,5 +9,6 @@ import pipe_detector
 import sonar_collision_detector
 import test
 import visual_collision_detector
+import simple_buoy_detector
 
 index = [k for k,v in locals().items() if hasattr(v, "Detector")]
