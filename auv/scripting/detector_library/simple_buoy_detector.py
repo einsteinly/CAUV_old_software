@@ -16,7 +16,7 @@ class SimpleBuoyDetector(event.EventLoop, AI.Detector):
             self.Max_Horizontal_Variation = 0.7
             self.Max_Vertical_Variation = 0.4
             self.Max_Samples = 7
-            self.Max_Sample_Time = 2.0
+            self.Max_Sample_Time = 1.0
             self.Pipeline_Name = "simple_detect_buoy"
             self.Circles_Name = "simple_buoy"
             
@@ -59,23 +59,27 @@ class SimpleBuoyDetector(event.EventLoop, AI.Detector):
                 break
         else:
             debug("Not enough circles in time.", 5)
+            debug("False", 5)
             return False
         #Order samples by horizontal position
         sorted_samples = sorted(list(self.circles)[start_i:], key=lambda circ: circ.centre.x)
-        #for each selection in the correct variation, repeat for vertical position
-        for substart_i in range(len(sorted_samples)-self.options.Required_Sightings+1):
+        #for each selection in the correct horizontal variation, repeat for vertical position
+        for substart_i in range(len(sorted_samples)-self.options.Required_Sightings):
             for subend_i in range(len(sorted_samples)-1, substart_i+self.options.Required_Sightings-1, -1):
-                debug("Horizontal {}".format(sorted_samples[subend_i].centre.x-sorted_samples[substart_i].centre.x))
+                debug("Horizontal {}".format(sorted_samples[subend_i].centre.x-sorted_samples[substart_i].centre.x), 5)
                 if sorted_samples[subend_i].centre.x-sorted_samples[substart_i].centre.x>self.options.Max_Horizontal_Variation:
-                    #samples too far apart
+                    #samples too far apart, move back 1
                     continue
+                #found largest subset starting at substart_i
                 sorted_samples_vert = sorted(sorted_samples[substart_i:subend_i], key=lambda circ: circ.centre.y)
-                for substart_vert_i in range(len(sorted_samples_vert)-self.options.Required_Sightings+1):
-                    debug("Vert {}".format(sorted_samples[subend_i].centre.y-sorted_samples[substart_i+self.options.Required_Sightings].centre.y))
-                    if sorted_samples[substart_vert_i].centre.y-sorted_samples[substart_vert_i+self.options.Required_Sightings].centre.y<self.options.Max_Vertical_Variation:
-                        debug("True")
+                for substart_vert_i in range(len(sorted_samples_vert)-self.options.Required_Sightings):
+                    debug("Vertical {}".format(sorted_samples_vert[substart_vert_i+self.options.Required_Sightings].centre.y-sorted_samples_vert[substart_vert_i].centre.y), 5)
+                    if sorted_samples_vert[substart_vert_i+self.options.Required_Sightings].centre.y-sorted_samples_vert[substart_vert_i].centre.y<self.options.Max_Vertical_Variation:
+                        debug("True", 5)
+                        self.fire(0.1)
                         return True
-        debug("False")
+                break
+        debug("False", 5)
         return False
         
         
