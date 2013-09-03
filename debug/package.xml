@@ -1,0 +1,18 @@
+<package>
+    <name>cauv_debug</name>
+    <version>1.0.0</version>
+    <description>
+        logging code, now a thin wrapper around ROS to provide compatibility and "magic" functionality
+    </description>
+    <url>http://www.cauv.co.uk</url>
+    <license>CAUV</license>
+    <maintainer email="tolls@fairyland.com">The Grumpy Bridge Troll</maintainer>
+
+    <author>Cats Arguing Under Vents</author>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <build_depend>boost</build_depend>
+    <build_depend>rosconsole</build_depend>
+    <run_depend>boost</run_depend>
+    <run_depend>rosconsole</run_depend>
+</package>

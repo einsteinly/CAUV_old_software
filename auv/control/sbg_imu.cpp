@@ -8,9 +8,8 @@
 #include "sbgCom/sbgCom.h"
 #include <boost/thread.hpp>
 
-#include <generated/types/floatYPR.h>
+#define CAUV_DEBUG_COMPAT
 #include <debug/cauv_debug.h>
-#include <generated/types/DebugMessage.h>
 
 #include "sbg_imu.h"
 

@@ -1,42 +1,64 @@
-include_directories("/usr/local/include/sbgCom/")
-include_directories("/usr/include/sbgCom/")
+cmake_minimum_required(VERSION 2.8.3)
+project (cauv_control)
 
-# sources
-if (CAUV_USE_SHITTY_OLD_MCB_SHIT)
-add_definitions(-DCAUV_USE_SHITTY_OLD_MCB_SHIT)
-add_executable (
-    control
+find_package(Boost REQUIRED COMPONENTS thread program_options)
+find_package(catkin REQUIRED COMPONENTS
+            rosconsole
+            roscpp
+            cauv_utility
+            cauv_debug
+            std_msgs
+            message_generation)
 
-    control.cpp
-    xsens_imu.cpp
-    sbg_imu.cpp
-    sim_imu.cpp
-    barracuda_mcb.cpp
-    pid.cpp
+add_message_files(
+    FILES
+    PIDParams.msg
+    PIDTarget.msg
+    PIDState.msg
+    ControlToken.msg
+    Attitude.msg
+    DepthCalibration.msg
+    MotorDemand.msg
 )
-else()
+
+generate_messages(DEPENDENCIES std_msgs)
+
+catkin_package(
+    DEPENDS Boost
+    CATKIN_DEPENDS cauv_debug cauv_utility roscpp roslib
+)
+
+include_directories(${Boost_INCLUDES} 
+                    ${rosconsole_INCLUDES}
+                    ${cauv_utility_INCLUDE_DIRS}
+                    )
+
+include_directories(${catkin_INCLUDE_DIRS})
+
 add_executable (
-    control
+    cauv_control
 
     control.cpp
-    xsens_imu.cpp
+#    xsens_imu.cpp
     sbg_imu.cpp
     sim_imu.cpp
     can_gate.cpp
     pid.cpp
+#    barracuda_mcb.cpp
 )
-endif()
-cauv_install ( control )
 
-# libs
+#TODO: make sbgCom library embedded...
 target_link_libraries (
-    control
+    cauv_control
 
-    ${Boost_LIBRARIES}
-    common
-    cmt
-    pthread
-
+    cauv_debug
+    cauv_utility
     SbgComSerial
-    ${BOOST_THREAD_LIB}
+    ${Boost_LIBRARIES}
+    ${catkin_LIBRARIES}
 )
+
+install(TARGETS cauv_control
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
