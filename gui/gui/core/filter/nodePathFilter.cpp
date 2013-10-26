@@ -28,9 +28,9 @@ QString NodePathFilter::getText(){
 }
 
 bool NodePathFilter::containsText(boost::shared_ptr<Node> const& node){
-    debug(7) << "NODE = " << node;
-    debug(7) << "PATH = " << node->nodePath();
-    debug(7) << "TEXT = " << getText().toStdString();
+    CAUV_LOG_DEBUG(7, "NODE = " << node);
+    CAUV_LOG_DEBUG(7, "PATH = " << node->nodePath());
+    CAUV_LOG_DEBUG(7, "TEXT = " << getText().toStdString());
 
     if(QString::fromStdString(node->nodePath()).contains(getText(), Qt::CaseInsensitive))
         return true;

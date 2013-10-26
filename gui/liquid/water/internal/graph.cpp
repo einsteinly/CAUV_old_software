@@ -15,8 +15,6 @@
 #include <QBrush>
 #include <QGraphicsScene>
 
-#include <debug/cauv_debug.h>
-
 #include <utility/time.h>
 #include <utility/math.h>
 
@@ -25,6 +23,8 @@
 #include "dataWindow.h"
 #include "graphAxes.h"
 
+#define CAUV_DEBUG_COMPAT
+#include <debug/cauv_debug.h>
 
 namespace w = liquid::water;
 namespace wi = liquid::water::internal;

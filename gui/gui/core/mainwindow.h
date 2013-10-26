@@ -9,7 +9,6 @@
 
 #include <QtGui>
 #include <boost/enable_shared_from_this.hpp>
-#include <common/cauv_node.h>
 
 class QDir;
 
@@ -47,7 +46,7 @@ class StackWidget: public QWidget{
         QPropertyAnimation * m_titleAnimation;
 };
 
-class CauvMainWindow : public QMainWindow, public CauvNode, public boost::enable_shared_from_this<CauvMainWindow> {
+class CauvMainWindow : public QMainWindow, public boost::enable_shared_from_this<CauvMainWindow> {
     Q_OBJECT
 
 public:
@@ -56,14 +55,12 @@ public:
 
     StackWidget* viewStack();
 
+    virtual void onRun();
+
 public Q_SLOTS:
-    int send(boost::shared_ptr<const Message>message);
-    void registerObserver(boost::shared_ptr<MessageObserver>observer);
-    void unregisterObserver(boost::shared_ptr<MessageObserver>observer);
     void createContextMenu(QPoint point);
 
 protected:
-    virtual void onRun();
     virtual CauvInterfacePlugin * loadPlugin(QObject * plugin);
     virtual void closeEvent(QCloseEvent *);
 

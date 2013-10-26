@@ -45,7 +45,7 @@ namespace cauv {
             NodePicker * nodes;
 
             ~GuiActions() {
-                debug(2) << "~GuiActions()";
+                CAUV_LOG_DEBUG(2, "~GuiActions()");
             }
         };
     } //namespace gui

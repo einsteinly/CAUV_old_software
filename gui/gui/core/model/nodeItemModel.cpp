@@ -16,7 +16,7 @@ using namespace cauv::gui;
 
 
 NodeUpdateModelNotfication::NodeUpdateModelNotfication(NodeItemModel * model) : m_model(model) {
-    debug(8) << "NodeUpdateModelNotfication()";
+    CAUV_LOG_DEBUG(0, "NodeUpdateModelNotfication()");
 }
 
 void NodeUpdateModelNotfication::update(){
@@ -110,11 +110,11 @@ QMimeData * NodeItemModel::mimeData(const QModelIndexList &indexes) const {
                 url.setHost(QString::fromStdString(vehicleNode->nodeName()));
                 url.setPath(QString::fromStdString(node->nodePath()).remove(url.host().prepend("/")));
             } catch (std::out_of_range){
-                error() << "NodeItemModel::mimiData() - Vehicle node not found while building path string";
+                CAUV_LOG_ERROR("NodeItemModel::mimiData() - Vehicle node not found while building path string");
                 continue;
             }
             urls.append(url);
-            debug(5) << url.toString().toStdString() << "added to drag";
+            CAUV_LOG_DEBUG(5, url.toString().toStdString() << "added to drag");
         }
     }
 

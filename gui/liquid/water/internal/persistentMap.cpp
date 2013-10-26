@@ -6,13 +6,15 @@
 
 #include "persistentMap.h"
 
-#include <debug/cauv_debug.h>
 #include <utility/string.h>
 #include <utility/qstring.h>
 
 #include <QSqlRecord>
 #include <QSqlError>
 #include <QVariant>
+
+#define CAUV_DEBUG_COMPAT
+#include <debug/cauv_debug.h>
 
 namespace wi = liquid::water::internal;
 

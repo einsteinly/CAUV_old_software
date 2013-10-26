@@ -44,7 +44,6 @@ add_library( fluidityplugin MODULE
     ${FLUIDITY_PLUGIN_MOC_H}
 )
 cauv_install_plugin(fluidityplugin)
-add_precompiled_header(fluidityplugin ${guis_SOURCE_DIR}/pch.h)
 
 target_link_libraries( fluidityplugin
     gui-core

@@ -122,12 +122,14 @@ add_library ( gui-core SHARED
         ${GUI_CORE_RCC_H}
     )
 
-cauv_install( gui-core )
+install(TARGETS gui-core
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 
 target_link_libraries ( gui-core
         cauv_debug
         liquid
-        common
         pthread
         ${QT_LIBRARIES}
     )

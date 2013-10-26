@@ -9,14 +9,14 @@
 #include <cmath>
 #include <cassert>
 
-#include <debug/cauv_debug.h>
-
 #include <QPainter>
 
 #include "arcSink.h"
 #include "style.h"
 #include "ephemeralArcEnd.h"
 
+#define CAUV_DEBUG_COMPAT
+#include <debug/cauv_debug.h>
 
 using namespace liquid;
 

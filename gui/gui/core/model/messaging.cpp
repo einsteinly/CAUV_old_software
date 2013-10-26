@@ -9,6 +9,9 @@
 using namespace cauv;
 using namespace cauv::gui;
 
+#warning TODO
+#if 0
+
 /* Motor message handling */
 
 boost::shared_ptr<const Message> MessageHandler<MotorNode, MotorStateMessage>::generate() {
@@ -246,3 +249,4 @@ void MessageHandler<GroupingNode, PenultimateResortTimeoutMessage>::onPenultimat
     m_node->findOrCreate<NumericNode<BoundedFloat> >("remaining")->setInverted(true);
     m_node->findOrCreate<NumericNode<float> >("timeout")->typedUpdate(message->timeout().max);
 }
+#endif

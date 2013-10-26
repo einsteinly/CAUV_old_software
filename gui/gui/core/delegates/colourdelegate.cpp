@@ -10,6 +10,8 @@
 
 #include <algorithm>
 
+#warning TODO
+#if 0
 #include "model/nodes/colournode.h"
 
 using namespace cauv;
@@ -112,3 +114,4 @@ QSize ColourDelegate::sizeHint(const QStyleOptionViewItem & option,
                                const QModelIndex &) const{
     return QSize(120, option.fontMetrics.height()*2);
 }
+#endif

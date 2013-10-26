@@ -10,9 +10,10 @@
 #include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
 
-#include <debug/cauv_debug.h>
-
 #include "style.h"
+
+#define CAUV_DEBUG_COMPAT
+#include <debug/cauv_debug.h>
 
 using namespace liquid;
 

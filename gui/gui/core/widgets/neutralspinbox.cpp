@@ -89,19 +89,21 @@ void NeutralDoubleSpinBox::setInverted(bool invert){
     m_inverted = invert;
 }
 
+/*
 void NeutralDoubleSpinBox::setBoundedValue(BoundedFloat value){
     info() << "set bounded value " << value;
     setMaximum(value.max);
     setMinimum(value.min);
     setValue(value.value);
     setWrapping(value.type == BoundedFloatType::Wraps);
-}
+}*/
 
+/*
 BoundedFloat NeutralDoubleSpinBox::boundedValue() const{
     BoundedFloat bf(value(), minimum(), maximum(),
                     wrapping()?BoundedFloatType::Wraps:BoundedFloatType::Clamps);
     return bf;
-}
+}*/
 
 void NeutralDoubleSpinBox::paintEvent(QPaintEvent * )
  {

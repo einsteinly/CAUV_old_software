@@ -9,8 +9,6 @@
 
 #include <gui/core/model/messaging.h>
 
-#include <generated/types/message.h>
-
 namespace cauv {
     namespace gui {
 
@@ -39,6 +37,7 @@ namespace cauv {
             typedef std::set<boost::shared_ptr<BaseMessageGenerator> > generator_set_t;
             typedef std::set<boost::shared_ptr<MessageObserver> > observer_set_t;
 
+#if 0
             void attachGenerator(boost::shared_ptr<BaseMessageGenerator> generator)
             {
                 connect(generator->node().get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)),
@@ -77,14 +76,17 @@ namespace cauv {
                 }
                 m_observers.erase(node);
             }
+#endif
 
         protected Q_SLOTS:
             void nodeRemoved() {
-                info() << "node removed";
+                CAUV_LOG_INFO("node removed");
+#if 0
                 if(Node* node = dynamic_cast<Node*>(sender())) {
                     detachGenerators(node->shared_from_this());
                     detachObservers(node->shared_from_this());
                 }
+#endif
             }
 
         protected:
