@@ -27,7 +27,7 @@ using namespace cauv::gui;
 
 
 bool NodeDropListener::routeNode(boost::shared_ptr<Node> const& s, QPointF pos){
-    info() << "Routing stream" << s->nodeName();
+    CAUV_LOG_INFO("Routing stream" << s->nodeName());
     onNodeDroppedAt(s, pos);
     onNodeDropped(s);
     return true;
@@ -56,7 +56,7 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
                                 return true;
                             }
                         } catch (std::runtime_error& ex){
-                            warning() << ex.what();
+                            CAUV_LOG_WARNING(ex.what());
                         }
                     }
                 }
@@ -81,7 +81,7 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
                                 m_listener->routeNode(node,  QPointF(dropEvent->pos()));
                             }
                         } catch (std::runtime_error& ex){
-                            warning() << ex.what();
+                            CAUV_LOG_WARNING(ex.what());
                         }
                     }
                 }
@@ -111,9 +111,9 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
                                 }
                             }
                         } catch (std::runtime_error& ex){
-                            warning() << ex.what();
+                            CAUV_LOG_WARNING(ex.what());
                         } catch (std::exception& ex){
-                            error() << ex.what();
+                            CAUV_LOG_ERROR(ex.what());
                         }
                     }
                 }

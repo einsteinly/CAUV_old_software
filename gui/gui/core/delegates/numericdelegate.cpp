@@ -26,7 +26,7 @@ NumericDelegate::NumericDelegate(bool showTitle, QObject *parent) :
     setItemEditorFactory(factory);
 
     //https://bugreports.qt-project.org/browse/QTBUG-2151
-    qRegisterMetaType<cauv::BoundedFloat>("cauv__BoundedFloat");
+    //qRegisterMetaType<cauv::BoundedFloat>("cauv__BoundedFloat");
 
     factory->registerEditor(QVariant::Int,
                             new QItemEditorCreator<NeutralSpinBox>("value"));
@@ -36,8 +36,8 @@ NumericDelegate::NumericDelegate(bool showTitle, QObject *parent) :
                             new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
     factory->registerEditor((QVariant::Type)qMetaTypeId<float>(),
                             new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
-    factory->registerEditor((QVariant::Type)qMetaTypeId<cauv::BoundedFloat>(),
-                            new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
+    //factory->registerEditor((QVariant::Type)qMetaTypeId<cauv::BoundedFloat>(),
+    //                        new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
 }
 
 void NumericDelegate::paint(QPainter *painter,

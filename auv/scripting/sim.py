@@ -7,7 +7,6 @@
 # and sends:
 #   PressureMessage (simulating the pressure sensors)
 #   StateMessage (simulating the xsens orientation information)
-#   RedHerringBatteryStatusMessage (maybe..)
 #
 # for debug and simulation purposes, it also sends:
 #   SimPositionMessage (exact position in simulated environment)
@@ -19,15 +18,13 @@ import importlib
 import time
 
 # Third Party Modules
+import rospy
 
 # CAUV Modules
 import cauv
-import cauv.messaging as messaging
 import cauv.control as control
-import cauv.node
 from cauv.debug import debug, error, warning, info
 import simulator.base_model
-
 
 def fmtArr(a):
     r = ''
@@ -38,16 +35,16 @@ def fmtArr(a):
     else:
         return '[]'
 
-def runLoop(auv_model, node):
+def runLoop(auv_model):
     auv_model.start()
-    while True:
+    while not rospy.is_shutdown():
         # this is just a print-loop, the work is done in a separate thread,
         # running at a configurable tick-rate
-        time.sleep(0.1)
+        time.sleep(5)
         (lt, ln, al, oriYPR, ori, speed) = auv_model.position()
-        debug('lat:%.12g lon:%.12g alt:%.12g' % (lt, ln, al), 3)
-        node.send(messaging.SimPositionMessage(messaging.WGS84Coord(lt, ln, al), oriYPR, 
-                        messaging.quat(ori.q0, ori.q1, ori.q2, ori.q3), speed))
+        #debug('lat:%.12g lon:%.12g alt:%.12g' % (lt, ln, al), 3)
+        #node.send(messaging.SimPositionMessage(messaging.WGS84Coord(lt, ln, al), oriYPR, 
+        #                messaging.quat(ori.q0, ori.q1, ori.q2, ori.q3), speed))
 
         info('displ=%s\tvel=%s\tori=%s\tomega=%s\t' %
             (fmtArr(auv_model.displacement),
@@ -72,12 +69,11 @@ if __name__ == '__main__':
     vehicle_modname = 'simulator.' + opts.vehicle.lower().replace('-','') + '_model'
     vehicle_module = importlib.import_module(vehicle_modname)
 
-    node = cauv.node.Node('py-sim',args)
+    rospy.init_node("Sim")
     model = None
     try: 
-        model = vehicle_module.Model(node, profile=opts.profile, currentx=opts.currentx, currenty=opts.currenty, currentz=opts.currentz)
-        runLoop(model, node)
+        model = vehicle_module.Model(profile=opts.profile, currentx=opts.currentx, currenty=opts.currenty, currentz=opts.currentz)
+        runLoop(model)
     finally:
         if model is not None:
             model.stop()
-        node.stop()

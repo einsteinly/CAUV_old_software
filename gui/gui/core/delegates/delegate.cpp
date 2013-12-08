@@ -15,7 +15,7 @@
 
 #include "delegate.h"
 #include "numericdelegate.h"
-#include "colourdelegate.h"
+//#include "colourdelegate.h"
 #include "booleandelegate.h"
 
 using namespace cauv;
@@ -28,7 +28,7 @@ DelegateProxy::DelegateProxy(QObject *){
     registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>());
     registerDelegate(nodeType<StringNode>(), boost::make_shared<SizedDelegate>(QSize(100, 25)));
     registerDelegate(nodeType<GroupingNode>(), boost::make_shared<SizedDelegate>(QSize(100, 25)));
-    registerDelegate(nodeType<ColourNode>(), boost::make_shared<ColourDelegate>());
+    //registerDelegate(nodeType<ColourNode>(), boost::make_shared<ColourDelegate>());
     m_default = boost::make_shared<SizedDelegate>(QSize(100,25));
 }
 
@@ -161,7 +161,7 @@ void AbstractNodeDelegate::setEditorData(QWidget *editor,
                                          const QModelIndex &index) const {
     // don't allow updates while editing
 
-    info() << "setEditorData";
+    CAUV_LOG_INFO("setEditorData");
 
     QStyledItemDelegate::setEditorData(editor, index);
 

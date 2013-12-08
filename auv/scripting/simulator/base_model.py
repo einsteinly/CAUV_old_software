@@ -11,6 +11,7 @@ import datetime
 import threading
 import time
 import math
+import rospy
 
 # Third Party Modules
 import numpy as np # BSD-type license
@@ -19,9 +20,9 @@ import numpy as np # BSD-type license
 from utils import coordinates
 from utils.quaternion import Quaternion
 import cauv
-import cauv.messaging as messaging
 from cauv.debug import debug, error, warning, info
 from utils.hacks import tdToFloatSeconds
+import cauv_control.msg as ctrl_msgs
 
 # If there exists a python rigid body dynamics simulator that actually works,
 # please use that instead of dealing directly with quaternions!
@@ -124,7 +125,7 @@ def orientationToYPR(q):
     '''Calculate the yaw, pitch and roll implied by a quaternion, and convert them to degrees'''
     yaw, pitch, roll = calculateYPRRadians(q)
     # NB: converting to our silly on-the-wire angle format here
-    return messaging.floatYPR(360-math.degrees(yaw), math.degrees(pitch), math.degrees(roll))
+    return ctrl_msgs.Attitude(360-math.degrees(yaw), math.degrees(pitch), math.degrees(roll))
 
 class MotorStates(object):
     def __init__(self):
@@ -133,15 +134,17 @@ class MotorStates(object):
         self.VBow = 0
         self.HStern = 0
         self.VStern = 0
-    def update(self, motor_state_message):
-        setattr(self,str(motor_state_message.motorId), motor_state_message.speed)
+    def update(self, m):
+        self.Prop = m.prop
+        self.HBow = m.hbow
+        self.VBow = m.vbow
+        self.HStern = m.hstern
+        self.VStern = m.vstern
     def __repr__(self):
         return 'p=%4s hb=%4s hs=%4s vb=%4s vs=%4s' % (self.Prop, self.HBow, self.HStern, self.VBow, self.VStern)
 
-class Model(messaging.MessageObserver):
-    def __init__(self, node, profile=False):
-        messaging.MessageObserver.__init__(self)
-        self.node = node
+class Model(object):
+    def __init__(self, profile=False):
         self.profile = profile
         self.update_frequency = 20.0
         self.datum = coordinates.Simulation_Datum
@@ -168,50 +171,47 @@ class Model(messaging.MessageObserver):
         self.update_lock = threading.Lock()
 
         self.thread = threading.Thread(target = self.runLoopWrapper)
-        self.thread.daemon = False
+        self.thread.daemon = True
         self.keep_going = True
-
-        node.subMessage(messaging.MotorStateMessage())
-        node.addObserver(self)
+        rospy.Subscriber("/control/motors", ctrl_msgs.MotorDemand, self.onMotorStateMessage)
 
     def start(self):
         self.thread.start()
     def stop(self):
         self.keep_going = False
         self.thread.join()
+
     def runLoopWrapper(self):
         if self.profile:
             import cProfile as profile
             profile.runctx('self.runLoop()', globals(), locals(), 'sim.profile')
         else:
             self.runLoop()
+
     def runLoop(self):
         tprev = datetime.datetime.now()
         tdelta = datetime.timedelta(seconds=1.0/self.update_frequency)
-        while self.keep_going:
+        while not rospy.is_shutdown():
             tnow = datetime.datetime.now()
-            self.update_lock.acquire()
-            self.processUpdate(self.motor_states)
-            self.update_lock.release()
+            with self.update_lock:
+                self.processUpdate(self.motor_states)
             tprev = tnow
             tnow = datetime.datetime.now()
             if tnow < tprev + tdelta:
                 time.sleep(tdToFloatSeconds(tprev + tdelta - tnow))
 
     def onMotorStateMessage(self, m):
-        debug(str(m), 5)
+        debug(str(m))
         if not self.keep_going:
             return
-        self.update_lock.acquire()
-        self.motor_states.update(m)
-        self.processUpdate(self.motor_states)
-        self.update_lock.release()
+        with self.update_lock:
+            self.motor_states.update(m)
+            self.processUpdate(self.motor_states)
 
     def processUpdate(self, motor_states):
         # Derived classes should implement this, and send (when appropriate):
         #   PressureMessage
         #   StateMessage
-        #   and optionally: RedHerringBatteryStatusMessage
         # This base class ensures that this function will be called at least 10
         # times per second, with cached motor states if nothing has changed.
         #
@@ -220,13 +220,12 @@ class Model(messaging.MessageObserver):
         raise NotImplementedError('derived classes must implement this')
 
     def position(self):
-        self.update_lock.acquire()        
-        ned = coordinates.NorthEastDepthCoord(
-            self.displacement[1], self.displacement[0], -self.displacement[2]
-        )
-        ori = self.orientation
-        vel = self.velocity
-        self.update_lock.release()
+        with self.update_lock:
+            ned = coordinates.NorthEastDepthCoord(
+                self.displacement[1], self.displacement[0], -self.displacement[2]
+            )
+            ori = self.orientation
+            vel = self.velocity
         debug('%s' % ned, 3)
         r = self.datum + ned
         return (float(r.latitude),
@@ -234,6 +233,6 @@ class Model(messaging.MessageObserver):
                float(r.altitude),
                orientationToYPR(ori),
                ori,
-               messaging.floatXYZ(*(float(x) for x in vel)))
+               ctrl_msgs.Attitude(*(float(x) for x in vel)))
 
 

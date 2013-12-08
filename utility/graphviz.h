@@ -18,7 +18,7 @@ namespace graphviz {
 
 #include <graphviz/types.h>
 #include <graphviz/gvc.h>
-#include <graphviz/graph.h>
+#include <graphviz/cgraph.h>
 
 class Graph;
 class Node

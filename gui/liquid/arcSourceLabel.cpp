@@ -15,6 +15,7 @@
 #include "label.h"
 #include "proxyWidget.h"
 
+#define CAUV_DEBUG_COMPAT
 #include <debug/cauv_debug.h>
 
 using namespace liquid;

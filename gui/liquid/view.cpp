@@ -13,9 +13,10 @@
 #include <QDebug>
 #include <QPixmapCache>
 
-#include <debug/cauv_debug.h>
-
 #include <utility/rounding.h>
+
+#define CAUV_DEBUG_COMPAT
+#include <debug/cauv_debug.h>
 
 using namespace liquid;
 

@@ -23,7 +23,7 @@ Node::Node(nid_t const& id, node_type t) :
 }
 
 Node::~Node(){
-    debug(2) << "~Node" << nodeName();
+    CAUV_LOG_DEBUG(2, "~Node" << nodeName());
 }
 
 std::string Node::nodeName() const {
@@ -189,9 +189,9 @@ void Node::update(QVariant const& value){
         m_value = value;
         Q_EMIT onUpdate(value);
         Q_EMIT onUpdate();
-        debug(8) << nodePath() << "updated to " << value.toString().toStdString() << "type:" << value.typeName();
+        CAUV_LOG_DEBUG(8,nodePath() << "updated to " << value.toString().toStdString() << "type:" << value.typeName());
     }else{
-        debug(8) << nodePath() << "remains at " << value.toString().toStdString() << "type:" << value.typeName();
+        CAUV_LOG_DEBUG(8, nodePath() << "remains at " << value.toString().toStdString() << "type:" << value.typeName());
     }
 }
 
@@ -199,7 +199,7 @@ bool Node::set(QVariant const& value){
     //if(m_value.userType() != value.userType()) {
     //    error() << "Node::set() Type mismatch in Node variant:" << nodePath();
     // }
-    debug(2) << nodePath() << "set to" << value.toString().toStdString() << "type:" << value.typeName();
+    CAUV_LOG_DEBUG(8, nodePath() << "set to" << value.toString().toStdString() << "type:" << value.typeName());
     update(value);
     Q_EMIT onSet(value);
     Q_EMIT onSet();

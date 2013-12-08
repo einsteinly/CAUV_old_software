@@ -14,7 +14,7 @@ using namespace cauv;
 using namespace cauv::gui;
 
 CauvBasicPlugin::~CauvBasicPlugin(){
-    debug(2) << "~CauvBasicPlugin()";
+    CAUV_LOG_DEBUG(2, "~CauvBasicPlugin()");
 }
 
 void CauvBasicPlugin::initialise(boost::shared_ptr<GuiActions> const& actions, ConnectedNodeMap* m) {

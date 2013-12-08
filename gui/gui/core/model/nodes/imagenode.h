@@ -11,33 +11,31 @@
 
 #include <gui/core/model/node.h>
 
-#include <common/msg_classes/base_image.h>
+#warning TODO
 
 namespace cauv {
     namespace gui {
 
-        typedef boost::shared_ptr<const BaseImage> image_t;
-
+//        typedef boost::shared_ptr<const BaseImage> image_t;
 
         class ImageNode : public Node {
             Q_OBJECT
 
         public:
             ImageNode(nid_t const& id) : Node(id, nodeType<ImageNode>()){
-                qRegisterMetaType<image_t>("image_t");
-                m_value = QVariant::fromValue<image_t>(image_t());
+//                qRegisterMetaType<image_t>("image_t");
+//                m_value = QVariant::fromValue<image_t>(image_t());
             }
 
         public Q_SLOTS:
-            virtual void typedUpdate(image_t const& value){
-                Node::update(QVariant::fromValue<image_t>(value));
-            }
+//            virtual void typedUpdate(image_t const& value){
+//                Node::update(QVariant::fromValue<image_t>(value));
+//            }
         };
 
     } //namespace gui
 } // namespace cauv
 
-
-Q_DECLARE_METATYPE(cauv::gui::image_t)
+//Q_DECLARE_METATYPE(cauv::gui::image_t)
 
 #endif // GUI_IMAGENODE_H

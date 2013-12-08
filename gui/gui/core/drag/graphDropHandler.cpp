@@ -72,12 +72,12 @@ GraphingDropHandler::GraphingDropHandler(boost::shared_ptr<NodeItemModel> model)
 }
 
 bool GraphingDropHandler::accepts(boost::shared_ptr<Node> const& node){
-    debug() << "GraphingDropHandler drop enter from" << node->nodePath();
+    CAUV_LOG_DEBUG(0, "GraphingDropHandler drop enter from" << node->nodePath());
     return node->type == nodeType<NumericNodeBase>();
 }
 
 QGraphicsItem* GraphingDropHandler::handle(boost::shared_ptr<Node> const& node) {
-    debug() << "GraphingDropHandler drop from" << node->nodePath();
+    CAUV_LOG_DEBUG(0, "GraphingDropHandler drop from" << node->nodePath());
 
     LiquidGraphNode * ln = new LiquidGraphNode(node->to<NumericNodeBase>());
     ln->setResizable(true);

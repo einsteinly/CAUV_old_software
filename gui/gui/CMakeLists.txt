@@ -46,32 +46,33 @@ else()
     qt4_wrap_cpp (GUI_MOC_H ${GUI_H})
     qt4_add_resources(GUI_RCC_H ${GUI_RCC})
 
-    add_executable ( gui
+    add_executable ( cauv_gui
         ${GUI_SRCS}
         ${GUI_UIS_H}
         ${GUI_MOC_H}
         ${GUI_RCC_H}
     )
-    add_precompiled_header( gui ${guis_SOURCE_DIR}/pch.h)
 
-    cauv_install( gui )
+    install(TARGETS cauv_gui
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 
-    target_link_libraries ( gui
-        common
+    target_link_libraries ( cauv_gui
         gui-core
         liquid
         ${QT_LIBRARIES}
     )
 
-    add_custom_target ( guiall
-        DEPENDS
-        gui
-        redherringplugin
-        aiplugin
-        fluidityplugin
-    )
+#    add_custom_target ( guiall
+#        DEPENDS
+#        gui
+#        redherringplugin
+#        aiplugin
+#        fluidityplugin
+#    )
 
     # build plugins
-    add_subdirectory(plugins)
+    #add_subdirectory(plugins)
 
 endif()

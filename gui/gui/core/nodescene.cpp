@@ -27,7 +27,6 @@ using namespace cauv::gui;
 
 #define GUI_DEBUG_POSITION false
 
-
 VanishingTextItem::VanishingTextItem(QString const& text, float lod) : QGraphicsTextItem(text), m_lod(lod){
 }
 
@@ -121,7 +120,7 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
 }
 
 NodeScene::~NodeScene(){
-    debug(2) << "~NodeScene()";
+    CAUV_LOG_DEBUG(2, "~NodeScene()");
 }
 
 void NodeScene::registerDropHandler(drop_handler_ptr const& handler){
@@ -156,7 +155,7 @@ void NodeScene::onNodeDroppedAt(boost::shared_ptr<Node> const& node, QPointF pos
             }
         }
     } catch (drop_not_handled){
-        error() << node->nodeName() << "not supported in this drop area (" << this << ")";
+        CAUV_LOG_ERROR(node->nodeName() << "not supported in this drop area (" << this << ")");
     }
 }
 
@@ -168,7 +167,7 @@ QGraphicsItem *  NodeScene::applyHandlers(boost::shared_ptr<Node> const& node)
             if(handler->accepts(node))
                 return handler->handle(node);
         } catch (drop_not_handled){
-            debug(5) << "Handler not appropriate";
+            CAUV_LOG_DEBUG(5, "Handler not appropriate");
         }
     }
     // no registered handler matched. oh dear.

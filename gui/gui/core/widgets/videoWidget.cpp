@@ -12,18 +12,18 @@
 
 #include <boost/make_shared.hpp>
 
-#include <common/msg_classes/base_image.h>
 #include <debug/cauv_debug.h>
 
-#include <generated/types/GuiImageMessage.h>
+#warning TODO
 
 using namespace cauv;
 using namespace cauv::gui;
 
 VideoWidget::VideoWidget(QGraphicsWidget* parent)
     : QGraphicsWidget(parent),
-      m_image_msg(),
+//      m_image_msg(),
       m_pixmap(){
+#if 0
     qRegisterMetaType< boost::shared_ptr<const GuiImageMessage> >("boost::shared_ptr<const GuiImageMessage>");
     setMinimumSize(QSizeF(40,40));
     setPreferredSize(QSizeF(4000,400));
@@ -32,12 +32,14 @@ VideoWidget::VideoWidget(QGraphicsWidget* parent)
 #ifdef QT_PROFILE_GRAPHICSSCENE
     setProfileName("VideoWidget");
 #endif // def QT_PROFILE_GRAPHICSSCENE
+#endif
 }
 
 void VideoWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){
     Q_UNUSED(widget);
     Q_UNUSED(option);
 
+#if 0
     if(m_pixmap){
         debug(10) << "painting image"
                   << m_pixmap->size().width() << "x" << m_pixmap->size().height() << "->"
@@ -59,9 +61,11 @@ void VideoWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
         }
         painter->drawPixmap(fixed_ratio.toAlignedRect(), *m_pixmap);
     }
+#endif
 }
 
 void VideoWidget::displayImage(boost::shared_ptr<const GuiImageMessage> p){
+#if 0
     m_image_msg = p;
     BaseImage t;
     m_image_msg->get_image_inplace(t);
@@ -71,5 +75,6 @@ void VideoWidget::displayImage(boost::shared_ptr<const GuiImageMessage> p){
     QGraphicsScene* s = scene();
     if(s)
         s->invalidate(sceneBoundingRect(), QGraphicsScene::ItemLayer);
+#endif
 }
 

@@ -4,11 +4,12 @@
  */
 
 
-#include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
 
 #include "persistentMap.h"
 
+#define CAUV_DEBUG_COMPAT
+#include <debug/cauv_debug.h>
 using namespace liquid::water::internal;
 
 template<typename key_T, typename val_T, typename char_T, typename traits>

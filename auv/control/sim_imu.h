@@ -2,23 +2,23 @@
  *
  * See license.txt for details.
  */
+#pragma once
 
-#ifndef __CAUV_SIM_IMU_H__
-#define __CAUV_SIM_IMU_H__
 #include "imu.h"
-#include <generated/message_observers.h>
+#include <cauv_control/Attitude.h>
+#include <ros/subscriber.h>
+#include <std_msgs/Float32.h>
 
 namespace cauv {
 
-class SimIMU : public IMU, public MessageObserver {
+class SimIMU : public IMU {
     public:
         virtual void start();
+        void onStateMessage(const cauv_control::AttitudeConstPtr &m);
+        void onDepthMessage(const std_msgs::Float32Ptr &depth);
     protected:
-        virtual void onStateMessage(StateMessage_ptr m);
-    private:
-        DepthCalibrationMessage_ptr m_depthCalibration;
+        ros::Subscriber m_state_sub;
+        ros::Subscriber m_depth_sub;
 };
 
 } // namespace cauv
-
-#endif

@@ -1,22 +1,23 @@
 ''' This module defines the AUV class used to control the motors and control loops.'''
 
-import messaging
 import threading
 import time
 
 from cauv.debug import info, warning, error, debug
 
-class AUV_readonly(messaging.MessageObserver):
+import cauv_control.msg as ctrl_msgs
+import std_msgs.msg as std_msgs
+import rospy
+
+class AUV_readonly(object):
     '''Provides access to telemetry data'''
-    def __init__(self, node):
-        messaging.MessageObserver.__init__(self)
-        self.node = node
-        node.subMessage(messaging.TelemetryMessage())
+    def __init__(self):
         self.current_bearing = None
         self.current_depth = None
         self.current_pitch = None
-        node.addObserver(self)
-    
+        rospy.Subscriber("control/attitude", ctrl_msgs.Attitude, self.onAttitude)
+        rospy.Subscriber("control/depth", std_msgs.Float32, self.onDepth)
+
     def getBearing(self):
         '''Return the current bearing: may return None!'''
         return self.current_bearing
@@ -29,15 +30,17 @@ class AUV_readonly(messaging.MessageObserver):
         '''Return the current pitch: may return None!'''
         return self.current_pitch
     
-    def onTelemetryMessage(self, m):
-        self.current_bearing = m.orientation.yaw
-        self.current_depth = m.depth
-        self.current_pitch = m.orientation.pitch
+    def onAttitude(self, m):
+        self.current_bearing = m.yaw
+        self.current_pitch = m.pitch
+
+    def onDepth(self, m):
+        self.current_depth = m.data
 
 class AUV(AUV_readonly):
     '''The AUV class provides an interface to control the AUV's control loops, motors, and other hardware.'''
-    def __init__(self, node, priority = 0, timeout = 10):
-        AUV_readonly.__init__(self, node)
+    def __init__(self, priority = 0, timeout = 10):
+        AUV_readonly.__init__(self)
         self.bearingCV = threading.Condition()
         self.depthCV = threading.Condition()
         self.pitchCV = threading.Condition()
@@ -46,38 +49,47 @@ class AUV(AUV_readonly):
         info("Control Token: {}".format(self.token))
         self.timeout = timeout #seconds
 
-    def send(self, msg):
-        self.node.send(msg)
+        self.depth_params_pub   = rospy.Publisher("control/depth/params",    ctrl_msgs.PIDParams, latch = True)
+        self.pitch_params_pub   = rospy.Publisher("control/pitch/params",    ctrl_msgs.PIDParams, latch = True)
+        self.bearing_params_pub = rospy.Publisher("control/bearing/params",  ctrl_msgs.PIDParams, latch = True)
+        self.depth_target_pub   = rospy.Publisher("control/depth/target",    ctrl_msgs.PIDTarget, tcp_nodelay = True)
+        self.pitch_target_pub   = rospy.Publisher("control/pitch/target",    ctrl_msgs.PIDTarget, tcp_nodelay = True)
+        self.bearing_target_pub = rospy.Publisher("control/bearing/target",  ctrl_msgs.PIDTarget, tcp_nodelay = True)
+        self.motor_demand_pub   = rospy.Publisher("control/external_demand", ctrl_msgs.MotorDemand, tcp_nodelay = True)
+        self.depth_cal_aft_pub  = rospy.Publisher("control/depth/aft_calibration", ctrl_msgs.DepthCalibration)
+        self.depth_cal_fore_pub = rospy.Publisher("control/depth/fore_calibration", ctrl_msgs.DepthCalibration)
+
+        self.motors = ctrl_msgs.MotorDemand()
 
     def get_token(self):
-        return messaging.ControlLockToken(self.token, self.priority, self.timeout * 1000)
+        return ctrl_msgs.ControlToken(self.token, self.priority, self.timeout * 1000)
+
+    def send_motors(self):
+        self.motor_demand_pub.publish(self.motors)
 
     def kill(self):
         '''Stop all motors, deactivate the control loops.'''
-        self.prop(0)
-        self.hbow(0)
-        self.vbow(0)
-        self.hstern(0)
-        self.vstern(0)
+        self.stop()
         self.bearing(None)
         self.pitch(None)
         self.depth(None)
         
     def stop(self):
         '''Stop all motors, but leave the control loops.'''
-        self.prop(0)
-        self.hbow(0)
-        self.vbow(0)
-        self.hstern(0)
-        self.vstern(0)
+        self.motors.prop = 0
+        self.motors.hbow = 0
+        self.motors.vbow = 0
+        self.motors.hstern = 0
+        self.motors.vstern = 0
+        self.send_motors()
 
     def bearing(self, bearing):
         '''Set a bearing (degrees CW from north) and activate the bearing control loop, or deactivate bearing control if 'None' is passed.'''
         if bearing is not None:
-            self.send(messaging.BearingAutopilotEnabledMessage(self.get_token(), True, bearing))
+            self.bearing_target_pub.publish(ctrl_msgs.PIDTarget(self.get_token(), True, bearing))
         else:
-            self.send(messaging.BearingAutopilotEnabledMessage(self.get_token(), False, 0))
-    
+            self.bearing_target_pub.publish(self.get_token(), False, 0)
+
     # additional rate parameter (degrees per second) would ideally be
     # implemented by the control loops
     def bearingAndWait(self, bearing, epsilon = 5, timeout = 30, rate=90):
@@ -138,7 +150,8 @@ class AUV(AUV_readonly):
         elif aftMultiplier is None:
             warning("Warning: aftOffset set but aftMultiplier not set -- using aftMultiplier := foreMultiplier")
 
-        self.send(messaging.DepthCalibrationMessage(foreOffset, foreMultiplier, aftOffset, aftMultiplier))
+        self.depth_cal_aft_pub.publish (ctrl_msgs.DepthCalibrationMessage(aftOffset,  aftMultiplier))
+        self.depth_cal_fore_pub.publish(ctrl_msgs.DepthCalibrationMessage(foreOffset, foreMultiplier))
 
     def calibrateForSaltWater(self):
         '''Redherring calibration: Set the depth calibration for seawater.'''
@@ -165,10 +178,11 @@ class AUV(AUV_readonly):
 
     def depth(self, depth):
         '''Set a depth (metres) and activate the depth control loop, or deactivate depth control if 'None' is passed.'''
+
         if depth is not None:
-            self.send(messaging.DepthAutopilotEnabledMessage(self.get_token(), True, depth))
+            self.depth_target_pub.publish(ctrl_msgs.PIDTarget(self.get_token(), True, depth))
         else:
-            self.send(messaging.DepthAutopilotEnabledMessage(self.get_token(), False, 0))
+            self.depth_target_pub.publish(ctrl_msgs.PIDTarget(self.get_token(), False, 0))
 
     def depthAndWait(self, depth, epsilon = 0.25, timeout = 30):
         '''Set a depth (metres) and activate the depth control loop, do not return until the depth is achieved within 'epsilon' metres'''
@@ -185,9 +199,9 @@ class AUV(AUV_readonly):
     def pitch(self, pitch):
         '''Set a pitch (degrees up) and activate the pitch control loop, or deactivate pitch control if 'None' is passed.'''
         if pitch is not None:
-            self.send(messaging.PitchAutopilotEnabledMessage(self.get_token(), True, pitch))
+            self.pitch_target_pub.publish(ctrl_msgs.PIDTarget(self.get_token(), True, pitch))
         else:
-            self.send(messaging.PitchAutopilotEnabledMessage(self.get_token(), False, 0))
+            self.pitch_target_pub.publish(ctrl_msgs.PIDTarget(self.get_token(), False, 0))
 
     def pitchAndWait(self, pitch, epsilon = 5, timeout = 30):
         '''Set a pitch (degrees up) and activate the pitch control loop, do not return until the pitch is achieved within 'epsilon' degrees'''
@@ -234,8 +248,8 @@ class AUV(AUV_readonly):
             This is a sensible example:
                 bearingParams(3.5, 0, 35, -1, 1.3, 1.3, 1, 1, 150)
         '''
-      
-        self.send(messaging.BearingAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
+
+        self.bearing_params_pub.publish(ctrl_msgs.PIDParams(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
 
     bearingParams.__doc__ += PID_params_docstring
 
@@ -245,7 +259,7 @@ class AUV(AUV_readonly):
             This is a sensible example:
                 depthParams(40, 0.6, 500, 1, 2, 2, 2, 1, 40)
         '''
-        self.send(messaging.DepthAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
+        self.depth_params_pub.publish(ctrl_msgs.PIDParams(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
 
     depthParams.__doc__ += PID_params_docstring
 
@@ -255,7 +269,7 @@ class AUV(AUV_readonly):
             This is a sensible example:
                 pitchParams(0.5, 0.1, 10, 1, 1, 1, 1, 1, 5)
         '''
-        self.send(messaging.PitchAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
+        self.pitch_params_pub.publish(ctrl_msgs.PIDParams(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
 
     pitchParams.__doc__ += PID_params_docstring
 
@@ -263,117 +277,70 @@ class AUV(AUV_readonly):
         '''Set the prop speed. Positive is forwards, range -127:127'''
         debug("cauv.control.Node.prop(%s)" % value, 5)
         self.checkRange(value)
-        self.send(messaging.MotorMessage(self.get_token(), messaging.MotorID.Prop, value))
+        self.motors.prop = value
+        self.send_motors()
 
     def hbow(self, value):
         '''Set the horizontal bow thruster speed. Positive is ????, range -127:127'''
         self.checkRange(value)
-        self.send(messaging.MotorMessage(self.get_token(), messaging.MotorID.HBow, value))
+        self.motors.hbow = value
+        self.send_motors()
    
     def vbow(self, value):
         '''Set the vertical bow thruster speed. Positive is ????, range -127:127'''
         self.checkRange(value)
-        self.send(messaging.MotorMessage(self.get_token(), messaging.MotorID.VBow, value))
+        self.motors.vbow = value
+        self.send_motors()
 
     def hstern(self, value):
         '''Set the horizontal stern thruster speed. Positive is ????, range -127:127'''
         self.checkRange(value)
-        self.send(messaging.MotorMessage(self.get_token(), messaging.MotorID.HStern, value))
+        self.motors.hstern = value
+        self.send_motors()
 
     def vstern(self, value):
         '''Set the vertical stern thruster speed. Positive is ????, range -127:127'''
         self.checkRange(value)
-        self.send(messaging.MotorMessage(self.get_token(), messaging.MotorID.VStern, value))
-        
-    def forwardlights(self, value, duty_cycle=255, cycle_period=1000):
-        '''Set the forwards light power. Value range 0-255, duty cycle 0=off 255=on 127=50% on 50% off, cycle_period=milliseconds/cycle'''
-        self.checkLightValue(value)
-        self.node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
-        
-    def downlights(self, value, duty_cycle=255, cycle_period=1000):
-        '''Set the forwards light power. Value range 0-255, duty cycle 0=off 255=on 127=50% on 50% off, cycle_period=milliseconds/cycle'''
-        self.checkLightValue(value)
-        self.node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
+        self.motors.vstern = value
+        self.send_motors()
 
-    def strobe(self, value, duty_cycle=8, cycle_period=2000):
-        '''Set the forwards light power. Value range 0-255, duty cycle 0=off 255=on 127=50% on 50% off, cycle_period=milliseconds/cycle'''
-        self.checkLightValue(value)
-        self.node.send(messaging.LightControlMessage(messaging.LightID.Forward, value, duty_cycle, cycle_period))
-        
-    def checkLightValue(self, value):
-        '''Raise an error if 'value' is not in the range accepted for light control.'''
-        if not (value>=0 and value<256):
-            raise ValueError("invalid light value: %d" % value)
-
-    def motorMap(self, motor_id, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
-        '''Apply linear mapping to motor power values.
-        
-           map:
-                    -127                           0                            127
-             demand:  |---------------------------|0|----------------------------| 
-             output:     |---------------|         0            |----------------|
-                         ^               ^                      ^                ^
-                         maxMinus     zeroMinus               zeroPlus        maxPlus
-
-        '''
-        m = messaging.MotorMap()
-        m.zeroPlus = zero_plus
-        m.zeroMinus = zero_minus
-        m.maxPlus = max_plus
-        m.maxMinus = max_minus
-        self.send(messaging.SetMotorMapMessage(motor_id, m))
-
-    def propMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
-        self.motorMap(messaging.MotorID.Prop, zero_plus, zero_minus, max_plus, max_minus)
-    propMap.__doc__ = motorMap.__doc__
-
-    def hbowMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
-        self.motorMap(messaging.MotorID.HBow, zero_plus, zero_minus, max_plus, max_minus)
-    hbowMap.__doc__ = motorMap.__doc__
-
-    def vbowMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
-        self.motorMap(messaging.MotorID.VBow, zero_plus, zero_minus, max_plus, max_minus)
-    vbowMap.__doc__ = motorMap.__doc__
-
-    def vsternMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
-        self.motorMap(messaging.MotorID.VStern, zero_plus, zero_minus, max_plus, max_minus)
-    vsternMap.__doc__ = motorMap.__doc__
-
-    def hsternMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
-        self.motorMap(messaging.MotorID.HStern, zero_plus, zero_minus, max_plus, max_minus)
-    hsternMap.__doc__ = motorMap.__doc__
-
-    def v(self, value):
+    def vert(self, value):
         '''Go vertically with a given prop value'''
         self.checkRange(value)
-        self.vbow(value)
-        self.vstern(value)
+        self.motors.vstern = value
+        self.motors.vbow = value
+        self.send_motors()
 
     def strafe(self, value):
         '''go sideways with a given prop value'''
         self.checkRange(value)
-        self.hbow(value)
-        self.hstern(value)
+        self.motors.hbow = value
+        self.motors.hstern = value
+        self.send_motors()
 
-    def r(self, value):
+    def rotate(self, value):
         '''Rotate with a given prop value'''
         self.checkRange(value)
-        self.hbow(value)
-        self.hstern(-value)
+        self.motors.hbow = value
+        self.motors.hstern = -value
+        self.send_motors()
 
     def checkRange(self, value):
         if value < -127 or value > 127:
             raise ValueError("invalid motor value: %d" % value)
     
-    def onTelemetryMessage(self, m):
-        AUV_readonly.onTelemetryMessage(self, m)
+    def onAttitude(self, m):
+        AUV_readonly.onAttitude(self, m)
         self.bearingCV.acquire()
-        self.depthCV.acquire()
         self.pitchCV.acquire()
         self.bearingCV.notifyAll()
-        self.depthCV.notifyAll()
         self.pitchCV.notifyAll()
         self.bearingCV.release()
-        self.depthCV.release()
         self.pitchCV.release()
+
+    def onDepth(self, m):
+        AUV_readonly.onDepth(self, m)
+        self.depthCV.acquire()
+        self.depthCV.notifyAll()
+        self.depthCV.release()
 

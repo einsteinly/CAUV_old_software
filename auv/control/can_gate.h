@@ -1,5 +1,4 @@
-#ifndef _CAUV_CAN_GATE_H_
-#define _CAUV_CAN_GATE_H_
+#pragma once
 
 #include <string>
 #include <linux/can.h>
@@ -7,11 +6,15 @@
 #include <boost/thread/thread.hpp>
 #include <boost/asio/basic_datagram_socket.hpp>
 
+#include <cauv_control/MotorDemand.h>
 #include <utility/observable.h>
-#include <generated/message_observers.h>
-#include <generated/types/MotorDemand.h>
 
 namespace cauv {
+
+typedef cauv_control::MotorDemand MotorDemand;
+
+MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r);
+
 
 struct CANObserver {
     virtual void onPressure(float fore, float aft) = 0;
@@ -36,5 +39,3 @@ private:
 };
 
 }//namespace cauv
-
-#endif//_CAUV_CAN_GATE_H_

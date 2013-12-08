@@ -168,16 +168,16 @@ void NodeTreeView::keyPressEvent(QKeyEvent *event){
 }
 
 void NodeTreeView::applyFilters(){
-    debug(8) << "applyFilters()";
+    CAUV_LOG_DEBUG(8, "applyFilters()");
     applyFilters(rootIndex());
 }
 
 void NodeTreeView::applyFilters(QModelIndex const& index){
-    debug(8) << "applyFilters(QModelIndex const&)";
+    CAUV_LOG_DEBUG(8, "applyFilters(QModelIndex const&)");
 
     boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
 
-    debug(8) << "filtering" << node->nodePath();
+    CAUV_LOG_DEBUG(8, "filtering" << node->nodePath());
 
     // apply to current node
     if (!applyFilters(node))
@@ -191,7 +191,7 @@ void NodeTreeView::applyFilters(QModelIndex const& index){
 }
 
 bool NodeTreeView::applyFilters(boost::shared_ptr<Node> const& node){
-    debug(8) << "applyFilters(boost::shared_ptr<Node> node)";
+    CAUV_LOG_DEBUG(8, "applyFilters(boost::shared_ptr<Node> node)");
     foreach(boost::shared_ptr<NodeFilterInterface> const& filter, m_filters){
         // filtering is exclusive, so if any filter says no then the
         // node won't appear in the list

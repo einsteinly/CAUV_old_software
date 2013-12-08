@@ -9,24 +9,28 @@
 
 #include <gui/core/model/node.h>
 
-#include <common/msg_classes/colour.h>
-
 namespace cauv {
 namespace gui {
+
+#warning TODO
 
 class ColourNode : public Node {
     Q_OBJECT
 
 public:
     ColourNode(nid_t const& id) : Node(id, nodeType<ColourNode>()){
+#if 0
         qRegisterMetaType<Colour>("Colour");
         m_value = QVariant::fromValue<Colour>(Colour());
+#endif
     }
 
 public Q_SLOTS:
+#if 0
     virtual void typedUpdate(Colour const& value){
         Node::update(QVariant::fromValue<Colour>(value));
     }
+#endif
 };
 } //namespace gui
 } // namespace cauv

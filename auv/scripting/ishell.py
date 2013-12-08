@@ -6,26 +6,25 @@
 #
 
 import cauv
-import cauv.messaging as msg
-import cauv.pipeline as pipeline
+import rospy
+#import cauv.pipeline as pipeline
 import cauv.control as control
-import cauv.sonar
-import cauv.node
+#import cauv.sonar
+#import cauv.node
 
-node = cauv.node.Node('py-shell')
-auv = control.AUV(node)
-sonar = cauv.sonar.Sonar(node)
-gemini = cauv.sonar.Gemini(node)
-pl = pipeline.Model(node)
+rospy.init_node("py_shell")
+auv = control.AUV()
+#sonar = cauv.sonar.Sonar(node)
+#gemini = cauv.sonar.Gemini(node)
+#pl = pipeline.Model(node)
 
-
-# FIXME Obvious.
 try:
+    #All Crosby's fault... damn Mac users...
     import IPython
-    ipython_version_is_jameses_shitty_one = [int(v) for v in IPython.__version__.split('.')] < [0,11]
+    old_ipython = [int(v) for v in IPython.__version__.split('.')] < [0,11]
 except:
-    ipython_version_is_jameses_shitty_one = False
-if ipython_version_is_jameses_shitty_one:
+    old_ipython = False
+if old_ipython:
     from IPython.Shell import IPShellEmbed as InteractiveShellEmbed #pylint: disable=E0611
 else:
     from IPython.frontend.terminal.embed import InteractiveShellEmbed #pylint: disable=E0611

@@ -30,7 +30,7 @@ class VideoWidget: public QGraphicsWidget{
         void displayImage(boost::shared_ptr<const GuiImageMessage>);
 
     private:
-        boost::shared_ptr<const GuiImageMessage> m_image_msg;
+        //boost::shared_ptr<const GuiImageMessage> m_image_msg;
         boost::shared_ptr<QPixmap> m_pixmap;
 };
 

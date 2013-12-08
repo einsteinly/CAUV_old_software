@@ -27,6 +27,7 @@
 #include <common/msg_classes/image.h>
 #include <common/mailbox.h>
 #include <debug/cauv_debug.h>
+
 #include <generated/types/PipelineGroup.h>
 #include <generated/types/Pl_GuiGroup.h>
 #include <generated/types/NodeInputStatus.h>

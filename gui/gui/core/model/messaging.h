@@ -9,30 +9,6 @@
 
 #include <QObject>
 
-#include <generated/message_observers.h>
-#include <generated/types/message.h>
-#include <generated/types/MotorID.h>
-#include <generated/types/Controller.h>
-#include <generated/types/MotorMessage.h>
-#include <generated/types/MotorStateMessage.h>
-#include <generated/types/BearingAutopilotEnabledMessage.h>
-#include <generated/types/DepthAutopilotEnabledMessage.h>
-#include <generated/types/PitchAutopilotEnabledMessage.h>
-#include <generated/types/BearingAutopilotParamsMessage.h>
-#include <generated/types/DepthAutopilotParamsMessage.h>
-#include <generated/types/PitchAutopilotParamsMessage.h>
-#include <generated/types/DepthCalibrationMessage.h>
-#include <generated/types/DebugLevelMessage.h>
-#include <generated/types/TelemetryMessage.h>
-#include <generated/types/ImageMessage.h>
-#include <generated/types/ControllerStateMessage.h>
-#include <generated/types/PressureMessage.h>
-#include <generated/types/BatteryUseMessage.h>
-#include <generated/types/CPUTemperatureMessage.h>
-#include <generated/types/SonarControlMessage.h>
-#include <generated/types/PenultimateResortTimeoutMessage.h>
-#include <generated/types/SetPenultimateResortTimeoutMessage.h>
-
 #include <boost/shared_ptr.hpp>
 
 #include <model/node.h>
@@ -48,19 +24,18 @@
 namespace cauv {
 namespace gui {
 
+#warning TODO
+#if 0
 class Node;
-
 
 class BaseMessageGenerator : public QObject {
     Q_OBJECT
 public:
     BaseMessageGenerator(boost::shared_ptr<Node> node) : m_baseNode(node){
-        debug(5) << "BaseMessageGenerator()";
         node->connect(node.get(), SIGNAL(onBranchChanged()), this, SLOT(generateMessage()));
         this->moveToThread(node->thread());
     }
     ~BaseMessageGenerator(){
-        info() << "~BaseMessageGenerator()";
     }
 
     virtual boost::shared_ptr<const Message> generate() = 0;
@@ -84,7 +59,6 @@ struct MessageGenerator : public BaseMessageGenerator, public TypedNodeStore<Nod
 public:
     MessageGenerator(boost::shared_ptr<NodeType> node) : BaseMessageGenerator(node), TypedNodeStore<NodeType>(node)  {}
     ~MessageGenerator() {
-        info() << "~MessageGenerator()";
     }
 };
 
@@ -154,7 +128,9 @@ public:
             virtual void on ## Y (Y ## _ptr); \
     };
 
+#endif
 
+#if 0
 MESSAGE_OBSERVER_GENERATOR(MotorNode, MotorStateMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotNode, BearingAutopilotEnabledMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotNode, PitchAutopilotEnabledMessage)
@@ -174,6 +150,7 @@ MESSAGE_OBSERVER(GroupingNode, CPUTemperatureMessage)
 MESSAGE_OBSERVER(ImageNode, ImageMessage)
 NODE_GENERATOR(ImageNode, ImageMessage)
 MESSAGE_OBSERVER_GENERATOR(SonarNode, SonarControlMessage)
+#endif
 
 
 } // namespace gui

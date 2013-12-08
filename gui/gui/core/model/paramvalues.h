@@ -8,8 +8,7 @@
 #define GUI_PARAMVALUES_H
 
 #include <model/variants.h>
-
-#include <generated/types/ParamWithMeta.h>
+#include <model/node.h>
 
 #include <QVariant>
 
@@ -34,16 +33,17 @@ namespace cauv {
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(float & ) const;
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(std::string& ) const;
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand ) const;
-    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & ) const;
-    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & ) const;
+    //template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & ) const;
+    //template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & ) const;
 
-    template <class T>
-    boost::shared_ptr<Node> paramValueToNode(nid_t id, T boostVariant){
-        return boost::apply_visitor(ParamValueToNode(id), boostVariant);
-    }
+    //template <class T>
+    //boost::shared_ptr<Node> paramValueToNode(nid_t id, T boostVariant){
+    //    return boost::apply_visitor(ParamValueToNode(id), boostVariant);
+    //}
 
-    boost::shared_ptr<Node> paramWithMetaToNode(nid_t id, ParamWithMeta & param_with_meta);
+    //boost::shared_ptr<Node> paramWithMetaToNode(nid_t id, ParamWithMeta & param_with_meta);
 
+#if 0
     template<class T>
     std::map<std::string, ParamValue> nodeMapToParamValueMap(const std::map<std::string, boost::shared_ptr<T> > nodes){
         std::map<std::string, ParamValue> values;
@@ -61,6 +61,7 @@ namespace cauv {
         }
         return values;
     }
+#endif
 
     } // namespace gui
 } // namespace cauv

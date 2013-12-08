@@ -13,7 +13,6 @@ using namespace cauv::gui;
 #include "nodes/stringnode.h"
 #include "nodes/colournode.h"
 
-
 ParamValueToNode::ParamValueToNode(const nid_t id) :
     m_id(id) {
 }
@@ -46,6 +45,7 @@ template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand)
     return node;
 }
 
+#if 0
 template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & operand) const
 {
     boost::shared_ptr<NumericNode<BoundedFloat> > node = boost::make_shared<NumericNode<BoundedFloat> >(m_id);
@@ -59,7 +59,9 @@ template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & operan
     node->typedUpdate(operand);
     return node;
 }
+#endif
 
+#if 0
 boost::shared_ptr<Node> cauv::gui::paramWithMetaToNode(nid_t id, ParamWithMeta & param_with_meta)
 {
     boost::shared_ptr<Node> node = paramValueToNode(id, param_with_meta.value);
@@ -73,3 +75,4 @@ boost::shared_ptr<Node> cauv::gui::paramWithMetaToNode(nid_t id, ParamWithMeta &
     }
     return node;
 }
+#endif
