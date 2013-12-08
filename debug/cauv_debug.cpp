@@ -17,7 +17,7 @@ class LogInitializer {
     public:
     LogInitializer() {
         ros::console::initialize();
-        ros::console::initializeLogLocation(&location, "ros.cauv_debug", ros::console::Level::Info);
+        ros::console::initializeLogLocation(&location, "ros.cauv_debug", ros::console::levels::Info);
     }
     ros::console::LogLocation location;
 };
@@ -84,15 +84,15 @@ Log::~Log() {
     static LogInitializer log;
     ros::console::Level l;
     if (level >= 0) {
-        l = ros::console::Level::Debug;
+        l = ros::console::levels::Debug;
     } else if (level == -1) {
-        l = ros::console::Level::Info;
+        l = ros::console::levels::Info;
     } else if (level == -2) {
-        l = ros::console::Level::Warn;
+        l = ros::console::levels::Warn;
     } else if (level == -3) {
-        l = ros::console::Level::Error;
+        l = ros::console::levels::Error;
     } else {
-        l = ros::console::Level::Fatal;
+        l = ros::console::levels::Fatal;
     }
     ros::console::print(NULL, log.location.logger_, l, stream, filename, line_number, func_name);
 };
