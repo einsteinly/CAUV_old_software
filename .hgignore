@@ -245,3 +245,4 @@ auv/lib/spread-src-4.1.0/stdutil/src/stdutil/private/stdarch_autoconf.h
 relre:metadata/*
 auv/pinger/PingerListenD
 auv/pinger/Makefile.dep
+./CMakeLists.txt

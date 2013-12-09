@@ -13,10 +13,10 @@ add_subdirectory (water)
 # for generated files (mainly moc'd stuff)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-find_package (GraphViz REQUIRED)
-include_directories (${graphviz_INCLUDE_DIRS})
+#find_package (GraphViz REQUIRED)
+#include_directories (${graphviz_INCLUDE_DIRS})
 include_directories (/usr/include/)
-link_directories (${graphviz_LIBRARY_DIRS})
+#link_directories (${graphviz_LIBRARY_DIRS})
 
 set (
     LIQUID_SRCS
