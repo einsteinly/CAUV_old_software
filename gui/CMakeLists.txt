@@ -11,20 +11,22 @@ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(catkin REQUIRED COMPONENTS
             rosconsole
             roscpp
-            cauv_utility
             cauv_debug
             std_msgs
             message_generation)
+find_package(cauv_utility REQUIRED)
 find_package(Boost REQUIRED)
 
 catkin_package(
-    INCLUDE_DIRS ..
     DEPENDS Boost
+    CATKIN_DEPENDS cauv_utility
 )
 
 include_directories(${Boost_INCLUDE_DIRS}
+                    ${catkin_INCLUDE_DIRS}
                     ${cauv_utility_INCLUDE_DIRS}
                     )
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 option(CAUV_BUILD_GUI "Whether or not to use the GUI" ON)
 
