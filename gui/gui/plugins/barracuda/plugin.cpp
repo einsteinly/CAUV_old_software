@@ -5,17 +5,16 @@
 
 
 
-#include "plugin.h"
-
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 
-//#include <ros/node_handle.h>
-//#include <ros/subscriber.h>
+#include "plugin.h"
 
 #include <debug/cauv_debug.h>
 
 #include <model/registry.h>
+
+#include <ros/node_handle.h>
 
 using namespace cauv;
 using namespace cauv::gui;
