@@ -254,12 +254,14 @@ Q_DECLARE_METATYPE(QModelIndex)
 void CauvMainWindow::createContextMenu(QPoint point){
     const auto& model = *m_actions->root;
     // this needs some thought. redherring should REALLY not be hardcoded in here
-    auto pipelinesIndex = model.indexFromNode(VehicleRegistry::instance()->
+    /*auto pipelinesIndex = model.indexFromNode(VehicleRegistry::instance()->
                                              find<Vehicle>("redherring")->
-                                             findOrCreate<GroupingNode>("pipelines"));
+                                             findOrCreate<GroupingNode>("pipelines"));*/
     QMenu menu{this};
     //fillMenu(model, rootIndex, &menu);
-    auto new_pipeline = menu.addMenu("new pipeline");
+    auto disabled = menu.addAction("disabled");
+    disabled->setEnabled(false);
+    /*auto new_pipeline = menu.addMenu("new pipeline");
     if (model.rowCount(pipelinesIndex) == 0) {
         new_pipeline->setEnabled(false);
     } else {
@@ -271,7 +273,7 @@ void CauvMainWindow::createContextMenu(QPoint point){
             // TODO: This relies on the first child of the pipeline being "new"
             action->setData(QVariant::fromValue(pipelineIndex.child(0,0)));
         }
-    }
+    }*/
 
     auto selectedAction = menu.exec(m_actions->view->mapToGlobal(point));
     if (selectedAction) {
@@ -288,6 +290,7 @@ CauvInterfacePlugin * CauvMainWindow::loadPlugin(QObject *plugin){
     CauvInterfacePlugin * basicPlugin = qobject_cast<CauvInterfacePlugin*>(plugin);
     if(basicPlugin) {
         basicPlugin->initialise(m_actions, ConnectedNode::getMap());
+        CAUV_LOG_INFO("Loaded plugin:"<< basicPlugin->name().toStdString());
     }
 
     return basicPlugin;

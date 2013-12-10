@@ -13,7 +13,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <ros/node_handle.h>
-#include <ros/publisher.h>
+//#include <ros/publisher.h>
 
 #include <cauv_control/ControlToken.h>
 

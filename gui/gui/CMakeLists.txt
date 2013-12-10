@@ -73,6 +73,6 @@ else()
 #    )
 
     # build plugins
-    #add_subdirectory(plugins)
+    add_subdirectory(plugins)
 
 endif()

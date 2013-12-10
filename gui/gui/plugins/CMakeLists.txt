@@ -19,7 +19,7 @@ function (cauv_install_plugin TARGET)
 endfunction()
 
 # plugin directories
-add_subdirectory (processes)
-add_subdirectory (ai)
-add_subdirectory (fluidity)
-add_subdirectory (redherring)
+#add_subdirectory (processes)
+#add_subdirectory (ai)
+#add_subdirectory (fluidity)
+add_subdirectory (barracuda)

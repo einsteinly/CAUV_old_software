@@ -24,6 +24,9 @@
 #include <model/nodeType.h>
 
 
+
+
+
 #define GENERATE_SIMPLE_NODE(X) \
     class X : public Node { \
         public: \

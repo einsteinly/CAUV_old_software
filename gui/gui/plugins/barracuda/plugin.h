@@ -4,8 +4,8 @@
  */
 
 
-#ifndef CAUV_REDHERRINGPLUGIN_H
-#define CAUV_REDHERRINGPLUGIN_H
+#ifndef CAUV_BARRACUDAPLUGIN_H
+#define CAUV_BARRACUDAPLUGIN_H
 
 #include <cauvbasicplugin.h>
 #include <model/node.h>
@@ -16,7 +16,7 @@
 namespace cauv {
     namespace gui {
 
-        class RedHerringPlugin : public QObject, public CauvBasicPlugin
+        class BarracudaPlugin : public QObject, public CauvBasicPlugin
         {
             Q_OBJECT
             Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
@@ -26,14 +26,14 @@ namespace cauv {
             virtual void initialise();
         };
 
-        class RedHerring : public Vehicle
+        class Barracuda : public Vehicle
         {
             Q_OBJECT
             public:
                 friend class VehicleRegistry;
 
             protected:
-                RedHerring(const std::string& name);
+                Barracuda(const std::string& name);
                 virtual void initialise();
 
             protected Q_SLOTS:
@@ -45,4 +45,4 @@ namespace cauv {
     } // namespace gui
 } // namespace cauv
 
-#endif // CAUV_REDHERRINGPLUGIN_H
+#endif // CAUV_BARRACUDAPLUGIN_H

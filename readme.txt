@@ -1,6 +1,8 @@
 Readme for ROS based system:
 
-Message definition locations:
+Packages containg messages:
 
-auv/control
+auv/control - control messages
+
+auv/img-pipeline/model
 

@@ -4,12 +4,14 @@
  */
 
 
+
 #include "plugin.h"
 
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <common/cauv_node.h>
+//#include <ros/node_handle.h>
+//#include <ros/subscriber.h>
 
 #include <debug/cauv_debug.h>
 
@@ -18,12 +20,12 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-const QString RedHerringPlugin::name() const{
-    return QString("RedHerring");
+const QString BarracudaPlugin::name() const{
+    return QString("Barracuda");
 }
 
-void RedHerringPlugin::initialise(){
-    VehicleRegistry::instance()->registerVehicle<RedHerring>("redherring");
+void BarracudaPlugin::initialise(){
+    VehicleRegistry::instance()->registerVehicle<Barracuda>("barracuda");
 /*
     boost::shared_ptr<CauvNode> node = m_actions->node.lock();
     if(node){
@@ -35,53 +37,54 @@ void RedHerringPlugin::initialise(){
         node->joinGroup("pressure");
     }*/
 }
-Q_EXPORT_PLUGIN2(cauv_redherringplugin, RedHerringPlugin)
+Q_EXPORT_PLUGIN2(cauv_barracudaplugin, BarracudaPlugin)
 
 
 
-RedHerring::RedHerring(const std::string& name) : Vehicle(name) {
+Barracuda::Barracuda(const std::string& name) : Vehicle(name) {
     // don't populate anything in here as there isn't a shared pointer to
     // this object yet. We need to wait until after it's been fully constructed
 }
 
-void RedHerring::initialise() {
+void Barracuda::initialise() {
     // set up motors
     boost::shared_ptr<GroupingNode> motors = findOrCreate<GroupingNode>("motors");
     //connect(motors.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)), this, SLOT(setupMotor(boost::shared_ptr<Node>)));
-    setupMotor(motors->findOrCreate<MotorNode>(MotorID::HBow));
-    setupMotor(motors->findOrCreate<MotorNode>(MotorID::HStern));
-    setupMotor(motors->findOrCreate<MotorNode>(MotorID::Prop));
-    setupMotor(motors->findOrCreate<MotorNode>(MotorID::VBow));
-    setupMotor(motors->findOrCreate<MotorNode>(MotorID::VStern));
+    //TODO add messages and then sort this
+//     setupMotor(motors->findOrCreate<MotorNode>(MotorID::HBow));
+//     setupMotor(motors->findOrCreate<MotorNode>(MotorID::HStern));
+//     setupMotor(motors->findOrCreate<MotorNode>(MotorID::Prop));
+//     setupMotor(motors->findOrCreate<MotorNode>(MotorID::VBow));
+//     setupMotor(motors->findOrCreate<MotorNode>(MotorID::VStern));
 
     // set up autopilots
     boost::shared_ptr<GroupingNode> autopilots = findOrCreate<GroupingNode>("autopilots");
-    setupAutopilot(autopilots->findOrCreate<AutopilotNode>(Controller::Bearing));
-    setupAutopilot(autopilots->findOrCreate<AutopilotNode>(Controller::Depth));
-    setupAutopilot(autopilots->findOrCreate<AutopilotNode>(Controller::Pitch));
+//     setupAutopilot(autopilots->findOrCreate<AutopilotNode>(Controller::Bearing));
+//     setupAutopilot(autopilots->findOrCreate<AutopilotNode>(Controller::Depth));
+//     setupAutopilot(autopilots->findOrCreate<AutopilotNode>(Controller::Pitch));
 
     // telemetry
     boost::shared_ptr<GroupingNode> telemetry = findOrCreate<GroupingNode>("telemetry");
-    attachObserver(telemetry, boost::make_shared<MessageHandler<GroupingNode, TelemetryMessage> >(telemetry));
-    telemetry->findOrCreate<NumericNode<float> >("yaw")->typedSetMin(0);
-    telemetry->findOrCreate<NumericNode<float> >("yaw")->typedSetMax(360);
-    telemetry->findOrCreate<NumericNode<float> >("yaw")->setWraps(true);
-    telemetry->findOrCreate<NumericNode<float> >("yaw")->setUnits("°");
-    telemetry->findOrCreate<NumericNode<float> >("pitch")->typedSetMin(-180);
-    telemetry->findOrCreate<NumericNode<float> >("pitch")->typedSetMax(180);
-    telemetry->findOrCreate<NumericNode<float> >("pitch")->setWraps(true);
-    telemetry->findOrCreate<NumericNode<float> >("pitch")->setUnits("°");
-    telemetry->findOrCreate<NumericNode<float> >("roll")->typedSetMin(-180);
-    telemetry->findOrCreate<NumericNode<float> >("roll")->typedSetMax(180);
-    telemetry->findOrCreate<NumericNode<float> >("roll")->setWraps(true);
-    telemetry->findOrCreate<NumericNode<float> >("roll")->setUnits("°");
-    telemetry->findOrCreate<NumericNode<float> >("depth")->setUnits("m");
-    boost::shared_ptr<GroupingNode> pressure = telemetry->findOrCreate<GroupingNode>("pressure");
-    attachObserver(pressure, boost::make_shared<MessageHandler<GroupingNode, PressureMessage> >(pressure));
-    boost::shared_ptr<GroupingNode> power = telemetry->findOrCreate<GroupingNode>("power");
-    attachObserver(power, boost::make_shared<MessageHandler<GroupingNode, BatteryUseMessage> >(power));
-    boost::shared_ptr<GroupingNode> cputemperature = telemetry->findOrCreate<GroupingNode>("cputemperature");
-    attachObserver(cputemperature, boost::make_shared<MessageHandler<GroupingNode, CPUTemperatureMessage> >(cputemperature));
+//     attachObserver(telemetry, boost::make_shared<MessageHandler<GroupingNode, TelemetryMessage> >(telemetry));
+//     telemetry->findOrCreate<NumericNode<float> >("yaw")->typedSetMin(0);
+//     telemetry->findOrCreate<NumericNode<float> >("yaw")->typedSetMax(360);
+//     telemetry->findOrCreate<NumericNode<float> >("yaw")->setWraps(true);
+//     telemetry->findOrCreate<NumericNode<float> >("yaw")->setUnits("°");
+//     telemetry->findOrCreate<NumericNode<float> >("pitch")->typedSetMin(-180);
+//     telemetry->findOrCreate<NumericNode<float> >("pitch")->typedSetMax(180);
+//     telemetry->findOrCreate<NumericNode<float> >("pitch")->setWraps(true);
+//     telemetry->findOrCreate<NumericNode<float> >("pitch")->setUnits("°");
+//     telemetry->findOrCreate<NumericNode<float> >("roll")->typedSetMin(-180);
+//     telemetry->findOrCreate<NumericNode<float> >("roll")->typedSetMax(180);
+//     telemetry->findOrCreate<NumericNode<float> >("roll")->setWraps(true);
+//     telemetry->findOrCreate<NumericNode<float> >("roll")->setUnits("°");
+//     telemetry->findOrCreate<NumericNode<float> >("depth")->setUnits("m");
+//     boost::shared_ptr<GroupingNode> pressure = telemetry->findOrCreate<GroupingNode>("pressure");
+//     attachObserver(pressure, boost::make_shared<MessageHandler<GroupingNode, PressureMessage> >(pressure));
+//     boost::shared_ptr<GroupingNode> power = telemetry->findOrCreate<GroupingNode>("power");
+//     attachObserver(power, boost::make_shared<MessageHandler<GroupingNode, BatteryUseMessage> >(power));
+//     boost::shared_ptr<GroupingNode> cputemperature = telemetry->findOrCreate<GroupingNode>("cputemperature");
+//     attachObserver(cputemperature, boost::make_shared<MessageHandler<GroupingNode, CPUTemperatureMessage> >(cputemperature));
     //boost::shared_ptr<NumericNode<float> > core0 = cputemperature->findOrCreate<NumericNode<float> >("core0");
     //boost::shared_ptr<NumericNode<float> > core1 = cputemperature->findOrCreate<NumericNode<float> >("core1");
 
@@ -91,33 +94,33 @@ void RedHerring::initialise() {
     boost::shared_ptr<NumericNode<float> > timeout = gamepad->findOrCreate<NumericNode<float> >("timeout");
     timeout->setMutable(true);
     timeout->setUnits("s");
-    attachGenerator(boost::make_shared<MessageGenerator<NumericNode<float>, SetPenultimateResortTimeoutMessage> >(timeout));
-    attachObserver(gamepad, boost::make_shared<MessageHandler<GroupingNode, PenultimateResortTimeoutMessage> >(gamepad));
+//     attachGenerator(boost::make_shared<MessageGenerator<NumericNode<float>, SetPenultimateResortTimeoutMessage> >(timeout));
+//     attachObserver(gamepad, boost::make_shared<MessageHandler<GroupingNode, PenultimateResortTimeoutMessage> >(gamepad));
 
     // calibrations
     boost::shared_ptr<GroupingNode> calibration = telemetry->findOrCreate<GroupingNode>("calibration");
-    attachGenerator(boost::make_shared<MessageHandler<GroupingNode, DepthCalibrationMessage> >(calibration));
+//     attachGenerator(boost::make_shared<MessageHandler<GroupingNode, DepthCalibrationMessage> >(calibration));
 
     // images
     boost::shared_ptr<GroupingNode> imaging = findOrCreate<GroupingNode>("imaging");
-    connect(imaging.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
-            this, SLOT(setupImager(boost::shared_ptr<Node>)));
-    attachObserver(imaging, boost::make_shared<NodeGenerator<ImageNode, ImageMessage> >(imaging));
+//     connect(imaging.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
+//             this, SLOT(setupImager(boost::shared_ptr<Node>)));
+//     attachObserver(imaging, boost::make_shared<NodeGenerator<ImageNode, ImageMessage> >(imaging));
 
     // debug
     boost::shared_ptr<NumericNode<int> > debug = findOrCreate<GroupingNode>("debug")->findOrCreate<NumericNode<int> >("level");
     debug->setMutable(true);
-    attachGenerator(boost::make_shared<MessageHandler<NumericNode<int>, DebugLevelMessage> >(debug));
+//     attachGenerator(boost::make_shared<MessageHandler<NumericNode<int>, DebugLevelMessage> >(debug));
 }
-
-void RedHerring::setupMotor(boost::shared_ptr<MotorNode> motor){
+/*
+void Barracuda::setupMotor(boost::shared_ptr<MotorNode> motor){
     motor->setMax(127);
     motor->setMin(-127);
     motor->setMutable(true);
     attachGenerator(boost::make_shared<MessageHandler<MotorNode, MotorStateMessage> >(motor));
 }
 
-void RedHerring::setupAutopilot(boost::shared_ptr<AutopilotNode> node){
+void Barracuda::setupAutopilot(boost::shared_ptr<AutopilotNode> node){
     boost::shared_ptr<AutopilotNode> autopilot = node->to<AutopilotNode>();
     boost::shared_ptr<NumericNode<float> > target = node->findOrCreate<NumericNode<float> >("target");
     target->setMutable(true);
@@ -165,7 +168,7 @@ void RedHerring::setupAutopilot(boost::shared_ptr<AutopilotNode> node){
 }
 
 
-void RedHerring::setupImager(boost::shared_ptr<Node> node){
+void Barracuda::setupImager(boost::shared_ptr<Node> node){
     try {
         try {
             boost::shared_ptr<SonarNode> imager = node->to<SonarNode>();
@@ -177,4 +180,4 @@ void RedHerring::setupImager(boost::shared_ptr<Node> node){
     } catch (std::runtime_error ex){
         error() << "Node should be an ImageNode" << ex.what();
     }
-}
+}*/
