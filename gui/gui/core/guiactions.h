@@ -34,7 +34,6 @@ namespace cauv {
             // weak ptrs to window (which is actually the same as node)
             // breaks the cycle of window -> actions -> window
             boost::weak_ptr<CauvMainWindow> window;
-            boost::weak_ptr<CauvNode> node;
 
             // models
             boost::shared_ptr<NodeItemModel> root;

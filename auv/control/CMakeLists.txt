@@ -19,6 +19,7 @@ add_message_files(
     Attitude.msg
     DepthCalibration.msg
     MotorDemand.msg
+    ExternalMotorDemand.msg
 )
 
 generate_messages(DEPENDENCIES std_msgs)

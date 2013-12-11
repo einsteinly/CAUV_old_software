@@ -11,86 +11,107 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <ros/node_handle.h>
+#include <ros/subscriber.h>
+
 #include <model/node.h>
 #include <model/nodes/numericnode.h>
-#include <model/nodes/groupingnode.h>
-#include <model/nodes/autopilotnode.h>
-#include <model/nodes/imagenode.h>
-#include <model/nodes/stringnode.h>
-#include <model/nodes/sonarnode.h>
+#include <model/nodes/motornode.h>
+//#include <model/nodes/groupingnode.h>
+//#include <model/nodes/autopilotnode.h>
+//#include <model/nodes/imagenode.h>
+//#include <model/nodes/stringnode.h>
+//#include <model/nodes/sonarnode.h>
 
-#include <common/cauv_node.h>
+//message types
+#include <std_msgs/Float32.h>
+#include <cauv_control/MotorDemand.h>
+#include <cauv_control/PIDParams.h>
+#include <cauv_control/PIDTarget.h>
 
 namespace cauv {
 namespace gui {
 
-#warning TODO
-#if 0
+//?forward declare Node
 class Node;
 
+//Base class for generators that can be attached to nodes.
+//When the node is modified, this calls the generate method.
 class BaseMessageGenerator : public QObject {
     Q_OBJECT
 public:
     BaseMessageGenerator(boost::shared_ptr<Node> node) : m_baseNode(node){
-        node->connect(node.get(), SIGNAL(onBranchChanged()), this, SLOT(generateMessage()));
+        node->connect(node.get(), SIGNAL(onBranchChanged()), this, SLOT(publishMessage()));
         this->moveToThread(node->thread());
     }
     ~BaseMessageGenerator(){
     }
 
-    virtual boost::shared_ptr<const Message> generate() = 0;
+    virtual void publish() = 0;
     boost::shared_ptr<Node> node() {
         return m_baseNode;
     }
 
 public Q_SLOTS:
-    void generateMessage(){
-        Q_EMIT messageGenerated(generate());
+    void publishMessage(){
+        publish();
     }
-Q_SIGNALS:
-    void messageGenerated(boost::shared_ptr<const Message>);
 
 protected:
     boost::shared_ptr<Node> m_baseNode;
+    ros::Publisher m_pub;
 };
 
+//Default message generator - generate does nothing
 template<class NodeType, class MessageType>
 struct MessageGenerator : public BaseMessageGenerator, public TypedNodeStore<NodeType> {
 public:
-    MessageGenerator(boost::shared_ptr<NodeType> node) : BaseMessageGenerator(node), TypedNodeStore<NodeType>(node)  {}
+    MessageGenerator(boost::shared_ptr<NodeType> node, const std::string& topic) : BaseMessageGenerator(node), TypedNodeStore<NodeType>(node)  {}
     ~MessageGenerator() {
     }
 };
 
+//Macro for creating prototype for specific generators - note that this allows us to define the
+//generate function for specific node/message combinations (in messaging.cpp)
 #define MESSAGE_GENERATOR(X, Y) \
     template<> \
     struct MessageGenerator<X, Y> : public BaseMessageGenerator, public TypedNodeStore<X> { \
         public: \
             typedef Y message_type; \
             typedef X node_type; \
-            MessageGenerator<X, Y>(boost::shared_ptr<X> node) : BaseMessageGenerator(node), TypedNodeStore<X>(node){} \
-            virtual boost::shared_ptr<const Message> generate(); \
+            MessageGenerator<X, Y>(boost::shared_ptr<X> node, const std::string& topic) : \
+                BaseMessageGenerator(node), TypedNodeStore<X>(node){ \
+                //Possibly we could be more efficient by not creating a new handle everytime we create a generator \
+                ros::NodeHandle nh; \
+                m_pub = nh.advertise<Y>(topic); \
+            } \
+            virtual void publish(); \
     };
 
-
-
-
+//Default message handler
+//(note that we don't need a base message handler, as this is equivalent to a ROS subscriber)
 template<class NodeType, class MessageType>
-struct MessageHandler : public TypedNodeStore<NodeType>, public MessageObserver {
+struct MessageHandler : public TypedNodeStore<NodeType>, public ros::Subscriber {
 public:
     MessageHandler(boost::shared_ptr<NodeType> node) : TypedNodeStore<NodeType>(node) {}
 };
 
+//Macro for prototypes for specific observers
+//so we can define specific onMessage functions in messaging.cpp
 #define MESSAGE_OBSERVER(X, Y) \
     template<> \
-    struct MessageHandler<X, Y > : public TypedNodeStore<X >, public MessageObserver { \
+    struct MessageHandler<X, Y > : public TypedNodeStore<X > { \
         public: \
             typedef Y message_type; \
             typedef X node_type; \
             MessageHandler<X, Y >(boost::shared_ptr<X > node) : TypedNodeStore<X >(node){} \
-            virtual void on ## Y (Y ## _ptr); \
+            //onMessage (note that ROS callback is e.g. void callback(const std_msgs::String::ConstPtr&);\
+            virtual void onMessage (const Y ## ::ConstPtr&); \
     };
 
+#warning TODO Give this a different name to observers, in case we want to use the same node/message type in different situations
+//Macro for prototypes for specific combination generators/observers
+//Note no general/base case for this
 #define MESSAGE_OBSERVER_GENERATOR(X, Y) \
     template<> \
     struct MessageHandler<X, Y > : public MessageGenerator<X, Y>, public MessageObserver { \
@@ -98,14 +119,13 @@ public:
             typedef Y message_type; \
             typedef X node_type; \
             MessageHandler<X, Y >(boost::shared_ptr<X > node) : MessageGenerator<X, Y>(node){} \
-            virtual boost::shared_ptr<const Message> generate(); \
-            virtual void on ## Y (Y ## _ptr); \
+            // generate function - called when the node is changed \
+            virtual void publish(); \
+            // message handler - see above\
+            virtual void onMessage (const Y ## ::ConstPtr&); \
     };
 
-
-
-
-
+#if 0
 struct BaseNodeGenerator : public MessageObserver {
     BaseNodeGenerator(boost::shared_ptr<Node> parent) : m_node(parent){}
 protected:
@@ -130,14 +150,17 @@ public:
 
 #endif
 
+MESSAGE_OBSERVER(MotorsNode, cauv_control::MotorDemand)
+//MESSAGE_OBSERVER_GENERATOR(MotorsNode, cauv_control::ExternalMotorDemand)
+
 #if 0
-MESSAGE_OBSERVER_GENERATOR(MotorNode, MotorStateMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotNode, BearingAutopilotEnabledMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotNode, PitchAutopilotEnabledMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotNode, DepthAutopilotEnabledMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotParamsNode, DepthAutopilotParamsMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotParamsNode, PitchAutopilotParamsMessage)
 MESSAGE_OBSERVER_GENERATOR(AutopilotParamsNode, BearingAutopilotParamsMessage)
+
 MESSAGE_OBSERVER(GroupingNode, PenultimateResortTimeoutMessage)
 MESSAGE_GENERATOR(NumericNode<float>, SetPenultimateResortTimeoutMessage)
 MESSAGE_OBSERVER(AutopilotNode, ControllerStateMessage)

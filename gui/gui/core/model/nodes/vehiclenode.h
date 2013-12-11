@@ -12,7 +12,7 @@
 namespace cauv {
     namespace gui {
 
-        class BaseMessageGenerator;
+        //class BaseMessageGenerator;
 
         class Vehicle : public Node
         {
@@ -37,7 +37,6 @@ namespace cauv {
             typedef std::set<boost::shared_ptr<BaseMessageGenerator> > generator_set_t;
             typedef std::set<boost::shared_ptr<MessageObserver> > observer_set_t;
 
-#if 0
             void attachGenerator(boost::shared_ptr<BaseMessageGenerator> generator)
             {
                 connect(generator->node().get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)),
@@ -76,7 +75,6 @@ namespace cauv {
                 }
                 m_observers.erase(node);
             }
-#endif
 
         protected Q_SLOTS:
             void nodeRemoved() {

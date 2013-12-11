@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
             roscpp
             cauv_utility
             cauv_debug
+            cauv_control
             std_msgs
             message_generation)
 find_package(Boost REQUIRED)
@@ -24,6 +25,7 @@ catkin_package(
 
 include_directories(${Boost_INCLUDE_DIRS}
                     ${cauv_utility_INCLUDE_DIRS}
+                    ${catkin_INCLUDE_DIRS}
                     )
 
 option(CAUV_BUILD_GUI "Whether or not to use the GUI" ON)

@@ -9,20 +9,35 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-#warning TODO
-#if 0
 
 /* Motor message handling */
 
-boost::shared_ptr<const Message> MessageHandler<MotorNode, MotorStateMessage>::generate() {
-    return boost::make_shared<MotorMessage>(ControlLockToken(0,0,10000), boost::get<MotorID::e>(m_node->nodeId()), (int8_t) m_node->typedGet());
+void MessageHandler<MotorsNode, MotorDemand>::onMessage(const cauv_control::MotorDemand::ConstPtr& message){
+    m_node->find<MotorNode>("prop")->typedUpdate(message->prop);
+    m_node->find<MotorNode>("hbow")->typedUpdate(message->hbow);
+    m_node->find<MotorNode>("vbow")->typedUpdate(message->vbow);
+    m_node->find<MotorNode>("hstern")->typedUpdate(message->hstern);
+    m_node->find<MotorNode>("vstern")->typedUpdate(message->vstern);
 }
 
-void MessageHandler<MotorNode, MotorStateMessage>::onMotorStateMessage(MotorStateMessage_ptr message){
+
+#warning TODO
+#if 0
+
+void MessageHandler<MotorNode, cauv_control::ExternalMotorDemand>::generate() {
+    cauv_control::ExternalMotorDemand demand;
+    demand.
+    m_pub.publish()
+    return;
+}
+
+void MessageHandler<MotorNode, MotorDemand>::onMessage(const cauv_control::ExternalMotorDemand::ConstPtr& message){
     if(message->motorId() == boost::get<MotorID::e>(m_node->nodeId())){
         m_node->typedUpdate((int)message->speed());
     }
 }
+
+
 
 /* Autopilot message handling */
 
@@ -36,8 +51,8 @@ template<class T> void updateAutopilotNode(boost::shared_ptr<AutopilotNode> node
     node->findOrCreate<NumericNode<float> >("target")->typedUpdate(message->target());
 }
 
-void MessageHandler<AutopilotNode, DepthAutopilotEnabledMessage>::onDepthAutopilotEnabledMessage(
-        DepthAutopilotEnabledMessage_ptr message){
+//TODO again too many handlers according to the current system
+void MessageHandler<AutopilotNode, DepthAutopilotEnabledMessage>::onMessage(const  message){
     updateAutopilotNode(m_node, message);
 }
 

@@ -13,7 +13,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <ros/node_handle.h>
-//#include <ros/publisher.h>
+#include <ros/publisher.h>
 
 #include <cauv_control/ControlToken.h>
 
@@ -55,7 +55,7 @@ class ControlLoops : public IMUObserver, public boost::enable_shared_from_this<C
         void motorControlLoop();
         void updateMotorControl();
 
-        void onExternalMotorDemand(const MotorDemand::Ptr &msg);
+        void onExternalMotorDemand(const cauv_control::ExternalMotorDemand::ConstPtr &msg);
 
         ros::Publisher motor_pub;
         ros::Publisher attitude_pub;

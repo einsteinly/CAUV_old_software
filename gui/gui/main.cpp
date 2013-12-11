@@ -12,6 +12,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
+#include <ros/init.h>
+
 #include <debug/cauv_debug.h>
 
 #include <QApplication>
@@ -50,6 +52,7 @@ struct Application : public QApplication{
 
 int main(int argc, char** argv)
 {
+    ros::init(argc, argv, "GUI");
     Application app(argc, argv);
     Q_INIT_RESOURCE(resources);
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));

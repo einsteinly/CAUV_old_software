@@ -219,9 +219,8 @@ namespace cauv {
             }
         };
 
-
-#warning TODO
-#if 0
+#warning TODO fix this
+        /*
         template<>
         class NumericNode<BoundedFloat> : public NumericNodeBase {
         public:
@@ -280,7 +279,7 @@ namespace cauv {
                 NumericNodeBase::setWraps(value.type==BoundedFloatType::Wraps);
             }
         };
-#endif
+        */
 
 
         class BooleanNode : public NumericNode<bool> {

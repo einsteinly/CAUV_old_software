@@ -147,16 +147,7 @@ void CauvMainWindow::onRun()
 
     // data model and network access
     boost::shared_ptr<VehicleRegistry> registry = VehicleRegistry::instance();
-    connect(registry.get(), SIGNAL(observerAttached(boost::shared_ptr<MessageObserver>)),
-            this, SLOT(registerObserver(boost::shared_ptr<MessageObserver>)));
-    connect(registry.get(), SIGNAL(observerDetached(boost::shared_ptr<MessageObserver>)),
-            this, SLOT(unregisterObserver(boost::shared_ptr<MessageObserver>)));
-    connect(registry.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
-            this, SLOT(send(boost::shared_ptr<const Message>)));
     m_actions->root = boost::make_shared<NodeItemModel>(VehicleRegistry::instance());
-
-    // cauv node
-    //m_actions->node = shared_from_this();
     
     // Exposed interface elements - plugins might need to access some
     // elements of the main GUI framework. Here's where we can pass

@@ -5,17 +5,24 @@
 
 
 
+#include <ros/node_handle.h>
+#include <ros/subscriber.h>
+
 #include "plugin.h"
 
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 
-//#include <ros/node_handle.h>
-//#include <ros/subscriber.h>
-
 #include <debug/cauv_debug.h>
 
+#include <model/messaging.h>
 #include <model/registry.h>
+
+//message types
+#include <std_msgs/Float32.h>
+#include <cauv_control/MotorDemand.h>
+#include <cauv_control/PIDParams.h>
+#include <cauv_control/PIDTarget.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -26,7 +33,14 @@ const QString BarracudaPlugin::name() const{
 
 void BarracudaPlugin::initialise(){
     VehicleRegistry::instance()->registerVehicle<Barracuda>("barracuda");
-/*
+    
+    //create subscribers
+    ros::NodeHandle nh;
+    m_telemetry_motor_sub = nh.subscribe("control/motors", 1, &BarracudaPlugin::onMotorsMessage, this);
+    m_telemetry_attitude_sub = nh.subscribe("control/attitude", 1, &BarracudaPlugin::onAttitudeMessage, this);
+    m_telemetry_depth_sub = nh.subscribe("control/depth", 1, &BarracudaPlugin::onDepthMessage, this);
+    
+    /*
     boost::shared_ptr<CauvNode> node = m_actions->node.lock();
     if(node){
         node->joinGroup("telemetry");
@@ -48,14 +62,14 @@ Barracuda::Barracuda(const std::string& name) : Vehicle(name) {
 
 void Barracuda::initialise() {
     // set up motors
-    boost::shared_ptr<GroupingNode> motors = findOrCreate<GroupingNode>("motors");
+    boost::shared_ptr<GroupingNode> motors = findOrCreate<MotorsNode>("motors");
     //connect(motors.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)), this, SLOT(setupMotor(boost::shared_ptr<Node>)));
     //TODO add messages and then sort this
-//     setupMotor(motors->findOrCreate<MotorNode>(MotorID::HBow));
-//     setupMotor(motors->findOrCreate<MotorNode>(MotorID::HStern));
-//     setupMotor(motors->findOrCreate<MotorNode>(MotorID::Prop));
-//     setupMotor(motors->findOrCreate<MotorNode>(MotorID::VBow));
-//     setupMotor(motors->findOrCreate<MotorNode>(MotorID::VStern));
+    attachGenerator(boost::make_shared<MessageHandler<MotorsNode, cauv_control::MotorDemand> >(motors));
+//      setupMotor(motors->findOrCreate<MotorNode>(MotorID::HStern));
+//      setupMotor(motors->findOrCreate<MotorNode>(MotorID::Prop));
+//      setupMotor(motors->findOrCreate<MotorNode>(MotorID::VBow));
+//      setupMotor(motors->findOrCreate<MotorNode>(MotorID::VStern));
 
     // set up autopilots
     boost::shared_ptr<GroupingNode> autopilots = findOrCreate<GroupingNode>("autopilots");
@@ -112,7 +126,9 @@ void Barracuda::initialise() {
     debug->setMutable(true);
 //     attachGenerator(boost::make_shared<MessageHandler<NumericNode<int>, DebugLevelMessage> >(debug));
 }
+
 /*
+
 void Barracuda::setupMotor(boost::shared_ptr<MotorNode> motor){
     motor->setMax(127);
     motor->setMin(-127);

@@ -17,6 +17,7 @@
 #include <ros/node_handle.h>
 
 #include <std_msgs/Float32.h>
+#include <cauv_control/ExternalMotorDemand.h>
 #include <cauv_control/PIDParams.h>
 #include <cauv_control/PIDTarget.h>
 
@@ -93,8 +94,12 @@ void ControlLoops::onDepth(float depth)
     depth_pub.publish(msg);
 }
 
-void ControlLoops::onExternalMotorDemand(const MotorDemand::Ptr &msg) {
-    external_demand = *msg;
+void ControlLoops::onExternalMotorDemand(const cauv_control::ExternalMotorDemand::ConstPtr &msg) {
+    if (msg->setProp) {external_demand.prop = msg->prop;}
+    if (msg->setHbow) {external_demand.hbow = msg->hbow;}
+    if (msg->setVbow) {external_demand.vbow = msg->vbow;}
+    if (msg->setHstern) {external_demand.hstern = msg->hstern;}
+    if (msg->setVstern) {external_demand.vstern = msg->vstern;}
 }
 
 void ControlLoops::motorControlLoop()
