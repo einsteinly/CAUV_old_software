@@ -31,7 +31,7 @@
 Q_DECLARE_METATYPE(std::basic_string<char>)
 Q_DECLARE_METATYPE(std::vector<int32_t>)
 
-using namespace std::rel_ops;
+//using namespace std::rel_ops;
 
 namespace cauv {
     namespace gui {

@@ -10,11 +10,12 @@ find_package(catkin REQUIRED)
 find_package(Boost REQUIRED)
 
 catkin_package(
-    INCLUDE_DIRS ..
+    INCLUDE_DIRS "./.."
     DEPENDS Boost
 )
 
 include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 add_library(cauv_utility
     STATIC

@@ -35,6 +35,7 @@ include_directories(${Boost_INCLUDES}
                     )
 
 include_directories(${catkin_INCLUDE_DIRS})
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../")
 
 add_executable (
     cauv_control

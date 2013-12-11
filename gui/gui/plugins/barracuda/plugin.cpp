@@ -5,18 +5,16 @@
 
 
 
-#include <ros/node_handle.h>
-#include <ros/subscriber.h>
-
-#include "plugin.h"
-
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "plugin.h"
 #include <debug/cauv_debug.h>
 
 #include <model/messaging.h>
 #include <model/registry.h>
+
+#include <ros/node_handle.h>
 
 //message types
 #include <std_msgs/Float32.h>
