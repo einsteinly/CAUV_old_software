@@ -18,6 +18,8 @@
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
+#include <ros/spinner.h>
+
 #include <debug/cauv_debug.h>
 
 #include <liquid/view.h>
@@ -196,7 +198,10 @@ void CauvMainWindow::onRun()
     // There was a mutiny against the radial menu...
     m_actions->view->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_actions->view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(createContextMenu(QPoint)));
-
+    
+    //start mssage processing
+    ros::AsyncSpinner spinner(1); // Use 1 thread
+    spinner.start();
     m_application->exec();
 
     foreach(CauvInterfacePlugin * plugin, m_plugins){

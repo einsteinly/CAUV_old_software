@@ -12,12 +12,12 @@ using namespace cauv::gui;
 
 /* Motor message handling */
 
-void MessageHandler<MotorsNode, MotorDemand>::onMessage(const cauv_control::MotorDemand::ConstPtr& message){
-    m_node->find<MotorNode>("prop")->typedUpdate(message->prop);
-    m_node->find<MotorNode>("hbow")->typedUpdate(message->hbow);
-    m_node->find<MotorNode>("vbow")->typedUpdate(message->vbow);
-    m_node->find<MotorNode>("hstern")->typedUpdate(message->hstern);
-    m_node->find<MotorNode>("vstern")->typedUpdate(message->vstern);
+void MessageHandler<MotorsNode, cauv_control::MotorDemand>::onMessage(const cauv_control::MotorDemand::ConstPtr& message){
+    m_node->findOrCreate<MotorNode>("prop")->typedUpdate(message->prop);
+    m_node->findOrCreate<MotorNode>("hbow")->typedUpdate(message->hbow);
+    m_node->findOrCreate<MotorNode>("vbow")->typedUpdate(message->vbow);
+    m_node->findOrCreate<MotorNode>("hstern")->typedUpdate(message->hstern);
+    m_node->findOrCreate<MotorNode>("vstern")->typedUpdate(message->vstern);
 }
 
 

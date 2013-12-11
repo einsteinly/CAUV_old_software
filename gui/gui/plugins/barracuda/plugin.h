@@ -28,7 +28,7 @@ namespace cauv {
             virtual const QString name() const;
             virtual void initialise();
         private:
-            //ros::Subscriber m_telemetry_motor_sub;
+            ros::Subscriber m_telemetry_motor_sub;
             ros::Subscriber m_telemetry_attitude_sub;
             ros::Subscriber m_telemetry_depth_sub;
         };
@@ -45,8 +45,8 @@ namespace cauv {
 
             protected Q_SLOTS:
                 void setupMotor(boost::shared_ptr<MotorNode>);
-                void setupAutopilot(boost::shared_ptr<AutopilotNode>);
-                void setupImager(boost::shared_ptr<Node>);
+                //void setupAutopilot(boost::shared_ptr<AutopilotNode>);
+                //void setupImager(boost::shared_ptr<Node>);
         };
 
     } // namespace gui

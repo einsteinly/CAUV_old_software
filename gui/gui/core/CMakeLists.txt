@@ -132,4 +132,5 @@ target_link_libraries ( gui-core
         liquid
         pthread
         ${QT_LIBRARIES}
+        ${catkin_LIBRARIES}
     )

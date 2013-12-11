@@ -62,6 +62,7 @@ else()
         gui-core
         liquid
         ${QT_LIBRARIES}
+        ${catkin_LIBRARIES}
     )
 
 #    add_custom_target ( guiall

@@ -33,10 +33,6 @@ void BarracudaPlugin::initialise(){
     VehicleRegistry::instance()->registerVehicle<Barracuda>("barracuda");
     
     //create subscribers
-    ros::NodeHandle nh;
-    m_telemetry_motor_sub = nh.subscribe("control/motors", 1, &BarracudaPlugin::onMotorsMessage, this);
-    m_telemetry_attitude_sub = nh.subscribe("control/attitude", 1, &BarracudaPlugin::onAttitudeMessage, this);
-    m_telemetry_depth_sub = nh.subscribe("control/depth", 1, &BarracudaPlugin::onDepthMessage, this);
     
     /*
     boost::shared_ptr<CauvNode> node = m_actions->node.lock();
@@ -60,17 +56,17 @@ Barracuda::Barracuda(const std::string& name) : Vehicle(name) {
 
 void Barracuda::initialise() {
     // set up motors
-    boost::shared_ptr<GroupingNode> motors = findOrCreate<MotorsNode>("motors");
+    boost::shared_ptr<MotorsNode> motors = findOrCreate<MotorsNode>("motors");
     //connect(motors.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)), this, SLOT(setupMotor(boost::shared_ptr<Node>)));
     //TODO add messages and then sort this
-    attachGenerator(boost::make_shared<MessageHandler<MotorsNode, cauv_control::MotorDemand> >(motors));
+    attachObserver(motors, boost::make_shared<MessageHandler<MotorsNode, cauv_control::MotorDemand> >(motors, "control/motors"));
 //      setupMotor(motors->findOrCreate<MotorNode>(MotorID::HStern));
 //      setupMotor(motors->findOrCreate<MotorNode>(MotorID::Prop));
 //      setupMotor(motors->findOrCreate<MotorNode>(MotorID::VBow));
 //      setupMotor(motors->findOrCreate<MotorNode>(MotorID::VStern));
 
     // set up autopilots
-    boost::shared_ptr<GroupingNode> autopilots = findOrCreate<GroupingNode>("autopilots");
+    //boost::shared_ptr<GroupingNode> autopilots = findOrCreate<GroupingNode>("autopilots");
 //     setupAutopilot(autopilots->findOrCreate<AutopilotNode>(Controller::Bearing));
 //     setupAutopilot(autopilots->findOrCreate<AutopilotNode>(Controller::Depth));
 //     setupAutopilot(autopilots->findOrCreate<AutopilotNode>(Controller::Pitch));

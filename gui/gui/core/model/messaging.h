@@ -13,6 +13,7 @@
 
 #include <ros/node_handle.h>
 #include <ros/subscriber.h>
+#include <ros/publisher.h>
 
 #include <model/node.h>
 #include <model/nodes/numericnode.h>
@@ -89,9 +90,22 @@ public:
     };
 
 //Default message handler
-//(note that we don't need a base message handler, as this is equivalent to a ROS subscriber)
+
+class BaseMessageHandler {
+public:
+    BaseMessageHandler(boost::shared_ptr<Node> node) : m_baseNode(node){}
+    
+    boost::shared_ptr<Node> node() {
+        return m_baseNode;
+    }
+    
+protected:
+    boost::shared_ptr<Node> m_baseNode;
+    ros::Subscriber m_sub;
+};
+
 template<class NodeType, class MessageType>
-struct MessageHandler : public TypedNodeStore<NodeType>, public ros::Subscriber {
+struct MessageHandler : public TypedNodeStore<NodeType>, public BaseMessageHandler {
 public:
     MessageHandler(boost::shared_ptr<NodeType> node) : TypedNodeStore<NodeType>(node) {}
 };
@@ -100,13 +114,16 @@ public:
 //so we can define specific onMessage functions in messaging.cpp
 #define MESSAGE_OBSERVER(X, Y) \
     template<> \
-    struct MessageHandler<X, Y > : public TypedNodeStore<X > { \
+    struct MessageHandler<X, Y > : public TypedNodeStore<X >, public BaseMessageHandler { \
         public: \
             typedef Y message_type; \
             typedef X node_type; \
-            MessageHandler<X, Y >(boost::shared_ptr<X > node) : TypedNodeStore<X >(node){} \
-            //onMessage (note that ROS callback is e.g. void callback(const std_msgs::String::ConstPtr&);\
-            virtual void onMessage (const Y ## ::ConstPtr&); \
+            MessageHandler<X, Y >(boost::shared_ptr<X > node, const std::string& topic) : \
+                TypedNodeStore<X >(node), BaseMessageHandler(node){ \
+                ros::NodeHandle nh; \
+                m_sub = nh.subscribe(topic, 10, &MessageHandler<X, Y >::onMessage, this); \
+            } \
+            virtual void onMessage (const Y::ConstPtr&); \
     };
 
 #warning TODO Give this a different name to observers, in case we want to use the same node/message type in different situations
@@ -114,7 +131,7 @@ public:
 //Note no general/base case for this
 #define MESSAGE_OBSERVER_GENERATOR(X, Y) \
     template<> \
-    struct MessageHandler<X, Y > : public MessageGenerator<X, Y>, public MessageObserver { \
+    struct MessageHandler<X, Y > : public MessageGenerator<X, Y>, public BaseMessageObserver { \
         public: \
             typedef Y message_type; \
             typedef X node_type; \
@@ -122,7 +139,7 @@ public:
             // generate function - called when the node is changed \
             virtual void publish(); \
             // message handler - see above\
-            virtual void onMessage (const Y ## ::ConstPtr&); \
+            virtual void onMessage (const Y::ConstPtr&); \
     };
 
 #if 0
