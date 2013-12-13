@@ -1,0 +1,4 @@
+-------NAMESPACES-----------------
+cauv/
+    common/
+    gui/

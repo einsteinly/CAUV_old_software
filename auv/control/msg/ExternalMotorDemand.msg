@@ -1,0 +1,10 @@
+bool setProp
+float32 prop
+bool setVbow
+float32 vbow
+bool setHbow
+float32 hbow
+bool setVstern
+float32 vstern
+bool setHstern
+float32 hstern
