@@ -12,8 +12,6 @@
 namespace cauv {
     
 namespace pipeline_model {
-
-typedef int NodeId;
     
 class PipelineModel {
     //(basic) pipeline model, providing methods to convert to/from xml

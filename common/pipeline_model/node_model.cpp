@@ -47,6 +47,16 @@ NodeModel::NodeModel(const std::string type_, PipelineModel &pipeline_) :
      setName(name_str.str());
 }
 
+NodeModel::NodeModel(NodeModelType& type_, PipelineModel &pipeline_) :
+ type(type_),
+ id(current_id),
+ pipeline(pipeline_) {
+     current_id++;
+     std::stringstream name_str;
+     name_str << type.name << " " << id;
+     setName(name_str.str());
+}
+
 void NodeModel::setName(const std::string &new_name) {
     if (name == new_name) {
         return;

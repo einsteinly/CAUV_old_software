@@ -20,7 +20,6 @@
 
 #include <fluidity/managedElement.h>
 #include <fluidity/fNode.h>
-#include <fluidity/fNodeIO.h>
 
 class QGraphicsProxyWidget;
 
@@ -39,7 +38,6 @@ namespace f{
 class FNodeInput: public pipeline_model::InputModel,
                   public liquid::ArcSinkLabel,
                   public liquid::ConnectionSink,
-                  public FNodeIO,
                   public ManagedElement{
     protected:
         FNodeInput(Manager& m,
@@ -64,8 +62,8 @@ class FNodeInput: public pipeline_model::InputModel,
 class FNodeImageInput: public FNodeInput{
     public:
         FNodeImageInput(Manager& m, LocalNodeInput const& input, FNode* node); 
-        virtual OutputType::e ioType() const;
-        virtual SubType subType() const;
+        //virtual OutputType::e ioType() const;
+        //virtual SubType subType() const;
     
     private:
         static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType::e const& st);
@@ -76,8 +74,8 @@ class FNodeParamInput: public FNodeInput{
     public:
         FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode* node);
         ~FNodeParamInput();
-        virtual OutputType::e ioType() const;
-        virtual SubType subType() const;
+        //virtual OutputType::e ioType() const;
+        //virtual SubType subType() const;
 
         virtual void setCollapsed(bool state);
 
@@ -96,10 +94,10 @@ class FNodeParamInput: public FNodeInput{
 
         void initView();
 
-        SubType m_subtype;
+        //SubType m_subtype;
         std::set<int32_t> m_compatible_subtypes;
 
-        boost::shared_ptr<Node> m_model_node;
+        //boost::shared_ptr<Node> m_model_node;
         NodeTreeView* m_view;
         liquid::ProxyWidget* m_view_proxy;
 };

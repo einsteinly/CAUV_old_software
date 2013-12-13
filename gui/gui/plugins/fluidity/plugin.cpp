@@ -69,6 +69,8 @@ class FluidityDropHandler: public DropHandlerInterface<QGraphicsItem*> {
 
 
 
+bool FluidityPlugin::is_first = false;
+
 FluidityPlugin::FluidityPlugin() : m_parent(VehicleRegistry::instance()){
 }
 
@@ -109,6 +111,8 @@ void FluidityPlugin::initialise(){
     } else {
         CAUV_LOG_ERROR("Failed to get topic list from master.");
     }
+#warning TESTING
+    boost::shared_ptr<FluidityNode> test = pipelines->findOrCreate<FluidityNode>("test");
 }
 
 void FluidityPlugin::setupPipeline(boost::shared_ptr<Node> node){

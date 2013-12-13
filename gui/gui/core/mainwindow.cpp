@@ -229,6 +229,8 @@ int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
                 plugin->deleteLater();
                 CAUV_LOG_WARNING("Rejected plugin:"<< fileName.toStdString());
             }
+        } else {
+            CAUV_LOG_ERROR("Failed to load plugin:" << fileName.toStdString() << loader.errorString().toStdString());
         }
     }
 

@@ -64,13 +64,13 @@ class FView: public liquid::LiquidView{
 
     protected:
         // QWidget
-        void contextMenuEvent(QContextMenuEvent *event);
+        //void contextMenuEvent(QContextMenuEvent *event);
         //void resizeEvent(QResizeEvent* event);
         //void scrollContentsBy(int dx, int dy);
         void paintEvent(QPaintEvent * event);
 
         // temporary keyboard shortcut hook:
-        virtual void keyPressEvent(QKeyEvent *event);
+        //virtual void keyPressEvent(QKeyEvent *event);
 
         virtual void mouseMoveEvent(QMouseEvent *event);
 

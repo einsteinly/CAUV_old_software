@@ -167,7 +167,7 @@ void FView::init(const std::string& pipeline_name,
 }
 
 FView::~FView(){
-    debug() << "~FView()";
+    CAUV_LOG_DEBUG(1, "~FView()");
     std::vector< std::pair<QPoint, QGraphicsWidget*> >::iterator i;
     for(i = m_overlay_items.begin(); i != m_overlay_items.end(); i++){
         if(i->second->scene())
@@ -205,7 +205,8 @@ void FView::_initInMode(Mode const& mode){
         setViewportUpdateMode(QGraphicsView::MinimalViewportUpdate);
         m_scenerect_update_timer->stop();
 
-        initMenu();
+#warning menu
+//         initMenu();
     }else{
         setViewport(nullptr);
         setRenderHints(
@@ -226,7 +227,8 @@ void FView::_initInMode(Mode const& mode){
         m_scenerect_update_timer->setInterval(1000);
         m_scenerect_update_timer->start();
 
-        initMenu();
+#warning
+//         initMenu();
     }
 
 }
@@ -450,21 +452,21 @@ void FView::paintEvent(QPaintEvent * event){
     LiquidView::paintEvent(event);
 }
 
-// !!! temporary keyboard shortcut hack
-void FView::keyPressEvent(QKeyEvent *event){
-    LiquidView::keyPressEvent(event);
-    if(!event->isAccepted()){
-        event->accept();
-        switch(event->key()){
-            case Qt::Key_R:
-                m_manager->requestRefresh();
-                break;
-            default:
-                event->ignore();
-                break;
-        }
-    }
-}
+// // !!! temporary keyboard shortcut hack
+// void FView::keyPressEvent(QKeyEvent *event){
+//     LiquidView::keyPressEvent(event);
+//     if(!event->isAccepted()){
+//         event->accept();
+//         switch(event->key()){
+//             case Qt::Key_R:
+//                 m_manager->requestRefresh();
+//                 break;
+//             default:
+//                 event->ignore();
+//                 break;
+//         }
+//     }
+// }
 
 void FView::mouseMoveEvent(QMouseEvent *event){
     m_manager->delayLayout();
@@ -483,7 +485,7 @@ void FView::_updateOverlays(){
             y = QWidget::rect().bottom() + i->first.y();
         else
             y = i->first.y();
-        debug(8) << "_updateOverlays:" << i->first.x() << i->first.y() << "->" << x << y;
+        CAUV_LOG_DEBUG(8, "_updateOverlays:" << i->first.x() << i->first.y() << "->" << x << y);
         const QPointF new_pos = mapToScene(x, y);
         if((i->second->pos() - new_pos).manhattanLength() > 0.1)
             i->second->setPos(new_pos);

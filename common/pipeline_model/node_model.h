@@ -54,6 +54,7 @@ class PipelineModel;
 class NodeModel : public boost::enable_shared_from_this<NodeModel> {
 public:
     NodeModel(const std::string type, PipelineModel &pipeline);
+    NodeModel(NodeModelType& type_, PipelineModel &pipeline_);
 
     virtual void connectOutput(const std::string output, InputModel&);
     virtual void connectInput(const std::string input, OutputModel&);

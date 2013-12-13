@@ -10,6 +10,8 @@
 namespace cauv{
 namespace gui{
 namespace f{
+    
+#include <common/pipeline_model/edge_model.h>
 
 class FNode;
 

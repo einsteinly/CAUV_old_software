@@ -23,7 +23,7 @@
 
 #include "elements/style.h"
 
-#include "fNodeIO.h"
+//#include "fNodeIO.h"
 #include "fNode.h"
 
 #include <debug/cauv_debug.h>
@@ -34,14 +34,14 @@ namespace f{
 
 class FNodeOutput: public pipeline_model::OutputModel,
                    public QGraphicsWidget,
-                   public FNodeIO,
+                   //public FNodeIO,
                    public liquid::ArcSourceDelegate{
     Q_OBJECT
     public:
         FNodeOutput(FNode* node, liquid::ArcStyle const& arc_style, const std::string& id)
             : model::OutputNode(...., node),
               QGraphicsWidget(node),
-              FNodeIO(node, id),
+              //FNodeIO(node, id),
               m_source(NULL),
               m_text(NULL){
             QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(
@@ -77,11 +77,11 @@ class FNodeOutput: public pipeline_model::OutputModel,
         }
         virtual ~FNodeOutput(){}
 
-        virtual OutputType::e ioType() const = 0;
+        //virtual OutputType::e ioType() const = 0;
 
-        virtual SubType subType() const{
-            return -1;
-        }
+        //virtual SubType subType() const{
+        //    return -1;
+        //}
 
         liquid::Arc* arc() const{
             return m_source->arc();

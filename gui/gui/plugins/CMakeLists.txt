@@ -20,5 +20,5 @@ endfunction()
 # plugin directories
 #add_subdirectory (processes)
 #add_subdirectory (ai)
-#add_subdirectory (fluidity)
+add_subdirectory (fluidity)
 add_subdirectory (barracuda)

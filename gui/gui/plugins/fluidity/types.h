@@ -17,7 +17,7 @@ class FNode;
 
 typedef FNode* fnode_ptr;
 
-typedef int32_t node_id_t;
+typedef int NodeId;
 
 } // namespace f
 } // namespace gui

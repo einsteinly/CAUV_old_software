@@ -20,6 +20,7 @@ generate_messages(DEPENDENCIES std_msgs)
 catkin_package(
     DEPENDS Boost
     CATKIN_DEPENDS cauv_debug cauv_utility roscpp roslib
+    LIBRARIES cauv_pipeline_model
 )
 
 include_directories(${Boost_INCLUDES} 
@@ -57,7 +58,7 @@ target_link_libraries (
     ${catkin_LIBRARIES}
 )
 
-install(TARGETS model_test
+install(TARGETS model_test cauv_pipeline_model
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})

@@ -13,13 +13,14 @@ find_package(catkin REQUIRED COMPONENTS
             roscpp
             cauv_debug
             std_msgs
-            message_generation)
+            message_generation
+            cauv_pipeline_model)
 find_package(cauv_utility REQUIRED)
 find_package(Boost REQUIRED)
 
 catkin_package(
     DEPENDS Boost
-    CATKIN_DEPENDS cauv_utility
+    CATKIN_DEPENDS cauv_utility cauv_pipeline_model
 )
 
 include_directories(${Boost_INCLUDE_DIRS}

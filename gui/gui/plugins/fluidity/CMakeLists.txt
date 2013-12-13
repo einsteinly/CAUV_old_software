@@ -13,7 +13,7 @@ set ( FLUIDITY_PLUGIN_SRCS
     view.cpp
     managedElement.cpp
     manager.cpp
-    fNodeInput.cpp
+    #fNodeInput.cpp
 )
 
 set ( FLUIDITY_PLUGIN_UIS
@@ -26,10 +26,10 @@ set ( FLUIDITY_PLUGIN_H
     view.h
     manager.h
     fNode.h
-    fNodeOutput.h
-    fNodeInput.h
+    #fNodeOutput.h
+    #fNodeInput.h
     menu.h
-    imageSource.h
+    #imageSource.h
 )
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/auv)
@@ -43,10 +43,14 @@ add_library( fluidityplugin MODULE
     ${FLUIDITY_PLUGIN_UIS_H}
     ${FLUIDITY_PLUGIN_MOC_H}
 )
-cauv_install_plugin(fluidityplugin)
+
+install(TARGETS fluidityplugin
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/cauv_gui/plugins
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}/cauv_gui/plugins
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}/cauv_gui/plugins)
 
 target_link_libraries( fluidityplugin
     gui-core
-    cauv_pipeline_model
+    ${cauv_pipeline_model_LIBRARIES}
     ${QT_LIBRARIES}
 )

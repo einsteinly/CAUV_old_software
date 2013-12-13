@@ -24,7 +24,7 @@
 #include <drag/graphDropHandler.h>
 
 #include "fNode.h"
-#include "imageSource.h"
+//#include "imageSource.h"
 
 using namespace cauv;
 using namespace cauv::gui::f;
@@ -41,30 +41,30 @@ bool Manager::_nameMatches(boost::shared_ptr<const message_T> msg){
 #endif
 
 // - Static helper functions
-static bool isImageNode(NodeType::e t){
-    return t == NodeType::GuiOutput;
-}
-
-static bool isInvalid(NodeType::e t){
-    return t == NodeType::Invalid;
-}
-
-static bool isInvalid(node_id_t const& id){
-    return id == 0;
-}
+// static bool isImageNode(NodeType::e t){
+//     return t == NodeType::GuiOutput;
+// }
+// 
+// static bool isInvalid(NodeType::e t){
+//     return t == NodeType::Invalid;
+// }
+// 
+// static bool isInvalid(NodeId const& id){
+//     return id == 0;
+// }
 
 // - General Public Implementation:
 Manager::Manager(NodeScene *scene,
                  boost::shared_ptr<Node> model_parent,
                  const std::string& pipeline_name)
-    : PipelineModel(),
+    : PipelineModel(pipeline_name),
       QObject(),
       //DropHandlerInterface<QGraphicsItem*>(),
       boost::enable_shared_from_this<Manager>(),
       m_scene(scene),
-      m_nodes(),
-      m_pipeline_name(pipeline_name),
-      m_image_sources(), 
+//       m_nodes(),
+//       m_pipeline_name(pipeline_name),
+//       m_image_sources(), 
       m_focus_scenepos(0,0),
       m_layout_soon_timer(new QTimer()),
       m_model_parent(model_parent),
@@ -78,7 +78,7 @@ Manager::Manager(NodeScene *scene,
 }
 
 Manager::~Manager(){
-    debug() << "~Manager()";
+    CAUV_LOG_DEBUG(1, "~Manager()");
     teardown();
     delete m_layout_soon_timer;
 }
@@ -96,7 +96,7 @@ void Manager::init(){
 //     m_cauv_node->subMessage(ArcRemovedMessage());
 //     m_cauv_node->subMessage(GuiImageMessage());
 //     m_cauv_node->subMessage(StatusMessage());
-    requestRefresh();
+//     requestRefresh();
 }
 
 void Manager::teardown(){
@@ -162,13 +162,14 @@ QGraphicsItem* Manager::handle(boost::shared_ptr<cauv::gui::Node> const& node){
     return NULL;
 }*/
 
-// QList<QGraphicsItem*> Manager::rootNodes() const{
-//     QList<QGraphicsItem*> r;
+QList<QGraphicsItem*> Manager::rootNodes() const{
+    QList<QGraphicsItem*> r;
+#warning
 //     node_id_map_t::right_const_iterator i;
 //     for(i = m_nodes.right().begin(); i != m_nodes.right().end(); i++)
 //         r << i->left;
-//     return r;
-// }
+    return r;
+}
 
 // - Message Observer Implementation: thunks
 // void Manager::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){

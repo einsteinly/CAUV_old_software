@@ -28,9 +28,9 @@ class FNodeParamInput;
 class FNodeOutput;
 class ImageSource;
 
-class FNode: public pipeline_model::NodeModel,
-             public liquid::LiquidNode,
-             public ManagedElement{
+class FNode: public liquid::LiquidNode,
+             public ManagedElement,
+             public pipeline_model::NodeModel{
         Q_OBJECT
     public:
 //         // - public typedefs
@@ -46,7 +46,7 @@ class FNode: public pipeline_model::NodeModel,
 //         typedef std::map<std::string, FNodeOutput*> str_out_map_t;
 
     public:
-        FNode(Manager& m, node_id_t id, pipeline_model::NodeModelType);
+        FNode(Manager& m, pipeline_model::NodeModelType node_type);
 //         FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p);
 
 //         node_id_t id() const{ return m_node_id; }
@@ -63,8 +63,8 @@ class FNode: public pipeline_model::NodeModel,
 //         void disconnectOutputFrom(const std::string& output, fnode_ptr, const std::string& input);
 //         void addImageDisplayOnInput(const std::string& input, boost::shared_ptr<ImageSource>);
 
-//         virtual void status(Status const& s, const std::string& status_information="");
-//         virtual void status(Status const& s, float const& throughput, float const& frequency, float const& time_taken, float const& time_ratio);
+        virtual void status(Status const& s, const std::string& status_information="");
+        virtual void status(Status const& s, float const& throughput, float const& frequency, float const& time_taken, float const& time_ratio);
     
     Q_SIGNALS:
 //         void closed(node_id_t const);
@@ -77,9 +77,9 @@ class FNode: public pipeline_model::NodeModel,
         virtual void fadeAndRemove();
         virtual void remove();
         
-        virtual void reExec();
-        virtual void duplicate();
-        virtual void toggleCollapsed();
+//         virtual void reExec();
+//         virtual void duplicate();
+//         virtual void toggleCollapsed();
 
     protected:
 //         FNodeOutput* output(const std::string& id);

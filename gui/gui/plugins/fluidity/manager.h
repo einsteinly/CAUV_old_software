@@ -43,8 +43,8 @@ namespace f{
 // - Forward Declarations in cauv::gui::f
 class ImageSource;
 
-class Manager: public pipeline_model::PipelineModel,
-               public QObject,
+class Manager: public QObject,
+               public pipeline_model::PipelineModel,
                //public DropHandlerInterface<QGraphicsItem*>,
                public boost::enable_shared_from_this<Manager>,
                public boost::noncopyable{
@@ -111,7 +111,7 @@ class Manager: public pipeline_model::PipelineModel,
 //                          std::vector<NodeInputArc> const& inputs = std::vector<NodeInputArc>(),
 //                          std::vector<NodeOutputArc> const& outputs = std::vector<NodeOutputArc>()); 
 //         void requestRemoveNode(node_id_t const& id);
-        void requestRefresh();
+//         void requestRefresh();
 //         void requestForceExec(node_id_t const& id);
 
         void pushAnimationPermittedState(bool permitted);
@@ -140,7 +140,7 @@ class Manager: public pipeline_model::PipelineModel,
 
         void _layoutSoonIfNothingHappens();
 
-        void _checkAddImageSource(node_id_t);
+//         void _checkAddImageSource(NodeId);
 
     protected:
         NodeScene *m_scene;

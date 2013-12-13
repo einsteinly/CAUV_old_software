@@ -86,7 +86,7 @@ class Menu: public QMenu{
         virtual void keyPressEvent(QKeyEvent* e){
             static bool recursed_hack = false;
             if(m_parent_menu){
-                debug() << "forward keypress to parent menu...";
+                CAUV_LOG_DEBUG(1, "forward keypress to parent menu...");
                 m_parent_menu->keyPressEvent(e);
             }else{
                 switch(e->key())
@@ -131,7 +131,7 @@ class Menu: public QMenu{
         }
 
         int updateSearchWithString(QString search){
-            debug(3) << title().toStdString() << "::" << __func__ << search.toStdString();
+            CAUV_LOG_DEBUG(3, title().toStdString() << "::" << __func__ << search.toStdString());
             
             m_total_filtered = 0;
 
@@ -181,7 +181,7 @@ class Menu: public QMenu{
                 setActiveIndex(0);
             updateTextBoxGeom();
             
-            debug(3) << title().toStdString() << "::" << __func__ << "total filtered = " << m_total_filtered;
+            CAUV_LOG_DEBUG(3, title().toStdString() << "::" << __func__ << "total filtered = " << m_total_filtered);
 
             return m_total_filtered;
         }
@@ -215,7 +215,7 @@ class Menu: public QMenu{
         }
         QAction* setActiveIndex(int& i, std::vector<std::pair<Menu*, QAction*> >& action_stack)
         {
-            debug(3) << title().toStdString() << "::" << __func__ << i;
+            CAUV_LOG_DEBUG(3, title().toStdString() << "::" << __func__ << i);
 
             if (i < 0) {
                 return NULL;
@@ -243,7 +243,7 @@ class Menu: public QMenu{
                     typedef std::pair<Menu*, QAction*> stack_pair_t;
                     foreach(stack_pair_t p, action_stack) {
                         if (p.first->activeAction() != p.second) {
-                            debug(3) << p.first->title().toStdString() << "::setActiveAction" << p.second->text().toStdString();
+                            CAUV_LOG_DEBUG(3, p.first->title().toStdString() << "::setActiveAction" << p.second->text().toStdString());
                             p.first->setActiveAction(p.second);
                         }
                     }
