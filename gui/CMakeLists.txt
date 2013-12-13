@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
             rosconsole
             roscpp
             cauv_debug
-            cauv_control
             std_msgs
             message_generation)
 find_package(cauv_utility REQUIRED)
@@ -26,7 +25,6 @@ catkin_package(
 include_directories(${Boost_INCLUDE_DIRS}
                     ${catkin_INCLUDE_DIRS}
                     ${cauv_utility_INCLUDE_DIRS}
-                    ${catkin_INCLUDE_DIRS}
                     )
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 

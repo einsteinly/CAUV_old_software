@@ -54,8 +54,8 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
       m_node(node),
       m_contents(nullptr),
       m_view(nullptr),
-      m_source(new liquid::ArcSource(new FluidtySourceDelegate(node),
-                                     new liquid::Arc(Image_Arc_Style()))),
+      //m_source(new liquid::ArcSource(new FluidtySourceDelegate(node),
+      //                               new liquid::Arc(Image_Arc_Style()))),
       m_in_window(in_window),
       m_orginal_view_rect(),
       m_zoomed_view_rect(),
@@ -66,35 +66,29 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
     setTitle(QString::fromStdString(m_node->nodeName()));
     setInfo(QString::fromStdString(m_node->nodePath()));
 
-    m_source->setParentItem(this);
-    m_source->setZValue(10);
+    //m_source->setParentItem(this);
+    //m_source->setZValue(10);
     this->setClosable(false);
     
-    boost::shared_ptr<CauvNode> cauv_node = FluidityPlugin::theCauvNode().lock();
-    if(cauv_node){
-        std::string pipelineName = m_node->fullPipelineName();
+    std::string pipelineName = m_node->fullPipelineName();
 
-        m_view = new f::FView(cauv_node, pipelineName, node);
-        m_view->setMode(f::FView::Internal);
-        m_view->setMinimumSize(120, 120);
-        
-        m_contents = new liquid::ProxyWidget(this);
-        m_contents->setWidget(m_view);
-        m_contents->setMinimumSize(120, 120);
+    m_view = new f::FView(pipelineName, node);
+    m_view->setMode(f::FView::Internal);
+    m_view->setMinimumSize(120, 120);
+    
+    m_contents = new liquid::ProxyWidget(this);
+    m_contents->setWidget(m_view);
+    m_contents->setMinimumSize(120, 120);
 
-        auto  hlayout = new QGraphicsLinearLayout(Qt::Horizontal);
-        hlayout->setSpacing(0);
-        hlayout->setContentsMargins(0,0,0,0);
-        hlayout->addStretch(1);
-        hlayout->addItem(m_contents);
-        hlayout->addItem(m_source);
-        hlayout->setAlignment(m_source, Qt::AlignBottom | Qt::AlignRight);
+    auto  hlayout = new QGraphicsLinearLayout(Qt::Horizontal);
+    hlayout->setSpacing(0);
+    hlayout->setContentsMargins(0,0,0,0);
+    hlayout->addStretch(1);
+    hlayout->addItem(m_contents);
+    //hlayout->addItem(m_source);
+    //hlayout->setAlignment(m_source, Qt::AlignBottom | Qt::AlignRight);
 
-        addItem(hlayout);
-    }else{
-        throw std::runtime_error("no cauv node available to init FluidityNode");
-    }
-
+    addItem(hlayout);
     
     liquid::Button *maxbutton = new liquid::Button(
                 QRectF(0,0,24,24), QString(":/resources/icons/maximise_button"), nullptr, this
@@ -106,8 +100,8 @@ LiquidFluidityNode::LiquidFluidityNode(boost::shared_ptr<FluidityNode> node,
 
     setSize(QSizeF(300, 300));
 
-    connect(this, SIGNAL(xChanged()), m_source, SIGNAL(xChanged()));
-    connect(this, SIGNAL(yChanged()), m_source, SIGNAL(yChanged()));
+    //connect(this, SIGNAL(xChanged()), m_source, SIGNAL(xChanged()));
+    //connect(this, SIGNAL(yChanged()), m_source, SIGNAL(yChanged()));
 }
 
 void LiquidFluidityNode::beginMaximise(){
@@ -184,9 +178,8 @@ void LiquidFluidityNode::unMaximise(){
         //m_view->setMode(f::FView::Internal);
 
         // ... so create a new one instead:
-        boost::shared_ptr<CauvNode> cauv_node = m_view->node();
         m_view->deleteLater();
-        m_view = new f::FView(cauv_node, m_node->fullPipelineName(), m_view->manager()->model(), m_view->scene(), m_view->manager());
+        m_view = new f::FView(m_node->fullPipelineName(), m_view->manager()->model(), m_view->scene(), m_view->manager());
         m_view->setMode(f::FView::Internal);
         m_contents->setWidget(m_view);
     }
@@ -197,10 +190,11 @@ void LiquidFluidityNode::unMaximise(){
     timeline->start();
 }
 
-
+/*
 liquid::ArcSource *  LiquidFluidityNode::getSourceFor(boost::shared_ptr<Node> const&) const{
     return m_source;
 }
+*/
 
 
 boost::shared_ptr<FluidityNode> LiquidFluidityNode::fluidityNode(){

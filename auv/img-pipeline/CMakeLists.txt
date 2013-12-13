@@ -3,7 +3,7 @@
 # See license.txt for details.
 #
 
-# subdirs
+subdirs
 if(CAUV_BUILD_TESTS)
     add_subdirectory (tests)
 endif()

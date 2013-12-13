@@ -8,7 +8,6 @@ project (fluidityplugin)
 set ( FLUIDITY_PLUGIN_SRCS
     plugin.cpp
     fluiditynode.cpp
-    messaging.cpp
 
     fNode.cpp
     view.cpp
@@ -23,7 +22,6 @@ set ( FLUIDITY_PLUGIN_UIS
 set ( FLUIDITY_PLUGIN_H
     plugin.h
     fluiditynode.h
-    messaging.h
 
     view.h
     manager.h
@@ -33,6 +31,8 @@ set ( FLUIDITY_PLUGIN_H
     menu.h
     imageSource.h
 )
+
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/auv)
 
 
 qt4_wrap_ui (FLUIDITY_PLUGIN_UIS_H ${FLUIDITY_PLUGIN_UIS})
@@ -47,5 +47,6 @@ cauv_install_plugin(fluidityplugin)
 
 target_link_libraries( fluidityplugin
     gui-core
+    cauv_pipeline_model
     ${QT_LIBRARIES}
 )

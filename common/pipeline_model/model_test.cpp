@@ -6,6 +6,7 @@
 #include "pipeline.h"
 
 using namespace cauv;
+using namespace pipeline_model;
 
 BOOST_AUTO_TEST_CASE( paramValueFloatCreate )  {
     auto val = XmlRpc::XmlRpcValue(3.0);
@@ -61,7 +62,7 @@ BOOST_AUTO_TEST_CASE ( nodeType ) {
     new_type.addOutput("value", "test value", value);
     new_type.addInput("value", "test value", value);
     NodeModelType::addType(new_type);
-    PipelineModel pipeline;
+    PipelineModel pipeline("test");
 
     auto new_node = pipeline.addNode("test_type");
     BOOST_CHECK_EQUAL(new_node->type.name, "test_type");
@@ -79,7 +80,7 @@ BOOST_AUTO_TEST_CASE ( connectInput ) {
     new_type.addOutput("value", "test value", value);
     new_type.addInput("value", "test value", value);
     NodeModelType::addType(new_type);
-    PipelineModel pipeline;
+    PipelineModel pipeline("test");
 
     auto source_node = pipeline.addNode("connect_test_type");
     auto sink_node = pipeline.addNode("connect_test_type");
@@ -99,7 +100,7 @@ BOOST_AUTO_TEST_CASE ( invalidConnect ) {
     auto value_2 = IntParam(4);
     new_type.addInput("value", "test value", value_2);
     NodeModelType::addType(new_type);
-    PipelineModel pipeline;
+    PipelineModel pipeline("test");
 
     auto source_node = pipeline.addNode("invalid_connect_test_type");
     auto sink_node = pipeline.addNode("invalid_connect_test_type");
@@ -123,7 +124,7 @@ BOOST_AUTO_TEST_CASE ( pipelineToXml ) {
     new_type.addInput("int_input", "test value", int_param);
     NodeModelType::addType(new_type);
 
-    PipelineModel pipeline;
+    PipelineModel pipeline("test");
 
     auto source_node = pipeline.addNode("xml_test_type");
     auto sink_node = pipeline.addNode("xml_test_type");
@@ -134,13 +135,13 @@ BOOST_AUTO_TEST_CASE ( pipelineToXml ) {
 
     //std::cout << xml_pipeline.toXml();
 
-    PipelineModel pipeline2;
+    PipelineModel pipeline2("test");
 
     pipeline2.updateFromXmlRpcValue(xml_pipeline);
 }
 
 BOOST_AUTO_TEST_CASE ( disconnection ) {
-    PipelineModel pipeline;
+    PipelineModel pipeline("test");
     auto source_node = pipeline.addNode("connect_test_type");
     auto sink_node = pipeline.addNode("connect_test_type");
 
@@ -172,11 +173,11 @@ BOOST_AUTO_TEST_CASE ( disconnection ) {
 }
 
 BOOST_AUTO_TEST_CASE ( deleteNode ) {
-    PipelineModel pipeline;
+    PipelineModel pipeline("test");
 }
 
 BOOST_AUTO_TEST_CASE ( duplicateNodeNames ) {
-    PipelineModel pipeline;
+    PipelineModel pipeline("test");
     NodeModelType::addType(NodeModelType("duplicate_node_name_test_type"));
     auto node_1 = pipeline.addNode("duplicate_node_name_test_type");
     auto node_2 = pipeline.addNode("duplicate_node_name_test_type");

@@ -8,6 +8,7 @@
 #include <XmlRpcValue.h>
 
 namespace cauv {
+namespace pipeline_model {
 
 enum class ParamLinkType {
     Input,
@@ -66,6 +67,7 @@ class ParamValueReg : public ParamValue {
 template <class ParamValueType>
 bool ParamValueReg<ParamValueType>::reg = ParamValueReg<ParamValueType>::registerValueType();
 
+//model for parameter
 class ParamModel {
     public:
     ParamModel(const std::string name,
@@ -73,19 +75,21 @@ class ParamModel {
                const ParamLinkType link_type,
                const boost::shared_ptr<ParamValue> value);
     const std::string name;
-    const std::string description;
-    const ParamLinkType link_type;
+    const std::string description; // Used for e.g. mouseover
+    const ParamLinkType link_type; // Is this an input/output parameter
     const boost::shared_ptr<ParamValue> value;
 
     std::string getType() { return value->getType(); }
 };
 
+//model for parameter bound to a node
 class BoundParamModel : public ParamModel {
     public:
     BoundParamModel(const ParamModel &model, const boost::shared_ptr<NodeModel> node);
     const boost::shared_ptr<NodeModel> node;
 };
 
+//Possible ParamValue types (uses magic above to autoregister types on creation)
 class FloatParam: public ParamValueReg<FloatParam> {
     public:
     FloatParam() : value(0) {}
@@ -122,4 +126,5 @@ class IntParam: public ParamValueReg<IntParam> {
     }
 };
 
+}
 }

@@ -8,22 +8,20 @@
 
 #include <stdexcept>
 
-#include <generated/types/NodeAddedMessage.h>
-#include <generated/types/PipelineDiscoveryRequestMessage.h>
-
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <common/cauv_node.h>
+#include <ros/node_handle.h>
+#include <ros/master.h>
 
 #include <debug/cauv_debug.h>
+#include <utility/string.h>
 
 #include <model/registry.h>
 
 #include <nodescene.h>
 
 #include "fluiditynode.h"
-#include "messaging.h"
 
 
 using namespace cauv;
@@ -31,6 +29,7 @@ using namespace cauv::gui;
 
 GENERATE_SIMPLE_NODE(NewPipelineNode)
 
+//TODO merge add and setup pipeline functions
 
 class FluidityDropHandler: public DropHandlerInterface<QGraphicsItem*> {
     public:
@@ -40,11 +39,14 @@ class FluidityDropHandler: public DropHandlerInterface<QGraphicsItem*> {
           m_window(window){
     }
 
+    //this drop handler should deal with creating new and existing pipelines
     virtual bool accepts(boost::shared_ptr<Node> const& node){
         return (node->type == nodeType<FluidityNode>() ||
                 node->type == nodeType<NewPipelineNode>());
     }
 
+    //create new pipeline/liquidfluidity node as appropriate
+    //TODO neaten up 
     virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node){
         if(node->type == nodeType<FluidityNode>()){
             if(ConnectedNode * n = LiquidFluidityNode::nodeFor(node)){
@@ -67,7 +69,7 @@ class FluidityDropHandler: public DropHandlerInterface<QGraphicsItem*> {
 
 
 
-FluidityPlugin::FluidityPlugin(){
+FluidityPlugin::FluidityPlugin() : m_parent(VehicleRegistry::instance()){
 }
 
 const QString FluidityPlugin::name() const{
@@ -75,52 +77,37 @@ const QString FluidityPlugin::name() const{
 }
 
 void FluidityPlugin::initialise(){
-
-    foreach(boost::shared_ptr<Vehicle> vehicle, VehicleRegistry::instance()->getVehicles()){
-        debug() << "setup Fluidity plugin for" << vehicle;
-        setupVehicle(vehicle);
+    
+    if (!is_first) {
+        is_first = true;
+    } else {
+        throw std::runtime_error("only one FluidityPlugin may be initialised");
     }
-
-    connect(VehicleRegistry::instance().get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
-            this, SLOT(setupVehicle(boost::shared_ptr<Node>)));
+    
+    ros::NodeHandle ros_node;
+    
+    boost::shared_ptr<GroupingNode> pipelines = m_parent->findOrCreate<GroupingNode>("pipelines");
+    connect(pipelines.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
+            this, SLOT(setupPipeline(boost::shared_ptr<Node>)));
 
     m_actions->scene->registerDropHandler(
                 boost::make_shared<FluidityDropHandler>(m_actions->root, m_actions->window)
                 );
 
-    if(!(theCauvNode().lock())) {
-        theCauvNode() = m_actions->node;
-    }
-    else
-        throw std::runtime_error("only one FluidityPlugin may be initialised");
-
-    if(boost::shared_ptr<CauvNode> node = m_actions->node.lock()) {
-        boost::shared_ptr<FluiditySubscribeObserver> sub = boost::make_shared<FluiditySubscribeObserver>();
-        connect(sub.get(), SIGNAL(onSubscriptionConfirmation(MessageType::e)), this, SLOT(onSubscribed(MessageType::e)));
-        node->addSubscribeObserver(sub);
-
-        node->subMessage(PipelineDiscoveryResponseMessage());
-        node->subMessage(GraphDescriptionMessage());
-        node->subMessage(NodeAddedMessage()); // LEAVE THIS ONE LAST
-    } else error() << "Failed to lock CauvNode while setting up vehicle ai";
-}
-
-void FluidityPlugin::setupVehicle(boost::shared_ptr<Node> vnode){
-    try {
-        boost::shared_ptr<Vehicle> vehicle = vnode->to<Vehicle>();
-
-        boost::shared_ptr<CauvNode> node = m_actions->node.lock();
-        if(node) {
-            boost::shared_ptr<FluidityMessageObserver> observer = boost::make_shared<FluidityMessageObserver>(vnode);
-            node->addMessageObserver(observer);
+    //subscriptions must occur last, as may use other components
+    m_new_pipeline_sub = ros_node.subscribe("pipelines/new", 100, &FluidityPlugin::onNewPipeline, this);
+    //typedef of std::vector<TopicInfo>
+    ros::master::V_TopicInfo topics;
+    //loop through topics, those in the pipelines/updates correspond to pipeline names
+    if (ros::master::getTopics(topics)){
+        foreach(ros::master::TopicInfo topic, topics){
+            QString name = QString::fromStdString(topic.name);
+            if(name.startsWith("pipelines/updates")){
+                addPipeline(name.remove(0,17));
+            }
         }
-
-        boost::shared_ptr<GroupingNode> pipelines = vehicle->findOrCreate<GroupingNode>("pipelines");
-        connect(pipelines.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)),
-                this, SLOT(setupPipeline(boost::shared_ptr<Node>)));
-
-    } catch(std::runtime_error& e) {
-        error() << "FluidityPlugin::setupVehicle: Expecting Vehicle Node" << e.what();
+    } else {
+        CAUV_LOG_ERROR("Failed to get topic list from master.");
     }
 }
 
@@ -138,20 +125,40 @@ void FluidityPlugin::setupPipeline(boost::shared_ptr<Node> node){
     }
 }
 
-boost::weak_ptr<CauvNode>& FluidityPlugin::theCauvNode(){
-    static boost::weak_ptr<CauvNode> the_cauv_node;
-    return the_cauv_node;
+void FluidityPlugin::addPipeline(const std::string& name){
+    QString full_pipeline_name = QString::fromStdString(name);
+    addPipeline(full_pipeline_name);
 }
 
-void FluidityPlugin::onSubscribed(MessageType::e messageType){
-    if(messageType == MessageType::NodeAdded){
-        if(boost::shared_ptr<CauvNode> node = m_actions->node.lock()) {
-            info() << "Requesting pipeline state";
-            node->send(boost::make_shared<PipelineDiscoveryRequestMessage>());
-        } else {
-            error() << "Failed to lock CauvNode in FluidityPlugin";
-        }
+void FluidityPlugin::addPipeline(QString& full_pipeline_name){
+    //Create gui nodes
+    boost::shared_ptr<GroupingNode> pipelines = m_parent->findOrCreate<GroupingNode>("pipelines");
+
+    QStringList basename_subname = full_pipeline_name.split('/');
+    //note that this relies on the process_name/slot_name structure
+    if(basename_subname.size() == 1){
+        // no sub-name
+        pipelines->findOrCreate<GroupingNode>(full_pipeline_name.toUtf8().data());
     }
+    else if(basename_subname.size() == 2){
+        boost::shared_ptr<GroupingNode> pipeline_group = pipelines->findOrCreate<GroupingNode>(
+                    std::string(basename_subname[0].toUtf8().data())
+                    );
+        pipeline_group->findOrCreate<FluidityNode>(
+                    std::string(basename_subname[1].toUtf8().data())
+                    );
+    } else {
+        CAUV_LOG_ERROR("invalid pipeline ID:" << full_pipeline_name.toUtf8().data());
+    }
+    //Subscribe to update messages ? shold this be in liquidfluiditynode
+    /*if(boost::shared_ptr<ros::NodeHandle> node = m_action->node.lock()){
+        m_pipeline_updates_subs.push_back(node.subscribe("imaging/pipelines/updates/" << name,
+                                                     100, &FluidityPlugin::onNewPipeline, this))
+    } else error() << "Failed to lock ROSNode while adding pipeline:" << name;*/
+}
+
+void FluidityPlugin::onNewPipeline(const std_msgs::String::ConstPtr& msg){
+    addPipeline(msg->data);
 }
 
 Q_EXPORT_PLUGIN2(cauv_fluidityplugin, FluidityPlugin)

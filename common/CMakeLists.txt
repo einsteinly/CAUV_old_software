@@ -3,6 +3,7 @@
 # See license.txt for details.
 #
 
+add_subdirectory(pipeline_model)
 add_subdirectory(zeromq)
 add_subdirectory(msg_classes)
 

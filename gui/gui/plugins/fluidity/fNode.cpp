@@ -45,7 +45,8 @@ using namespace liquid;
 
 
 // - helper structures and classes
-
+#warning autolayout disabled
+#if 0
 class TestLayoutItem: public QGraphicsLayoutItem,
                       public QGraphicsPathItem{
     public:
@@ -98,13 +99,16 @@ class TestLayoutItem: public QGraphicsLayoutItem,
     private:
         QRectF m_preferred_geom;
 };
-
+#endif
 
 // - static functions
+#warning old node type stuff
+#if 0
 static QString nodeTypeDesc(cauv::NodeType::e const& type){
     std::string enum_name = mkStr() << type;
     return mkQStr() << enum_name.substr(enum_name.rfind(':')+1).c_str();
 }
+#endif
 
 static int countLocalInputsWithName(const std::string& name, FNode::msg_node_param_map_t const& map){
     for (FNode::msg_node_param_map_t::value_type const& v : map)
@@ -115,7 +119,7 @@ static int countLocalInputsWithName(const std::string& name, FNode::msg_node_par
 
 // - FNode
 
-FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
+FNode::FNode(Manager& m, node_id_t id, model::NodeTypeModel)
     : liquid::LiquidNode(F_Node_Style(), nullptr), 
       ManagedElement(m),
       m_node_id(id),

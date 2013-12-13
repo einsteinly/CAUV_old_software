@@ -9,6 +9,10 @@
 
 #include <QObject>
 
+#include <ros/subscriber.h>
+
+#include <std_msgs/String.h>
+
 #include <cauvbasicplugin.h>
 
 #include <model/node.h>
@@ -18,7 +22,6 @@
 #include <liquid/node.h>
 
 namespace cauv{
-class CauvNode;
 
 namespace gui{
 
@@ -43,15 +46,20 @@ public:
     virtual void initialise();
 
 public Q_SLOTS:
-    void setupVehicle(boost::shared_ptr<Node> node);
     void setupPipeline(boost::shared_ptr<Node> node);
-    void onSubscribed(MessageType::e messageType);
 
 private:
     friend class LiquidFluidityNode;
 
     // this is set by the first instance of a FluidityPlugin to be initialised.
-    static boost::weak_ptr<CauvNode>& theCauvNode();
+    static bool is_first;
+    boost::shared_ptr<Node> m_parent;
+    
+    ros::Subscriber m_new_pipeline_sub;
+    std::vector<boost::shared_ptr<ros::Subscriber>> m_pipeline_update_subs;
+    void addPipeline(const std::string& name);
+    void addPipeline(QString& full_pipeline_name);
+    void onNewPipeline(const std_msgs::String::ConstPtr& msg);
 
 
 };

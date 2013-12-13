@@ -39,6 +39,15 @@ add_executable (
     edge_model.cpp
 )
 
+add_library (
+    cauv_pipeline_model
+    
+    pipeline.cpp
+    param_model.cpp
+    node_model.cpp
+    edge_model.cpp
+)
+
 target_link_libraries (
     model_test
 

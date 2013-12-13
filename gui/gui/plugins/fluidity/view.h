@@ -34,15 +34,13 @@ class Menu;
 class FView: public liquid::LiquidView{
     Q_OBJECT
     public:
-        FView(boost::shared_ptr<CauvNode> node,
-              const std::string& pipeline_name,
+        FView(const std::string& pipeline_name,
               boost::shared_ptr<Node> model_parent,
               NodeScene* s,
               boost::shared_ptr<Manager> m,
               QWidget *parent = NULL);
         
-        FView(boost::shared_ptr<CauvNode> node,
-              const std::string& pipeline_name,
+        FView(const std::string& pipeline_name,
               boost::shared_ptr<Node> model_parent,
               QWidget *parent = NULL);
 
@@ -56,8 +54,6 @@ class FView: public liquid::LiquidView{
 
         enum Mode {TopLevel, Internal};
         void setMode(Mode const& mode);
-
-        boost::shared_ptr<CauvNode> node(){ return m_cauv_node; }
 
         boost::shared_ptr<Manager> manager() { return m_manager; }
 
@@ -90,15 +86,15 @@ class FView: public liquid::LiquidView{
 
     private:
         // methods
-        static float split(const std::string& word, QAction_ptr_set actions);
-        void initMenu();
-        void initMenu(MenuNode& parent, QAction_ptr_set actions);
+        //static float split(const std::string& word, QAction_ptr_set actions);
+        //void initMenu();
+        //void initMenu(MenuNode& parent, QAction_ptr_set actions);
         void _updateOverlays();
-        void _buildMenu(cauv::gui::f::Menu* menu, MenuNode const& node);
+        //void _buildMenu(cauv::gui::f::Menu* menu, MenuNode const& node);
 
     private Q_SLOTS:
         // slots
-        void menuActioned();
+        //void menuActioned();
         void setSceneRectToContents();
 
 #ifdef QT_PROFILE_GRAPHICSSCENE
@@ -112,7 +108,6 @@ class FView: public liquid::LiquidView{
         void _initInMode(Mode const& m);
 
         // data
-        boost::shared_ptr<CauvNode> m_cauv_node;
         boost::shared_ptr<Manager> m_manager;
         MenuNode m_contextmenu_root;
 

@@ -20,9 +20,6 @@ else()
     # for generated files (mainly moc'd stuff)
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-    # for <common/includesstuff> etc
-    include_directories (${AUV_SOURCE_DIR})
-
     set (
         GUI_SRCS
         main.cpp

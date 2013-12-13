@@ -5,6 +5,8 @@
 
 project (barracudaplugin)
 
+find_package(cauv_control)
+
 set ( BARRACUDA_PLUGIN_SRCS
     plugin.cpp
 )

@@ -9,9 +9,11 @@
 #include "edge_model.h"
 
 namespace cauv {
+namespace pipeline_model {
 
 typedef int NodeId;
 
+//Useful exceptions
 class NoSuchParamException : public std::runtime_error {
     using std::runtime_error::runtime_error;
 };
@@ -24,6 +26,7 @@ class DuplicateNodeNameException : public std::runtime_error {
     using std::runtime_error::runtime_error;
 };
 
+//Describes a node type (i.e. its name, inputs and outputs)
 class NodeModelType {
     public:
     NodeModelType();
@@ -47,8 +50,9 @@ class NodeModelType {
 
 class PipelineModel;
 
+//Describes an instance of a node, and how it is connected
 class NodeModel : public boost::enable_shared_from_this<NodeModel> {
-    public:
+public:
     NodeModel(const std::string type, PipelineModel &pipeline);
 
     virtual void connectOutput(const std::string output, InputModel&);
@@ -82,11 +86,12 @@ class NodeModel : public boost::enable_shared_from_this<NodeModel> {
         return getEdgeNames<InputModel>(inputs, type.inputs);
     }
 
+    //disconnect the node from other nodes
     virtual void isolate();
 
     virtual ~NodeModel();
-    protected:
-    private:
+protected:
+private:
     template< typename EdgeModelType >
     const std::set<std::string> getEdgeNames( const std::map <const std::string, EdgeModelType> &instance_map,
                                         const std::map <const std::string, ParamModel> &type_map ) const {
@@ -127,4 +132,5 @@ class NodeModel : public boost::enable_shared_from_this<NodeModel> {
     PipelineModel &pipeline;
 };
 
+}
 }

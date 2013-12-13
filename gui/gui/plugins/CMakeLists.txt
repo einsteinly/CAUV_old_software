@@ -7,7 +7,6 @@ project (plugins)
 
 # includes for shared and generated files
 include_directories (${guis_SOURCE_DIR})
-include_directories (${AUV_SOURCE_DIR})
 include_directories (${gui-core_SOURCE_DIR})
 include_directories (${plugins_SOURCE_DIR})
 

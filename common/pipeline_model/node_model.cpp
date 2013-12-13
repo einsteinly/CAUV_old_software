@@ -4,6 +4,7 @@
 #include <sstream>
 
 using namespace cauv;
+using namespace pipeline_model;
 
 
 std::map<std::string, const NodeModelType> NodeModelType::node_types;

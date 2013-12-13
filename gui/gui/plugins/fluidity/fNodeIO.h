@@ -7,8 +7,6 @@
 #ifndef __CAUV_GUI_FNODE_IO_H__
 #define __CAUV_GUI_FNODE_IO_H__
 
-#include <generated/types/OutputType.h>
-
 namespace cauv{
 namespace gui{
 namespace f{

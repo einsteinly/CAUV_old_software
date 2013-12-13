@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 using namespace cauv;
+using namespace pipeline_model;
 
 ParamModel::ParamModel(const std::string name_,
            const std::string description_,

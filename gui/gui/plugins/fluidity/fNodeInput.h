@@ -16,6 +16,8 @@
 
 #include <elements/style.h>
 
+#include <common/pipeline_model/edge_model.h>
+
 #include <fluidity/managedElement.h>
 #include <fluidity/fNode.h>
 #include <fluidity/fNodeIO.h>
@@ -34,7 +36,8 @@ class Node;
 
 namespace f{
 
-class FNodeInput: public liquid::ArcSinkLabel,
+class FNodeInput: public pipeline_model::InputModel,
+                  public liquid::ArcSinkLabel,
                   public liquid::ConnectionSink,
                   public FNodeIO,
                   public ManagedElement{

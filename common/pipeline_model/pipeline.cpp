@@ -4,15 +4,34 @@
 #include <sstream>
 
 using namespace cauv;
+using namespace pipeline_model;
 
-boost::shared_ptr<NodeModel>
-PipelineModel::addNode(const std::string type) {
+/*
+ *--------------Constructors/Destructors
+ */
+
+PipelineModel::PipelineModel(const std::string& pipeline_name) : pipeline_name(pipeline_name){}
+
+/*
+ * -------------Access information
+ */
+
+const std::string& PipelineModel::pipelineName(){
+    return pipeline_name;
+}
+
+/*
+ * -------------Node Manipulation
+ */
+
+boost::shared_ptr<NodeModel> PipelineModel::addNode(const std::string type) {
     auto new_node = boost::make_shared<NodeModel>(type, *this);
     nodes.push_back(new_node);
     return new_node;
 }
 
 void PipelineModel::delNode(const std::string &name) {
+    //removes by shifting everything down, and returns new end point
     auto end_it = std::remove_if(nodes.begin(), nodes.end(),
                                  [&name](boost::shared_ptr<NodeModel> &n) {
                                    if (n->getName() == name) {
@@ -25,8 +44,53 @@ void PipelineModel::delNode(const std::string &name) {
                                      return false;
                                    } 
                                 });
+    //delete everything past the new end point
     nodes.erase(end_it, nodes.end());
 }
+
+void PipelineModel::delNodeById(NodeId id) {
+    auto end_it = std::remove_if(nodes.begin(), nodes.end(),
+                                 [&id](boost::shared_ptr<NodeModel> &n) {
+                                   if (n->id == id) {
+                                     n->isolate();
+                                     std::stringstream deleted_name;
+                                     deleted_name << "__deleted " << n->id;
+                                     n->setName(deleted_name.str());
+                                     return true;
+                                   } else {
+                                     return false;
+                                   } 
+                                });
+    nodes.erase(end_it, nodes.end());
+}
+
+boost::shared_ptr<NodeModel> PipelineModel::getNode(const std::string &name){
+    auto it = std::find_if(nodes.begin(), nodes.end(),
+                            [&name](boost::shared_ptr<NodeModel> &n) {
+                                return n->getName() == name;
+                                });
+    if (it != nodes.end()){
+        return *it;
+    } else {
+        return nullptr;
+    }
+}
+
+boost::shared_ptr<NodeModel> PipelineModel::getNode(NodeId id){
+    auto it = std::find_if(nodes.begin(), nodes.end(),
+                            [&id](boost::shared_ptr<NodeModel> &n) {
+                                return n->id == id;
+                                });
+    if (it != nodes.end()){
+        return *it;
+    } else {
+        return nullptr;
+    }
+}
+
+/*
+ * -------------XML Conversion
+ */
 
 typedef XmlRpc::XmlRpcValue RpcValue;
 

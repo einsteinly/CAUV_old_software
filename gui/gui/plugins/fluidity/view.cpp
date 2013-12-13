@@ -18,7 +18,6 @@
 
 #include <utility/string.h>
 #include <utility/time.h>
-#include <generated/types/NodeType.h>
 
 #include <model/node.h>
 #include <elements/style.h>
@@ -44,12 +43,10 @@ uint qHash(boost::shared_ptr<T> p){
 }
 
 
-FView::FView(boost::shared_ptr<CauvNode> node,
-             const std::string& pipeline_name,
+FView::FView(const std::string& pipeline_name,
              boost::shared_ptr<gui::Node> model_parent,
              QWidget* parent)
     : liquid::LiquidView(parent),
-      m_cauv_node(node),
       m_manager(),
       m_contextmenu_root(),
       m_scenerect_update_timer(nullptr),
@@ -58,14 +55,12 @@ FView::FView(boost::shared_ptr<CauvNode> node,
     init(pipeline_name, model_parent, nullptr, boost::shared_ptr<Manager>(), parent);
 }
 
-FView::FView(boost::shared_ptr<CauvNode> node,
-             const std::string& pipeline_name,
+FView::FView(const std::string& pipeline_name,
              boost::shared_ptr<gui::Node> model_parent,
              NodeScene* s,
              boost::shared_ptr<Manager> m,
              QWidget* parent)
     : liquid::LiquidView(parent),
-      m_cauv_node(node),
       m_manager(),
       m_contextmenu_root(),
       m_scenerect_update_timer(nullptr),
@@ -92,7 +87,7 @@ void FView::init(const std::string& pipeline_name,
 
     if(!m_manager){
         m_manager = boost::make_shared<f::Manager>(
-            scene(), model_parent, m_cauv_node.get(), pipeline_name
+            scene(), model_parent, pipeline_name
         );
         m_manager->init();
     }
@@ -264,6 +259,8 @@ void FView::postData(){
     m_angle_series->postData(i/2.0, n);
 }*/
 
+#warning TODO add menu back
+#if 0
 void FView::initMenu(){
     QAction_ptr_set actions;
 
@@ -386,6 +383,7 @@ void FView::menuActioned(){
         error() << "menuActioned: non-action sender?";
     }
 }
+#endif
 
 void FView::setSceneRectToContents(){
     QList<QGraphicsItem*> nodes = m_manager->rootNodes();
@@ -424,13 +422,14 @@ void FView::dumpProfile(){
 }
 #endif // def QT_PROFILE_GRAPHICSSCENE
 
-
-
+#warning TODO menu disabled
+#if 0
 void FView::contextMenuEvent(QContextMenuEvent *event){
     cauv::gui::f::Menu menu(this);
     _buildMenu(&menu, m_contextmenu_root);
     menu.exec(event->globalPos());
 }
+#endif
 
 /*void FView::resizeEvent(QResizeEvent* event){
     debug() << "FView::resizeEvent";

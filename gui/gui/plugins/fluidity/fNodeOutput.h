@@ -19,7 +19,7 @@
 #include <liquid/label.h>
 #include <liquid/proxyWidget.h>
 
-#include <generated/types/LocalNodeOutput.h>
+#include <common/pipeline_model/edge_model.h>
 
 #include "elements/style.h"
 
@@ -32,13 +32,15 @@ namespace cauv{
 namespace gui{
 namespace f{
 
-class FNodeOutput: public QGraphicsWidget,
+class FNodeOutput: public pipeline_model::OutputModel,
+                   public QGraphicsWidget,
                    public FNodeIO,
                    public liquid::ArcSourceDelegate{
     Q_OBJECT
     public:
         FNodeOutput(FNode* node, liquid::ArcStyle const& arc_style, const std::string& id)
-            : QGraphicsWidget(node),
+            : model::OutputNode(...., node),
+              QGraphicsWidget(node),
               FNodeIO(node, id),
               m_source(NULL),
               m_text(NULL){

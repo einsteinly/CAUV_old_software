@@ -33,7 +33,7 @@ namespace f {
 class FView;
 } // namespace f
 
-
+//node in model
 class FluidityNode : public Node {
     public:
     FluidityNode(const nid_t id);
@@ -41,6 +41,8 @@ class FluidityNode : public Node {
     std::string fullPipelineName();
 };
 
+/*
+ * Code for arcs to/from pipeline
 class FluidtySourceDelegate : public liquid::ArcSourceDelegate {
     public:
     FluidtySourceDelegate(boost::shared_ptr<FluidityNode> const& node) :
@@ -49,7 +51,9 @@ class FluidtySourceDelegate : public liquid::ArcSourceDelegate {
     virtual boost::shared_ptr<FluidityNode> node(){ return m_node; }
     boost::shared_ptr<FluidityNode> m_node;
 };
+*/
 
+//node in liquid (drag and drop interface)
 class LiquidFluidityNode: public ConnectedNode
 {
     Q_OBJECT
@@ -71,10 +75,13 @@ public Q_SLOTS:
     void unMaximise();
 
 protected:
+    //node in model
     boost::shared_ptr<FluidityNode> m_node;
+    //widget containing actual pipeline nodes
     liquid::ProxyWidget* m_contents;
     f::FView* m_view;
-    liquid::ArcSource * m_source;
+    //source of arc
+    //liquid::ArcSource * m_source;
     boost::weak_ptr<CauvMainWindow> m_in_window;
     QRectF m_orginal_view_rect;
     QRectF m_zoomed_view_rect;
