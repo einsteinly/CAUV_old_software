@@ -3,21 +3,30 @@
  * See license.txt for details.
  */
 
-
-#ifndef __CAUV_IMU_H__
-#define __CAUV_IMU_H__
+#pragma once
 
 #include <utility/observable.h>
-#include <generated/types/floatYPR.h>
 #include <boost/noncopyable.hpp>
 
 namespace cauv{
+
+struct floatYPR {
+    // Yaw   = degrees CLOCKWISE from arbitrary reference (- euler down->up axis)
+    // Pitch = degrees UP from plane (- euler right->left axis)
+    // Roll  = degrees rolling to the right (euler back->front axis)
+    floatYPR() {};
+    floatYPR(float yaw_, float pitch_, float roll_) : 
+        yaw(yaw_), pitch(pitch_), roll(roll_) {}; 
+    float yaw;
+    float pitch;
+    float roll;
+};
 
 class IMUObserver
 {
     public:
         virtual void onAttitude(const floatYPR& /*attitude*/) {};
-        virtual void onDepth(float /*fore*/, float /*aft*/) {};
+        virtual void onDepth(float) {};
 };
 
 class IMU : public Observable<IMUObserver>, boost::noncopyable
@@ -28,6 +37,3 @@ class IMU : public Observable<IMUObserver>, boost::noncopyable
 };
 
 } // namespace cauv
-
-#endif // ndef __CAUV_IMU_H__
-

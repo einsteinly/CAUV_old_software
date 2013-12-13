@@ -8,15 +8,17 @@ import random
 
 # Third Party Modules
 import numpy as np # BSD-type license
+import rospy
 
 # CAUV Modules
 import base_model
 from base_model import calculateRoll, mkVec
 from utils.hacks import tdToFloatSeconds
 from utils.quaternion import Quaternion
-import cauv.messaging as messaging
-from cauv.debug import debug, error, warning, info
 
+from cauv.debug import debug, error, warning, info
+import std_msgs.msg as std_msgs
+import cauv_control.msg as ctrl_msgs
 
 # Rigid body model:
 #
@@ -98,12 +100,14 @@ Drag_J = np.array((Max_Yaw_Moment / 1.6,   # yaw
                    Max_Pitch_Moment / 1.6)) # pitch
 
 class Model(base_model.Model):
-    def __init__(self, node, profile=False, currentx=0, currenty=0, currentz=0):
+    def __init__(self, profile=False, currentx=0, currenty=0, currentz=0):
         self.tzero = None
         self.last_t = self.relativeTime()
         self.last_state_sent = self.relativeTime()
 	self.current = np.array((currentx, currenty, currentz))
-        base_model.Model.__init__(self, node, profile=profile)
+        base_model.Model.__init__(self, profile=profile)
+        self.depth_pub = rospy.Publisher("sim/depth", std_msgs.Float32)
+        self.attitude_pub = rospy.Publisher("sim/attitude", ctrl_msgs.Attitude)
 
     def relativeTime(self):
         '''return relative time in floating point seconds since tzero'''
@@ -222,16 +226,6 @@ class Model(base_model.Model):
             self.sendStateMessages()
             self.last_state_sent = self.relativeTime()
 
-    def addPressureNoise(self, pressure):
-        return int(pressure + random.gauss(0, 10))
-    
-    def addOrientationNoise(self, ypr):
-        return messaging.floatYPR(
-            ypr.yaw + random.gauss(0, 0.5),
-            ypr.pitch + random.gauss(0, 0.5),
-            ypr.roll + random.gauss(0, 0.5)
-        )
-
     def sendStateMessages(self):
         # send:
         #   ForePressureMessage
@@ -240,22 +234,11 @@ class Model(base_model.Model):
         # 
         # These should match the DepthCalibration message used:
         # Barracuda pressure
-        pressure = 1000 - self.displacement[2] * 9.81 * 10.2 # in millibars
-        # if somehow we're floating above the atmosphere
-        if pressure < 0:
-            pressure = 0
-        
+        #
         orientation = base_model.orientationToYPR(self.orientation)
-        
-        # make sure control can deal with pressure message ordering
-        if random.randint(0,1) == 1:
-            self.node.send(messaging.ForePressureMessage(self.addPressureNoise(pressure)))
-            self.node.send(messaging.AftPressureMessage(self.addPressureNoise(pressure)))
-        else:
-            self.node.send(messaging.AftPressureMessage(self.addPressureNoise(pressure)))
-            self.node.send(messaging.ForePressureMessage(self.addPressureNoise(pressure)))
-        self.node.send(messaging.StateMessage(self.addOrientationNoise(orientation)))
+        orientation.yaw += random.gauss(0, 0.5)
+        orientation.pitch += random.gauss(0, 0.5)
+        orientation.roll += random.gauss(0, 0.5)
+        self.depth_pub.publish(std_msgs.Float32(-self.displacement[2] + random.gauss(0, 0.02)))
 
-
-
-
+        self.attitude_pub.publish(orientation)

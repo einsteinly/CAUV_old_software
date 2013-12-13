@@ -12,6 +12,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
+#include <ros/init.h>
+
 #include <debug/cauv_debug.h>
 
 #include <QApplication>
@@ -40,7 +42,7 @@ struct Application : public QApplication{
       }
       catch(std::exception & e)
       {
-            error() << "Exception from signal / slot:" << e.what();
+            CAUV_LOG_ERROR("Exception from signal / slot:" << e.what());
             exit(1);
       }
       return false;
@@ -50,6 +52,7 @@ struct Application : public QApplication{
 
 int main(int argc, char** argv)
 {
+    ros::init(argc, argv, "GUI");
     Application app(argc, argv);
     Q_INIT_RESOURCE(resources);
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
@@ -58,7 +61,7 @@ int main(int argc, char** argv)
 
     QFile qss(":/resources/stylesheet.qss");
     qss.open(QFile::ReadOnly);
-    info() << QString(qss.readAll()).toStdString();
+    CAUV_LOG_INFO(QString(qss.readAll()).toStdString());
     app.setStyleSheet(qss.readAll());
     qss.close();
 
@@ -68,19 +71,7 @@ int main(int argc, char** argv)
 
     boost::shared_ptr<gui::CauvMainWindow> node = boost::make_shared<gui::CauvMainWindow>(&app);
 
-    int ret = node->parseOptions(argc, argv);
-    if(ret != 0) return ret;
-
-    try {
-        node->run(false);
-
-        info() << "Waiting for CauvNode to finish...";
-        while(node->isRunning()) sleep(10);
-        node.reset();
-        info() << "Finished. Bye";
-    } catch (char const* ex){
-        error() << ex;
-    }
+    node->onRun();
 
     return 0;
 }

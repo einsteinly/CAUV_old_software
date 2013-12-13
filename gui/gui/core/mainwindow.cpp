@@ -18,6 +18,8 @@
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
+#include <ros/spinner.h>
+
 #include <debug/cauv_debug.h>
 
 #include <liquid/view.h>
@@ -106,7 +108,6 @@ void StackWidget::updateTitle(){
 
 
 CauvMainWindow::CauvMainWindow(QApplication * app) :
-    CauvNode("CauvGui"),
     m_application(app),
     m_actions(boost::make_shared<GuiActions>()),
     ui(new Ui::MainWindow),
@@ -142,29 +143,13 @@ void CauvMainWindow::closeEvent(QCloseEvent* e){
     QMainWindow::closeEvent(e);
 }
 
-int CauvMainWindow::send(boost::shared_ptr<const Message> message){
-    debug(0) << "Sending message: " << *(message.get());
-    return CauvNode::send(message);
-}
-
 void CauvMainWindow::onRun()
 {
-    CauvNode::onRun();
-
     ConnectedNode::setMap(new ConnectedNodeMap());
 
     // data model and network access
     boost::shared_ptr<VehicleRegistry> registry = VehicleRegistry::instance();
-    connect(registry.get(), SIGNAL(observerAttached(boost::shared_ptr<MessageObserver>)),
-            this, SLOT(registerObserver(boost::shared_ptr<MessageObserver>)));
-    connect(registry.get(), SIGNAL(observerDetached(boost::shared_ptr<MessageObserver>)),
-            this, SLOT(unregisterObserver(boost::shared_ptr<MessageObserver>)));
-    connect(registry.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
-            this, SLOT(send(boost::shared_ptr<const Message>)));
     m_actions->root = boost::make_shared<NodeItemModel>(VehicleRegistry::instance());
-
-    // cauv node
-    m_actions->node = shared_from_this();
     
     // Exposed interface elements - plugins might need to access some
     // elements of the main GUI framework. Here's where we can pass
@@ -192,30 +177,6 @@ void CauvMainWindow::onRun()
     m_actions->scene->registerDropHandler(boost::make_shared<GroupDropHandler>(m_actions->root));
     m_actions->scene->registerDropHandler(boost::make_shared<GraphingDropHandler>(m_actions->root));
 
-
-    this->addMessageObserver(boost::make_shared<DebugMessageObserver>(3));
-
-    // always need at least the gui and control group
-    // TODO: messages based subscription
-
-    this->subMessage(MotorStateMessage());
-    this->subMessage(BearingAutopilotEnabledMessage());
-    this->subMessage(DepthAutopilotEnabledMessage());
-    this->subMessage(PitchAutopilotEnabledMessage());
-    this->subMessage(BearingAutopilotParamsMessage());
-    this->subMessage(DepthAutopilotParamsMessage());
-    this->subMessage(PitchAutopilotParamsMessage());
-    this->subMessage(DepthCalibrationMessage());
-    this->subMessage(DebugLevelMessage());
-    this->subMessage(TelemetryMessage());
-    this->subMessage(ImageMessage());
-    this->subMessage(ControllerStateMessage());
-    this->subMessage(PressureMessage());
-    this->subMessage(BatteryUseMessage());
-    this->subMessage(CPUTemperatureMessage());
-    this->subMessage(SonarControlMessage());
-    this->subMessage(PenultimateResortTimeoutMessage());
-
     // Load external plugins (this includes things like gamepad support)
     // static plugins first
     foreach (QObject *plugin, QPluginLoader::staticInstances())
@@ -223,7 +184,7 @@ void CauvMainWindow::onRun()
 
     // then any plugins in the plugins folder
     QDir pluginsDir = QDir(QApplication::instance()->applicationDirPath());
-    debug() << "Loading dynamic plugins from" << pluginsDir.absolutePath().toLatin1().constData();
+    CAUV_LOG_DEBUG(0, "Loading dynamic plugins from" << pluginsDir.absolutePath().toLatin1().constData());
     pluginsDir.cd("plugins");
     findPlugins(pluginsDir, 1);
 
@@ -237,7 +198,10 @@ void CauvMainWindow::onRun()
     // There was a mutiny against the radial menu...
     m_actions->view->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_actions->view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(createContextMenu(QPoint)));
-
+    
+    //start mssage processing
+    ros::AsyncSpinner spinner(1); // Use 1 thread
+    spinner.start();
     m_application->exec();
 
     foreach(CauvInterfacePlugin * plugin, m_plugins){
@@ -245,24 +209,12 @@ void CauvMainWindow::onRun()
         delete plugin;
     }
 
-    info() << "Qt Thread exiting";
-    info() << "Stopping CauvNode";
-    CauvNode::stopNode();
-}
-
-void CauvMainWindow::registerObserver(boost::shared_ptr<MessageObserver> observer){
-    info() << "MessageObserver registered";
-    CauvNode::addMessageObserver(observer);
-}
-
-void CauvMainWindow::unregisterObserver(boost::shared_ptr<MessageObserver> observer){
-    info() << "MessageObserver unregistered";
-    CauvNode::removeMessageObserver(observer);
+    CAUV_LOG_INFO("Qt Thread exiting");
 }
 
 int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
 {
-    debug(3) << "Looking for plugins in:"<< dir.absolutePath().toStdString();
+    CAUV_LOG_DEBUG(3, "Looking for plugins in:"<< dir.absolutePath().toStdString());
 
     int numFound = 0;
     foreach (QString fileName, dir.entryList(QDir::Files)) {
@@ -271,11 +223,11 @@ int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
         if (plugin) {
             if (CauvInterfacePlugin * cauvPlugin= loadPlugin(plugin)) {
                 m_plugins.push_back(cauvPlugin);
-                info() << "Loaded plugin:"<< fileName.toStdString();
+                CAUV_LOG_INFO("Loaded plugin:"<< fileName.toStdString());
                 numFound++;
             } else {
                 plugin->deleteLater();
-                warning() << "Rejected plugin:"<< fileName.toStdString();
+                CAUV_LOG_WARNING("Rejected plugin:"<< fileName.toStdString());
             }
         }
     }
@@ -298,12 +250,14 @@ Q_DECLARE_METATYPE(QModelIndex)
 void CauvMainWindow::createContextMenu(QPoint point){
     const auto& model = *m_actions->root;
     // this needs some thought. redherring should REALLY not be hardcoded in here
-    auto pipelinesIndex = model.indexFromNode(VehicleRegistry::instance()->
+    /*auto pipelinesIndex = model.indexFromNode(VehicleRegistry::instance()->
                                              find<Vehicle>("redherring")->
-                                             findOrCreate<GroupingNode>("pipelines"));
+                                             findOrCreate<GroupingNode>("pipelines"));*/
     QMenu menu{this};
     //fillMenu(model, rootIndex, &menu);
-    auto new_pipeline = menu.addMenu("new pipeline");
+    auto disabled = menu.addAction("disabled");
+    disabled->setEnabled(false);
+    /*auto new_pipeline = menu.addMenu("new pipeline");
     if (model.rowCount(pipelinesIndex) == 0) {
         new_pipeline->setEnabled(false);
     } else {
@@ -315,7 +269,7 @@ void CauvMainWindow::createContextMenu(QPoint point){
             // TODO: This relies on the first child of the pipeline being "new"
             action->setData(QVariant::fromValue(pipelineIndex.child(0,0)));
         }
-    }
+    }*/
 
     auto selectedAction = menu.exec(m_actions->view->mapToGlobal(point));
     if (selectedAction) {
@@ -332,6 +286,7 @@ CauvInterfacePlugin * CauvMainWindow::loadPlugin(QObject *plugin){
     CauvInterfacePlugin * basicPlugin = qobject_cast<CauvInterfacePlugin*>(plugin);
     if(basicPlugin) {
         basicPlugin->initialise(m_actions, ConnectedNode::getMap());
+        CAUV_LOG_INFO("Loaded plugin:"<< basicPlugin->name().toStdString());
     }
 
     return basicPlugin;

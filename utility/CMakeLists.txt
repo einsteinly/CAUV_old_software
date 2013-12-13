@@ -3,14 +3,22 @@
 # See license.txt for details.
 #
 
-project (utility)
+cmake_minimum_required(VERSION 2.8.3)
+project (cauv_utility)
 
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${AUV_BINARY_DIR}/bin")
+find_package(catkin REQUIRED)
+find_package(Boost REQUIRED)
 
-include_directories (${AUV_SOURCE_DIR})
+catkin_package(
+    INCLUDE_DIRS "./.."
+    DEPENDS Boost
+)
 
-add_library(utility
+include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 
+add_library(cauv_utility
+    STATIC
     math.cpp
     string.cpp
     uid.cpp
@@ -20,27 +28,10 @@ add_library(utility
     coordinates.cpp
     daemon.cpp
     files.cpp
+    options.cpp
 )
-add_precompiled_header(utility ${CAUV_SOURCE_DIR}/pch.h)
 
-if(CAUV_BUILD_TESTS)
-    add_executable(
-        serialisation-test
-        serialisation-test.cpp
-    )
-    target_link_libraries(
-       serialisation-test
-       cauv_debug
-    )
-
-    add_executable(
-        async-test
-        async-test.cpp
-    )
-    target_link_libraries(
-        async-test
-        cauv_debug
-        pthread
-    )
-
-endif()
+install(TARGETS cauv_utility
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})

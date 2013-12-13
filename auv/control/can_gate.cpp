@@ -10,15 +10,22 @@
 
 #include <linux/can.h>
 
-#include <boost/asio/read.hpp>
-#include <boost/asio/write.hpp>
+//#include <boost/asio/read.hpp>
+//#include <boost/asio/write.hpp>
 
+#define CAUV_DEBUG_COMPAT
 #include <debug/cauv_debug.h>
 
-#include <generated/types/ForePressureMessage.h>
-#include <generated/types/AftPressureMessage.h>
-
 #include "frames.h"
+
+cauv::MotorDemand& cauv::operator+=(cauv::MotorDemand& l, cauv::MotorDemand const& r) {
+    l.prop += r.prop;
+    l.vbow += r.vbow;
+    l.hbow += r.hbow;
+    l.vstern += r.vstern;
+    l.hstern += r.hstern;
+    return l;
+}
 
 cauv::CANGate::CANGate(const std::string& ifname) :
     socket_fd(-1), fore_pressure(0), aft_pressure(0)
@@ -154,7 +161,7 @@ void cauv::CANGate::setMotorState(const MotorDemand& state) {
     std::memcpy(&frame.data, &cmd.data, frame.can_dlc);
 
     ::write(socket_fd, &frame, sizeof(frame));
-    debug(3) << "CANGate::setMotorState:" << state;
+    //debug(3) << "CANGate::setMotorState:" << state;
 }
 
 void cauv::CANGate::notifyPressure(float fore, float aft)

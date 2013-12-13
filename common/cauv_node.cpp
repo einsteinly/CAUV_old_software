@@ -65,97 +65,6 @@ void CauvNode::onRun()
 {
 }
 
-void CauvNode::joinGroup(const std::string& group)
-{
-    info() << "Group-based subscriptions are deprecated. Switch to subMessage() if possible";
-    if(m_mailbox)
-        m_mailbox->joinGroup(group);
-    else
-        error() << "CauvNode::joinGroup: no mailbox";
-}
-
-void CauvNode::subMessage(const Message &message)
-{
-    if (m_mailbox)
-        m_mailbox->subMessage(message);
-    else
-        error() << "CauvNode::subMessage: no mailbox";
-}
-
-void CauvNode::unSubMessage(const Message &message)
-{
-    if (m_mailbox)
-        m_mailbox->subMessage(message);
-    else
-        error() << "CauvNode::unSubMessage: no mailbox";
-}
-
-void CauvNode::addMessageObserver(boost::shared_ptr<MessageObserver> o)
-{
-    if(m_event_monitor)
-        m_event_monitor->addMessageObserver(o);
-    else
-        error() << "CauvNode::addMessageObserver: no mailbox monitor";
-}
-void CauvNode::removeMessageObserver(boost::shared_ptr<MessageObserver> o)
-{
-    if(m_event_monitor)
-        m_event_monitor->removeMessageObserver(o);
-    else
-        error() << "CauvNode::removeMessageObserver: no mailbox monitor";
-}
-void CauvNode::clearMessageObservers()
-{
-    if(m_event_monitor)
-        m_event_monitor->clearMessageObservers();
-    else
-        error() << "CauvNode::clearObservers: no mailbox monitor";
-}
-
-void CauvNode::addSubscribeObserver(boost::shared_ptr<SubscribeObserver> o)
-{
-    if(m_event_monitor)
-        m_event_monitor->addSubscribeObserver(o);
-    else
-        error() << "CauvNode::addSubscribeObserver: no mailbox monitor";
-}
-void CauvNode::removeSubscribeObserver(boost::shared_ptr<SubscribeObserver> o)
-{
-    if(m_event_monitor)
-        m_event_monitor->removeSubscribeObserver(o);
-    else
-        error() << "CauvNode::removeSubscribeObserver: no mailbox monitor";
-}
-void CauvNode::clearSubscribeObservers()
-{
-    if(m_event_monitor)
-        m_event_monitor->clearSubscribeObservers();
-    else
-        error() << "CauvNode::clearObservers: no mailbox monitor";
-}
-
-int CauvNode::send(boost::shared_ptr<const Message> m, MessageReliability rel)
-{
-    if(m_mailbox)
-        return m_mailbox->sendMessage(m, rel);
-    else
-        error() << "CauvNode::sendMessage: no mailbox";
-    return 0;
-}
-
-boost::shared_ptr<Mailbox> CauvNode::mailbox() const
-{
-    return m_mailbox;
-}
-
-struct DBGLevelObserver: MessageObserver
-{
-    void onDebugLevelMessage(DebugLevelMessage_ptr m)
-    {
-        debug::setLevel(m->level());
-    }
-};
-
 int CauvNode::defaultOptions()
 {
     return parseOptions(0, nullptr);
@@ -163,8 +72,6 @@ int CauvNode::defaultOptions()
 
 int CauvNode::parseOptions(int argc, char** argv)
 {
-    if(argv && argc)
-        debug::setProgramName(boost::filesystem::path(argv[0]).leaf().native());
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
     po::positional_options_description pos;
@@ -182,10 +89,6 @@ void CauvNode::addOptions(boost::program_options::options_description& desc,
                           boost::program_options::positional_options_description& /*pos*/)
 {
     namespace po = boost::program_options;
-    desc.add_options()
-        ("help,h", "Print this help message")
-        ("version,V", "show version information")
-    ;
 }
 int CauvNode::useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc)
 {

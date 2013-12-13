@@ -1,0 +1,9 @@
+float32 Kp
+float32 Ki
+float32 Kd
+float32 scale
+float32 Ap
+float32 Ai
+float32 Ad
+float32 thr
+float32 maxError

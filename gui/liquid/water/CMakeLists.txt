@@ -55,10 +55,8 @@ add_library (
 target_link_libraries ( water
     ${QT_LIBRARIES}
     cauv_debug
-    utility
+    cauv_utility
 )
-
-cauv_install ( water )
 
 if(CAUV_BUILD_TESTS)
     add_executable(
@@ -72,3 +70,7 @@ if(CAUV_BUILD_TESTS)
     )
 endif()
 
+install(TARGETS water
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})

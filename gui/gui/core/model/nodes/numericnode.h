@@ -8,7 +8,6 @@
 #define GUI_NUMERICNODE_H
 
 #include <gui/core/model/node.h>
-#include <gui/core/model/paramvalues.h>
 
 #include <QMetaType>
 #include <QVariant>
@@ -176,7 +175,7 @@ namespace cauv {
             }
 
             virtual bool typedSet(T const& value){
-                debug() << "NumericNode::set() cleaning value";
+                CAUV_LOG_DEBUG(0,  "NumericNode::set() cleaning value");
 
                 QVariant minV = getMin();
                 QVariant maxV = getMax();
@@ -220,7 +219,8 @@ namespace cauv {
             }
         };
 
-
+#warning TODO fix this
+        /*
         template<>
         class NumericNode<BoundedFloat> : public NumericNodeBase {
         public:
@@ -279,6 +279,7 @@ namespace cauv {
                 NumericNodeBase::setWraps(value.type==BoundedFloatType::Wraps);
             }
         };
+        */
 
 
         class BooleanNode : public NumericNode<bool> {

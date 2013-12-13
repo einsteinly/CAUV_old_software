@@ -3,7 +3,6 @@
  * See license.txt for details.
  */
 
-
 #ifndef GUI_VARIANTS_H
 #define GUI_VARIANTS_H
 
@@ -21,11 +20,6 @@
 #include <boost/functional/hash.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <generated/types/MotorID.h>
-#include <generated/types/Controller.h>
-#include <generated/types/CameraID.h>
-#include <common/msg_classes/colour.h>
-
 #if BOOST_VERSION == 105100
     #error boost version 1.51 is broken for enum hashing: please update to a newer version
 #endif
@@ -34,31 +28,10 @@
 #include <vector>
 #include <string>
 
-#include <debug/cauv_debug.h>
-
-// register param values types as qt meta types
-//!!! todo: generate these?
-#include <generated/types/ParamValue.h>
 Q_DECLARE_METATYPE(std::basic_string<char>)
-Q_DECLARE_METATYPE(std::vector<cauv::Corner>)
-Q_DECLARE_METATYPE(std::vector<cauv::Line>)
-Q_DECLARE_METATYPE(std::vector<cauv::Circle>)
-Q_DECLARE_METATYPE(std::vector<float>)
-Q_DECLARE_METATYPE(std::vector<cauv::KeyPoint>)
-Q_DECLARE_METATYPE(cauv::Colour)
-Q_DECLARE_METATYPE(cauv::BoundedFloat)
 Q_DECLARE_METATYPE(std::vector<int32_t>)
-Q_DECLARE_METATYPE(cauv::ImageRegion)
-Q_DECLARE_METATYPE(cauv::Range)
-Q_DECLARE_METATYPE(cauv::floatXY)
-Q_DECLARE_METATYPE(cauv::DynamicEnum)
-Q_DECLARE_METATYPE(std::vector<cauv::floatXY>)
-Q_DECLARE_METATYPE(std::vector<cauv::Ellipse>)
-Q_DECLARE_METATYPE(std::vector<cauv::Colour>)
-Q_DECLARE_METATYPE(cauv::LocationSequence)
 
-
-using namespace std::rel_ops;
+//using namespace std::rel_ops;
 
 namespace cauv {
     namespace gui {
@@ -126,7 +99,7 @@ namespace cauv {
         /**
           * Variant definitions
           */
-        typedef boost::variant<std::string, MotorID::e, Controller::e, CameraID::e, uint32_t, int32_t> nid_t;
+        typedef boost::variant<std::string, uint32_t, int32_t> nid_t;
 
         /**
           * Useful variant visitors

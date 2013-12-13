@@ -9,12 +9,8 @@
 
 #include <gui/core/model/messaging.h>
 
-#include <generated/types/message.h>
-
 namespace cauv {
     namespace gui {
-
-        class BaseMessageGenerator;
 
         class Vehicle : public Node
         {
@@ -30,48 +26,48 @@ namespace cauv {
             virtual void initialise() = 0;
 
         Q_SIGNALS:
-            void messageGenerated(boost::shared_ptr<const Message>);
-            void observerAttached(boost::shared_ptr<MessageObserver>);
-            void observerDetached(boost::shared_ptr<MessageObserver>);
+            //void messageGenerated(boost::shared_ptr<const Message>);
+            void observerAttached(boost::shared_ptr<BaseMessageHandler>);
+            void observerDetached(boost::shared_ptr<BaseMessageHandler>);
 
         public:
 
             typedef std::set<boost::shared_ptr<BaseMessageGenerator> > generator_set_t;
-            typedef std::set<boost::shared_ptr<MessageObserver> > observer_set_t;
+            typedef std::set<boost::shared_ptr<BaseMessageHandler> > observer_set_t;
 
             void attachGenerator(boost::shared_ptr<BaseMessageGenerator> generator)
             {
                 connect(generator->node().get(), SIGNAL(detachedFrom(boost::shared_ptr<Node>)),
                         this, SLOT(nodeRemoved()));
 
-                generator->connect(generator.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
-                                   this, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)));
-                if(dynamic_cast<MessageObserver*>(generator.get())) {
-                    attachObserver(generator->node(), boost::dynamic_pointer_cast<MessageObserver>(generator));
+                //generator->connect(generator.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
+                //                   this, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)));
+                if(dynamic_cast<BaseMessageHandler*>(generator.get())) {
+                    attachObserver(generator->node(), boost::dynamic_pointer_cast<BaseMessageHandler>(generator));
                 }
 
                 m_generators[generator->node()].insert(generator);
             }
 
             void detachGenerators(boost::shared_ptr<Node> node){
-                info() << "detach generators";
+                CAUV_LOG_INFO("detach generators");
                 foreach(boost::shared_ptr<BaseMessageGenerator> const& generator, m_generators[node]){
-                    info() << "generator found";
+                    CAUV_LOG_INFO("generator found");
                     m_generators[node].erase(generator);
                 }
                 m_generators.erase(node);
             }
 
             void attachObserver(boost::shared_ptr<Node> node,
-                                boost::shared_ptr<MessageObserver> observer) {
+                                boost::shared_ptr<BaseMessageHandler> observer) {
                 m_observers[node].insert(observer);
                 Q_EMIT observerAttached(observer);
             }
 
             void detachObservers(boost::shared_ptr<Node> node) {
-                info() << "detach observers";
-                foreach(boost::shared_ptr<MessageObserver> const& observer, m_observers[node]){
-                    info() << "observer found";
+                CAUV_LOG_INFO("detach observers");
+                foreach(boost::shared_ptr<BaseMessageHandler> const& observer, m_observers[node]){
+                    CAUV_LOG_INFO("observer found");
                     m_observers[node].erase(observer);
                     Q_EMIT observerDetached(observer);
                 }
@@ -80,11 +76,13 @@ namespace cauv {
 
         protected Q_SLOTS:
             void nodeRemoved() {
-                info() << "node removed";
+                CAUV_LOG_INFO("node removed");
+#if 0
                 if(Node* node = dynamic_cast<Node*>(sender())) {
                     detachGenerators(node->shared_from_this());
                     detachObservers(node->shared_from_this());
                 }
+#endif
             }
 
         protected:

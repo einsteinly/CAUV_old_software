@@ -16,7 +16,6 @@
 #include <QGraphicsLinearLayout>
 #include <QGraphicsSceneMouseEvent>
 
-#include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
 
 #include "requiresCutout.h"
@@ -26,6 +25,9 @@
 #include "resize.h"
 #include "shadow.h"
 #include "itemFridge.h"
+
+#define CAUV_DEBUG_COMPAT
+#include <debug/cauv_debug.h>
 
 using namespace liquid;
 

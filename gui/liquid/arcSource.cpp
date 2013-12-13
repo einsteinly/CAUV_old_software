@@ -13,12 +13,13 @@
 #include <QGraphicsScene>
 #include <QApplication>
 
-
-#include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
 
 #include "arc.h"
 #include "arcSink.h"
+
+#define CAUV_DEBUG_COMPAT
+#include <debug/cauv_debug.h>
 
 using namespace liquid;
 using namespace liquid::_;

@@ -9,11 +9,11 @@
 
 #include <QtGui>
 
-#include <common/msg_classes/colour.h>
-
 #include <delegates/delegate.h>
 
 #include <boost/shared_ptr.hpp>
+
+#if 0
 
 namespace cauv {
 namespace gui {
@@ -69,6 +69,8 @@ public:
 
 } // namespace gui
 } // namespace cauv
+
+#endif
 
 
 #endif // __CAUV_GUI_COLOUR_DELEGATE_H__

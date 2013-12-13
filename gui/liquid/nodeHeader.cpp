@@ -14,11 +14,12 @@
 #include <QPropertyAnimation>
 #include <QFontMetrics>
 
-#include <debug/cauv_debug.h>
-
 #include "button.h"
 #include "style.h"
 #include "proxyWidget.h"
+
+#define CAUV_DEBUG_COMPAT
+#include <debug/cauv_debug.h>
 
 using namespace liquid;
 

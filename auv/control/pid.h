@@ -3,25 +3,36 @@
  * See license.txt for details.
  */
 
-
-#ifndef __CAUV_PIDCONTROL_H__
-#define __CAUV_PIDCONTROL_H__
+#pragma once
 
 #include <deque>
 #include <vector>
+#include <string>
 
-#include <generated/types/ControllerStateMessage.h>
-#include <generated/types/GraphableMessage.h>
-#include <generated/types/Controller.h>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+
+#include <cauv_control/PIDState.h>
+#include <cauv_control/PIDParams.h>
+#include <cauv_control/PIDTarget.h>
+#include <cauv_control/ControlToken.h>
 
 #include <utility/time.h>
+#include <utility/inbox.h>
+
+#include <ros/publisher.h>
 
 namespace cauv {
+
+struct TokenLock {
+    cauv_control::ControlToken current_token;
+    boost::posix_time::ptime current_tok_time;
+};
+
+bool check_lock_token(TokenLock &lock, const cauv_control::ControlToken &token);
 
 class PIDControl
 {
     public:
-        Controller::e controlee;
         double target;
         double Kp,Ki,Kd,scale;
         double Ap, Ai, Ad, thr;
@@ -29,27 +40,30 @@ class PIDControl
         double Kp1, Ki1, Kd1;
         double errorMAX;
         bool is_angle;
+        bool enabled;
 
-        PIDControl(Controller::e for_controlee=Controller::NumValues);
-        boost::shared_ptr<ControllerStateMessage> stateMsg() const;
-        std::vector< boost::shared_ptr<GraphableMessage> > extraStateMessages() const;
+        PIDControl(std::string topic, boost::shared_ptr<TokenLock> token_lock_, bool is_angle);
         double getMV(double current);
         void reset();
-
 
     private:
         double integral, previous_derror, previous_mv;
         std::deque< std::pair<TimeStamp, double> > previous_errors;
         TimeStamp previous_time;
         int retain_samples_msecs;
-        double last_derr_unsmoothed;
+
+        void onTargetMessage(const cauv_control::PIDTarget::Ptr &m);
+        void onParamsMessage(const cauv_control::PIDParams::Ptr &m);
 
         double getErrorAngle(double const& target, double const& current);
         double getError(double const& target, double const& current);
         double smoothedDerivative();
+
+        boost::shared_ptr<TokenLock> token_lock;
+
+        ros::Subscriber params_sub;
+        ros::Subscriber target_sub;
+        ros::Publisher state_pub;
 };
 
 } // namespace cauv
-
-#endif // ndef __CAUV_PIDCONTROL_H__
-

@@ -17,7 +17,7 @@
 #include <QParallelAnimationGroup>
 #include <QObject>
 
-#include <utility/graphviz.h>
+//#include <utility/graphviz.h>
 #include <utility/bimap.h>
 #include <utility/string.h>
 
@@ -33,6 +33,10 @@ std::set<liquid::Arc*> liquid::LayoutItems::g_arcs;
 
 
 void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
+//All graphviz stuff has been horribly broken with the latest version of
+//graphviz
+#warning TODO
+#if 0
     namespace gv = graphviz;
 
     std::map<AbstractArcSink*, QGraphicsItem*> sink_parent_lut;
@@ -148,6 +152,7 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
     anim_group->start();
  
     gv::gvFreeLayout(c.get(), g.get());
+#endif
 }
 
 liquid::LayoutItems::LayoutItems(AbstractArcSink* sink){

@@ -10,14 +10,11 @@
 #include <string>
 #include <cstdio>
 
-#include "debug/cauv_debug.h"
-
 namespace cauv{
 
 inline static std::string exec(const char* cmd) {
     FILE* pipe = popen(cmd, "r");
     if(!pipe){
-        error() << "failed to popen pipe";
         return "";
     }
     char buffer[4096];

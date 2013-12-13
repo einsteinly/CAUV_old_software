@@ -24,6 +24,9 @@
 #include <model/nodeType.h>
 
 
+
+
+
 #define GENERATE_SIMPLE_NODE(X) \
     class X : public Node { \
         public: \
@@ -144,7 +147,7 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
             } else {
                 boost::shared_ptr<T> newNode = boost::make_shared<T>(id);
                 this->addChild(newNode);
-                info() << "New node added" << newNode->nodePath();
+                CAUV_LOG_INFO("New node added" << newNode->nodePath());
                 return newNode;
             }
         }
@@ -156,7 +159,7 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
         virtual const QVariant get() const;
 
     Q_SIGNALS:
-        // strctural signals
+        // structural signals
         void childAdded(boost::shared_ptr<Node>);
         void childRemoved(boost::shared_ptr<Node>);
         void detachedFrom(boost::shared_ptr<Node>);

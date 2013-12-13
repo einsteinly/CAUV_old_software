@@ -1,0 +1,30 @@
+<package>
+    <name>cauv_pipeline_model</name>
+    <version>1.0.0</version>
+    <description>
+        An abstraction of an image pipeline and manipulations of it
+    </description>
+    <url>http://www.cauv.co.uk</url>
+    <license>CAUV</license>
+    <maintainer email="a@b.com">CBA</maintainer>
+
+    <author>Creatures Auditing Ungulate Ventures</author>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>boost</build_depend>
+    <build_depend>cauv_utility</build_depend>
+    <build_depend>cauv_debug</build_depend>
+    <build_depend>roscpp</build_depend>
+    <build_depend>roslib</build_depend>
+    <build_depend>message_generation</build_depend>
+    <build_depend>std_msgs</build_depend>
+
+    <run_depend>boost</run_depend>
+    <run_depend>cauv_utility</run_depend>
+    <run_depend>cauv_debug</run_depend>
+    <run_depend>roscpp</run_depend>
+    <run_depend>roslib</run_depend>
+    <run_depend>message_runtime</run_depend>
+    <run_depend>std_msgs</run_depend>
+</package>
