@@ -40,7 +40,7 @@ else()
     )
 
     qt4_wrap_ui (GUI_UIS_H ${GUI_UIS})
-    qt4_wrap_cpp (GUI_MOC_H ${GUI_H})
+    qt4_wrap_cpp (GUI_MOC_H ${GUI_H} ${MOC_BOOST_HACK})
     qt4_add_resources(GUI_RCC_H ${GUI_RCC})
 
     add_executable ( cauv_gui

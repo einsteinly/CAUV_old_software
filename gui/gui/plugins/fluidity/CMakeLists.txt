@@ -36,7 +36,7 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/auv)
 
 
 qt4_wrap_ui (FLUIDITY_PLUGIN_UIS_H ${FLUIDITY_PLUGIN_UIS})
-qt4_wrap_cpp (FLUIDITY_PLUGIN_MOC_H ${FLUIDITY_PLUGIN_H})
+qt4_wrap_cpp (FLUIDITY_PLUGIN_MOC_H ${FLUIDITY_PLUGIN_H} ${MOC_BOOST_HACK})
 
 add_library( fluidityplugin MODULE
     ${FLUIDITY_PLUGIN_SRCS}

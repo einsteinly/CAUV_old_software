@@ -26,7 +26,7 @@ set ( AI_PLUGIN_H
 
      
 qt4_wrap_ui (AI_PLUGIN_UIS_H ${AI_PLUGIN_UIS})
-qt4_wrap_cpp (AI_PLUGIN_MOC_H ${AI_PLUGIN_H})
+qt4_wrap_cpp (AI_PLUGIN_MOC_H ${AI_PLUGIN_H} ${MOC_BOOST_HACK})
 
 add_library( aiplugin MODULE
     ${AI_PLUGIN_SRCS}

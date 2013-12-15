@@ -63,7 +63,7 @@ set (
 )
 
 qt4_wrap_ui (LIQUID_UIS_H ${LIQUID_UIS})
-qt4_wrap_cpp (LIQUID_MOC_H ${LIQUID_H})
+qt4_wrap_cpp (LIQUID_MOC_H ${LIQUID_H} ${MOC_BOOST_HACK})
 qt4_add_resources(LIQUID_RCC_H ${LIQUID_RCC})
 
 add_definitions(${QT_DEFINITIONS})

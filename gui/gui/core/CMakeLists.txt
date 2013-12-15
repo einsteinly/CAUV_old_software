@@ -112,7 +112,7 @@ set ( GUI_CORE_RCC
     )
 
 qt4_wrap_ui (GUI_CORE_UIS_H ${GUI_CORE_UIS})
-qt4_wrap_cpp (GUI_CORE_MOC_H ${GUI_CORE_H})
+qt4_wrap_cpp (GUI_CORE_MOC_H ${GUI_CORE_H} ${MOC_BOOST_HACK})
 qt4_add_resources(GUI_CORE_RCC_H ${GUI_CORE_RCC})
 
 add_library ( gui-core SHARED

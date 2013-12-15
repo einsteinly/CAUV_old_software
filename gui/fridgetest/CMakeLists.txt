@@ -24,7 +24,7 @@ set (
     ../gui/resources.qrc    
 )
 
-qt4_wrap_cpp (fridgetest_MOC_H ${fridgetest_H})
+qt4_wrap_cpp (fridgetest_MOC_H ${fridgetest_H} ${MOC_BOOST_HACK})
 qt4_add_resources(fridgetest_RCC_H ${fridgetest_RCC})
 
 

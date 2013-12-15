@@ -62,7 +62,8 @@ else()
 
     # -DBOOST_TT... is a hack to workaround a moc bug with boost 1.48, see
     # https://bugreports.qt.nokia.com/browse/QTBUG-22829
-    set (MOC_BOOST_HACK OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
+    set (MOC_BOOST_HACK OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED
+                                -DBOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION)
 
     add_subdirectory (liquid)
     add_subdirectory (gui)

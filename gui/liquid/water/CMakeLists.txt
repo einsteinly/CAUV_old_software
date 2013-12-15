@@ -39,7 +39,7 @@ set (
 )
 
 qt4_wrap_ui (WATER_UIS_H ${WATER_UIS})
-qt4_wrap_cpp (WATER_MOC_H ${WATER_H})
+qt4_wrap_cpp (WATER_MOC_H ${WATER_H} ${MOC_BOOST_HACK})
 qt4_add_resources(WATER_RCC_H ${WATER_RCC})
 
 add_definitions(${QT_DEFINITIONS})

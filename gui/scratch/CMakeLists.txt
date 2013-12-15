@@ -25,7 +25,7 @@ set (
     ../gui/resources.qrc    
 )
 
-qt4_wrap_cpp (scratch_MOC_H ${scratch_H})
+qt4_wrap_cpp (scratch_MOC_H ${scratch_H} ${MOC_BOOST_HACK})
 qt4_add_resources(scratch_RCC_H ${scratch_RCC})
 
 
