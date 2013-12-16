@@ -23,7 +23,6 @@
 
 #include "elements/style.h"
 
-//#include "fNodeIO.h"
 #include "fNode.h"
 
 #include <debug/cauv_debug.h>
@@ -32,16 +31,14 @@ namespace cauv{
 namespace gui{
 namespace f{
 
-class FNodeOutput: public pipeline_model::OutputModel,
+class FNodeOutput: //public pipeline_model::OutputModel,
                    public QGraphicsWidget,
-                   //public FNodeIO,
-                   public liquid::ArcSourceDelegate{
+                   public liquid::ArcSourceDelegate {
     Q_OBJECT
     public:
-        FNodeOutput(FNode* node, liquid::ArcStyle const& arc_style, const std::string& id)
-            : model::OutputNode(...., node),
-              QGraphicsWidget(node),
-              //FNodeIO(node, id),
+        FNodeOutput(FNode &node, liquid::ArcStyle const& arc_style, const std::string& id)
+            : 
+              QGraphicsWidget(&node),
               m_source(NULL),
               m_text(NULL){
             QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(
@@ -72,86 +69,19 @@ class FNodeOutput: public pipeline_model::OutputModel,
 
             setLayout(hlayout);
             
-            connect(node, SIGNAL(xChanged()), this, SIGNAL(xChanged()));
-            connect(node, SIGNAL(yChanged()), this, SIGNAL(yChanged()));
+            connect(&node, SIGNAL(xChanged()), this, SIGNAL(xChanged()));
+            connect(&node, SIGNAL(yChanged()), this, SIGNAL(yChanged()));
         }
         virtual ~FNodeOutput(){}
 
-        //virtual OutputType::e ioType() const = 0;
-
-        //virtual SubType subType() const{
-        //    return -1;
-        //}
-
         liquid::Arc* arc() const{
             return m_source->arc();
-        }
-
-    protected Q_SLOTS:
-        void test(){
-            debug() << "TEST SLOT";
         }
 
     protected:
         liquid::ArcSource* m_source;
         QGraphicsProxyWidget* m_text;
 };
-
-class FNodeImageOutput: public FNodeOutput{
-    public:
-        FNodeImageOutput(LocalNodeOutput const& output, FNode* node)
-            : FNodeOutput(node, Image_Arc_Style(), output.output){
-            #ifndef CAUV_DEBUG_DRAW_LAYOUT
-            setFlag(ItemHasNoContents);
-            #endif // ndef CAUV_DEBUG_DRAW_LAYOUT
-        }
-
-        virtual OutputType::e ioType() const{
-            return OutputType::Image;
-        }
-
-        void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget=0){
-            Q_UNUSED(option);
-            Q_UNUSED(widget);
-            Q_UNUSED(painter);
-            #ifdef CAUV_DEBUG_DRAW_LAYOUT
-            painter->setPen(QPen(QColor(20,20,200,64)));
-            painter->setBrush(Qt::NoBrush);
-            painter->drawRect(boundingRect());
-            #endif // def CAUV_DEBUG_DRAW_LAYOUT
-        }
-};
-
-class FNodeParamOutput: public FNodeOutput{
-    public:
-        FNodeParamOutput(LocalNodeOutput const& output, FNode* node)
-            : FNodeOutput(node, Param_Arc_Style(), output.output), m_subType(output.subType){
-            #ifndef CAUV_DEBUG_DRAW_LAYOUT
-            setFlag(ItemHasNoContents);
-            #endif // ndef CAUV_DEBUG_DRAW_LAYOUT
-        }
-
-        virtual OutputType::e ioType() const{
-            return OutputType::Parameter;
-        }
-        virtual SubType subType() const{
-            return m_subType;
-        }
-
-        void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget=0){
-            Q_UNUSED(option);
-            Q_UNUSED(widget);
-            Q_UNUSED(painter);            
-            #ifdef CAUV_DEBUG_DRAW_LAYOUT
-            painter->setPen(QPen(QColor(200,20,30,64)));
-            painter->setBrush(Qt::NoBrush);
-            painter->drawRect(boundingRect());
-            #endif // def CAUV_DEBUG_DRAW_LAYOUT
-        }
-    private:
-        SubType m_subType;
-};
-
 
 } // namespace f
 } // namespace gui

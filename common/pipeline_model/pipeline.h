@@ -34,6 +34,9 @@ public:
 
     static boost::shared_ptr<PipelineModel> fromXmlRpcValue(XmlRpc::XmlRpcValue &value);
 
+protected:
+    virtual boost::shared_ptr<NodeModel> constructNode(const std::string type);
+
 private:
     std::string pipeline_name;
     std::set<std::string> node_names; //list of node_names, used to ensure no two nodes have same name

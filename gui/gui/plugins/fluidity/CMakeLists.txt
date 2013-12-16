@@ -13,7 +13,7 @@ set ( FLUIDITY_PLUGIN_SRCS
     view.cpp
     managedElement.cpp
     manager.cpp
-    #fNodeInput.cpp
+    fNodeInput.cpp
 )
 
 set ( FLUIDITY_PLUGIN_UIS
@@ -26,8 +26,8 @@ set ( FLUIDITY_PLUGIN_H
     view.h
     manager.h
     fNode.h
-    #fNodeOutput.h
-    #fNodeInput.h
+    fNodeOutput.h
+    fNodeInput.h
     menu.h
     #imageSource.h
 )

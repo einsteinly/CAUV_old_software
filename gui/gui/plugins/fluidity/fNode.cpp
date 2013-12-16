@@ -32,8 +32,8 @@
 #include "elements/style.h"
 #include "elements/nodeInput.h"
 
-//#include "fNodeOutput.h"
-//#include "fNodeInput.h"
+#include "fNodeOutput.h"
+#include "fNodeInput.h"
 #include "manager.h"
 #include "types.h"
 //#include "imageSource.h"
@@ -45,10 +45,6 @@ using cauv::mkQStr;
 using namespace liquid;
 using namespace cauv;
 
-
-// - helper structures and classes
-#warning autolayout disabled
-#if 0
 class TestLayoutItem: public QGraphicsLayoutItem,
                       public QGraphicsPathItem{
     public:
@@ -71,10 +67,10 @@ class TestLayoutItem: public QGraphicsLayoutItem,
             prepareGeometryChange();
             // sets geometry()
             QGraphicsLayoutItem::setGeometry(rect);
-            debug(3) << "setGeometry" << rect << "(pos=" << pos() << ")";
+            CAUV_LOG_DEBUG(3, "setGeometry" << rect << "(pos=" << pos() << ")");
             setPos(rect.topLeft() - m_preferred_geom.topLeft());
 
-            debug(3) << "parent item is" << 	parentItem();
+            CAUV_LOG_DEBUG(3, "parent item is" << parentItem());
         }
 
         /*void updateGeometry(){
@@ -101,7 +97,6 @@ class TestLayoutItem: public QGraphicsLayoutItem,
     private:
         QRectF m_preferred_geom;
 };
-#endif
 
 // - static functions
 #warning old node type stuff
@@ -121,16 +116,17 @@ static QString nodeTypeDesc(cauv::NodeType::e const& type){
 
 // - FNode
 
-FNode::FNode(Manager& m, pipeline_model::NodeModelType type)
-    : liquid::LiquidNode(F_Node_Style(), nullptr), 
+
+FNode::FNode(const std::string type, Manager &m)
+    :liquid::LiquidNode(F_Node_Style(), nullptr), 
       ManagedElement(m),
       pipeline_model::NodeModel(type, m),
       m_collapsed(false){
+
+    setTitle(QString::fromStdString(getName()));
     initButtons();
 
     setSize(QSizeF(104,130));
-    
-    // !!!
     
     status(OK);
 
@@ -139,6 +135,28 @@ FNode::FNode(Manager& m, pipeline_model::NodeModelType type)
 #endif // def QT_PROFILE_GRAPHICSSCENE
 }
 
+void FNode::initIO() {
+    for (auto &output_name : getOutputNames()) {
+        auto output = getOutput(output_name);
+        auto t = new FNodeOutput(*this, Param_Arc_Style(), output_name);
+        addItem(t);
+    }
+
+    for (auto &input_name : getInputNames()) {
+        auto input = getInput(input_name);
+        auto t = new FNodeInput(*this, manager());
+        addItem(t);
+    }
+}
+
+boost::shared_ptr<FNode>
+FNode::makeFNode(const std::string type, Manager &m) {
+    auto new_node = new FNode(type, m);
+    //deleteLater() because deletion could occur in events
+    auto node_ptr = boost::shared_ptr<FNode>(new_node, [](FNode *ptr) {CAUV_LOG_DEBUG(0, "FNode delete"); ptr->deleteLater();});
+    new_node->initIO();
+    return node_ptr; 
+}
 
 // FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
 //     : liquid::LiquidNode(F_Node_Style(), nullptr),
@@ -345,8 +363,7 @@ void FNode::status(Status const& s, float const& throughput, float const& freque
 
 void FNode::close(){
     Q_EMIT LiquidNode::closed(this);
-#warning
-//     Q_EMIT closed(id);
+    Q_EMIT closed(*this);
     // don't delete yet! That happens when fadeAndRemove (or just remove) slots
     // are triggered
     if(manager().animationPermitted()){
@@ -378,32 +395,33 @@ void FNode::remove(){
     CAUV_LOG_DEBUG(1, "FNode::remove() (scene=" << scene() << ")" << this);
     hide();
     scene()->removeItem(this);
-    deleteLater();
 }
 
-// void FNode::reExec(){
+void FNode::reExec(){
 //     manager().requestForceExec(id());
-// }
+}
 
-// void FNode::duplicate(){
+void FNode::duplicate(){
 //     // Don't duplicate output links - this would break the connections of the
 //     // duplicated node
 //     debug() << "duplicate()" << m_type << m_input_links;
 //     manager().requestNode(m_type, m_input_links/*, m_output_links*/);
-// }
+}
 
-// void FNode::toggleCollapsed(){
-//     m_collapsed = !m_collapsed;
-//     for(int i = 0; i < m_contentLayout->count(); i++){
-//         FNodeInput* ip = dynamic_cast<FNodeInput*>(m_contentLayout->itemAt(i)->graphicsItem());
-//         if(ip)
-//             ip->setCollapsed(m_collapsed);
-//     }
-//     setSize(Minimum_Size);
-//     //updateLayout();
-//     manager().considerUpdatingLayout();
-// }
-// 
+void FNode::toggleCollapsed(){
+    m_collapsed = !m_collapsed;
+#if 0
+    for(int i = 0; i < m_contentLayout->count(); i++){
+        FNodeInput* ip = dynamic_cast<FNodeInput*>(m_contentLayout->itemAt(i)->graphicsItem());
+        if(ip) {
+            ip->setCollapsed(m_collapsed);
+        }
+    }
+#endif
+    setSize(Minimum_Size);
+    manager().considerUpdatingLayout();
+}
+ 
 // FNodeOutput* FNode::output(const std::string& id){
 //     str_out_map_t::const_iterator i = m_outputs.find(id);
 //     if(i != m_outputs.end())
@@ -439,9 +457,9 @@ void FNode::initButtons(){
     );
     addButton("duplicate", dupbutton);
     
-//     connect(this, SIGNAL(closed(node_id_t const&)), &manager(), SLOT(requestRemoveNode(node_id_t const&)));
-//     connect(dupbutton, SIGNAL(pressed()), this, SLOT(duplicate()));
-//     connect(execbutton, SIGNAL(pressed()), this, SLOT(reExec()));
-//     connect(collapsebutton, SIGNAL(pressed()), this, SLOT(toggleCollapsed()));
+    connect(this, SIGNAL(closed(pipeline_model::NodeModel&)), &manager(), SLOT(requestRemoveNode(pipeline_model::NodeModel&)));
+    connect(dupbutton, SIGNAL(pressed()), this, SLOT(duplicate()));
+    connect(execbutton, SIGNAL(pressed()), this, SLOT(reExec()));
+    connect(collapsebutton, SIGNAL(pressed()), this, SLOT(toggleCollapsed()));
 }
 

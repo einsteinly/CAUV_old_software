@@ -92,7 +92,7 @@ void FView::init(const std::string& pipeline_name,
         m_manager->init();
     }
 
-    //initMenu();
+    initMenu();
 
     setWindowTitle("Fluidity");
 
@@ -101,10 +101,12 @@ void FView::init(const std::string& pipeline_name,
     b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/x_button"));
     s->addItem(b);
     b->setZValue(1000);
-    m_overlay_items.push_back(std::make_pair(QPoint(-64, -40), b));
+    b->setToolTip(QString("Close pipeline editor"));
+    m_overlay_items.push_back(std::make_pair(QPoint(-40, -80), b));
     connect(b, SIGNAL(pressed()), this, SIGNAL(closeRequested()));
 
     b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"));
+    b->setToolTip(QString("Reload pipeline"));
     s->addItem(b);
     b->setZValue(1000);
     m_overlay_items.push_back(std::make_pair(QPoint(-40, -40), b));
@@ -205,8 +207,7 @@ void FView::_initInMode(Mode const& mode){
         setViewportUpdateMode(QGraphicsView::MinimalViewportUpdate);
         m_scenerect_update_timer->stop();
 
-#warning menu
-//         initMenu();
+         initMenu();
     }else{
         setViewport(nullptr);
         setRenderHints(
@@ -227,8 +228,7 @@ void FView::_initInMode(Mode const& mode){
         m_scenerect_update_timer->setInterval(1000);
         m_scenerect_update_timer->start();
 
-#warning
-//         initMenu();
+        initMenu();
     }
 
 }
@@ -261,107 +261,53 @@ void FView::postData(){
     m_angle_series->postData(i/2.0, n);
 }*/
 
-#warning TODO add menu back
-#if 0
 void FView::initMenu(){
     QAction_ptr_set actions;
 
     // !!! TODO: might? need to use a deleter on the QAction shared_ptr that
     // calls deleteLater() instead of simply delete
 
-    for(int i = 0; i < NodeType::NumValues; i++){
-        QString n = QString::fromStdString(mkStr() << NodeType::e(i));
-        n.replace("NodeType::","");
-        n += " Node";
-        boost::shared_ptr<QAction> a = boost::make_shared<QAction>(n, this);
-        a->setData(uint32_t(i));
-        connect(a.get(), SIGNAL(triggered()), this, SLOT(menuActioned()));
-        actions << a;
-    }
-
     m_contextmenu_root.action.reset();
     m_contextmenu_root.group_name = "Create Node";
     m_contextmenu_root.kids.clear();
-    initMenu(m_contextmenu_root, actions);
-}
 
-struct ContainsWord{
-    ContainsWord(const std::string& word) : m_word(QString::fromStdString(word)){ }
-
-    bool operator()(boost::shared_ptr<QAction>  a) const{
-        return a->text().contains(m_word, Qt::CaseInsensitive);
-    }
-
-    QString m_word;
-};
-
-float FView::split(const std::string& word, QAction_ptr_set actions){
-    std::size_t do_contain_word = std::count_if(actions.begin(), actions.end(), ContainsWord(word));
-    return float(do_contain_word) / actions.size();
-}
-
-template<typename T, typename P>
-QSet<T> passesPredicate(QSet<T> const& in, P const& pred){
-    QSet<T> r;
-    foreach(T const& t, in)
-        if(pred(t))
-            r << t;
-    return r;
-}
-
-void FView::initMenu(MenuNode& parent, QAction_ptr_set actions){
-    if(actions.size() == 1){
-        parent.action = *actions.begin();
-        assert(parent.kids.size() == 0);
-        return;
-    }
-
-    static const char* split_words_init[] = {
-        "Sonar", "File", "Split", "Combine", "Math", "Corner", /*"Int",*/ "Float",
-        "String", "Keypoint", "Lines", "Point", "Circle", "Ellipse",
-        "Input", "Output", "Camera", "Histogram", "Max", "Min", "Segment",
-        "Mix", "Filter", "Copy", "Mix", "Clamp", "Crop", "Draw", "Broadcast",
-        "Background", "Fit", "Segment", "KMean", "Colour", "Mean", "Cluster"
+    std::vector<std::string> test_names = {
+        "test one",
+        "test two",
+        "foo",
+        "bar",
+        "baz"
     };
-    std::vector<std::string> split_words;
-    for(auto & word : split_words_init){
-        split_words.push_back(word);
+
+    int n_names = 0;
+    for (auto& name: test_names) {
+        pipeline_model::NodeModelType test_type(name);
+        auto float_param = pipeline_model::FloatParam(4.0);
+        auto int_param = pipeline_model::IntParam(4);
+        test_type.addOutput("float_output", "test value", float_param);
+        test_type.addOutput("int_output", "test value", int_param);
+        test_type.addInput("float_input", "test value", float_param);
+        test_type.addInput("int_input", "test value", int_param);
+        pipeline_model::NodeModelType::addType(test_type);
+
+        QString n = QString::fromStdString(name);
+        boost::shared_ptr<QAction> a = boost::make_shared<QAction>(n, this);
+        a->setData(n);
+        connect(a.get(), SIGNAL(triggered()), this, SLOT(menuActioned()));
+        boost::shared_ptr<MenuNode> m = boost::make_shared<MenuNode>();
+        m->action = a;
+        m_contextmenu_root.kids << m;
+        actions << a;
     }
-    
-    const int submenu_split_min = 2;
-    while(actions.size()){
-        float best_split = 0;
-        int best_split_count = 0;
-        std::string best_split_word;
-        foreach(const std::string& w, split_words){
-            const float s = split(w, actions);
-            debug(5) << "split" << s << s*actions.size() << w;
-            if(std::fabs(s-0.5) < std::fabs(best_split-0.5)){
-                best_split = s;
-                best_split_word = w;
-                best_split_count = s*(actions.size()+0.5);
-            }
-        }
-        debug(5) << "best split" << best_split << best_split_count << best_split_word;
-        if(best_split_count >= submenu_split_min &&
-           actions.size() - best_split_count > submenu_split_min){
-            QAction_ptr_set does_contain = passesPredicate(actions, ContainsWord(best_split_word));
-            actions -= does_contain;
+
+#if 0
+//for later reference:
             boost::shared_ptr<MenuNode> m = boost::make_shared<MenuNode>();
             m->group_name = QString::fromStdString(best_split_word);
             initMenu(*m, does_contain);
             parent.kids << m;
-        }else{
-            break;
-        }
-    }
-    // add remaining actions (didn't fall into any subcategories) at this top
-    // level:
-    foreach(QAction_ptr p, actions){
-        boost::shared_ptr<MenuNode> m = boost::make_shared<MenuNode>();
-        m->action = p;
-        parent.kids << m;
-    }
+#endif
+
 }
 
 void FView::_buildMenu(cauv::gui::f::Menu* menu, MenuNode const& node){
@@ -377,15 +323,19 @@ void FView::_buildMenu(cauv::gui::f::Menu* menu, MenuNode const& node){
 
 void FView::menuActioned(){
     QAction* s = dynamic_cast<QAction*>(sender());
-    if(s){
-        QVariant data = s->data();
-        m_manager->requestNode(NodeType::e(data.value<uint32_t>()));
-        debug() << "menuActioned:" << NodeType::e(data.value<uint32_t>());
-    }else{
-        error() << "menuActioned: non-action sender?";
+    if (!s) { 
+        CAUV_LOG_ERROR("menuActioned: non-action sender?");
+        return;
     }
+    try {
+        QVariant data = s->data();
+        std::string node_type = data.value<QString>().toStdString();
+        m_manager->addNode(node_type);
+        CAUV_LOG_DEBUG(2, "Added fluidity node of type" << node_type);
+    } catch (pipeline_model::NoSuchNodeTypeException &e) {
+        CAUV_LOG_ERROR(e.what());
+    } 
 }
-#endif
 
 void FView::setSceneRectToContents(){
     QList<QGraphicsItem*> nodes = m_manager->rootNodes();
@@ -424,26 +374,11 @@ void FView::dumpProfile(){
 }
 #endif // def QT_PROFILE_GRAPHICSSCENE
 
-#warning TODO menu disabled
-#if 0
 void FView::contextMenuEvent(QContextMenuEvent *event){
     cauv::gui::f::Menu menu(this);
     _buildMenu(&menu, m_contextmenu_root);
     menu.exec(event->globalPos());
 }
-#endif
-
-/*void FView::resizeEvent(QResizeEvent* event){
-    debug() << "FView::resizeEvent";
-    _updateOverlays();
-    LiquidView::resizeEvent(event);
-}
-
-void FView::scrollContentsBy(int dx, int dy){
-    debug() << "FView::scrollContentsBy" << dx << dy;
-    _updateOverlays();
-    LiquidView::scrollContentsBy(dx, dy);
-}*/
 
 void FView::paintEvent(QPaintEvent * event){
     // hooking on resize/scroll events updates the positions too late and it
@@ -451,22 +386,6 @@ void FView::paintEvent(QPaintEvent * event){
     _updateOverlays();
     LiquidView::paintEvent(event);
 }
-
-// // !!! temporary keyboard shortcut hack
-// void FView::keyPressEvent(QKeyEvent *event){
-//     LiquidView::keyPressEvent(event);
-//     if(!event->isAccepted()){
-//         event->accept();
-//         switch(event->key()){
-//             case Qt::Key_R:
-//                 m_manager->requestRefresh();
-//                 break;
-//             default:
-//                 event->ignore();
-//                 break;
-//         }
-//     }
-// }
 
 void FView::mouseMoveEvent(QMouseEvent *event){
     m_manager->delayLayout();

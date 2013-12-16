@@ -48,10 +48,6 @@ class Arc: public _::AbstractArcSourceInternal,
                            const QStyleOptionGraphicsItem *option,
                            QWidget *widget = 0);
     protected:
-        // itemChanged is used to hook the notification when this arc is
-        // actually added to a scene, at which point magic-foo is performed to
-        // draw arcs underneath everything else
-        virtual QVariant itemChange(GraphicsItemChange change, QVariant const& value);
 
     public Q_SLOTS:
         void updateLayout();    

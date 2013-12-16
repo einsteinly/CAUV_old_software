@@ -14,6 +14,11 @@ namespace pipeline_model {
 typedef int NodeId;
 
 //Useful exceptions
+
+class NoSuchNodeTypeException : public std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+
 class NoSuchParamException : public std::runtime_error {
     using std::runtime_error::runtime_error;
 };
@@ -54,7 +59,7 @@ class PipelineModel;
 class NodeModel : public boost::enable_shared_from_this<NodeModel> {
 public:
     NodeModel(const std::string type, PipelineModel &pipeline);
-    NodeModel(NodeModelType& type_, PipelineModel &pipeline_);
+    NodeModel(const NodeModelType& type_, PipelineModel &pipeline_);
 
     virtual void connectOutput(const std::string output, InputModel&);
     virtual void connectInput(const std::string input, OutputModel&);
@@ -75,7 +80,7 @@ public:
     const NodeModelType &type;
     const NodeId id;
 
-    std::string getName() { return name; };
+    std::string getName() const { return name; };
 
     void setName(const std::string &new_name);
 

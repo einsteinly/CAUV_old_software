@@ -228,13 +228,13 @@ void Arc::paint(QPainter *painter,
     #endif // def CAUV_DEBUG_DRAW_LAYOUT
 }
 
-QVariant Arc::itemChange(GraphicsItemChange change, QVariant const& value){
-    if(change == ItemSceneHasChanged && scene())
-        setParentItem(nullptr);
-    return AbstractArcSourceInternal::itemChange(change, value);
-}
-
 void Arc::updateLayout(){
+    //Do reparenting here instead of in itemChange() because that does nasty
+    //things to the internal state of the scene (adding items but not updating
+    //their scene(), in unpredictable ways)
+    if (scene() && parentItem()) {
+        setParentItem(nullptr);
+    }
     if(!m_source){
         warning() << "no source!";
         return;

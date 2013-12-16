@@ -15,10 +15,7 @@ namespace f{
 
 class FNode;
 
-// !!! corresponds to messages.msg
-typedef int32_t SubType;
-
-class FNodeIO{
+class FNodeIO {
     public:
         FNodeIO(FNode* node, const std::string& id)
             : m_node(node), m_id(id){
@@ -29,10 +26,6 @@ class FNodeIO{
         }
 
         const std::string& id() const{ return m_id; }
-        
-        virtual SubType subType() const = 0;
-        virtual OutputType::e ioType() const = 0;
-
     protected:
         FNode* m_node;
         std::string m_id;

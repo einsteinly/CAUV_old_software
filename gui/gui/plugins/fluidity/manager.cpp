@@ -30,16 +30,6 @@ using namespace cauv;
 using namespace cauv::gui::f;
 using namespace cauv::pipeline_model;
 
-// - Templates Used Locally
-#if 0
-template<typename message_T>
-bool Manager::_nameMatches(boost::shared_ptr<const message_T> msg){
-    if(msg->pipelineName() == m_pipeline_name)
-        return true;
-    return false;
-}
-#endif
-
 // - Static helper functions
 // static bool isImageNode(NodeType::e t){
 //     return t == NodeType::GuiOutput;
@@ -86,21 +76,10 @@ Manager::~Manager(){
 
 void Manager::init(){
     m_scene->registerDropHandler(boost::make_shared<gui::GraphingDropHandler>(m_item_model));
-
-//     m_cauv_node->addMessageObserver(shared_from_this());
-//     m_cauv_node->subMessage(GraphDescriptionMessage());
-//     m_cauv_node->subMessage(NodeParametersMessage());
-//     m_cauv_node->subMessage(NodeAddedMessage());
-//     m_cauv_node->subMessage(NodeRemovedMessage());
-//     m_cauv_node->subMessage(ArcAddedMessage());
-//     m_cauv_node->subMessage(ArcRemovedMessage());
-//     m_cauv_node->subMessage(GuiImageMessage());
-//     m_cauv_node->subMessage(StatusMessage());
-//     requestRefresh();
 }
 
 void Manager::teardown(){
-//     m_cauv_node->removeMessageObserver(shared_from_this());
+
 }
 
 // fnode_ptr Manager::lookup(node_id_t const& id){
@@ -171,40 +150,6 @@ QList<QGraphicsItem*> Manager::rootNodes() const{
     return r;
 }
 
-// - Message Observer Implementation: thunks
-// void Manager::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){
-//     if(!_nameMatches(m)) return;
-//     Q_EMIT receivedGraphDescription(m);
-// }
-// void Manager::onNodeParametersMessage(NodeParametersMessage_ptr m){
-//     if(!_nameMatches(m)) return;
-//     Q_EMIT receivedNodeParameters(m);
-// }
-// void Manager::onNodeAddedMessage(NodeAddedMessage_ptr m){
-//     if(!_nameMatches(m)) return;
-//     Q_EMIT receivedNodeAdded(m);
-// }
-// void Manager::onNodeRemovedMessage(NodeRemovedMessage_ptr m){
-//     if(!_nameMatches(m)) return;
-//     Q_EMIT receivedNodeRemoved(m);
-// }
-// void Manager::onArcAddedMessage(ArcAddedMessage_ptr m){
-//     if(!_nameMatches(m)) return;
-//     Q_EMIT receivedArcAdded(m);
-// }
-// void Manager::onArcRemovedMessage(ArcRemovedMessage_ptr m){
-//     if(!_nameMatches(m)) return;
-//     Q_EMIT receivedArcRemoved(m);
-// }
-// void Manager::onGuiImageMessage(GuiImageMessage_ptr m){
-//     if(!_nameMatches(m)) return;
-//     Q_EMIT receivedGuiImage(m);
-// }
-// void Manager::onStatusMessage(StatusMessage_ptr m){
-//     if(!_nameMatches(m)) return;
-//     Q_EMIT receivedStatus(m);
-// }
-// 
 // // - Message Handling Slots:
 // void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
 //     debug(7) << BashColour::Green << "Manager::" << __func__ << *m;
@@ -388,10 +333,16 @@ QList<QGraphicsItem*> Manager::rootNodes() const{
 //     ));
 // }
 // 
-// void Manager::requestRemoveNode(node_id_t const& id){
-//     debug() << BashColour::Brown << "requestRemoveNode" << id;
-//     m_cauv_node->send(boost::make_shared<RemoveNodeMessage>(m_pipeline_name, id));
-// }
+void Manager::requestRemoveNode(pipeline_model::NodeModel &node) {
+    CAUV_LOG_DEBUG(0, "removing node " << node.getName());
+    try {
+        auto &fNode = dynamic_cast<FNode&>(node);
+        fNode.remove();
+    } catch ( std::bad_cast ) {
+        CAUV_LOG_ERROR("Somehow asked to remove a non-FNode node");
+    }
+    delNode(node.getName());
+}
 
 // void Manager::requestRefresh(){
 //     m_cauv_node->send(boost::make_shared<GraphRequestMessage>(m_pipeline_name));
@@ -457,7 +408,24 @@ QList<QGraphicsItem*> Manager::rootNodes() const{
 //     }
 //     return r;
 // }
-// 
+
+boost::shared_ptr<pipeline_model::NodeModel>
+Manager::addNode(const std::string type) {
+    auto node = pipeline_model::PipelineModel::addNode(type);
+    auto fNode = boost::dynamic_pointer_cast<FNode>(node);
+    if (fNode) {
+        m_scene->addItem(fNode.get());
+    } else {
+        CAUV_LOG_ERROR("Somehow created a non-Fnode Node!?");
+    }
+    return node;
+};
+
+boost::shared_ptr<pipeline_model::NodeModel>
+Manager::constructNode(const std::string type) {
+    return FNode::makeFNode(type, *this);
+}
+
 // void Manager::clearNodes(){
 //     debug() << BashColour::Red << "clearNodes";
 //     node_id_map_t::right_iterator i;

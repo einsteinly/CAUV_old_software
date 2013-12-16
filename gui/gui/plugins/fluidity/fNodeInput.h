@@ -25,8 +25,6 @@ class QGraphicsProxyWidget;
 
 namespace cauv{
 
-struct LocalNodeInput;
-
 namespace gui{
 
 class NodeItemModel;
@@ -35,69 +33,40 @@ class Node;
 
 namespace f{
 
-class FNodeInput: public pipeline_model::InputModel,
+class FNodeInput: //public pipeline_model::InputModel,
                   public liquid::ArcSinkLabel,
                   public liquid::ConnectionSink,
-                  public ManagedElement{
-    protected:
-        FNodeInput(Manager& m,
-                   liquid::ArcStyle const& of_style,
-                   liquid::CutoutStyle const& with_cutout,
-                   FNode* node,
-                   const std::string& id);
+                  public ManagedElement {
+    Q_OBJECT
+
+    public:
+        FNodeInput(FNode &node, Manager& m);
         virtual ~FNodeInput();
+    protected:
 
         // ConnectionSink:
         virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*);
         virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*);
+
+    protected Q_SLOTS:
+        void modelValueChanged(QVariant value);
 
     public:
         void addWidget(QGraphicsWidget* w);
         void removeWidget(QGraphicsWidget* w);
 
         virtual void setCollapsed(bool state);
-};
 
-
-class FNodeImageInput: public FNodeInput{
-    public:
-        FNodeImageInput(Manager& m, LocalNodeInput const& input, FNode* node); 
-        //virtual OutputType::e ioType() const;
-        //virtual SubType subType() const;
-    
-    private:
-        static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType::e const& st);
-};
-
-class FNodeParamInput: public FNodeInput{
-    Q_OBJECT
-    public:
-        FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode* node);
-        ~FNodeParamInput();
-        //virtual OutputType::e ioType() const;
-        //virtual SubType subType() const;
-
-        virtual void setCollapsed(bool state);
-
-        void setValue(ParamValue const& v);
+        void setValue(pipeline_model::ParamValue const& v);
 
         void setEditable(bool editable);
 
-        // ConnectionSink:
-        virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink* to_sink);
-
-    protected Q_SLOTS:
-        void modelValueChanged(QVariant value);
-    
-    private:
-        static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType::e const& st);
+        static liquid::CutoutStyle const& cutoutStyleForParam();
 
         void initView();
 
-        //SubType m_subtype;
-        std::set<int32_t> m_compatible_subtypes;
-
-        //boost::shared_ptr<Node> m_model_node;
+    protected:
+        boost::shared_ptr<Node> m_model_node;
         NodeTreeView* m_view;
         liquid::ProxyWidget* m_view_proxy;
 };

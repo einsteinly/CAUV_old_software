@@ -64,13 +64,8 @@ class FView: public liquid::LiquidView{
 
     protected:
         // QWidget
-        //void contextMenuEvent(QContextMenuEvent *event);
-        //void resizeEvent(QResizeEvent* event);
-        //void scrollContentsBy(int dx, int dy);
+        void contextMenuEvent(QContextMenuEvent *event);
         void paintEvent(QPaintEvent * event);
-
-        // temporary keyboard shortcut hook:
-        //virtual void keyPressEvent(QKeyEvent *event);
 
         virtual void mouseMoveEvent(QMouseEvent *event);
 
@@ -87,14 +82,14 @@ class FView: public liquid::LiquidView{
     private:
         // methods
         //static float split(const std::string& word, QAction_ptr_set actions);
-        //void initMenu();
+        void initMenu();
         //void initMenu(MenuNode& parent, QAction_ptr_set actions);
         void _updateOverlays();
-        //void _buildMenu(cauv::gui::f::Menu* menu, MenuNode const& node);
+        void _buildMenu(cauv::gui::f::Menu* menu, MenuNode const& node);
 
     private Q_SLOTS:
         // slots
-        //void menuActioned();
+        void menuActioned();
         void setSceneRectToContents();
 
 #ifdef QT_PROFILE_GRAPHICSSCENE

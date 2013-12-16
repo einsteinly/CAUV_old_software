@@ -95,7 +95,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
 }
 
 LiquidNode::~LiquidNode(){
-    debug(7) << "~LiquidNode()" << this;
+    debug() << "~LiquidNode()" << this;
 }
 
 void LiquidNode::close(){

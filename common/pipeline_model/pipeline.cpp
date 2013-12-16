@@ -24,8 +24,13 @@ const std::string& PipelineModel::pipelineName(){
  * -------------Node Manipulation
  */
 
+
+boost::shared_ptr<NodeModel> PipelineModel::constructNode(const std::string type) {
+    return boost::make_shared<NodeModel>(type, *this);
+}
+
 boost::shared_ptr<NodeModel> PipelineModel::addNode(const std::string type) {
-    auto new_node = boost::make_shared<NodeModel>(type, *this);
+    auto new_node = constructNode(type);
     nodes.push_back(new_node);
     return new_node;
 }

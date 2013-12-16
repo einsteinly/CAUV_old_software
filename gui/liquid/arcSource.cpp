@@ -260,7 +260,9 @@ ArcSource::ArcSource(ArcSourceDelegate* sourceDelegate,
     : AbstractArcSource(arc->style(), sourceDelegate, arc),
       m_front_line(nullptr),
       m_back_line(nullptr){
-    
+
+    setOwnedByLayout(true);
+
     arc->setFrom(this);
 
     setFlag(ItemHasNoContents);

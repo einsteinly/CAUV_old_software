@@ -30,7 +30,7 @@ class ImageSource;
 
 class FNode: public liquid::LiquidNode,
              public ManagedElement,
-             public pipeline_model::NodeModel{
+             public pipeline_model::NodeModel {
         Q_OBJECT
     public:
 //         // - public typedefs
@@ -44,10 +44,11 @@ class FNode: public liquid::LiquidNode,
 //         typedef std::map<std::string, FNodeInput*> str_in_map_t;
 //         typedef std::map<std::string, FNodeParamInput*> str_inparam_map_t;
 //         typedef std::map<std::string, FNodeOutput*> str_out_map_t;
+        FNode(const std::string type, Manager &m);
+        void initIO();
 
     public:
-        FNode(Manager& m, pipeline_model::NodeModelType node_type);
-//         FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p);
+        static boost::shared_ptr<FNode> makeFNode(const std::string type, Manager &m);
 
 //         node_id_t id() const{ return m_node_id; }
 //         NodeType::e nodeType() const{ return m_type; }
@@ -67,7 +68,7 @@ class FNode: public liquid::LiquidNode,
         virtual void status(Status const& s, float const& throughput, float const& frequency, float const& time_taken, float const& time_ratio);
     
     Q_SIGNALS:
-//         void closed(node_id_t const);
+        void closed(pipeline_model::NodeModel&);
     
     public:
     // overridden virtual slots (don't need to be marked as slots):
@@ -77,9 +78,9 @@ class FNode: public liquid::LiquidNode,
         virtual void fadeAndRemove();
         virtual void remove();
         
-//         virtual void reExec();
-//         virtual void duplicate();
-//         virtual void toggleCollapsed();
+        virtual void reExec();
+        virtual void duplicate();
+        virtual void toggleCollapsed();
 
     protected:
 //         FNodeOutput* output(const std::string& id);
@@ -89,19 +90,10 @@ class FNode: public liquid::LiquidNode,
         void initButtons();
 
     protected:
-//         node_id_t m_node_id;
-//         NodeType::e m_type;
-//     
 //         str_in_map_t       m_inputs;
 //         str_inparam_map_t  m_params;
 //         str_out_map_t      m_outputs;
         
-        // NB: do not assume these always correspond to m_inputs and m_outputs,
-        // this is not the case while arcs are pending addition or removal.
-#warning TODO fix these
-//         std::vector<cauv::NodeInputArc> m_input_links; // includes parameters
-//         std::vector<cauv::NodeOutputArc> m_output_links;
-
         bool m_collapsed;
 };
 

@@ -40,7 +40,7 @@ namespace _{
 
 class AbstractArcSourceInternal: public QGraphicsObject,
                                  public ArcSourceDelegate,
-                                 public LayoutItem{
+                                 public LayoutItem {
     Q_OBJECT
     public:
         AbstractArcSourceInternal(ArcStyle const& of_style,
@@ -118,7 +118,7 @@ class AbstractArcSource: public _::AbstractArcSourceInternal,
 };
 
 class ArcSource: public AbstractArcSource,
-                 public QGraphicsLayoutItem{
+                 public QGraphicsLayoutItem {
     public:
         ArcSource(ArcSourceDelegate* sourceDelegate,
                   Arc* arc);

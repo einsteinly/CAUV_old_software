@@ -47,7 +47,7 @@ class Manager: public QObject,
                public pipeline_model::PipelineModel,
                //public DropHandlerInterface<QGraphicsItem*>,
                public boost::enable_shared_from_this<Manager>,
-               public boost::noncopyable{
+               public boost::noncopyable {
     Q_OBJECT
     public:
         Manager(NodeScene *scene,
@@ -76,6 +76,8 @@ class Manager: public QObject,
         boost::shared_ptr<Node> model() const;
         gui::NodeItemModel * itemModel() const;
         
+        virtual boost::shared_ptr<pipeline_model::NodeModel> addNode(const std::string type);
+
         // these methods are called from the messaging thread(s), they MUST NOT
         // modify anything directly: the general pattern is that these emit a
         // corresponding signal, which is connected to a slot called on the
@@ -107,10 +109,7 @@ class Manager: public QObject,
          */
 //         void requestArc(NodeOutput from, NodeInput to);
 //         void requestRemoveArc(NodeOutput from, NodeInput to);
-//         void requestNode(NodeType::e const& type,
-//                          std::vector<NodeInputArc> const& inputs = std::vector<NodeInputArc>(),
-//                          std::vector<NodeOutputArc> const& outputs = std::vector<NodeOutputArc>()); 
-//         void requestRemoveNode(node_id_t const& id);
+        void requestRemoveNode(pipeline_model::NodeModel &node);
 //         void requestRefresh();
 //         void requestForceExec(node_id_t const& id);
 
@@ -126,7 +125,9 @@ class Manager: public QObject,
 //         fnode_ptr addNode(NodeType::e const& type, node_id_t const& id);
 //         fnode_ptr addNode(NodeAddedMessage_ptr);
 //         void clearNodes();
-    
+
+        virtual boost::shared_ptr<pipeline_model::NodeModel> constructNode(const std::string type);
+
     protected Q_SLOTS:
         void updateLayoutNow();
 

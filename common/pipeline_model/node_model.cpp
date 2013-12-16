@@ -37,17 +37,20 @@ void NodeModelType::addType(const NodeModelType &type) {
     node_types.insert(std::make_pair(type.name, type));
 }
 
-NodeModel::NodeModel(const std::string type_, PipelineModel &pipeline_) :
+NodeModel::NodeModel(const std::string type_, PipelineModel &pipeline_) try :
  type(NodeModelType::node_types.at(type_)),
  id(current_id),
- pipeline(pipeline_) {
+ pipeline(pipeline_) 
+{
      current_id++;
      std::stringstream name_str;
      name_str << type.name << " " << id;
      setName(name_str.str());
-}
+} catch (std::out_of_range) {
+    throw NoSuchNodeTypeException("Tried to create node of nonexistant type " + type_);
+} 
 
-NodeModel::NodeModel(NodeModelType& type_, PipelineModel &pipeline_) :
+NodeModel::NodeModel(const NodeModelType& type_, PipelineModel &pipeline_) :
  type(type_),
  id(current_id),
  pipeline(pipeline_) {
@@ -116,6 +119,8 @@ void NodeModel::isolate() {
     for (auto &input: inputs) {
         disconnectInput(input.first);
     }
+    outputs.clear();
+    inputs.clear();
 }
 
 NodeModel::~NodeModel() {
