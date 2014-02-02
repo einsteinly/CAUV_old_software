@@ -1,0 +1,10 @@
+<package>
+  <name>libnabo</name>
+  <version>1.0.4</version>
+  <description>libnabo is a fast K Nearest Neighbour library for low-dimensional spaces.</description>
+  <maintainer email="dy245@cam.ac.uk">Douglas Young</maintainer>
+  <author>Stephane Mangenat</author>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>
