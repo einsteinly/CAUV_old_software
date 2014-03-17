@@ -10,7 +10,15 @@
 
 namespace cauv {
 
+struct Pose {
+    float x;
+    float y;
+    float bearing;
+    unsigned int scan_id;
+};
+
 struct PolarMapping {
+    static PolarMapping generate(float rangeStart = 0, float rangeEnd = 35, float rangeConversion = 0.0341797);
     float rangeStart;
     float rangeEnd;
     float rangeConversion;
@@ -28,6 +36,12 @@ struct LocalPolarFeature {
     float range;
     float colour; //Any extra 'dimension' or information attached to the feature to distinguish it
     LocalCartFeature toCart(PolarMapping &m);
+};
+
+struct GlobalCartFeature {
+    float x;
+    float y;
+    cv::Mat descriptor;
 };
 
 std::vector<boost::filesystem::path> get_msg_files(std::string directory);

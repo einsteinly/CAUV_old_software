@@ -92,13 +92,6 @@ void MapView::keyPressEvent(QKeyEvent *event) {
     }
 }
 
-struct Pose {
-    float x;
-    float y;
-    float bearing;
-    unsigned int scan_id;
-};
-
 class PoseItem : public QGraphicsItemGroup {
     public:
     PoseItem(Pose pose, PoseItem *prev);
@@ -213,7 +206,9 @@ void SonarBitmap::addPose(Pose &p) {
     auto file = image_paths.at(p.scan_id);
     cauv_slam::SonarImage image;
     load_sonar_image(file, image);
-    std::cout << "Range: " << image.rangeEnd << "(" << image.rangeConversion << "m per bin)" << std::endl;
+    std::cout << file << " " << p.scan_id << 
+                " Range: " << image.rangeStart << "-" << image.rangeEnd << 
+                "(" << image.rangeConversion << "m per bin)" << std::endl;
     auto mapping = get_polar_mapping(image);
     auto map_mat = get_polar_to_cartesian_map(mapping, 10);
     auto mat = sonar_msg_to_mat(image);
@@ -283,10 +278,9 @@ int main(int argc, char **argv) {
     int every = vm["every"].as<int>();
     int n_scans = vm["n_scans"].as<int>();
     for (auto &ipose : map.poses) {
-        //urg, minus signs....
-        current_pose.x -= ipose.dx * 10;
-        current_pose.y -= ipose.dy * 10;
-        current_pose.bearing -= ipose.dtheta;
+        current_pose.x += ipose.dx * 10;
+        current_pose.y += ipose.dy * 10;
+        current_pose.bearing += ipose.dtheta;
         current_pose.scan_id = ipose.scan_id;
         auto poseitem = new PoseItem(current_pose, last_pose);
         scene->addItem(poseitem);

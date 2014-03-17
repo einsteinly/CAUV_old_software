@@ -22,6 +22,20 @@ using namespace cauv;
 
 namespace fs = boost::filesystem;
 
+PolarMapping
+cauv::PolarMapping::generate(float rangeStart, float rangeEnd, float rangeConversion) {
+    std::vector<int> bearings;
+    static const int num_beams = 256;
+    std::vector<int32_t> r;
+    const double radConvert = (180.0 / M_PI) * (6400.0/360.0) * 0x10000;
+    for(int beam = 0; beam <= num_beams; beam++){
+        // see Gemini Interface Specification Appendix B
+        double radians = std::asin(((2*(beam+0.5) - num_beams) / num_beams) * 0.86602540);
+        bearings.push_back(round(radConvert * radians));
+    }
+    return PolarMapping{rangeStart, rangeEnd, rangeConversion, bearings};
+};
+
 cauv::LocalCartFeature
 cauv::LocalPolarFeature::toCart(cauv::PolarMapping &m) {
     static const float pi = boost::math::constants::pi<float>();

@@ -15,7 +15,7 @@ cauv::CornerFeatureDetector::extractFeatures(cv::Mat polarImage) {
     features.resize(corners.size());
     std::transform(corners.begin(), corners.end(), features.begin(),
                    [](cv::KeyPoint &kp) {
-                        return LocalPolarFeature {kp.pt.x, kp.pt.y, 0};
+                        return LocalPolarFeature {kp.pt.x, kp.pt.y, kp.response};
                     });
     return features;
 }

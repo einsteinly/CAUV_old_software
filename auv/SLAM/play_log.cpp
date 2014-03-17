@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     int start_frame = vm["start"].as<int>();
     int end_frame = vm["end"].as<int>();
     using namespace cauv;
-    std::unique_ptr<LocalFeatureDetector> feature_detector;
+    std::unique_ptr<LocalFeatureExtractor> feature_detector;
     if (vm.count("features")) {
         if (vm["features"].as<std::string>() == "FAST") {
             feature_detector = cauv::make_unique<CornerFeatureDetector>();

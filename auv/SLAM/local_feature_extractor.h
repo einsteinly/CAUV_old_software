@@ -6,7 +6,7 @@
 
 namespace cauv {
 
-class LocalFeatureDetector {
+class LocalFeatureExtractor {
     public:
     virtual std::vector<LocalPolarFeature> extractFeatures(cv::Mat polarImage) = 0;
 };

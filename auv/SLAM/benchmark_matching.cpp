@@ -19,6 +19,7 @@
 
 #include "sonar_ops.h"
 #include "corner_feature_detector.h" 
+#include "surf_extractor.h"
 #include "ros_save.hpp"
 
 using namespace cauv;
@@ -41,16 +42,28 @@ cauv_slam::IncrementalPose IncrementalPose::from3dAffine(Eigen::MatrixXf matrix)
     return pose;
 }
 
-std::unique_ptr<LocalFeatureDetector> getDetector(boost::program_options::variables_map &vm) {
+std::unique_ptr<LocalFeatureExtractor> getLocalExtractor(boost::program_options::variables_map &vm) {
     if (vm.count("features")) {
         std::string features = vm["features"].as<std::string>();
         if (features == "FAST") {
             return cauv::make_unique<CornerFeatureDetector>();
         } else {
+            return std::unique_ptr<LocalFeatureExtractor>();
+        }
+    }
+    return std::unique_ptr<LocalFeatureExtractor>();
+}
+
+std::unique_ptr<GlobalFeatureExtractor> getGlobalExtractor(boost::program_options::variables_map &vm) {
+    if (vm.count("features")) {
+        std::string features = vm["features"].as<std::string>();
+        if (features == "SURF") {
+            return cauv::make_unique<SURFExtractor>();
+        } else {
             throw std::runtime_error("Unknown feature detector " + features);
         }
     }
-    return std::unique_ptr<LocalFeatureDetector>();
+    return std::unique_ptr<GlobalFeatureExtractor>();
 }
 
 typedef PointMatcher<float> PM;
@@ -58,18 +71,49 @@ typedef PointMatcher<float> PM;
 std::unique_ptr<PM::DataPoints>
 features_to_datapoints(std::vector<LocalPolarFeature> &features, PolarMapping &mapping) {
     Eigen::MatrixXf feature_matrix;
+    Eigen::MatrixXf descriptor_matrix;
     int n_features = features.size();
     feature_matrix.resize(3, n_features);
+    descriptor_matrix.resize(1, n_features);
     for (int i = 0; i < n_features; i++) {
         auto cart_feature = features[i].toCart(mapping);
         feature_matrix(0, i) = cart_feature.x;
         feature_matrix(1, i) = cart_feature.y;
         feature_matrix(2, i) = 1.0;
+        descriptor_matrix(0, i) = cart_feature.colour;
     }
-    PM::DataPoints::Label label("corners", 2);
-    PM::DataPoints::Labels labels;
-    labels.push_back(label);
-    return cauv::make_unique<PM::DataPoints>(feature_matrix, labels);
+    PM::DataPoints::Label f_label("corners", 2);
+    PM::DataPoints::Labels f_labels;
+    f_labels.push_back(f_label);
+    PM::DataPoints::Label d_label("colour", 1);
+    PM::DataPoints::Labels d_labels;
+    d_labels.push_back(d_label);
+    return cauv::make_unique<PM::DataPoints>(feature_matrix, f_labels, descriptor_matrix, d_labels);
+}
+
+std::unique_ptr<PM::DataPoints>
+features_to_datapoints(std::vector<GlobalCartFeature> &features) {
+    Eigen::MatrixXf feature_matrix;
+    Eigen::MatrixXf descriptor_matrix;
+    int n_features = features.size();
+    feature_matrix.resize(3, n_features);
+    descriptor_matrix.resize(64, n_features);
+    for (int i = 0; i < n_features; i++) {
+        auto cart_feature = features[i];
+        feature_matrix(0, i) = cart_feature.x;
+        feature_matrix(1, i) = cart_feature.y;
+        feature_matrix(2, i) = 1.0;
+        for (int j = 0; j < 64; j++) {
+            descriptor_matrix(j, i) = cart_feature.descriptor.at<float>(0, j);
+        }
+    }
+    PM::DataPoints::Label f_label("features", 2);
+    PM::DataPoints::Labels f_labels;
+    f_labels.push_back(f_label);
+    PM::DataPoints::Label d_label("descriptors", 64);
+    PM::DataPoints::Labels d_labels;
+    d_labels.push_back(d_label);
+    return cauv::make_unique<PM::DataPoints>(feature_matrix, f_labels, descriptor_matrix, d_labels);
 }
 
 void show_points(cv::Mat mat, PM::DataPoints &datapoints, cv::Scalar colour, float scale, float range) {
@@ -106,7 +150,11 @@ int main(int argc, char **argv) {
     int start_frame = vm["start"].as<int>();
     int end_frame = vm["end"].as<int>();
     bool show_vis = vm.count("vis");
-    auto feature_detector = getDetector(vm);
+    auto local_feature_extractor = getLocalExtractor(vm);
+    std::unique_ptr<GlobalFeatureExtractor> global_feature_extractor;
+    if (!local_feature_extractor) {
+        global_feature_extractor = getGlobalExtractor(vm);
+    }
 
     auto files = get_msg_files(image_directory);
 
@@ -123,8 +171,14 @@ int main(int argc, char **argv) {
         auto mapping = get_polar_mapping(image);
         auto mat = sonar_msg_to_mat(image);
 
-        auto features = feature_detector->extractFeatures(mat);
-        auto data_points = features_to_datapoints(features, mapping);
+        std::unique_ptr<PM::DataPoints> data_points;
+        if (local_feature_extractor) {
+            auto features = local_feature_extractor->extractFeatures(mat);
+            data_points = features_to_datapoints(features, mapping);
+        } else {
+            auto features = global_feature_extractor->extractFeatures(mat, mapping);
+            data_points = features_to_datapoints(features);
+        }
         if (recent_data_points.size() < 1) {
             recent_data_points.push_back(std::move(data_points));
             continue;
@@ -140,6 +194,10 @@ int main(int argc, char **argv) {
             auto params = icp(*past_data_points, *data_points);
 
             auto pose = IncrementalPose::from3dAffine(params);
+            //FIXME sign conventions
+            pose.dx = -pose.dx;
+            pose.dy = -pose.dy;
+            pose.dtheta = -pose.dtheta;
             pose.scan_id = i;
             std::cout << pose << std::endl;
             if (save_map) {
