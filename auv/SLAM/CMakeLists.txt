@@ -46,6 +46,7 @@ include_directories(${Boost_INCLUDES}
                     ${cauv_utility_INCLUDE_DIRS}
                     ${QT_INCLUDES}
                     ${EIGEN_INCLUDE_DIR}
+                    ${libpointmatcher_INCLUDE_DIRS}
                     )
 
 include(${QT_USE_FILE})

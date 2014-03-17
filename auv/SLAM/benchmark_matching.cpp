@@ -8,7 +8,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <pointmatcher/PointMatcher.h>
+#include <libpointmatcher/PointMatcher.h>
 
 #include <utility/options.h>
 #include <utility/make_unique.h>

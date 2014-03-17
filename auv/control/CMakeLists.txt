@@ -60,6 +60,11 @@ target_link_libraries (
     ${catkin_LIBRARIES}
 )
 
+add_dependencies (
+    cauv_control
+    cauv_control_generate_messages_cpp
+)
+
 install(TARGETS cauv_control
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

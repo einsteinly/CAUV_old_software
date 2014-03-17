@@ -5,6 +5,7 @@ project(libnabo)
 find_package(catkin)
 
 catkin_package(
+    INCLUDE_DIRS "./.."
     CATKIN_DEPENDS 
     DEPENDS Boost 
 )
@@ -32,8 +33,6 @@ add_library(
     kdtree_cpu.cpp
     brute_force_cpu.cpp
 )
-
-install(FILES nabo.h DESTINATION include/nabo)
 
 install(TARGETS nabo 
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

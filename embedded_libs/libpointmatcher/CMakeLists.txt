@@ -2,14 +2,18 @@ cmake_minimum_required(VERSION 2.8.3)
 project(libpointmatcher)
 # Load catkin and all dependencies required for this package
 
-find_package(catkin)
+find_package(catkin REQUIRED COMPONENTS
+    libnabo
+)
 
 catkin_package(
-    CATKIN_DEPENDS 
+    INCLUDE_DIRS "./.."
+    CATKIN_DEPENDS libnabo
     DEPENDS Boost 
 )
 
-include_directories(${Boost_INCLUDES} 
+include_directories(${Boost_INCLUDES}
+                    ${embedded_libs_INCLUDE_DIRS}
                     )
 
 
@@ -62,16 +66,6 @@ target_link_libraries(
     pointmatcher
 
     nabo
-)
-
-install(FILES
-    PointMatcher.h
-    PointMatcherPrivate.h
-    Parametrizable.h
-    Registrar.h
-    Timer.h
-    IO.h
-    DESTINATION include/pointmatcher
 )
 
 install(TARGETS pointmatcher 

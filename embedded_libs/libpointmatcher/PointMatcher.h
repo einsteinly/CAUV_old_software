@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 
-#include "nabo/nabo.h"
+#include "libnabo/nabo.h"
 
 #include <boost/thread/mutex.hpp>
 
