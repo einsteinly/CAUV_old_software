@@ -16,8 +16,6 @@
 
 #include <elements/style.h>
 
-#include <common/pipeline_model/edge_model.h>
-
 #include <fluidity/managedElement.h>
 #include <fluidity/fNode.h>
 
@@ -33,20 +31,21 @@ class Node;
 
 namespace f{
 
-class FNodeInput: //public pipeline_model::InputModel,
-                  public liquid::ArcSinkLabel,
+class FNodeInput: public liquid::ArcSinkLabel,
                   public liquid::ConnectionSink,
                   public ManagedElement {
     Q_OBJECT
 
     public:
-        FNodeInput(FNode &node, Manager& m);
+        FNodeInput(const std::string input_name, FNode &node, Manager& m);
         virtual ~FNodeInput();
     protected:
 
         // ConnectionSink:
         virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*);
         virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*);
+        
+        pipeline_model::InputModel& getModel();
 
     protected Q_SLOTS:
         void modelValueChanged(QVariant value);
@@ -66,9 +65,11 @@ class FNodeInput: //public pipeline_model::InputModel,
         void initView();
 
     protected:
-        boost::shared_ptr<Node> m_model_node;
+        boost::shared_ptr<Node> m_model_node; //gui node for actual data
         NodeTreeView* m_view;
         liquid::ProxyWidget* m_view_proxy;
+        std::string m_input_name;
+        FNode* m_node;
 };
 
 } // namespace f

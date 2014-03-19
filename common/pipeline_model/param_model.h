@@ -22,6 +22,7 @@ class ParamValue {
     virtual XmlRpc::XmlRpcValue toXmlRpcValue() = 0;
     virtual std::string getType() = 0;
     virtual boost::shared_ptr<ParamValue> clone() = 0;
+    //TODO change this to allow accepting things that can be converted automatically
     virtual bool canAccept(ParamValue &other) {
         return getType() == other.getType();
     }
@@ -80,6 +81,9 @@ class ParamModel {
     const boost::shared_ptr<ParamValue> value;
 
     std::string getType() { return value->getType(); }
+    bool canAccept(ParamModel &other){
+        return value->canAccept(*(other.value));
+    }
 };
 
 //model for parameter bound to a node

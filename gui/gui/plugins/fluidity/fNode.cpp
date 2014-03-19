@@ -114,17 +114,18 @@ static QString nodeTypeDesc(cauv::NodeType::e const& type){
 //     return 0;
 // }
 
+
 // - FNode
 
-
-FNode::FNode(const std::string type, Manager &m)
+FNode::FNode(boost::shared_ptr<GuiNodeModel> node, Manager &m)
     :liquid::LiquidNode(F_Node_Style(), nullptr), 
       ManagedElement(m),
-      pipeline_model::NodeModel(type, m),
+      m_associated_node(node),
       m_collapsed(false){
 
-    setTitle(QString::fromStdString(getName()));
+    setTitle(QString::fromStdString(m_associated_node->getName()));
     initButtons();
+    initIO();
 
     setSize(QSizeF(104,130));
     
@@ -133,31 +134,49 @@ FNode::FNode(const std::string type, Manager &m)
 #ifdef QT_PROFILE_GRAPHICSSCENE
     setProfileName("FNode");
 #endif // def QT_PROFILE_GRAPHICSSCENE
+    CAUV_LOG_DEBUG(2, "Created FNode for pipeline model node " << m_associated_node->getName());
+}
+
+FNode::~FNode(){
+    CAUV_LOG_DEBUG(2, "Destroyed FNode for pipeline model node " << m_associated_node->getName());
 }
 
 void FNode::initIO() {
-    for (auto &output_name : getOutputNames()) {
-        auto output = getOutput(output_name);
-        auto t = new FNodeOutput(*this, Param_Arc_Style(), output_name);
+    for (auto &output_name : m_associated_node->getOutputNames()) {
+        //makes sure output is created
+        auto output = m_associated_node->getOutput(output_name);
+        
+        auto t = new FNodeOutput(output_name, *this, Param_Arc_Style());
+        m_outputs.insert(std::make_pair(output_name, t));
         addItem(t);
     }
 
-    for (auto &input_name : getInputNames()) {
-        auto input = getInput(input_name);
-        auto t = new FNodeInput(*this, manager());
+    for (auto &input_name : m_associated_node->getInputNames()) {
+        //make sure input is created
+        auto input = m_associated_node->getInput(input_name);
+        
+        auto t = new FNodeInput(input_name, *this, manager());
+        m_inputs.insert(std::make_pair(input_name, t));
         addItem(t);
     }
 }
-
-boost::shared_ptr<FNode>
-FNode::makeFNode(const std::string type, Manager &m) {
-    auto new_node = new FNode(type, m);
-    //deleteLater() because deletion could occur in events
-    auto node_ptr = boost::shared_ptr<FNode>(new_node, [](FNode *ptr) {CAUV_LOG_DEBUG(0, "FNode delete"); ptr->deleteLater();});
-    new_node->initIO();
-    return node_ptr; 
+        
+void FNode::constructArcTo(const std::string output, FNode& to, const std::string input){
+    getOutput(output).arc()->addTo(to.getInput(input).sink());
 }
 
+void FNode::destructArcTo(const std::string output, FNode& to, const std::string input){
+    getOutput(output).arc()->removeTo(to.getInput(input).sink());
+}
+
+FNodeInput& FNode::getInput(const std::string input_name){
+    return *(m_inputs[input_name]);
+}
+
+FNodeOutput& FNode::getOutput(const std::string output_name){
+    return *(m_outputs[output_name]);
+}
+        
 // FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
 //     : liquid::LiquidNode(F_Node_Style(), nullptr),
 //       ManagedElement(m),
@@ -344,16 +363,16 @@ FNode::makeFNode(const std::string type, Manager &m) {
 
 void FNode::status(Status const& s, const std::string& status_information){
     if(!status_information.size())
-        LiquidNode::status(s, mkStr() << id << ": unknown status");
+        LiquidNode::status(s, mkStr() << m_associated_node->id << ": unknown status");
     else
-        LiquidNode::status(s, mkStr() << id << ": " << status_information);
+        LiquidNode::status(s, mkStr() << m_associated_node->id << ": " << status_information);
 }
 
 void FNode::status(Status const& s, float const& throughput, float const& frequency, float const& time_taken, float const& time_ratio){
     LiquidNode::status(
         s,
         mkStr()
-            << id << ": "
+            << m_associated_node->id << ": "
             << std::setprecision(1) << std::setiosflags(std::ios::fixed) << throughput << "Mb/s "
             << std::setprecision(1) << std::setiosflags(std::ios::fixed) << frequency << "Hz "
             << std::setprecision(0) << std::setiosflags(std::ios::fixed) << time_taken << "ms "
@@ -361,40 +380,19 @@ void FNode::status(Status const& s, float const& throughput, float const& freque
     );
 }
 
+//called when we hit the close button
 void FNode::close(){
+    //tells manager etc to clear up these nodes
     Q_EMIT LiquidNode::closed(this);
     Q_EMIT closed(*this);
-    // don't delete yet! That happens when fadeAndRemove (or just remove) slots
-    // are triggered
-    if(manager().animationPermitted()){
-        QPropertyAnimation *fade = new QPropertyAnimation(this, "opacity");
-        fade->setEndValue(0.25);
-        fade->setDuration(200);
-        fade->start();
-    }else{
-        setOpacity(0.25);
-    }
 }
 
-void FNode::fadeAndRemove(){
-    CAUV_LOG_DEBUG(1, "FNode::fadeAndRemove()" << this);
+//actually remove this node (take ownership)
+FNode* FNode::remove(){
+    CAUV_LOG_DEBUG(1, "FNode::remove()" << this);
     disconnect();
-    // now we are cut off from the outside world (apart from the scene), fade away:
-    if(manager().animationPermitted()){
-        QPropertyAnimation *fade = new QPropertyAnimation(this, "opacity");
-        fade->setEndValue(0);
-        fade->setDuration(200);    
-        fade->start();
-        connect(fade, SIGNAL(finished()), this, SLOT(remove()));
-    }else{
-        remove();
-    }
-}
-
-void FNode::remove(){
-    CAUV_LOG_DEBUG(1, "FNode::remove() (scene=" << scene() << ")" << this);
-    hide();
     scene()->removeItem(this);
+    return this;
 }
 
 void FNode::reExec(){
@@ -457,7 +455,7 @@ void FNode::initButtons(){
     );
     addButton("duplicate", dupbutton);
     
-    connect(this, SIGNAL(closed(pipeline_model::NodeModel&)), &manager(), SLOT(requestRemoveNode(pipeline_model::NodeModel&)));
+    connect(this, SIGNAL(closed(FNode&)), &manager(), SLOT(removeNode(FNode&)));
     connect(dupbutton, SIGNAL(pressed()), this, SLOT(duplicate()));
     connect(execbutton, SIGNAL(pressed()), this, SLOT(reExec()));
     connect(collapsebutton, SIGNAL(pressed()), this, SLOT(toggleCollapsed()));

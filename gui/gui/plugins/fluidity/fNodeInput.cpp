@@ -17,7 +17,7 @@
 #include <liquid/proxyWidget.h>
 
 #include <model/node.h>
-#include <model/variants.h>
+//#include <model/variants.h>
 #include <model/nodes/numericnode.h>
 #include <model/nodes/groupingnode.h>
 #include <model/nodes/stringnode.h>
@@ -32,15 +32,18 @@ using namespace cauv;
 using namespace cauv::gui::f;
 
 // - FNodeInput
-FNodeInput::FNodeInput(FNode &node, Manager &m)
+FNodeInput::FNodeInput(const std::string input_name, FNode &node, Manager &m)
     : ArcSinkLabel(new liquid::ArcSink(Param_Arc_Style(), Optional_Param_Input(), this),
                    &node,
-                   QString::fromStdString("ASDFF")),
-      ManagedElement(m) {
+                   QString::fromStdString(input_name)),
+      ManagedElement(m),
+      m_input_name(input_name),
+      m_node(&node){
     // don't want a label:
     //removeWidget(m_text);
     //m_text->deleteLater();
     //m_text = nullptr;
+    CAUV_LOG_DEBUG(2, "Created input " << m_input_name << " for FNode " << node.getName());
 }
 
 FNodeInput::~FNodeInput(){
@@ -52,7 +55,12 @@ FNodeInput::~FNodeInput(){
             return;
     m_view_proxy->deleteLater();
     */
+    CAUV_LOG_DEBUG(2, "Destroyed input " << m_input_name);
 }
+
+pipeline_model::InputModel& FNodeInput::getModel(){
+    return m_node->getModel()->getInput(m_input_name);
+};
 
 void FNodeInput::setCollapsed(bool collapsed){
     if(collapsed){
@@ -78,43 +86,34 @@ void FNodeInput::removeWidget(QGraphicsWidget* w){
 
 bool FNodeInput::willAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*){
     FNodeOutput* output = dynamic_cast<FNodeOutput*>(from_source);
-    return true;
+    //check input type in pipeline model
+    return getModel().canAccept(output->getModel());
 }
+
 
 FNodeInput::ConnectionStatus FNodeInput::doAcceptConnection(liquid::ArcSourceDelegate* from_source, liquid::AbstractArcSink*){
     FNodeOutput* output = dynamic_cast<FNodeOutput*>(from_source);
-    //debug() << "FNodeInput::doAcceptConnection:" << output;
-    return Pending;
-#if 0
-    if(output &&
-       output->ioType() == ioType() &&
-       // for now, allow people to try to force connections to the wrong place if they really want to
-       //output->subType() == subType() && 
-       output->node() != node()){
-        manager().requestArc(
-            NodeOutput(output->node()->id(), output->id(), ioType(), subType()),
-            NodeInput(node()->id(), id(), subType())
-        );
-        return Pending;
-    }
-    return Rejected;
-#endif
+     if (manager().createArc(output->getNode(), output->getName(), getModel())){
+        return Accepted;
+     } else {
+        return Rejected;
+     }
 }
 
-// - static helper stuff:
 #if 0
+// - static helper stuff:
 struct MakeModelNode: boost::static_visitor<boost::shared_ptr<cauv::gui::Node> >{
     MakeModelNode(const std::string& id) : id(id) { }
     
     // catch-all for uneditable types...
     template<typename T>
     boost::shared_ptr<cauv::gui::Node> operator()(T const&) const{
-        debug(7) << "MakeModelNode: catch all (string)";    
+        CAUV_LOG_DEBUG(7, "MakeModelNode: catch all (string)");    
         return boost::make_shared< cauv::gui::StringNode >(cauv::gui::nid_t(id));
     }
 
     boost::shared_ptr<cauv::gui::Node> operator()(float const&) const{
-        debug(7) << "MakeModelNode: float";
+        CAUV_LOG_DEBUG(7, "MakeModelNode: float");
         typedef cauv::gui::NumericNode<float> float_node_t;
         boost::shared_ptr<float_node_t> r = boost::make_shared<float_node_t>(cauv::gui::nid_t(id));
         r->setPrecision(8);
@@ -122,10 +121,9 @@ struct MakeModelNode: boost::static_visitor<boost::shared_ptr<cauv::gui::Node> >
     }
     
     boost::shared_ptr<cauv::gui::Node> operator()(bool const&) const{
-        debug(7) << "MakeModelNode: bool";    
+        CAUV_LOG_DEBUG(7, "MakeModelNode: bool");    
         return boost::make_shared< cauv::gui::BooleanNode >(cauv::gui::nid_t(id));
     }
-
     boost::shared_ptr<cauv::gui::Node> operator()(Colour const&) const{
         debug(7) << "MakeModelNode: Colour";
         return boost::make_shared< cauv::gui::ColourNode >(cauv::gui::nid_t(id));
@@ -153,19 +151,19 @@ struct MakeModelNode: boost::static_visitor<boost::shared_ptr<cauv::gui::Node> >
     private:
         const std::string& id;
 };
-#endif
 
 static boost::shared_ptr<cauv::gui::Node> makeModelNodeForInput(const std::string& id, pipeline_model::ParamValue const& v){
-    //return boost::apply_visitor(MakeModelNode(id), v);
-    return boost::shared_ptr<cauv::gui::Node>();
+    return boost::apply_visitor(MakeModelNode(id), v);
+    //return boost::shared_ptr<cauv::gui::Node>();
 }
 
+#endif
 
 void FNodeInput::setValue(pipeline_model::ParamValue const& v){
 #if 0
     if(!m_model_node){
-        m_model_node = makeModelNodeForInput(id(), v);
-        boost::shared_ptr<gui::Node> n = manager().model()->findOrCreate<GroupingNode>(node()->id());
+        m_model_node = makeModelNodeForInput(m_input_name, v);
+        boost::shared_ptr<gui::Node> n = manager().model()->findOrCreate<GroupingNode>(m_node->getName());
         // each item needs to be an only child
         // this should be changed if multiple NodeItemViews are not used any more
         boost::shared_ptr<gui::Node> p = n->findOrCreate<GroupingNode>((unsigned int)n->getChildren().size());
@@ -173,7 +171,7 @@ void FNodeInput::setValue(pipeline_model::ParamValue const& v){
         connect(m_model_node.get(), SIGNAL(onSet(QVariant)), this, SLOT(modelValueChanged(QVariant)));
         initView();
     }
-    m_model_node->update(variantToQVariant(v));
+    //m_model_node->update(paramValueToQVariant(v));
 #endif
 }
 

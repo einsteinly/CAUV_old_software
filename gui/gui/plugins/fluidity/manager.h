@@ -22,11 +22,11 @@
 #include <utility/bimap.h>
 #include <utility/time.h>
 
-#include <common/pipeline_model/pipeline.h>
 #include <std_msgs/Bool.h>
 
 #include <drag/nodeDragging.h>
 #include <fluidity/types.h>
+#include <fluidity/model.h>
 
 // - Forward Declarations in ::
 class QGraphicsScene;
@@ -43,12 +43,14 @@ namespace f{
 // - Forward Declarations in cauv::gui::f
 class ImageSource;
 
+class Manager;
+
 class Manager: public QObject,
-               public pipeline_model::PipelineModel,
                //public DropHandlerInterface<QGraphicsItem*>,
                public boost::enable_shared_from_this<Manager>,
                public boost::noncopyable {
     Q_OBJECT
+    friend class GuiPipelineModel;
     public:
         Manager(NodeScene *scene,
                 boost::shared_ptr<Node> model_parent,
@@ -57,13 +59,11 @@ class Manager: public QObject,
         
         // a shared pointer to this must be held when this is called!
         void init();
-        
         // deletion is normally managed by shared pointers, but teardown
         // ensures that this is removed as an observer
         void teardown();
 
         bool animationPermitted() const;
-
         void setFocusPosition(QPointF p);
 
         // DropHandlerInterface: create things in response to drag-drop
@@ -72,11 +72,12 @@ class Manager: public QObject,
         //virtual QGraphicsItem* handle(boost::shared_ptr<cauv::gui::Node> const& node);
         
         QList<QGraphicsItem *> rootNodes() const;
-
         boost::shared_ptr<Node> model() const;
         gui::NodeItemModel * itemModel() const;
         
-        virtual boost::shared_ptr<pipeline_model::NodeModel> addNode(const std::string type);
+        void addNode(const std::string type);
+        bool createArc(boost::shared_ptr<pipeline_model::NodeModel> from, const std::string output,
+               pipeline_model::InputModel& input);
 
         // these methods are called from the messaging thread(s), they MUST NOT
         // modify anything directly: the general pattern is that these emit a
@@ -88,14 +89,6 @@ class Manager: public QObject,
         void receivedPipelineUpdatedMessage(const std_msgs::Bool::ConstPtr& up);
 
     public Q_SLOTS:
-//         void onGraphDescription(GraphDescriptionMessage_ptr);
-//         void onNodeParameters(NodeParametersMessage_ptr);
-//         void onNodeAdded(NodeAddedMessage_ptr);
-//         void onNodeRemoved(NodeRemovedMessage_ptr);
-//         void onArcAdded(ArcAddedMessage_ptr);
-//         void onArcRemoved(ArcRemovedMessage_ptr);
-//         void onGuiImage(GuiImageMessage_ptr);
-//         void onStatus(StatusMessage_ptr);
 
         /* When an arc is added: 
          * 1) GUI element emits arcRequested in response to drag & drop, or
@@ -109,7 +102,7 @@ class Manager: public QObject,
          */
 //         void requestArc(NodeOutput from, NodeInput to);
 //         void requestRemoveArc(NodeOutput from, NodeInput to);
-        void requestRemoveNode(pipeline_model::NodeModel &node);
+        void removeNode(FNode &node);
 //         void requestRefresh();
 //         void requestForceExec(node_id_t const& id);
 
@@ -121,12 +114,11 @@ class Manager: public QObject,
         void delayLayout();
 
     protected:
-//         void removeNode(node_id_t const& id);
 //         fnode_ptr addNode(NodeType::e const& type, node_id_t const& id);
 //         fnode_ptr addNode(NodeAddedMessage_ptr);
 //         void clearNodes();
-
-        virtual boost::shared_ptr<pipeline_model::NodeModel> constructNode(const std::string type);
+        FNode* constructFNode(boost::shared_ptr<GuiNodeModel> node);
+        void destructFNode(boost::shared_ptr<GuiNodeModel> node);
 
     protected Q_SLOTS:
         void updateLayoutNow();
@@ -145,8 +137,11 @@ class Manager: public QObject,
 
     protected:
         NodeScene *m_scene;
+        
         ros::NodeHandle *m_ros_node;
-        ros::Subscriber m_update_sub;
+        ros::Subscriber m_update_sub; //subscriber to pipeline updates
+        
+        GuiPipelineModel m_pipeline_model; //actual pipeline model
         
         std::stack<bool> m_animation_permitted;
         

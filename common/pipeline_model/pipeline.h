@@ -24,9 +24,9 @@ public:
     //manipulate nodes
     virtual boost::shared_ptr<NodeModel> addNode(const std::string type);
     virtual void delNode(const std::string &name);
-    virtual void delNodeById(NodeId id);
+    //virtual void delNodeById(NodeId id);
     virtual boost::shared_ptr<NodeModel> getNode(const std::string &name);
-    virtual boost::shared_ptr<NodeModel> getNode(NodeId id);
+    //virtual boost::shared_ptr<NodeModel> getNode(NodeId id);
     
     //xml conversion
     virtual XmlRpc::XmlRpcValue toXmlRpcValue();

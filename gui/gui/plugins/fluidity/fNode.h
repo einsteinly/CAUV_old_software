@@ -12,12 +12,11 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <common/pipeline_model/node_model.h>
-
 #include <liquid/node.h>
 
 #include "managedElement.h"
 #include "types.h"
+#include "model.h"
 
 namespace cauv{
 namespace gui{
@@ -29,26 +28,14 @@ class FNodeOutput;
 class ImageSource;
 
 class FNode: public liquid::LiquidNode,
-             public ManagedElement,
-             public pipeline_model::NodeModel {
+             public ManagedElement {
         Q_OBJECT
+    friend class GuiNodeModel;
     public:
-//         // - public typedefs
-//         typedef std::vector<cauv::NodeInput> msg_node_in_list_t;
-//         typedef std::map<cauv::LocalNodeOutput, msg_node_in_list_t> msg_node_output_map_t;
-//         typedef std::map<cauv::LocalNodeInput, cauv::NodeOutput> msg_node_input_map_t;
-//         typedef std::map<cauv::LocalNodeInput, cauv::ParamValue> msg_node_param_map_t;
-
-    protected:
-//         // - protected typedefs
-//         typedef std::map<std::string, FNodeInput*> str_in_map_t;
-//         typedef std::map<std::string, FNodeParamInput*> str_inparam_map_t;
-//         typedef std::map<std::string, FNodeOutput*> str_out_map_t;
-        FNode(const std::string type, Manager &m);
-        void initIO();
-
-    public:
-        static boost::shared_ptr<FNode> makeFNode(const std::string type, Manager &m);
+        FNode(boost::shared_ptr<GuiNodeModel> node, Manager &m);
+        ~FNode();
+        std::string getName() const { return m_associated_node->getName(); };
+        boost::shared_ptr<GuiNodeModel> getModel(){ return m_associated_node; };
 
 //         node_id_t id() const{ return m_node_id; }
 //         NodeType::e nodeType() const{ return m_type; }
@@ -66,35 +53,37 @@ class FNode: public liquid::LiquidNode,
 
         virtual void status(Status const& s, const std::string& status_information="");
         virtual void status(Status const& s, float const& throughput, float const& frequency, float const& time_taken, float const& time_ratio);
+
+    protected:
+        void initIO();
+        
+        void constructArcTo(const std::string output, FNode& to, const std::string input);
+        void destructArcTo(const std::string output, FNode& to, const std::string input);
+        FNodeInput& getInput(const std::string input_name);
+        FNodeOutput& getOutput(const std::string output_name);
     
     Q_SIGNALS:
-        void closed(pipeline_model::NodeModel&);
+        void closed(FNode&);
     
     public:
     // overridden virtual slots (don't need to be marked as slots):
         virtual void close();
 
     public Q_SLOTS:
-        virtual void fadeAndRemove();
-        virtual void remove();
+        virtual FNode* remove();
         
         virtual void reExec();
         virtual void duplicate();
         virtual void toggleCollapsed();
 
     protected:
-//         FNodeOutput* output(const std::string& id);
-//         FNodeInput* input(const std::string& id);
-
-//         void initFromMessage(boost::shared_ptr<NodeAddedMessage const> m);
         void initButtons();
 
     protected:
-//         str_in_map_t       m_inputs;
-//         str_inparam_map_t  m_params;
-//         str_out_map_t      m_outputs;
-        
         bool m_collapsed;
+        boost::shared_ptr<GuiNodeModel> m_associated_node;
+        std::map<const std::string, FNodeInput*> m_inputs;
+        std::map<const std::string, FNodeOutput*> m_outputs;
 };
 
 } // namespace f

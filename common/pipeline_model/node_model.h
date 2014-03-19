@@ -61,8 +61,9 @@ public:
     NodeModel(const std::string type, PipelineModel &pipeline);
     NodeModel(const NodeModelType& type_, PipelineModel &pipeline_);
 
-    virtual void connectOutput(const std::string output, InputModel&);
-    virtual void connectInput(const std::string input, OutputModel&);
+    virtual void connectOutput(const std::string output, InputModel& input);
+    [[gnu::deprecated("Not implemented yet.")]]
+    virtual void connectInput(const std::string input, OutputModel& output);
 
     virtual void disconnectOutput(const std::string output);
     virtual void disconnectInput(const std::string input);

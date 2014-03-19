@@ -47,10 +47,10 @@ using namespace cauv::pipeline_model;
 Manager::Manager(NodeScene *scene,
                  boost::shared_ptr<Node> model_parent,
                  const std::string& pipeline_name)
-    : PipelineModel(pipeline_name),
-      QObject(),
+    : QObject(),
       //DropHandlerInterface<QGraphicsItem*>(),
       boost::enable_shared_from_this<Manager>(),
+      m_pipeline_model(pipeline_name, this),
       m_scene(scene),
 //       m_nodes(),
 //       m_pipeline_name(pipeline_name),
@@ -59,10 +59,9 @@ Manager::Manager(NodeScene *scene,
       m_layout_soon_timer(new QTimer()),
       m_model_parent(model_parent),
       m_item_model(new gui::NodeItemModel(model_parent->getRoot())){
+
     m_animation_permitted.push(true);
-
     m_scene->installEventFilter(new FocusPositionForwarder(*this));
-
 //     m_layout_soon_timer->setSingleShot(true);
 //     connect(m_layout_soon_timer, SIGNAL(timeout()), this, SLOT(updateLayoutNow()));
 }
@@ -333,15 +332,10 @@ QList<QGraphicsItem*> Manager::rootNodes() const{
 //     ));
 // }
 // 
-void Manager::requestRemoveNode(pipeline_model::NodeModel &node) {
+void Manager::removeNode(FNode &node) {
     CAUV_LOG_DEBUG(0, "removing node " << node.getName());
-    try {
-        auto &fNode = dynamic_cast<FNode&>(node);
-        fNode.remove();
-    } catch ( std::bad_cast ) {
-        CAUV_LOG_ERROR("Somehow asked to remove a non-FNode node");
-    }
-    delNode(node.getName());
+    //update the model
+    m_pipeline_model.delNode(node.getName());
 }
 
 // void Manager::requestRefresh(){
@@ -409,21 +403,29 @@ void Manager::requestRemoveNode(pipeline_model::NodeModel &node) {
 //     return r;
 // }
 
-boost::shared_ptr<pipeline_model::NodeModel>
-Manager::addNode(const std::string type) {
-    auto node = pipeline_model::PipelineModel::addNode(type);
-    auto fNode = boost::dynamic_pointer_cast<FNode>(node);
-    if (fNode) {
-        m_scene->addItem(fNode.get());
-    } else {
-        CAUV_LOG_ERROR("Somehow created a non-Fnode Node!?");
-    }
-    return node;
+void Manager::addNode(const std::string type) {
+    m_pipeline_model.addNode(type);
 };
 
-boost::shared_ptr<pipeline_model::NodeModel>
-Manager::constructNode(const std::string type) {
-    return FNode::makeFNode(type, *this);
+FNode* Manager::constructFNode(boost::shared_ptr<GuiNodeModel> node){
+    auto fNode = new FNode(node, *this);
+    node->setFNode(fNode);
+    m_scene->addItem(fNode);
+    return fNode;
+}
+
+void Manager::destructFNode(boost::shared_ptr<GuiNodeModel> node){
+    auto fNode = node->getFNode();
+    //remove and delete the fluidity node
+    fNode->remove();
+    fNode->deleteLater();
+    node->setFNode(nullptr);
+}
+
+bool Manager::createArc(boost::shared_ptr<pipeline_model::NodeModel> from, const std::string output,
+               pipeline_model::InputModel& input){
+    from->connectOutput(output, input);
+    return true;
 }
 
 // void Manager::clearNodes(){

@@ -19,8 +19,6 @@
 #include <liquid/label.h>
 #include <liquid/proxyWidget.h>
 
-#include <common/pipeline_model/edge_model.h>
-
 #include "elements/style.h"
 
 #include "fNode.h"
@@ -31,16 +29,17 @@ namespace cauv{
 namespace gui{
 namespace f{
 
-class FNodeOutput: //public pipeline_model::OutputModel,
-                   public QGraphicsWidget,
+class FNodeOutput: public QGraphicsWidget,
                    public liquid::ArcSourceDelegate {
     Q_OBJECT
     public:
-        FNodeOutput(FNode &node, liquid::ArcStyle const& arc_style, const std::string& id)
+        FNodeOutput(const std::string output_name, FNode &node, liquid::ArcStyle const& arc_style)
             : 
               QGraphicsWidget(&node),
               m_source(NULL),
-              m_text(NULL){
+              m_text(NULL),
+              m_output_name(output_name),
+              m_node(&node){
             QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(
                 Qt::Horizontal, this
             );
@@ -49,7 +48,7 @@ class FNodeOutput: //public pipeline_model::OutputModel,
             
             hlayout->addStretch(1);
 
-            liquid::LiquidLabel* text_label = new liquid::LiquidLabel(QString::fromStdString(id));
+            liquid::LiquidLabel* text_label = new liquid::LiquidLabel(QString::fromStdString(m_output_name));
             text_label->setFont(F_Node_Style().text.font);
 
             m_text = new liquid::ProxyWidget();
@@ -71,16 +70,33 @@ class FNodeOutput: //public pipeline_model::OutputModel,
             
             connect(&node, SIGNAL(xChanged()), this, SIGNAL(xChanged()));
             connect(&node, SIGNAL(yChanged()), this, SIGNAL(yChanged()));
+            CAUV_LOG_DEBUG(2, "Created output " << m_output_name << " for FNode " << node.getName());
         }
-        virtual ~FNodeOutput(){}
+        virtual ~FNodeOutput(){
+            CAUV_LOG_DEBUG(2, "Destroyed output " << m_output_name);
+        }
 
         liquid::Arc* arc() const{
             return m_source->arc();
         }
+        
+        std::string getName(){
+            return m_output_name;
+        };
+        
+        boost::shared_ptr<pipeline_model::NodeModel> getNode(){
+            return m_node->getModel();
+        };
+        
+        pipeline_model::OutputModel& getModel(){
+            return m_node->getModel()->getOutput(m_output_name);
+        };
 
     protected:
         liquid::ArcSource* m_source;
         QGraphicsProxyWidget* m_text;
+        std::string m_output_name;
+        FNode* m_node;
 };
 
 } // namespace f

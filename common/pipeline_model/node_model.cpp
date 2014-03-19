@@ -77,6 +77,9 @@ void NodeModel::connectOutput(const std::string output_name, InputModel& input) 
     if (!input.value->canAccept(*output.value)) {
         throw IncompatibleTypesException("Input of type " + input.value->getType() + " cannot accept output of type " + output.value->getType());
     }
+    if (input.input){
+        input.node->disconnectInput(input.name);
+    }
     output.outputs.push_back(input);
     input.input = &output;
 }

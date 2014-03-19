@@ -53,21 +53,21 @@ void PipelineModel::delNode(const std::string &name) {
     nodes.erase(end_it, nodes.end());
 }
 
-void PipelineModel::delNodeById(NodeId id) {
-    auto end_it = std::remove_if(nodes.begin(), nodes.end(),
-                                 [&id](boost::shared_ptr<NodeModel> &n) {
-                                   if (n->id == id) {
-                                     n->isolate();
-                                     std::stringstream deleted_name;
-                                     deleted_name << "__deleted " << n->id;
-                                     n->setName(deleted_name.str());
-                                     return true;
-                                   } else {
-                                     return false;
-                                   } 
-                                });
-    nodes.erase(end_it, nodes.end());
-}
+// void PipelineModel::delNodeById(NodeId id) {
+//     auto end_it = std::remove_if(nodes.begin(), nodes.end(),
+//                                  [&id](boost::shared_ptr<NodeModel> &n) {
+//                                    if (n->id == id) {
+//                                      n->isolate();
+//                                      std::stringstream deleted_name;
+//                                      deleted_name << "__deleted " << n->id;
+//                                      n->setName(deleted_name.str());
+//                                      return true;
+//                                    } else {
+//                                      return false;
+//                                    } 
+//                                 });
+//     nodes.erase(end_it, nodes.end());
+// }
 
 boost::shared_ptr<NodeModel> PipelineModel::getNode(const std::string &name){
     auto it = std::find_if(nodes.begin(), nodes.end(),
@@ -81,17 +81,17 @@ boost::shared_ptr<NodeModel> PipelineModel::getNode(const std::string &name){
     }
 }
 
-boost::shared_ptr<NodeModel> PipelineModel::getNode(NodeId id){
-    auto it = std::find_if(nodes.begin(), nodes.end(),
-                            [&id](boost::shared_ptr<NodeModel> &n) {
-                                return n->id == id;
-                                });
-    if (it != nodes.end()){
-        return *it;
-    } else {
-        return nullptr;
-    }
-}
+// boost::shared_ptr<NodeModel> PipelineModel::getNode(NodeId id){
+//     auto it = std::find_if(nodes.begin(), nodes.end(),
+//                             [&id](boost::shared_ptr<NodeModel> &n) {
+//                                 return n->id == id;
+//                                 });
+//     if (it != nodes.end()){
+//         return *it;
+//     } else {
+//         return nullptr;
+//     }
+// }
 
 /*
  * -------------XML Conversion
