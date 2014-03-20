@@ -11,7 +11,6 @@
 #include "plugin.h"
 #include <debug/cauv_debug.h>
 
-#include <model/messaging.h>
 #include <model/registry.h>
 
 #include <ros/node_handle.h>
@@ -59,7 +58,7 @@ void Barracuda::initialise() {
     boost::shared_ptr<MotorsNode> motors = findOrCreate<MotorsNode>("motors");
     //connect(motors.get(), SIGNAL(childAdded(boost::shared_ptr<Node>)), this, SLOT(setupMotor(boost::shared_ptr<Node>)));
     //TODO add messages and then sort this
-    attachObserver(motors, boost::make_shared<MessageHandler<MotorsNode, cauv_control::MotorDemand> >(motors, "control/motors"));
+    //attachObserver(motors, boost::make_shared<MessageHandler<MotorsNode, cauv_control::MotorDemand> >(motors, "control/motors"));
 //      setupMotor(motors->findOrCreate<MotorNode>(MotorID::HStern));
 //      setupMotor(motors->findOrCreate<MotorNode>(MotorID::Prop));
 //      setupMotor(motors->findOrCreate<MotorNode>(MotorID::VBow));

@@ -16,7 +16,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            StringNode(nid_t const& id) : Node(id, nodeType<StringNode>()){
+            StringNode(std::string const& id) : Node(id, nodeType<StringNode>()){
                 m_value = QVariant(QString());
             }
 

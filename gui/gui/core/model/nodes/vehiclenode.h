@@ -7,7 +7,9 @@
 #ifndef GUI_VEHICLENODE_H
 #define GUI_VEHICLENODE_H
 
-#include <gui/core/model/messaging.h>
+#include <QObject>
+
+#include "model/node.h"
 
 namespace cauv {
     namespace gui {
@@ -24,7 +26,7 @@ namespace cauv {
             }
 
             virtual void initialise() = 0;
-
+#if 0
         Q_SIGNALS:
             //void messageGenerated(boost::shared_ptr<const Message>);
             void observerAttached(boost::shared_ptr<BaseMessageHandler>);
@@ -73,7 +75,7 @@ namespace cauv {
                 }
                 m_observers.erase(node);
             }
-
+#endif
         protected Q_SLOTS:
             void nodeRemoved() {
                 CAUV_LOG_INFO("node removed");
@@ -84,10 +86,11 @@ namespace cauv {
                 }
 #endif
             }
-
+#if 0
         protected:
             std::map<boost::shared_ptr<Node>,  generator_set_t > m_generators;
             std::map<boost::shared_ptr<Node>,  observer_set_t > m_observers;
+#endif
         };
 
     } //namespace gui

@@ -19,7 +19,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            SonarNode(nid_t const& id) : ImageNode(id){
+            SonarNode(std::string const& id) : ImageNode(id){
                 type = nodeType<SonarNode>();
             }
 

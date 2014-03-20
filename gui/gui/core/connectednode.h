@@ -16,8 +16,6 @@
 #include <liquid/style.h>
 #include <liquid/arcSource.h>
 
-#include <model/variants.h>
-
 #include <connectednodemap.h>
 
 namespace cauv{

@@ -13,6 +13,9 @@
 #include <cauvbasicplugin.h>
 #include <model/node.h>
 #include <model/nodes/vehiclenode.h>
+#include <model/nodes/motornode.h>
+#include <model/nodes/groupingnode.h>
+#include <model/nodes/numericnode.h>
 
 #include <QObject>
 

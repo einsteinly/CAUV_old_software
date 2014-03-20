@@ -30,7 +30,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-FluidityNode::FluidityNode(const nid_t id) :
+FluidityNode::FluidityNode(const std::string id) :
     Node(id, nodeType<FluidityNode>()){
 }
 

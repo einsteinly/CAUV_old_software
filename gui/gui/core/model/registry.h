@@ -32,10 +32,10 @@ namespace cauv {
 
                 template <class T> boost::shared_ptr<T> registerVehicle(const std::string& name){
                     boost::shared_ptr<Vehicle> vehicle(new T(name));
-                    connect(vehicle.get(), SIGNAL(observerAttached(boost::shared_ptr<BaseMessageObserver>)),
-                            this, SIGNAL(observerAttached(boost::shared_ptr<BaseMessageObserver>)));
-                    connect(vehicle.get(), SIGNAL(observerDetached(boost::shared_ptr<BaseMessageObserver>)),
-                            this, SIGNAL(observerDetached(boost::shared_ptr<BaseMessageObserver>)));
+//                     connect(vehicle.get(), SIGNAL(observerAttached(boost::shared_ptr<BaseMessageObserver>)),
+//                             this, SIGNAL(observerAttached(boost::shared_ptr<BaseMessageObserver>)));
+//                     connect(vehicle.get(), SIGNAL(observerDetached(boost::shared_ptr<BaseMessageObserver>)),
+//                             this, SIGNAL(observerDetached(boost::shared_ptr<BaseMessageObserver>)));
                     vehicle->initialise();
                     addChild(vehicle);
                     Q_EMIT vehicleAdded(vehicle);
@@ -46,8 +46,8 @@ namespace cauv {
                 const boost::shared_ptr<Node> getNode(QUrl url);
 
             Q_SIGNALS:
-                void observerAttached(boost::shared_ptr<BaseMessageObserver>);
-                void observerDetached(boost::shared_ptr<BaseMessageObserver>);
+                //void observerAttached(boost::shared_ptr<BaseMessageObserver>);
+                //void observerDetached(boost::shared_ptr<BaseMessageObserver>);
                 void vehicleAdded(boost::shared_ptr<Vehicle>);
 
             private:

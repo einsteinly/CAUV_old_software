@@ -18,7 +18,7 @@ class ColourNode : public Node {
     Q_OBJECT
 
 public:
-    ColourNode(nid_t const& id) : Node(id, nodeType<ColourNode>()){
+    ColourNode(std::string const& id) : Node(id, nodeType<ColourNode>()){
 #if 0
         qRegisterMetaType<Colour>("Colour");
         m_value = QVariant::fromValue<Colour>(Colour());

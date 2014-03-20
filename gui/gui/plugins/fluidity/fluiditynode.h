@@ -36,7 +36,7 @@ class FView;
 //node in model
 class FluidityNode : public Node {
     public:
-    FluidityNode(const nid_t id);
+    FluidityNode(const std::string id);
     virtual ~FluidityNode();
     std::string fullPipelineName();
 };

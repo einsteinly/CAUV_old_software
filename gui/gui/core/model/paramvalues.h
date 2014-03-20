@@ -7,8 +7,10 @@
 #ifndef GUI_PARAMVALUES_H
 #define GUI_PARAMVALUES_H
 
-#include <model/variants.h>
+//TODO remove variants dependency
+//#include <model/variants.h>
 #include <model/node.h>
+#include <pipeline_model/param_model.h>
 
 #include <QVariant>
 
@@ -17,30 +19,31 @@ namespace cauv {
 
     class Node;
 
-    struct ParamValueToNode : public boost::static_visitor<boost::shared_ptr<Node> >
-    {
-        ParamValueToNode(const nid_t id);
+//     struct ParamValueToNode : public boost::static_visitor<boost::shared_ptr<Node> >
+//     {
+//         ParamValueToNode(const nid_t id);
+// 
+//         template <typename T> boost::shared_ptr<Node> operator()( T & ) const
+//         {
+//             throw std::runtime_error("Unsupported ParamValue type");
+//         }
+// 
+//         nid_t m_id;
+//     };
+// 
+//     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(int &) const;
+//     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(float & ) const;
+//     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(std::string& ) const;
+//     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand ) const;
+//     //TODO reimplement bounded and colour types (also ?file type)
+//     //template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & ) const;
+//     //template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & ) const;
+// 
+//     template <class T>
+    
+    boost::shared_ptr<Node> paramModelToNode(pipeline_model::ParamModel& pm);
 
-        template <typename T> boost::shared_ptr<Node> operator()( T & ) const
-        {
-            throw std::runtime_error("Unsupported ParamValue type");
-        }
-
-        nid_t m_id;
-    };
-
-    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(int &) const;
-    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(float & ) const;
-    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(std::string& ) const;
-    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand ) const;
-    //template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & ) const;
-    //template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & ) const;
-
-    //template <class T>
-    //boost::shared_ptr<Node> paramValueToNode(nid_t id, T boostVariant){
-    //    return boost::apply_visitor(ParamValueToNode(id), boostVariant);
-    //}
-
+    //TODO reimplement meta data
     //boost::shared_ptr<Node> paramWithMetaToNode(nid_t id, ParamWithMeta & param_with_meta);
 
 #if 0

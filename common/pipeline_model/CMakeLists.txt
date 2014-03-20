@@ -18,6 +18,7 @@ add_message_files(
 generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
+    INCLUDE_DIRS "./.."
     DEPENDS Boost
     CATKIN_DEPENDS cauv_debug cauv_utility roscpp roslib
     LIBRARIES cauv_pipeline_model

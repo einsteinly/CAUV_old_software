@@ -23,8 +23,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/widgets)
 
-# for <common/includesstuff> etc
-include_directories (${AUV_SOURCE_DIR})
+# for param value etc
+include_directories (${pipeline_model_INCLUDE_DIRS})
 
 # for <gui/core/...>
 include_directories (${guis_SOURCE_DIR})
@@ -41,10 +41,8 @@ set ( GUI_CORE_SRCS
     widgets/videoWidget.cpp
 
     model/node.cpp
-    model/variants.cpp
     model/nodeItemModel.cpp
     model/registry.cpp
-    model/messaging.cpp
     model/paramvalues.cpp
 
     styles/style.cpp
@@ -90,7 +88,6 @@ set ( GUI_CORE_H
     model/nodes/autopilotnode.h
     model/nodes/sonarnode.h
     model/nodes/colournode.h
-    model/messaging.h
 
     styles/style.h
 
@@ -132,5 +129,6 @@ target_link_libraries ( gui-core
         liquid
         pthread
         ${QT_LIBRARIES}
+        ${cauv_pipeline_model_LIBRARIES}
         ${catkin_LIBRARIES}
     )

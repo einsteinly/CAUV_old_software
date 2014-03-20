@@ -16,7 +16,7 @@ namespace cauv {
 
         class MotorNode : public NumericNode<int> {
         public:
-            MotorNode(nid_t const& id) : NumericNode<int>(id) {
+            MotorNode(std::string const& id) : NumericNode<int>(id) {
                 typedSetMax(127);
                 typedSetMin(-127);
             }
@@ -24,7 +24,7 @@ namespace cauv {
         
         class MotorsNode : public GroupingNode {
         public:
-            MotorsNode(nid_t const& id) : GroupingNode(id) {}
+            MotorsNode(std::string const& id) : GroupingNode(id) {}
         };
 
     } //namespace gui

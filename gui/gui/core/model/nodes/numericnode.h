@@ -19,7 +19,7 @@ namespace cauv {
             Q_OBJECT
 
         protected:
-            NumericNodeBase(nid_t const& id) : Node(id, nodeType<NumericNodeBase>()),
+            NumericNodeBase(std::string const& id) : Node(id, nodeType<NumericNodeBase>()),
                 m_max(100), m_min(0), m_maxSet(false), m_minSet(false), m_wraps(false), m_inverted(false), m_precision(6)
             {
             }
@@ -133,7 +133,7 @@ namespace cauv {
         template<class T>
         class NumericNode : public NumericNodeBase {
         public:
-            NumericNode(nid_t const& id) : NumericNodeBase(id)
+            NumericNode(std::string const& id) : NumericNodeBase(id)
             {
                 m_value = QVariant::fromValue(T());
             }
@@ -224,7 +224,7 @@ namespace cauv {
         template<>
         class NumericNode<BoundedFloat> : public NumericNodeBase {
         public:
-            NumericNode(nid_t const& id) : NumericNodeBase(id)
+            NumericNode(std::string const& id) : NumericNodeBase(id)
             {
                 m_value = QVariant::fromValue(BoundedFloat());
             }
@@ -284,7 +284,7 @@ namespace cauv {
 
         class BooleanNode : public NumericNode<bool> {
         public:
-            BooleanNode(const nid_t id) : NumericNode<bool>(id) {
+            BooleanNode(const std::string id) : NumericNode<bool>(id) {
                 // change the type of boolean nodes so they're not really
                 // numeric nodes, but we get all the typing stuff above for free
                 type = nodeType<BooleanNode>();

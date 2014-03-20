@@ -19,7 +19,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            AutopilotParamsNode(nid_t const& id) : GroupingNode(id)
+            AutopilotParamsNode(std::string const& id) : GroupingNode(id)
             {}
 
             boost::shared_ptr<NumericNode<float> > kP() {
@@ -103,7 +103,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            AutopilotNode(nid_t const& id) : BooleanNode(id)
+            AutopilotNode(std::string const& id) : BooleanNode(id)
             {}
 
             boost::shared_ptr<AutopilotParamsNode> getParams() {

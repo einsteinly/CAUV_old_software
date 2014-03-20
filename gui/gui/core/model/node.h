@@ -20,40 +20,37 @@
 
 #include <debug/cauv_debug.h>
 
-#include <model/variants.h>
+//TODO remove variant dependency
+//#include <model/variants.h>
 #include <model/nodeType.h>
-
-
-
-
 
 #define GENERATE_SIMPLE_NODE(X) \
     class X : public Node { \
         public: \
-            X(const nid_t id) : Node(id, nodeType<X>()){ \
+            X(const std::string id) : Node(id, nodeType<X>()){ \
         } \
     };
 
 namespace cauv {
 namespace gui {
-
+    
 class Node : public QObject, public boost::enable_shared_from_this<Node> {
     Q_OBJECT
     public:
-        typedef boost::unordered_map<nid_t, boost::shared_ptr<Node> > id_map_t;
+        typedef boost::unordered_map<std::string, boost::shared_ptr<Node> > id_map_t;
         typedef std::vector<boost::shared_ptr<Node> > children_list_t;
 
         node_type type;
 
-        Node(nid_t const& id, node_type type);
+        Node(std::string const& id, node_type type);
         virtual ~Node();
 
-        virtual nid_t nodeId() const;
+        virtual std::string nodeId() const;
         virtual std::string nodeName() const;
         virtual std::string nodePath() const;
         virtual void addChild(boost::shared_ptr<Node> const& child);
         virtual bool removeChild(boost::shared_ptr<Node> const& child);
-        virtual bool removeChild(nid_t const& childId);
+        virtual bool removeChild(std::string const& childId);
         virtual const children_list_t getChildren() const;
         virtual bool isMutable() const;
         virtual void setMutable(bool mut);
@@ -110,14 +107,14 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
             return output;
         }
 
-        template <class T> boost::shared_ptr<T> find(nid_t const& id) const {
+        template <class T> boost::shared_ptr<T> find(std::string const& id) const {
             // throws std::out_of_range_exception if its not found
             if(exists<T>(id)) {
                 boost::shared_ptr<Node> node = m_id_map.at(id);
                 return node->to<T>();
             } else {
                 std::stringstream str;
-                str << "Node not found: " << boost::apply_visitor(id_to_name(), id);
+                str << "Node not found: " << id;
                 throw std::out_of_range(str.str());
             }
         }
@@ -128,18 +125,17 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
             if(pathparts.length() > 1){
                 QString prefixNode = path;
                 prefixNode.truncate(path.indexOf('/'));
-                boost::shared_ptr<Node> node = find<Node>(nid_t(
-                                prefixNode.toStdString()));
+                boost::shared_ptr<Node> node = find<Node>(prefixNode.toStdString());
                 return node->findFromPath<T>(path.remove(0, path.indexOf('/')+1));
             }
-            else return find<T>(nid_t(path.toStdString()));
+            else return find<T>(path.toStdString());
         }
 
-        template <class T> bool exists(nid_t const& id) const {
+        template <class T> bool exists(std::string const& id) const {
             return m_id_map.find(id) != m_id_map.end();
         }
 
-        template <class T> boost::shared_ptr<T> findOrCreate(nid_t const& id){
+        template <class T> boost::shared_ptr<T> findOrCreate(std::string const& id){
             lock_t l(m_creationLock);
 
             if(exists<T>(id)) {
@@ -180,7 +176,7 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
         children_list_t m_children;
         id_map_t m_id_map;
 
-        const nid_t m_id;
+        const std::string m_id;
         bool m_mutable;
         std::string m_docstring;
 

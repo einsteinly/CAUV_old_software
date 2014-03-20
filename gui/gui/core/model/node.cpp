@@ -16,7 +16,7 @@ int node_types::count = 0;
 std::map<std::string, int> node_types::typeMap;
 
 
-Node::Node(nid_t const& id, node_type t) :
+Node::Node(std::string const& id, node_type t) :
     type(t), m_parent(), m_id(id), m_mutable(false) {
 
     qRegisterMetaType<boost::shared_ptr<Node> >("boost::shared_ptr<Node>");
@@ -27,10 +27,10 @@ Node::~Node(){
 }
 
 std::string Node::nodeName() const {
-    return boost::apply_visitor(id_to_name(), m_id);
+    return m_id;
 }
 
-nid_t Node::nodeId() const {
+std::string Node::nodeId() const {
     return m_id;
 }
 
@@ -123,7 +123,7 @@ bool Node::removeChild(boost::shared_ptr<Node> const& child){
     return true;
 }
 
-bool Node::removeChild(nid_t const& childId){
+bool Node::removeChild(std::string const& childId){
     return removeChild(find<Node>(childId));
 }
 
