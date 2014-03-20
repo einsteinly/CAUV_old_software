@@ -56,7 +56,7 @@ class FNodeInput: public liquid::ArcSinkLabel,
 
         virtual void setCollapsed(bool state);
 
-        void setValue(pipeline_model::ParamValue const& v);
+        void setValue(boost::shared_ptr<pipeline_model::ParamValue> const& v);
 
         void setEditable(bool editable);
 

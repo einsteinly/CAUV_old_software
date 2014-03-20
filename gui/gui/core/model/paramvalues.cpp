@@ -15,28 +15,55 @@ using namespace cauv::pipeline_model;
 #include "nodes/stringnode.h"
 #include "nodes/colournode.h"
 
-boost::shared_ptr<Node> IntParamValueToNode(std::string const& name, boost::shared_ptr<ParamValue> pv)
+//ensures that required methods are implemented
+struct ConverterBase
 {
-    try {
-        auto ipv = boost::dynamic_pointer_cast<IntParam>(pv);
-        boost::shared_ptr<NumericNode<int> > node = boost::make_shared<NumericNode<int> >(name);
-        node->typedUpdate(ipv->value);
-        return node;
-    } catch (std::bad_cast) {
-        throw std::runtime_error("Could not cast ParamValue of type int to IntParam");
+    virtual boost::shared_ptr<Node> toNode(std::string const& name) = 0;
+    virtual QVariant toQVariant() = 0;
+};
+
+template< typename T >
+struct Converter : ConverterBase
+{
+    Converter(boost::shared_ptr<ParamValue> pv) : ConverterBase() {
+        m_pv = boost::dynamic_pointer_cast< T >(pv);
+        if (!m_pv){ throw std::runtime_error("Could not cast ParamValue"); }
     }
+    virtual QVariant toQVariant(){
+        return QVariant(m_pv->value);
+    }
+    virtual boost::shared_ptr<Node> toNode(std::string const& name);
+private:
+    boost::shared_ptr< T > m_pv;
+};
+
+//TODO string specialisation
+// template<>
+// QVariant Converter<StringParam>::toQVariant(){
+//     return QString::fromStdString(m_pv->value())
+// }
+
+template<>
+boost::shared_ptr<Node> Converter<IntParam>::toNode(std::string const& name){
+    boost::shared_ptr<NumericNode<int> > node = boost::make_shared<NumericNode<int> >(name);
+    node->typedUpdate(m_pv->value);
+    return node;
 }
 
-boost::shared_ptr<Node> FloatParamValueToNode(std::string const& name, boost::shared_ptr<ParamValue> pv)
+template<>
+boost::shared_ptr<Node> Converter<FloatParam>::toNode(std::string const& name)
 {
-    try {
-        auto fpv = boost::dynamic_pointer_cast<FloatParam>(pv);
-        boost::shared_ptr<NumericNode<float> > node = boost::make_shared<NumericNode<float> >(name);
-        node->typedUpdate(fpv->value);
-        return node;
-    } catch (std::bad_cast) {
-        throw std::runtime_error("Could not cast ParamValue of type float to FloatParam");
-    }
+    boost::shared_ptr<NumericNode<float> > node = boost::make_shared<NumericNode<float> >(name);
+    node->typedUpdate(m_pv->value);
+    return node;
+}
+
+template<>
+boost::shared_ptr<Node> Converter<BoolParam>::toNode(std::string const& name)
+{
+    boost::shared_ptr<BooleanNode> node = boost::make_shared<BooleanNode>(name);
+    node->typedUpdate(m_pv->value);
+    return node;
 }
 
 //TODO implement string param values
@@ -46,18 +73,6 @@ boost::shared_ptr<Node> FloatParamValueToNode(std::string const& name, boost::sh
 //     node->update(operand);
 //     return node;
 // }
-
-boost::shared_ptr<Node> BoolParamValueToNode(std::string const& name, boost::shared_ptr<ParamValue> pv)
-{
-    try {
-        auto bpv = boost::dynamic_pointer_cast<BoolParam>(pv);
-        boost::shared_ptr<BooleanNode> node = boost::make_shared<BooleanNode>(name);
-        node->typedUpdate(bpv->value);
-        return node;
-    } catch (std::bad_cast) {
-        throw std::runtime_error("Could not cast ParamValue of type bool to BoolParam");
-    }
-}
 
 #if 0
 //TODO impement bounded and colour param values
@@ -76,23 +91,42 @@ template <> boost::shared_ptr<Node> ParamValueToNode::operator()(Colour & operan
 }
 #endif
 
+//"constructor" that can be stored
+template< typename T>
+boost::shared_ptr<ConverterBase> constructConverter(boost::shared_ptr<ParamValue> pv){
+    return boost::make_shared<Converter<T>>(pv);
+}
 
-
-boost::shared_ptr<Node> paramModelToNode(ParamModel& pm){
+boost::shared_ptr<ConverterBase> getConverter(boost::shared_ptr<ParamValue> pv){
     static std::map<std::string,
-                    std::function< boost::shared_ptr<Node>(std::string const&,
-                                                           boost::shared_ptr<ParamValue>)
-                                 >
+                    std::function< boost::shared_ptr<ConverterBase>(boost::shared_ptr<ParamValue>)>
                    >dispatcher = {
-        {"int", IntParamValueToNode},
-        {"float", FloatParamValueToNode},
-        {"bool", BoolParamValueToNode},
+        {"int", constructConverter<IntParam>},
+        {"float", constructConverter<FloatParam>},
+        {"bool", constructConverter<BoolParam>},
     };
     try {
-        dispatcher.at(pm.getType())(pm.name, pm.value);
-    } catch (std::out_of_range){
-        throw std::runtime_error("Unsupported ParamValue type");
+        return dispatcher.at(pv->getType())(pv);
+    } catch (std::out_of_range) {
+        throw std::runtime_error("Unsupported ParamValue");
     }
+}
+
+
+namespace cauv{
+namespace gui{
+boost::shared_ptr<Node> paramModelToNode(ParamModel& pm){
+    return paramValueToNode(pm.name, pm.value);
+}
+
+boost::shared_ptr<Node> paramValueToNode(std::string const& id, boost::shared_ptr<ParamValue> pv){
+    return getConverter(pv)->toNode(id);
+}
+
+QVariant paramValueToQVariant(boost::shared_ptr<ParamValue> pv){
+    return getConverter(pv)->toQVariant();
+}
+}
 }
 
 #if 0

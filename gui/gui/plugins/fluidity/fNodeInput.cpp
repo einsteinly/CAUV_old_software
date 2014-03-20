@@ -23,6 +23,7 @@
 #include <model/nodes/stringnode.h>
 #include <model/nodes/colournode.h>
 #include <model/nodeItemModel.h>
+#include <model/paramvalues.h>
 #include <nodepicker.h>
 
 #include "manager.h"
@@ -40,9 +41,9 @@ FNodeInput::FNodeInput(const std::string input_name, FNode &node, Manager &m)
       m_input_name(input_name),
       m_node(&node){
     // don't want a label:
-    //removeWidget(m_text);
-    //m_text->deleteLater();
-    //m_text = nullptr;
+    removeWidget(m_text);
+    m_text->deleteLater();
+    m_text = nullptr;
     CAUV_LOG_DEBUG(2, "Created input " << m_input_name << " for FNode " << node.getName());
 }
 
@@ -159,20 +160,18 @@ static boost::shared_ptr<cauv::gui::Node> makeModelNodeForInput(const std::strin
 
 #endif
 
-void FNodeInput::setValue(pipeline_model::ParamValue const& v){
-#if 0
+void FNodeInput::setValue(boost::shared_ptr<pipeline_model::ParamValue> const& v){
     if(!m_model_node){
-        m_model_node = makeModelNodeForInput(m_input_name, v);
+        m_model_node = paramValueToNode(m_input_name, v);
         boost::shared_ptr<gui::Node> n = manager().model()->findOrCreate<GroupingNode>(m_node->getName());
         // each item needs to be an only child
         // this should be changed if multiple NodeItemViews are not used any more
-        boost::shared_ptr<gui::Node> p = n->findOrCreate<GroupingNode>((unsigned int)n->getChildren().size());
+        boost::shared_ptr<gui::Node> p = n->findOrCreate<GroupingNode>(m_input_name);
         p->addChild(m_model_node);
         connect(m_model_node.get(), SIGNAL(onSet(QVariant)), this, SLOT(modelValueChanged(QVariant)));
         initView();
     }
-    //m_model_node->update(paramValueToQVariant(v));
-#endif
+    m_model_node->update(paramValueToQVariant(v));
 }
 
 void FNodeInput::setEditable(bool editable){

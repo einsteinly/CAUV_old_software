@@ -81,6 +81,7 @@ set ( GUI_CORE_H
     model/node.h
     model/nodeItemModel.h
     model/registry.h
+    model/paramvalues.h
     model/nodes/numericnode.h
     model/nodes/stringnode.h
     model/nodes/imagenode.h
@@ -122,8 +123,8 @@ add_library ( gui-core SHARED
 install(TARGETS gui-core
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
-
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})    
+    
 target_link_libraries ( gui-core
         cauv_debug
         liquid

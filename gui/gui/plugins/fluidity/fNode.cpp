@@ -38,6 +38,8 @@
 #include "types.h"
 //#include "imageSource.h"
 
+#include "model/nodes/groupingnode.h"
+
 using cauv::gui::f::FNode;
 using cauv::gui::f::FNodeOutput;
 using cauv::gui::f::FNodeInput;
@@ -121,7 +123,8 @@ FNode::FNode(boost::shared_ptr<GuiNodeModel> node, Manager &m)
     :liquid::LiquidNode(F_Node_Style(), nullptr), 
       ManagedElement(m),
       m_associated_node(node),
-      m_collapsed(false){
+      m_collapsed(false),
+      m_name(m_associated_node->getName()){
 
     setTitle(QString::fromStdString(m_associated_node->getName()));
     initButtons();
@@ -131,6 +134,9 @@ FNode::FNode(boost::shared_ptr<GuiNodeModel> node, Manager &m)
     
     status(OK);
 
+    //create grouping node in model tree
+    manager().model()->findOrCreate<GroupingNode>(getName());
+    
 #ifdef QT_PROFILE_GRAPHICSSCENE
     setProfileName("FNode");
 #endif // def QT_PROFILE_GRAPHICSSCENE
@@ -139,6 +145,9 @@ FNode::FNode(boost::shared_ptr<GuiNodeModel> node, Manager &m)
 
 FNode::~FNode(){
     CAUV_LOG_DEBUG(2, "Destroyed FNode for pipeline model node " << m_associated_node->getName());
+    
+    //destroy grouping node in model tree
+    manager().model()->removeChild(getName());
 }
 
 void FNode::initIO() {
@@ -156,25 +165,31 @@ void FNode::initIO() {
         auto input = m_associated_node->getInput(input_name);
         
         auto t = new FNodeInput(input_name, *this, manager());
+        t->setValue(input.value);
+        //editable (until connection occurs)
+        t->setEditable(true);
+        
         m_inputs.insert(std::make_pair(input_name, t));
         addItem(t);
     }
 }
         
 void FNode::constructArcTo(const std::string output, FNode& to, const std::string input){
-    getOutput(output).arc()->addTo(to.getInput(input).sink());
+    FNodeInput* in = to.getInput(input);
+    getOutput(output)->arc()->addTo(in->sink());
 }
 
 void FNode::destructArcTo(const std::string output, FNode& to, const std::string input){
-    getOutput(output).arc()->removeTo(to.getInput(input).sink());
+    FNodeInput* in = to.getInput(input);
+    getOutput(output)->arc()->removeTo(in->sink());
 }
 
-FNodeInput& FNode::getInput(const std::string input_name){
-    return *(m_inputs[input_name]);
+FNodeInput* FNode::getInput(const std::string input_name){
+    return m_inputs.at(input_name);
 }
 
-FNodeOutput& FNode::getOutput(const std::string output_name){
-    return *(m_outputs[output_name]);
+FNodeOutput* FNode::getOutput(const std::string output_name){
+    return m_outputs.at(output_name);
 }
         
 // FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)

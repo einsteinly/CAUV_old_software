@@ -34,7 +34,7 @@ class FNode: public liquid::LiquidNode,
     public:
         FNode(boost::shared_ptr<GuiNodeModel> node, Manager &m);
         ~FNode();
-        std::string getName() const { return m_associated_node->getName(); };
+        std::string getName() const { return m_name; };
         boost::shared_ptr<GuiNodeModel> getModel(){ return m_associated_node; };
 
 //         node_id_t id() const{ return m_node_id; }
@@ -59,8 +59,8 @@ class FNode: public liquid::LiquidNode,
         
         void constructArcTo(const std::string output, FNode& to, const std::string input);
         void destructArcTo(const std::string output, FNode& to, const std::string input);
-        FNodeInput& getInput(const std::string input_name);
-        FNodeOutput& getOutput(const std::string output_name);
+        FNodeInput* getInput(const std::string input_name);
+        FNodeOutput* getOutput(const std::string output_name);
     
     Q_SIGNALS:
         void closed(FNode&);
@@ -84,6 +84,7 @@ class FNode: public liquid::LiquidNode,
         boost::shared_ptr<GuiNodeModel> m_associated_node;
         std::map<const std::string, FNodeInput*> m_inputs;
         std::map<const std::string, FNodeOutput*> m_outputs;
+        const std::string m_name;
 };
 
 } // namespace f
