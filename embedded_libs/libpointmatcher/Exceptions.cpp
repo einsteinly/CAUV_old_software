@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "PointMatcher.h"
+#include <pointmatcher/PointMatcher.h>
 
 //TODO: gather exceptions here and in Exceptions.cpp
 

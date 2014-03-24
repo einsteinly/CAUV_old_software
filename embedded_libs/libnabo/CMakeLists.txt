@@ -5,14 +5,17 @@ project(libnabo)
 find_package(catkin)
 
 catkin_package(
-    INCLUDE_DIRS "./.."
+    INCLUDE_DIRS include
     CATKIN_DEPENDS 
+    LIBRARIES nabo
     DEPENDS Boost 
 )
 
-include_directories(${Boost_INCLUDES} 
-                    )
-
+include_directories(
+    include
+    ${Boost_INCLUDES} 
+    ${catkin_INCLUDE_DIRS}
+)
 
 find_path(EIGEN_INCLUDE_DIR Eigen/Core
 	/usr/local/include/eigen3

@@ -36,8 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __POINTMATCHER_REGISTRAR_H
 #define __POINTMATCHER_REGISTRAR_H
 
-#include "Parametrizable.h"
-#include "PointMatcher.h"
+#include <pointmatcher/Parametrizable.h>
+#include <pointmatcher/PointMatcher.h>
 #include <boost/format.hpp>
 #include <boost/typeof/typeof.hpp>
 

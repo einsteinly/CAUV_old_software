@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "nabo_private.h"
-#include "index_heap.h"
+#include <nabo/index_heap.h>
 #include <iostream>
 #include <stdexcept>
 #include <limits>

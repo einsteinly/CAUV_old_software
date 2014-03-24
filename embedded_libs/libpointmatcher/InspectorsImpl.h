@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __POINTMATCHER_INSPECTORS_H
 #define __POINTMATCHER_INSPECTORS_H
 
-#include "PointMatcher.h"
+#include <pointmatcher/PointMatcher.h>
 #include "Histogram.h"
 
 template<typename T>

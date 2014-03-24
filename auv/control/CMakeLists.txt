@@ -8,7 +8,8 @@ find_package(catkin REQUIRED COMPONENTS
             cauv_utility
             cauv_debug
             std_msgs
-            message_generation)
+            message_generation
+            sbgcom)
 
 add_message_files(
     FILES
@@ -26,16 +27,14 @@ generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
     DEPENDS Boost
-    CATKIN_DEPENDS cauv_debug cauv_utility roscpp roslib
+    CATKIN_DEPENDS cauv_debug cauv_utility roscpp roslib sbgcom
 )
 
 include_directories(${Boost_INCLUDES} 
                     ${rosconsole_INCLUDES}
                     ${cauv_utility_INCLUDE_DIRS}
+                    ${catkin_INCLUDE_DIRS}
                     )
-
-include_directories(${catkin_INCLUDE_DIRS})
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../")
 
 add_executable (
     cauv_control
@@ -49,7 +48,6 @@ add_executable (
 #    barracuda_mcb.cpp
 )
 
-#TODO: make sbgCom library embedded...
 target_link_libraries (
     cauv_control
 

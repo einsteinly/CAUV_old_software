@@ -7,14 +7,17 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 catkin_package(
-    INCLUDE_DIRS "./.."
+    INCLUDE_DIRS include
     CATKIN_DEPENDS libnabo
-    DEPENDS Boost 
+    DEPENDS Boost nabo 
 )
 
-include_directories(${Boost_INCLUDES}
-                    ${embedded_libs_INCLUDE_DIRS}
-                    )
+include_directories(
+    include
+    ${Boost_INCLUDES}
+    ${embedded_libs_INCLUDE_DIRS}
+    ${catkin_INCLUDE_DIRS}
+)
 
 
 find_path(EIGEN_INCLUDE_DIR Eigen/Core

@@ -2,10 +2,9 @@
 #include <iostream>
 #include <cstdio>
 
-#include "stdio.h"
-#include "time.h"
+#include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
-#include "sbgCom/sbgCom.h"
 #include <boost/thread.hpp>
 
 #define CAUV_DEBUG_COMPAT

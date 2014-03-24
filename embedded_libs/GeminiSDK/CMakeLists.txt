@@ -1,7 +1,13 @@
 #set (CMAKE_VERBOSE_MAKEFILE on)
 
 cmake_minimum_required (VERSION 2.8)
-project (GeminiSDK)
+project (geminisdk)
+
+catkin_package(
+    INCLUDE_DIRS Src/SDK
+    CATKIN_DEPENDS 
+    DEPENDS
+)
 
 set (${PROJECT_NAME}_MAJOR_VERSION 0)
 set (${PROJECT_NAME}_MINOR_VERSION 0)

@@ -1,0 +1,10 @@
+<package>
+  <name>sbgcom</name>
+  <version>1.0.0</version>
+  <description>library for communicating with the SBG IMU</description>
+  <maintainer email="dy245@cam.ac.uk">Douglas Young</maintainer>
+  <author>SBG</author>
+  <license>Propreitary</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>

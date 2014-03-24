@@ -10,7 +10,7 @@
 #include <boost/thread.hpp>
 #include <boost/noncopyable.hpp>
 
-#include "sbgCom/sbgCom.h"
+#include <sbg/sbgCom.h>
 
 #include <utility/observable.h>
 

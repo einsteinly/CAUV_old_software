@@ -1,0 +1,10 @@
+<package>
+  <name>geminisdk</name>
+  <version>1.0.0</version>
+  <description>SDK for communicating the the Gemini multibeam sonar</description>
+  <maintainer email="dy245@cam.ac.uk">Douglas Young</maintainer>
+  <author>Tritech</author>
+  <license>Propreitary</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>

@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "Parametrizable.h"
+#include <pointmatcher/Parametrizable.h>
 #include <boost/format.hpp>
 #include <boost/typeof/typeof.hpp>
 

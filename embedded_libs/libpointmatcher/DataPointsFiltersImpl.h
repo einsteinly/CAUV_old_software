@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __POINTMATCHER_DATAPOINTSFILTERS_H
 #define __POINTMATCHER_DATAPOINTSFILTERS_H
 
-#include "PointMatcher.h"
+#include <pointmatcher/PointMatcher.h>
 
 template<typename T>
 struct DataPointsFiltersImpl

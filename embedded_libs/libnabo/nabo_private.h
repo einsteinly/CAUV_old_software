@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __NABO_PRIVATE_H
 #define __NABO_PRIVATE_H
 
-#include "nabo.h"
+#include <nabo/nabo.h>
 
 #ifdef BOOST_STDINT
 	#include <boost/cstdint.hpp>

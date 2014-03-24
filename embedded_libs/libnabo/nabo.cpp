@@ -29,9 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "nabo.h"
+#include <nabo/nabo.h>
 #include "nabo_private.h"
-#include "index_heap.h"
+#include <nabo/index_heap.h>
 #include <limits>
 #include <algorithm>
 #include <stdexcept>

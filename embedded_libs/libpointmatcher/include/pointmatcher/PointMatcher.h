@@ -39,12 +39,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef EIGEN_USE_NEW_STDVECTOR
 #define EIGEN_USE_NEW_STDVECTOR
 #endif // EIGEN_USE_NEW_STDVECTOR
+#define EIGEN_NO_EIGEN2_DEPRECATED_WARNING
 #define EIGEN2_SUPPORT
-#include "Eigen/StdVector"
-#include "Eigen/Core"
-#include "Eigen/Geometry"
+#include <Eigen/StdVector>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
-#include "libnabo/nabo.h"
+#include <nabo/nabo.h>
 
 #include <boost/thread/mutex.hpp>
 
@@ -54,8 +55,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ostream>
 #include <memory>
 
-#include "Parametrizable.h"
-#include "Registrar.h"
+#include <pointmatcher/Parametrizable.h>
+#include <pointmatcher/Registrar.h>
 
 #if NABO_VERSION_INT < 10001
 	#error "You need libnabo version 1.0.1 or greater"
