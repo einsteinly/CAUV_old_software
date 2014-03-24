@@ -170,24 +170,30 @@ void PipelineModel::updateFromXmlRpcValue(RpcValue &value) {
     for (int i = 0; i < nodes_v.size(); i++) {
         auto &node_v = nodes_v[i];
         boost::shared_ptr<NodeModel> node;
+        //create/get node as appropriate
         try {
-            node = existing_nodes_by_name.at(node_v["type"]);
+            node = existing_nodes_by_name.at(node_v["name"]);
             if (node->type.name != std::string(node_v["type"])) {
-                delNode(node_v["type"]);
+                delNode(node_v["name"]);
                 node = addNode(node_v["type"]);
+                node->setName(node_v["name"]);
             }
         } catch (std::out_of_range) {
             node = addNode(node_v["type"]);
+            node->setName(node_v["name"]);
         }
+        //add to list of 'known' nodes
         nodes_by_name.insert(std::make_pair(node->getName(), node));
+        //add inputs to  'known'  nodes
         RpcValue inputs_v = node_v["inputs"];
         for (int j = 0; j < inputs_v.size(); j++) {
             RpcValue input_v = inputs_v[j];
             if (input_v.hasMember("value")) {
                 node->disconnectInput(input_v["name"]);
-                *node->getInput(input_v["name"]).value = *ParamTypeRegistry::getParamValue(input_v["type"], input_v["value"]);
+                node->setInputValue(input_v["name"], ParamTypeRegistry::getParamValue(input_v["type"], input_v["value"]));
             }
         }
+        //add outputs to 'known' nodes
         RpcValue outputs_v = node_v["outputs"];
         for (int j = 0; j < inputs_v.size(); j++) {
             RpcValue output_v = outputs_v[j];

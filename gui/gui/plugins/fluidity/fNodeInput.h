@@ -47,8 +47,11 @@ class FNodeInput: public liquid::ArcSinkLabel,
         
         pipeline_model::InputModel& getModel();
 
-    protected Q_SLOTS:
-        void modelValueChanged(QVariant value);
+    Q_SIGNALS:
+        void modelValueChanged(const std::string& input, QVariant value);
+        
+    public Q_SLOTS:
+        void widgetValueChanged(QVariant value);
 
     public:
         void addWidget(QGraphicsWidget* w);

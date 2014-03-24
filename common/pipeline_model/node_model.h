@@ -6,6 +6,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include <XmlRpcValue.h>
+
 #include "edge_model.h"
 
 namespace cauv {
@@ -67,6 +69,8 @@ public:
 
     virtual void disconnectOutput(const std::string output);
     virtual void disconnectInput(const std::string input);
+    
+    virtual void setInputValue(const std::string input, const boost::shared_ptr<ParamValue> value);
 
     virtual InputModel& getInput(const std::string input_name) {
         return getEdge<InputModel>(inputs, type.inputs, input_name);

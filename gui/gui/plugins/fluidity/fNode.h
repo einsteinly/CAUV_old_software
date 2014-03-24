@@ -57,8 +57,8 @@ class FNode: public liquid::LiquidNode,
     protected:
         void initIO();
         
-        void constructArcTo(const std::string output, FNode& to, const std::string input);
-        void destructArcTo(const std::string output, FNode& to, const std::string input);
+        void constructArcTo(const std::string output, FNode* to, const std::string input);
+        void destructArcFrom(const std::string input, FNode* from, const std::string output);
         FNodeInput* getInput(const std::string input_name);
         FNodeOutput* getOutput(const std::string output_name);
     
@@ -75,6 +75,7 @@ class FNode: public liquid::LiquidNode,
         virtual void reExec();
         virtual void duplicate();
         virtual void toggleCollapsed();
+        virtual void modelParamValueChanged(const std::string& input, QVariant variant);
 
     protected:
         void initButtons();

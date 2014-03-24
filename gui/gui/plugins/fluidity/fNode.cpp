@@ -39,6 +39,7 @@
 //#include "imageSource.h"
 
 #include "model/nodes/groupingnode.h"
+#include "model/paramvalues.h"
 
 using cauv::gui::f::FNode;
 using cauv::gui::f::FNodeOutput;
@@ -46,6 +47,7 @@ using cauv::gui::f::FNodeInput;
 using cauv::mkQStr;
 using namespace liquid;
 using namespace cauv;
+using namespace cauv::gui;
 
 class TestLayoutItem: public QGraphicsLayoutItem,
                       public QGraphicsPathItem{
@@ -169,19 +171,26 @@ void FNode::initIO() {
         //editable (until connection occurs)
         t->setEditable(true);
         
+        connect(t, SIGNAL(modelValueChanged(const std::string&, QVariant)),
+                this, SLOT(modelParamValueChanged(const std::string&, QVariant)));
+        
         m_inputs.insert(std::make_pair(input_name, t));
         addItem(t);
     }
 }
         
-void FNode::constructArcTo(const std::string output, FNode& to, const std::string input){
-    FNodeInput* in = to.getInput(input);
+void FNode::constructArcTo(const std::string output, FNode* to, const std::string input){
+    FNodeInput* in = to->getInput(input);
+    in->setEditable(false);
     getOutput(output)->arc()->addTo(in->sink());
 }
 
-void FNode::destructArcTo(const std::string output, FNode& to, const std::string input){
-    FNodeInput* in = to.getInput(input);
-    getOutput(output)->arc()->removeTo(in->sink());
+void FNode::destructArcFrom(const std::string input, FNode* from, const std::string output){
+    //set input as editable
+    getInput(input)->setEditable(true);
+    //destruction might happen when we have no FNode so be careful
+    if (!from) { return; }
+    from->getOutput(output)->arc()->removeTo(getInput(input)->sink());
 }
 
 FNodeInput* FNode::getInput(const std::string input_name){
@@ -433,6 +442,10 @@ void FNode::toggleCollapsed(){
 #endif
     setSize(Minimum_Size);
     manager().considerUpdatingLayout();
+}
+
+void FNode::modelParamValueChanged(const std::string& input, QVariant variant){
+    m_associated_node->setInputValue(input, qVariantToParamValue(variant));
 }
  
 // FNodeOutput* FNode::output(const std::string& id){
