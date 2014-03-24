@@ -18,7 +18,7 @@ using namespace cauv::pipeline_model;
 //ensures that required methods are implemented
 struct ConverterBase
 {
-    virtual boost::shared_ptr<Node> toNode(std::string const& name) = 0;
+    virtual boost::shared_ptr<Node> toNode(const std::string& name) = 0;
     virtual QVariant toQVariant() = 0;
 };
 
@@ -113,20 +113,46 @@ boost::shared_ptr<ConverterBase> getConverter(boost::shared_ptr<ParamValue> pv){
 }
 
 
-namespace cauv{
-namespace gui{
-boost::shared_ptr<Node> paramModelToNode(ParamModel& pm){
+boost::shared_ptr<Node> cauv::gui::paramModelToNode(const ParamModel& pm){
     return paramValueToNode(pm.name, pm.value);
 }
 
-boost::shared_ptr<Node> paramValueToNode(std::string const& id, boost::shared_ptr<ParamValue> pv){
+boost::shared_ptr<Node> cauv::gui::paramValueToNode(const std::string& id, boost::shared_ptr<ParamValue> pv){
     return getConverter(pv)->toNode(id);
 }
 
-QVariant paramValueToQVariant(boost::shared_ptr<ParamValue> pv){
+QVariant cauv::gui::paramValueToQVariant(boost::shared_ptr<ParamValue> pv){
     return getConverter(pv)->toQVariant();
 }
+
+boost::shared_ptr<ParamValue> qVariantToIntParam(const QVariant& variant){
+    return boost::make_shared<IntParam>(variant.value<int>());
 }
+
+boost::shared_ptr<ParamValue> qVariantToFloatParam(const QVariant& variant){
+    return boost::make_shared<FloatParam>(variant.value<float>());
+}
+
+boost::shared_ptr<ParamValue> qVariantToBoolParam(const QVariant& variant){
+    return boost::make_shared<BoolParam>(variant.value<bool>());
+}
+
+//TODO sort out QVariant::Type vs QMetaType::Type (?second allows floats...?)
+boost::shared_ptr<ParamValue> cauv::gui::qVariantToParamValue(const QVariant& variant){
+    static std::map<int, //as userType returns an int
+                    std::function<boost::shared_ptr<ParamValue>(const QVariant& variant)>
+                    > dispatcher = {
+        { QMetaType::Int, qVariantToIntParam },
+        { QMetaType::Float, qVariantToFloatParam },
+        { QMetaType::Bool, qVariantToBoolParam }
+    };
+    try {
+        return dispatcher.at(variant.userType())(variant);
+    } catch (std::out_of_range) {
+        throw std::runtime_error(std::string("Unsupported QVariant (of type ")+
+                                 QVariant::typeToName(variant.type())+
+                                 ") to ParamValue conversion.");
+    }
 }
 
 #if 0

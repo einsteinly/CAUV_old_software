@@ -26,6 +26,7 @@ class ParamValue {
     virtual bool canAccept(ParamValue &other) {
         return getType() == other.getType();
     }
+    virtual ParamValue& operator=(const ParamValue& that) = 0;
     virtual ~ParamValue() {};
     protected:
     ParamValue() {};
@@ -104,6 +105,11 @@ class FloatParam: public ParamValueReg<FloatParam> {
     static boost::shared_ptr<ParamValue> fromXmlRpcValue(XmlRpc::XmlRpcValue &val) { 
         return boost::make_shared<FloatParam>(static_cast<double>(val));
     }
+    virtual ParamValue& operator=(const ParamValue& that){
+        auto other = dynamic_cast<const FloatParam*>(&that);
+        if(!other) { throw std::runtime_error("Tried to set FloatParam equal to non-FloatParam"); }
+        this->value = other->value;
+    }
 };
 
 class BoolParam: public ParamValueReg<BoolParam> {
@@ -116,6 +122,11 @@ class BoolParam: public ParamValueReg<BoolParam> {
     static boost::shared_ptr<ParamValue> fromXmlRpcValue(XmlRpc::XmlRpcValue &val) {
         return boost::make_shared<BoolParam>(val);
     }
+    virtual ParamValue& operator=(const ParamValue& that){
+        auto other = dynamic_cast<const BoolParam*>(&that);
+        if(!other) { throw std::runtime_error("Tried to set BoolParam equal to non-BoolParam"); }
+        this->value = other->value;
+    }
 };
 
 class IntParam: public ParamValueReg<IntParam> {
@@ -127,6 +138,11 @@ class IntParam: public ParamValueReg<IntParam> {
     virtual XmlRpc::XmlRpcValue toXmlRpcValue() { return XmlRpc::XmlRpcValue(value); }
     static boost::shared_ptr<ParamValue> fromXmlRpcValue(XmlRpc::XmlRpcValue& val) { 
         return boost::make_shared<IntParam>(val);
+    }
+    virtual ParamValue& operator=(const ParamValue& that){
+        auto other = dynamic_cast<const IntParam*>(&that);
+        if(!other) { throw std::runtime_error("Tried to set IntParam equal to non-IntParam"); }
+        this->value = other->value;
     }
 };
 

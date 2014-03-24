@@ -27,29 +27,26 @@ FNode* GuiNodeModel::getFNode(){
 
 void GuiNodeModel::connectOutput(const std::string output, InputModel& input){
     NodeModel::connectOutput(output, input);
-    auto to = boost::static_pointer_cast<GuiNodeModel>(input.node);
-    m_node->constructArcTo(output, *(to->getFNode()), input.name);
+    auto to = boost::static_pointer_cast<GuiNodeModel>(input.node)->getFNode();
+    m_node->constructArcTo(output, to, input.name);
 }
 //void connectInput(const std::string input, OutputModel&);
 
 void GuiNodeModel::disconnectOutput(const std::string output){
-    //this might be called after we've removed the assoicated FNode, in which case do nothing
-    if (!m_node){ return; }
     for (InputModel& link : getOutput(output).outputs){
-        auto to = boost::static_pointer_cast<GuiNodeModel>(link.node);
-        m_node->destructArcTo(output, *(to->getFNode()), link.name);
+        auto to = boost::static_pointer_cast<GuiNodeModel>(link.node)->getFNode();
+        if (to) { to->destructArcFrom(link.name, m_node, output); }
     }
     NodeModel::disconnectOutput(output);
 }
 
 void GuiNodeModel::disconnectInput(const std::string input){
-    if (!m_node){ return; }
     OutputModel* output = getInput(input).input;
     if (output){
-        auto from = boost::static_pointer_cast<GuiNodeModel>(output->node);
-        from->getFNode()->destructArcTo(output->name, *m_node, input);
-        NodeModel::disconnectInput(input);
+        auto from = boost::static_pointer_cast<GuiNodeModel>(output->node)->getFNode();
+        if (m_node) { m_node->destructArcFrom(input, from, output->name); }
     }
+    NodeModel::disconnectInput(input);
 }
 
 // ----------- GuiPipelineModel -------------

@@ -166,9 +166,10 @@ void FNodeInput::setValue(boost::shared_ptr<pipeline_model::ParamValue> const& v
         boost::shared_ptr<gui::Node> n = manager().model()->findOrCreate<GroupingNode>(m_node->getName());
         // each item needs to be an only child
         // this should be changed if multiple NodeItemViews are not used any more
+        // TODO (Not sure what this comment is saying, does any one know what NodeItemViews are?)
         boost::shared_ptr<gui::Node> p = n->findOrCreate<GroupingNode>(m_input_name);
         p->addChild(m_model_node);
-        connect(m_model_node.get(), SIGNAL(onSet(QVariant)), this, SLOT(modelValueChanged(QVariant)));
+        connect(m_model_node.get(), SIGNAL(onSet(QVariant)), this, SLOT(widgetValueChanged(QVariant)));
         initView();
     }
     m_model_node->update(paramValueToQVariant(v));
@@ -178,7 +179,8 @@ void FNodeInput::setEditable(bool editable){
     m_model_node->setMutable(editable);
 }
 
-void FNodeInput::modelValueChanged(QVariant value){
+void FNodeInput::widgetValueChanged(QVariant value){
+    Q_EMIT modelValueChanged(m_input_name, value);
 }
 
 liquid::CutoutStyle const& FNodeInput::cutoutStyleForParam(){

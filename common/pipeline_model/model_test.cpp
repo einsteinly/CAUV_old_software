@@ -133,11 +133,17 @@ BOOST_AUTO_TEST_CASE ( pipelineToXml ) {
 
     XmlRpc::XmlRpcValue xml_pipeline = pipeline.toXmlRpcValue();
 
-    //std::cout << xml_pipeline.toXml();
+    std::cout << xml_pipeline.toXml();
 
     PipelineModel pipeline2("test");
 
     pipeline2.updateFromXmlRpcValue(xml_pipeline);
+    auto source_node2 = pipeline2.getNode(source_node->getName());
+    auto sink_node2 = pipeline2.getNode(sink_node->getName());
+    
+    BOOST_CHECK_EQUAL(boost::dynamic_pointer_cast<FloatParam>(source_node2->getInput("float_input").value)->value, float_param.value);
+    BOOST_CHECK_EQUAL(boost::dynamic_pointer_cast<FloatParam>(sink_node2->getOutput("float_output").value)->value, float_param.value);
+    
 }
 
 BOOST_AUTO_TEST_CASE ( disconnection ) {

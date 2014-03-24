@@ -42,10 +42,12 @@ namespace cauv {
 //     template <class T>
     
     
-    boost::shared_ptr<Node> paramModelToNode(pipeline_model::ParamModel& pm);
-    boost::shared_ptr<Node> paramValueToNode(std::string const& id,
+    boost::shared_ptr<Node> paramModelToNode(const pipeline_model::ParamModel& pm);
+    boost::shared_ptr<Node> paramValueToNode(const std::string& id,
                                              boost::shared_ptr<pipeline_model::ParamValue> pv);
     QVariant paramValueToQVariant(boost::shared_ptr<pipeline_model::ParamValue> pv);
+    
+    boost::shared_ptr<pipeline_model::ParamValue> qVariantToParamValue(const QVariant& variant);
 
     //TODO reimplement meta data
     //boost::shared_ptr<Node> paramWithMetaToNode(nid_t id, ParamWithMeta & param_with_meta);

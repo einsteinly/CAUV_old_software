@@ -115,6 +115,12 @@ void NodeModel::disconnectOutput(const std::string output_name) {
     output.outputs.clear();
 }
 
+void NodeModel::setInputValue(const std::string input, const boost::shared_ptr<ParamValue> value) {
+    //copy apprpriate data
+    //relies on overloaded operator= functions
+    *(getInput(input).value) = *(value);
+}
+
 void NodeModel::isolate() {
     for (auto &output: outputs) {
         disconnectOutput(output.first);
