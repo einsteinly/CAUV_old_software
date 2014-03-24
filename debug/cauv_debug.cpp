@@ -3,7 +3,7 @@
  * See license.txt for details.
  */
 
-#include "cauv_debug.h"
+#include <debug/cauv_debug.h>
 
 #include <iostream>
 

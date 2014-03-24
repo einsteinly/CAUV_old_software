@@ -4,11 +4,11 @@
  */
 
 
-#include "coordinates.h"
+#include <utility/coordinates.h>
 
 #include <cmath>
 
-#include "math.h"
+#include <utility/math.h>
 
 namespace cc = cauv::coords;
 

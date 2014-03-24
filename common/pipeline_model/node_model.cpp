@@ -1,5 +1,5 @@
-#include "node_model.h"
-#include "pipeline.h"
+#include <pipeline_model/node_model.h>
+#include <pipeline_model/pipeline.h>
 #include <algorithm>
 #include <sstream>
 

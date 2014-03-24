@@ -47,12 +47,12 @@ include_directories(${Boost_INCLUDES}
                     ${QT_INCLUDES}
                     ${EIGEN_INCLUDE_DIR}
                     ${libpointmatcher_INCLUDE_DIRS}
+                    ${catkin_INCLUDE_DIRS}
                     )
 
 include(${QT_USE_FILE})
 
-include_directories(${catkin_INCLUDE_DIRS})
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../")
+include_directories()
 
 add_library(
     sonar_ops

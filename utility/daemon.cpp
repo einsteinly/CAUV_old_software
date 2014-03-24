@@ -3,7 +3,7 @@
  * See license.txt for details.
  */
 
-#include "daemon.h"
+#include <utility/daemon.h>
 
 #include <stdio.h>
 #include <stdlib.h>

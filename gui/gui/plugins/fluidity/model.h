@@ -9,9 +9,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <common/pipeline_model/pipeline.h>
-#include <common/pipeline_model/node_model.h>
-#include <common/pipeline_model/edge_model.h>
+#include <pipeline_model/pipeline.h>
+#include <pipeline_model/node_model.h>
+#include <pipeline_model/edge_model.h>
 
 namespace cauv{
 namespace gui{

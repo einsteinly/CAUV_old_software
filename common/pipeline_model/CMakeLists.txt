@@ -18,7 +18,7 @@ add_message_files(
 generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
-    INCLUDE_DIRS "./.."
+    INCLUDE_DIRS include
     DEPENDS Boost
     CATKIN_DEPENDS cauv_debug cauv_utility roscpp roslib
     LIBRARIES cauv_pipeline_model
@@ -27,9 +27,9 @@ catkin_package(
 include_directories(${Boost_INCLUDES} 
                     ${rosconsole_INCLUDES}
                     ${cauv_utility_INCLUDE_DIRS}
+                    include
+                    ${catkin_INCLUDE_DIRS}
                     )
-
-include_directories(${catkin_INCLUDE_DIRS})
 
 add_executable (
     model_test

@@ -3,10 +3,10 @@
  * See license.txt for details.
  */
 
-#include "ratelimit.h"
+#include <utility/ratelimit.h>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#include "time.h"
+#include <utility/time.h>
 
 
 cauv::RateLimiter::RateLimiter(const unsigned int max, const unsigned int period) : m_maximum(max), m_period(period) {

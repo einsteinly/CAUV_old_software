@@ -12,9 +12,11 @@ find_package(catkin REQUIRED COMPONENTS
             rosconsole
             roscpp
             cauv_debug
+            cauv_utility
             std_msgs
             message_generation
             cauv_pipeline_model)
+
 find_package(cauv_utility REQUIRED)
 find_package(Boost REQUIRED)
 
@@ -27,7 +29,6 @@ include_directories(${Boost_INCLUDE_DIRS}
                     ${catkin_INCLUDE_DIRS}
                     ${cauv_utility_INCLUDE_DIRS}
                     )
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 option(CAUV_BUILD_GUI "Whether or not to use the GUI" ON)
 

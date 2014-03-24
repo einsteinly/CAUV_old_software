@@ -10,11 +10,14 @@ find_package(Boost REQUIRED)
 find_package(catkin REQUIRED COMPONENTS rosconsole)
 
 catkin_package(
-    INCLUDE_DIRS .
+    INCLUDE_DIRS include
     DEPENDS rosconsole Boost
 )
 
-include_directories(${Boost_INCLUDES} ${rosconsole_INCLUDES})
+include_directories(include 
+                    ${Boost_INCLUDES}
+                    ${rosconsole_INCLUDES}
+                    ${catkin_INCLUDE_DIRS})
 
 add_library (
     cauv_debug STATIC
@@ -33,6 +36,6 @@ install(TARGETS cauv_debug
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 
-install(FILES
-    cauv_debug.h
+install(DIRECTORY
+    include
     DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})

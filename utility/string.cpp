@@ -4,7 +4,7 @@
  */
 
 
-#include "string.h"
+#include <utility/string.h>
 
 std::string cauv::implode( const std::string& glue, const std::set<std::string>& pieces )
 {

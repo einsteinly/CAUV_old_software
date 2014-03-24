@@ -1,4 +1,4 @@
-#include "param_model.h"
+#include <pipeline_model/param_model.h>
 
 #include <XmlRpcValue.h>
 #include <stdexcept>

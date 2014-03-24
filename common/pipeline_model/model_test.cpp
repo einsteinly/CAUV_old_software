@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <iostream>
-#include "pipeline.h"
+#include <pipeline_model/pipeline.h>
 
 using namespace cauv;
 using namespace pipeline_model;

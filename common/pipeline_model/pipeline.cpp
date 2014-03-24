@@ -1,4 +1,4 @@
-#include "pipeline.h"
+#include <pipeline_model/pipeline.h>
 #include <boost/make_shared.hpp>
 #include <algorithm>
 #include <sstream>
