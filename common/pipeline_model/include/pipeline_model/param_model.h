@@ -109,6 +109,7 @@ class FloatParam: public ParamValueReg<FloatParam> {
         auto other = dynamic_cast<const FloatParam*>(&that);
         if(!other) { throw std::runtime_error("Tried to set FloatParam equal to non-FloatParam"); }
         this->value = other->value;
+        return *this;
     }
 };
 
@@ -126,6 +127,7 @@ class BoolParam: public ParamValueReg<BoolParam> {
         auto other = dynamic_cast<const BoolParam*>(&that);
         if(!other) { throw std::runtime_error("Tried to set BoolParam equal to non-BoolParam"); }
         this->value = other->value;
+        return *this;
     }
 };
 
@@ -143,6 +145,7 @@ class IntParam: public ParamValueReg<IntParam> {
         auto other = dynamic_cast<const IntParam*>(&that);
         if(!other) { throw std::runtime_error("Tried to set IntParam equal to non-IntParam"); }
         this->value = other->value;
+        return *this;
     }
 };
 
