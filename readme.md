@@ -1,8 +1,9 @@
 ## Contents
-0) Notes
-1) Directory Layout
-2) Readmes
-3) Messaging
+
+0. Notes
+1. Directory Layout
+2. Readmes
+3. Messaging
 
 ## Notes
 
